@@ -15,7 +15,6 @@ import com.facebook.FacebookSdk;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.facebook.AccessToken;
-import com.facebook.AccessTokenTracker;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -43,25 +42,25 @@ public class LoginActivity extends AppCompatActivity {
 
         AccessToken currentToken = AccessToken.getCurrentAccessToken();
         if (currentToken == null) {
-            Log.d(TAG, "----- no current token, show login screen -----");
+//            Log.d(TAG, "----- no current token, show login screen -----");
             setupLoginScreen();
         }
         else {
-            Log.d(TAG, "----- current token exists, go straight to app -----");
+//            Log.d(TAG, "----- current token exists, go straight to app -----");
             Intent intent = new Intent(self, ProfileActivity.class);
             startActivity(intent);
         }
     }
 
     private void updateWithToken(AccessToken newAccessToken) {
-        Log.d(TAG, "----- updating previous token -----");
+//        Log.d(TAG, "----- updating previous token -----");
         if (newAccessToken != null) {
-            Log.d(TAG, "----- previous token logged in -----");
+//            Log.d(TAG, "----- previous token logged in -----");
             Intent intent = new Intent(self, ProfileActivity.class);
             startActivity(intent);
         }
         else {
-            Log.d(TAG, "----- previous token not logged in -----");
+//            Log.d(TAG, "----- previous token not logged in -----");
             setupLoginScreen();
         }
     }
@@ -92,6 +91,15 @@ public class LoginActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         callbackManager.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_HOME);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
     @Override

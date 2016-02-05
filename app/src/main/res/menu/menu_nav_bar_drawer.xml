@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:id="@+id/nav_bar_menu"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_trending"
+            android:icon="@drawable/ic_trending"
+            android:title="Trending" />
+        <item
+            android:id="@+id/nav_events"
+            android:icon="@drawable/ic_events_calendar"
+            android:title="Events Calendar" />
+        <item
+            android:id="@+id/nav_browse_teams"
+            android:icon="@drawable/ic_browse_teams"
+            android:title="Browse Teams" />
+        <item
+            android:id="@+id/nav_settings"
+            android:icon="@drawable/ic_menu_manage"
+            android:title="Settings" />
+    </group>
+
+    <group android:id="@+id/nav_bar_logout"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_logout"
+            android:icon="@drawable/ic_logout"
+            android:title="Logout" />
+    </group>
+
+</menu>

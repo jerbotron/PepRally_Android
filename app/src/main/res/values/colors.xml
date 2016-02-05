@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorPrimary">#D26B20</color>
+    <color name="colorPrimaryLight">#d77d3c</color>
+    <color name="colorPrimaryDark">#CC5D00</color>
+    <color name="colorAccent">#FFFFFF</color>
 
-    <color name="colorLongHorns">#D26B20</color>
+    <color name="colorFollowing">#66BD2B</color>
+    <color name="colorNotFollowing">#929292</color>
 </resources>
