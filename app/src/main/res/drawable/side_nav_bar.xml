@@ -9,9 +9,4 @@
                 android:type="linear"/>
         </shape>
     </item>
-    <!--<item android:drawable="@drawable/logo_longhorns_white"-->
-        <!--android:right="-150dp"-->
-        <!--android:top="10dp"-->
-        <!--android:left="150dp"-->
-        <!--android:bottom="-50dp"></item>-->
 </layer-list>

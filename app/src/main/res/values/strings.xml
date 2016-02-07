@@ -1,8 +1,6 @@
 <resources>
     <string name="app_name">PepRally</string>
     <string name="team_slogan">Hook\'em Horns</string>
-    <string name="action_settings">Settings</string>
-    <string name="title_activity_login">Sign in</string>
 
     <!-- Strings related to Login Activity -->
     <string name="facebook_app_id">1006674646058120</string>
@@ -12,7 +10,12 @@
     <string name="profile_followers"> Followers</string>
     <string name="profile_btn_follow">+ Follow</string>
 
-    <string name="title_activity_nav_bar">NavBarActivity</string>
+    <string name="title_activity_profile">ProfileActivity</string>
+    <string name="title_activity_events">EventsActivity</string>
+    <string name="title_activity_browse_teams">BrowseTeamsActivity</string>
+    <string name="title_activity_trending">TrendingActivity</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+    
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 </resources>

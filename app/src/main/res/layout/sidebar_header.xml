@@ -8,20 +8,20 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:theme="@style/ThemeOverlay.AppCompat.Dark">
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:src="@drawable/profile"
-        android:scaleType="fitStart"
-        android:layout_margin="15dp"
-        android:paddingRight="-85dp"/>
+    android:theme="@style/ThemeOverlay.AppCompat.Dark"
+    android:clickable="true"
+    android:onClick="onNavBarHeaderClick">
+    <com.facebook.login.widget.ProfilePictureView
+        android:id="@+id/profile_image_header"
+        android:layout_width="112dp"
+        android:layout_height="112dp"
+        android:layout_margin="8dp"/>
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:gravity="center_vertical">
+        android:gravity="center_vertical"
+        android:layout_marginLeft="8dp">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

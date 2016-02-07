@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
         <com.facebook.login.widget.ProfilePictureView
-            android:id="@+id/profile_image"
+            android:id="@+id/profile_image_profile"
             android:layout_width="128dp"
             android:layout_height="128dp"
             android:layout_gravity="left"
@@ -54,16 +54,6 @@
                 android:onClick="onFollowButtonClick"/>
         </LinearLayout>
     </LinearLayout>
-    <Button
-        style="?android:attr/buttonStyleSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Log out"
-        android:id="@+id/button_logout_profile"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:onClick="onLogoutButtonClick"/>
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
