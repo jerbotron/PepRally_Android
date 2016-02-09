@@ -15,6 +15,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.facebook.AccessToken;
@@ -75,8 +76,15 @@ public class ProfileActivity extends AppCompatActivity
         profilePicture.setProfileId(userId);
 
         View headerView = navigationView.getHeaderView(0);
+        LinearLayout header = (LinearLayout) headerView.findViewById(R.id.sidebar_header);
         profilePictureHeader = (ProfilePictureView) headerView.findViewById(R.id.profile_image_header);
         profilePictureHeader.setProfileId(userId);
+        header.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onNavBarHeaderClick();
+            }
+        });
 
         fistBumpsTextView = (TextView) findViewById(R.id.id_profile_tv_fist_bumps);
         followersTextView = (TextView) findViewById(R.id.id_profile_tv_followers);
@@ -104,14 +112,13 @@ public class ProfileActivity extends AppCompatActivity
 //        startActivity(intent);
     }
 
-    public void onNavBarHeaderClick(View view) {
-        Log.d(TAG, "----- Header clicked -----");
-//        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_profile);
-//        drawer.closeDrawer(GravityCompat.START);
-    }
-
     public void onFollowButtonClick(View view) {
         setFollowButton();
+    }
+
+    private void onNavBarHeaderClick() {
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_profile);
+        drawer.closeDrawer(GravityCompat.START);
     }
 
     private void setFollowButton() {
@@ -136,15 +143,19 @@ public class ProfileActivity extends AppCompatActivity
         if (id == R.id.nav_trending) {
             Intent intent = new Intent(this, TrendingActivity.class);
             startActivity(intent);
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
         } else if (id == R.id.nav_events) {
             Intent intent = new Intent(this, EventsActivity.class);
             startActivity(intent);
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
         } else if (id == R.id.nav_browse_teams) {
             Intent intent = new Intent(this, BrowseTeamsActivity.class);
             startActivity(intent);
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
         } else if (id == R.id.nav_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
         } else if (id == R.id.nav_logout) {
             LoginManager.getInstance().logOut();
             Intent intent = new Intent(this, LoginActivity.class);

@@ -12,6 +12,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.LinearLayout;
 
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
@@ -46,8 +47,15 @@ public class BrowseTeamsActivity extends AppCompatActivity
 
         AccessToken currentToken = AccessToken.getCurrentAccessToken();
         View headerView = navigationView.getHeaderView(0);
+        LinearLayout header = (LinearLayout) headerView.findViewById(R.id.sidebar_header);
         profilePicture = (ProfilePictureView) headerView.findViewById(R.id.profile_image_header);
         profilePicture.setProfileId(currentToken.getUserId());
+        header.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onNavBarHeaderClick();
+            }
+        });
     }
 
     @Override
@@ -60,11 +68,11 @@ public class BrowseTeamsActivity extends AppCompatActivity
         }
     }
 
-//    public void onNavBarHeaderClick(View view) {
-//        finish();
-//        Intent intent = new Intent(this, ProfileActivity.class);
-//        startActivity(intent);
-//    }
+    private void onNavBarHeaderClick() {
+        finish();
+        Intent intent = new Intent(this, ProfileActivity.class);
+        startActivity(intent);
+    }
 
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -74,17 +82,20 @@ public class BrowseTeamsActivity extends AppCompatActivity
         if (id == R.id.nav_trending) {
             Intent intent = new Intent(this, TrendingActivity.class);
             startActivity(intent);
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
         } else if (id == R.id.nav_events) {
             Intent intent = new Intent(this, EventsActivity.class);
             startActivity(intent);
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
         } else if (id == R.id.nav_browse_teams) {
             Intent intent = new Intent(this, BrowseTeamsActivity.class);
             startActivity(intent);
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
         } else if (id == R.id.nav_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
         } else if (id == R.id.nav_logout) {
-//            finish();
             LoginManager.getInstance().logOut();
             Intent intent = new Intent(this, LoginActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
