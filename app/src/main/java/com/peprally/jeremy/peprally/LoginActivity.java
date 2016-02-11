@@ -47,7 +47,7 @@ public class LoginActivity extends AppCompatActivity {
         }
         else {
 //            Log.d(TAG, "----- current token exists, go straight to app -----");
-            Intent intent = new Intent(self, ProfileActivity.class);
+            Intent intent = new Intent(self, HomeActivity.class);
             startActivity(intent);
         }
     }
@@ -56,7 +56,7 @@ public class LoginActivity extends AppCompatActivity {
 //        Log.d(TAG, "----- updating previous token -----");
         if (newAccessToken != null) {
 //            Log.d(TAG, "----- previous token logged in -----");
-            Intent intent = new Intent(self, ProfileActivity.class);
+            Intent intent = new Intent(self, HomeActivity.class);
             startActivity(intent);
         }
         else {
@@ -71,7 +71,7 @@ public class LoginActivity extends AppCompatActivity {
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
-                Intent intent = new Intent(self, ProfileActivity.class);
+                Intent intent = new Intent(self, HomeActivity.class);
                 startActivity(intent);
             }
 

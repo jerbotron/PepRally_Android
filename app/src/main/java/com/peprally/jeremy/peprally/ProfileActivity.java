@@ -2,7 +2,6 @@ package com.peprally.jeremy.peprally;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.media.audiofx.BassBoost;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -11,7 +10,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -107,12 +105,44 @@ public class ProfileActivity extends AppCompatActivity
         startActivity(intent);
     }
 
-    public void onTestButtonClick(View view) {
-//        Intent intent = new Intent(this, EventsActivity.class);
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        // Handle navigation view item clicks here.
+        int id = item.getItemId();
+        finish();
+        if (id == R.id.nav_trending) {
+            Intent intent = new Intent(this, TrendingFragment.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
+        } else if (id == R.id.nav_events) {
+            Intent intent = new Intent(this, EventsFragment.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
+        } else if (id == R.id.nav_browse_teams) {
+            Intent intent = new Intent(this, BrowseTeamsFragment.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
+        } else if (id == R.id.nav_settings) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.right_in, R.anim.right_out);
+        } else if (id == R.id.nav_logout) {
+            LoginManager.getInstance().logOut();
+            Intent intent = new Intent(this, LoginActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+        }
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_profile);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
+    private void onTestButtonClick(View view) {
+//        Intent intent = new Intent(this, EventsFragment.class);
 //        startActivity(intent);
     }
 
-    public void onFollowButtonClick(View view) {
+    private void onFollowButtonClick(View view) {
         setFollowButton();
     }
 
@@ -133,37 +163,5 @@ public class ProfileActivity extends AppCompatActivity
             followButton.setBackgroundColor(Color.parseColor("#929292"));
             following = true;
         }
-    }
-
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
-        finish();
-        if (id == R.id.nav_trending) {
-            Intent intent = new Intent(this, TrendingActivity.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.right_in, R.anim.right_out);
-        } else if (id == R.id.nav_events) {
-            Intent intent = new Intent(this, EventsActivity.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.right_in, R.anim.right_out);
-        } else if (id == R.id.nav_browse_teams) {
-            Intent intent = new Intent(this, BrowseTeamsActivity.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.right_in, R.anim.right_out);
-        } else if (id == R.id.nav_settings) {
-            Intent intent = new Intent(this, SettingsActivity.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.right_in, R.anim.right_out);
-        } else if (id == R.id.nav_logout) {
-            LoginManager.getInstance().logOut();
-            Intent intent = new Intent(this, LoginActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(intent);
-        }
-        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_profile);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
     }
 }

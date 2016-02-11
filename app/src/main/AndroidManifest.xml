@@ -31,12 +31,12 @@
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".EventsActivity"
+            android:name=".EventsFragment"
             android:label="@string/title_activity_events"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".BrowseTeamsActivity"
+            android:name=".BrowseTeamsFragment"
             android:label="@string/title_activity_browse_teams"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
@@ -44,9 +44,9 @@
             android:name=".SettingsActivity"
             android:label="@string/title_activity_settings"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar"/>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".TrendingActivity"
+            android:name=".TrendingFragment"
             android:label="@string/title_activity_trending"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
@@ -71,6 +71,8 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
+        <activity android:name=".HomeActivity"></activity>
     </application>
 
 </manifest>

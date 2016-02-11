@@ -2,8 +2,6 @@ package com.peprally.jeremy.peprally;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -19,7 +17,7 @@ import com.facebook.FacebookSdk;
 import com.facebook.login.LoginManager;
 import com.facebook.login.widget.ProfilePictureView;
 
-public class EventsActivity extends AppCompatActivity
+public class EventsFragment extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private ActionBarDrawerToggle drawerToggle;
@@ -68,27 +66,21 @@ public class EventsActivity extends AppCompatActivity
         }
     }
 
-    public void onNavBarHeaderClick() {
-        finish();
-        Intent intent = new Intent(this, ProfileActivity.class);
-        startActivity(intent);
-    }
-
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
         finish();
         if (id == R.id.nav_trending) {
-            Intent intent = new Intent(this, TrendingActivity.class);
+            Intent intent = new Intent(this, TrendingFragment.class);
             startActivity(intent);
             overridePendingTransition(R.anim.right_in, R.anim.right_out);
         } else if (id == R.id.nav_events) {
-            Intent intent = new Intent(this, EventsActivity.class);
+            Intent intent = new Intent(this, EventsFragment.class);
             startActivity(intent);
             overridePendingTransition(R.anim.right_in, R.anim.right_out);
         } else if (id == R.id.nav_browse_teams) {
-            Intent intent = new Intent(this, BrowseTeamsActivity.class);
+            Intent intent = new Intent(this, BrowseTeamsFragment.class);
             startActivity(intent);
             overridePendingTransition(R.anim.right_in, R.anim.right_out);
         } else if (id == R.id.nav_settings) {
@@ -104,5 +96,11 @@ public class EventsActivity extends AppCompatActivity
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout_events);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void onNavBarHeaderClick() {
+        finish();
+        Intent intent = new Intent(this, ProfileActivity.class);
+        startActivity(intent);
     }
 }

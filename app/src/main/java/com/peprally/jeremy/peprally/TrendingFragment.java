@@ -1,12 +1,12 @@
 package com.peprally.jeremy.peprally;
 
 import android.content.Intent;
+import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,7 +17,7 @@ import com.facebook.FacebookSdk;
 import com.facebook.login.LoginManager;
 import com.facebook.login.widget.ProfilePictureView;
 
-public class SettingsActivity extends AppCompatActivity
+public class TrendingFragment extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private ActionBarDrawerToggle drawerToggle;
@@ -30,17 +30,17 @@ public class SettingsActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext());
-        setContentView(R.layout.activity_settings);
-        toolbar = (Toolbar) findViewById(R.id.toolbar_settings);
+        setContentView(R.layout.activity_trending);
+        toolbar = (Toolbar) findViewById(R.id.toolbar_trending);
         setSupportActionBar(toolbar);
 
-        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_settings);
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_trending);
         drawerToggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(drawerToggle);
         drawerToggle.syncState();
 
-        navigationView = (NavigationView) findViewById(R.id.nav_view_settings);
+        navigationView = (NavigationView) findViewById(R.id.nav_view_trending);
         navigationView.setNavigationItemSelectedListener(this);
 
         AccessToken currentToken = AccessToken.getCurrentAccessToken();
@@ -58,7 +58,7 @@ public class SettingsActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_settings);
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_trending);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -93,7 +93,7 @@ public class SettingsActivity extends AppCompatActivity
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         }
-        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_settings);
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_trending);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
@@ -103,4 +103,5 @@ public class SettingsActivity extends AppCompatActivity
         Intent intent = new Intent(this, ProfileActivity.class);
         startActivity(intent);
     }
+
 }

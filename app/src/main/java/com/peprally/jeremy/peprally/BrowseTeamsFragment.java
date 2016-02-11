@@ -2,9 +2,7 @@ package com.peprally.jeremy.peprally;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -19,7 +17,7 @@ import com.facebook.FacebookSdk;
 import com.facebook.login.LoginManager;
 import com.facebook.login.widget.ProfilePictureView;
 
-public class TrendingActivity extends AppCompatActivity
+public class BrowseTeamsFragment extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private ActionBarDrawerToggle drawerToggle;
@@ -32,17 +30,17 @@ public class TrendingActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext());
-        setContentView(R.layout.activity_trending);
-        toolbar = (Toolbar) findViewById(R.id.toolbar_trending);
+        setContentView(R.layout.activity_browse_teams);
+        toolbar = (Toolbar) findViewById(R.id.toolbar_browse_teams);
         setSupportActionBar(toolbar);
 
-        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_trending);
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_browse_teams);
         drawerToggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(drawerToggle);
         drawerToggle.syncState();
 
-        navigationView = (NavigationView) findViewById(R.id.nav_view_trending);
+        navigationView = (NavigationView) findViewById(R.id.nav_view_browse_teams);
         navigationView.setNavigationItemSelectedListener(this);
 
         AccessToken currentToken = AccessToken.getCurrentAccessToken();
@@ -60,18 +58,12 @@ public class TrendingActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_trending);
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_browse_teams);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();
         }
-    }
-
-    public void onNavBarHeaderClick() {
-        finish();
-        Intent intent = new Intent(this, ProfileActivity.class);
-        startActivity(intent);
     }
 
     @Override
@@ -80,15 +72,15 @@ public class TrendingActivity extends AppCompatActivity
         int id = item.getItemId();
         finish();
         if (id == R.id.nav_trending) {
-            Intent intent = new Intent(this, TrendingActivity.class);
+            Intent intent = new Intent(this, TrendingFragment.class);
             startActivity(intent);
             overridePendingTransition(R.anim.right_in, R.anim.right_out);
         } else if (id == R.id.nav_events) {
-            Intent intent = new Intent(this, EventsActivity.class);
+            Intent intent = new Intent(this, EventsFragment.class);
             startActivity(intent);
             overridePendingTransition(R.anim.right_in, R.anim.right_out);
         } else if (id == R.id.nav_browse_teams) {
-            Intent intent = new Intent(this, BrowseTeamsActivity.class);
+            Intent intent = new Intent(this, BrowseTeamsFragment.class);
             startActivity(intent);
             overridePendingTransition(R.anim.right_in, R.anim.right_out);
         } else if (id == R.id.nav_settings) {
@@ -101,8 +93,14 @@ public class TrendingActivity extends AppCompatActivity
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         }
-        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_trending);
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_browse_teams);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void onNavBarHeaderClick() {
+        finish();
+        Intent intent = new Intent(this, ProfileActivity.class);
+        startActivity(intent);
     }
 }

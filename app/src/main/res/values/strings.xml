@@ -15,7 +15,7 @@
     <string name="title_activity_browse_teams">BrowseTeamsActivity</string>
     <string name="title_activity_trending">TrendingActivity</string>
     <string name="title_activity_settings">SettingsActivity</string>
-    
+
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 </resources>
