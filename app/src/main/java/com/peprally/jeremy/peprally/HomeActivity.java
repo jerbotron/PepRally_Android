@@ -13,6 +13,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
@@ -64,6 +65,25 @@ public class HomeActivity extends AppCompatActivity
                 onNavBarHeaderClick();
             }
         });
+
+        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                viewPager.setCurrentItem(tab.getPosition());
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+        });
+    }
+
+    void showToast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -72,7 +92,11 @@ public class HomeActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            super.onBackPressed();
+            finish();
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
         }
     }
 
@@ -80,24 +104,19 @@ public class HomeActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-        finish();
+        viewPager = (ViewPager) findViewById(R.id.viewpager_home);
         if (id == R.id.nav_trending) {
-            Intent intent = new Intent(this, TrendingFragment.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.right_in, R.anim.right_out);
+            viewPager.setCurrentItem(0);
         } else if (id == R.id.nav_events) {
-            Intent intent = new Intent(this, EventsFragment.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.right_in, R.anim.right_out);
+            viewPager.setCurrentItem(1);
         } else if (id == R.id.nav_browse_teams) {
-            Intent intent = new Intent(this, BrowseTeamsFragment.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.right_in, R.anim.right_out);
+            viewPager.setCurrentItem(2);
         } else if (id == R.id.nav_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
             overridePendingTransition(R.anim.right_in, R.anim.right_out);
         } else if (id == R.id.nav_logout) {
+            finish();
             LoginManager.getInstance().logOut();
             Intent intent = new Intent(this, LoginActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -112,13 +131,14 @@ public class HomeActivity extends AppCompatActivity
         finish();
         Intent intent = new Intent(this, ProfileActivity.class);
         startActivity(intent);
+        overridePendingTransition(R.anim.right_in, R.anim.right_out);
     }
 
     private void setupViewPager(ViewPager viewPager) {
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
-        adapter.addFrag(new EventsFragment(getResources().getColor(R.color.accent_material_light)), "Events");
-        adapter.addFrag(new TrendingFragment(getResources().getColor(R.color.ripple_material_light)), "Trending");
-        adapter.addFrag(new BrowseTeamsFragment(getResources().getColor(R.color.button_material_dark)), "Teams");
+        adapter.addFrag(new TrendingFragment(), "Trending");
+        adapter.addFrag(new EventsFragment(), "Events");
+        adapter.addFrag(new BrowseTeamsFragment(), "Teams");
         viewPager.setAdapter(adapter);
     }
 }

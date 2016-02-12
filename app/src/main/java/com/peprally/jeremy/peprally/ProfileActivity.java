@@ -2,32 +2,21 @@ package com.peprally.jeremy.peprally;
 
 import android.content.Intent;
 import android.graphics.Color;
-import android.support.design.widget.NavigationView;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
-import com.facebook.login.LoginManager;
 import com.facebook.login.widget.ProfilePictureView;
 
-public class ProfileActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+public class ProfileActivity extends AppCompatActivity {
 
-    private ActionBarDrawerToggle drawerToggle;
-    private DrawerLayout drawer;
-    private NavigationView navigationView;
-    private ProfilePictureView profilePicture, profilePictureHeader;
+    private ProfilePictureView profilePicture;
     private TextView fistBumpsTextView, followersTextView;
     private Toolbar toolbar;
 
@@ -59,30 +48,10 @@ public class ProfileActivity extends AppCompatActivity
         toolbar = (Toolbar) findViewById(R.id.toolbar_profile);
         setSupportActionBar(toolbar);
 
-        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_profile);
-        drawerToggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(drawerToggle);
-        drawerToggle.syncState();
-
-        navigationView = (NavigationView) findViewById(R.id.nav_view_profile);
-        navigationView.setNavigationItemSelectedListener(this);
-
         AccessToken currentToken = AccessToken.getCurrentAccessToken();
         String userId = currentToken.getUserId();
         profilePicture = (ProfilePictureView) findViewById(R.id.profile_image_profile);
         profilePicture.setProfileId(userId);
-
-        View headerView = navigationView.getHeaderView(0);
-        LinearLayout header = (LinearLayout) headerView.findViewById(R.id.sidebar_header);
-        profilePictureHeader = (ProfilePictureView) headerView.findViewById(R.id.profile_image_header);
-        profilePictureHeader.setProfileId(userId);
-        header.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onNavBarHeaderClick();
-            }
-        });
 
         fistBumpsTextView = (TextView) findViewById(R.id.id_profile_tv_fist_bumps);
         followersTextView = (TextView) findViewById(R.id.id_profile_tv_followers);
@@ -99,56 +68,15 @@ public class ProfileActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_HOME);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
-    }
-
-    @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        // Handle navigation view item clicks here.
-        int id = item.getItemId();
         finish();
-        if (id == R.id.nav_trending) {
-            Intent intent = new Intent(this, TrendingFragment.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.right_in, R.anim.right_out);
-        } else if (id == R.id.nav_events) {
-            Intent intent = new Intent(this, EventsFragment.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.right_in, R.anim.right_out);
-        } else if (id == R.id.nav_browse_teams) {
-            Intent intent = new Intent(this, BrowseTeamsFragment.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.right_in, R.anim.right_out);
-        } else if (id == R.id.nav_settings) {
-            Intent intent = new Intent(this, SettingsActivity.class);
-            startActivity(intent);
-            overridePendingTransition(R.anim.right_in, R.anim.right_out);
-        } else if (id == R.id.nav_logout) {
-            LoginManager.getInstance().logOut();
-            Intent intent = new Intent(this, LoginActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(intent);
-        }
-        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_profile);
-        drawer.closeDrawer(GravityCompat.START);
-        return true;
+        Intent intent = new Intent(this, HomeActivity.class);
+        startActivity(intent);
+        overridePendingTransition(R.anim.left_in, R.anim.left_out);
     }
 
     private void onTestButtonClick(View view) {
 //        Intent intent = new Intent(this, EventsFragment.class);
 //        startActivity(intent);
-    }
-
-    private void onFollowButtonClick(View view) {
-        setFollowButton();
-    }
-
-    private void onNavBarHeaderClick() {
-        drawer = (DrawerLayout) findViewById(R.id.drawer_layout_profile);
-        drawer.closeDrawer(GravityCompat.START);
     }
 
     private void setFollowButton() {
@@ -163,5 +91,9 @@ public class ProfileActivity extends AppCompatActivity
             followButton.setBackgroundColor(Color.parseColor("#929292"));
             following = true;
         }
+    }
+
+    public void onFollowButtonClick(View view) {
+        setFollowButton();
     }
 }
