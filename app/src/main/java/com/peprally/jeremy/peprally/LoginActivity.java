@@ -1,6 +1,5 @@
 package com.peprally.jeremy.peprally;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -16,14 +15,21 @@ import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.facebook.AccessToken;
 
-public class LoginActivity extends AppCompatActivity {
+import java.io.Serializable;
 
-    private LoginButton loginButton;
-    private Activity self = this;
+public class LoginActivity extends AppCompatActivity implements Serializable{
 
-    private CallbackManager callbackManager;
+    public interface AWSLoginTaskCallback {
+        void onTaskDone();
+    }
 
+    // AWS/FB Variables
     private AccessTokenTracker accessTokenTracker;
+    private CallbackManager callbackManager;
+    private boolean AWSLoginVerified = false;
+
+    // UI Variables
+    private LoginButton loginButton;
 
     private static final String TAG = LoginActivity.class.getSimpleName();
 
@@ -31,37 +37,28 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext());
         callbackManager = CallbackManager.Factory.create();
+
         Log.d(TAG, "----- STARTING Pep Rally -----");
 
         accessTokenTracker = new AccessTokenTracker() {
             @Override
             protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken newAccessToken) {
+//                Log.d(TAG, "access token changed");
                 updateWithToken(newAccessToken);
             }
         };
 
         AccessToken currentToken = AccessToken.getCurrentAccessToken();
-        if (currentToken == null) {
-//            Log.d(TAG, "----- no current token, show login screen -----");
-            setupLoginScreen();
-        }
-        else {
-//            Log.d(TAG, "----- current token exists, go straight to app -----");
-            Intent intent = new Intent(self, HomeActivity.class);
-            startActivity(intent);
-        }
+        updateWithToken(currentToken);
     }
 
     private void updateWithToken(AccessToken newAccessToken) {
 //        Log.d(TAG, "----- updating previous token -----");
-        if (newAccessToken != null) {
-//            Log.d(TAG, "----- previous token logged in -----");
-            Intent intent = new Intent(self, HomeActivity.class);
-            startActivity(intent);
-        }
-        else {
-//            Log.d(TAG, "----- previous token not logged in -----");
+        if (newAccessToken == null) {
             setupLoginScreen();
+        } else {
+//            Log.d(TAG, "----- previous token not logged in -----");
+            AWSLoginTask();
         }
     }
 
@@ -71,18 +68,19 @@ public class LoginActivity extends AppCompatActivity {
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
-                Intent intent = new Intent(self, HomeActivity.class);
-                startActivity(intent);
+                Log.d(TAG, "fb login success");
+//                setContentView(R.layout.activity_login);
+//                AWSLoginTask();
             }
 
             @Override
             public void onCancel() {
-                Toast.makeText(self, "Login attempt canceled.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "Login attempt canceled.", Toast.LENGTH_LONG).show();
             }
 
             @Override
             public void onError(FacebookException error) {
-                Toast.makeText(self, "Login attempt failed.", Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "Login attempt failed.", Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -106,6 +104,25 @@ public class LoginActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         accessTokenTracker.stopTracking();
+    }
+
+    private void AWSLoginTask() {
+        setContentView(R.layout.splash_screen);
+        AWSCredentialProvider credentialProviderTask = new AWSCredentialProvider(getApplicationContext(), new AWSLoginTaskCallback() {
+            @Override
+            public void onTaskDone() {
+                safeLoginToApp();
+            }
+        });
+        credentialProviderTask.execute();
+    }
+
+    private void safeLoginToApp() {
+        AWSLoginVerified = true;
+        finish();
+        Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
+        startActivity(intent);
+        overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
     }
 }
 

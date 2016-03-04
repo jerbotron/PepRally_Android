@@ -23,13 +23,14 @@
         android:gravity="center_vertical"
         android:layout_marginLeft="8dp">
         <TextView
+            android:id="@+id/sidebar_header_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingTop="@dimen/nav_header_vertical_spacing"
-            android:text="Jeremy"
+            android:text="First Name"
             android:textSize="25sp"
             android:textStyle="bold"
-            android:textColor="@color/colorAccent"
+            android:textColor="@color/colorWhite"
             android:gravity="left"/>
         <TextView
             android:layout_width="wrap_content"

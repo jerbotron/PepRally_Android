@@ -10,13 +10,16 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
+import com.facebook.Profile;
 import com.facebook.login.LoginManager;
 import com.facebook.login.widget.ProfilePictureView;
 
@@ -31,10 +34,14 @@ public class HomeActivity extends AppCompatActivity
     private Toolbar toolbar;
     private ViewPager viewPager;
 
+    private static final String TAG = HomeActivity.class.getSimpleName();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext());
+        AccessToken currentToken = AccessToken.getCurrentAccessToken();
+
         setContentView(R.layout.activity_home);
         toolbar = (Toolbar) findViewById(R.id.toolbar_home);
         setSupportActionBar(toolbar);
@@ -54,11 +61,14 @@ public class HomeActivity extends AppCompatActivity
         navigationView = (NavigationView) findViewById(R.id.nav_view_home);
         navigationView.setNavigationItemSelectedListener(this);
 
-        AccessToken currentToken = AccessToken.getCurrentAccessToken();
+        // Fetch FB profile photo and first name and display them in sidebar header
         View headerView = navigationView.getHeaderView(0);
         LinearLayout header = (LinearLayout) headerView.findViewById(R.id.sidebar_header);
         profilePicture = (ProfilePictureView) headerView.findViewById(R.id.profile_image_header);
         profilePicture.setProfileId(currentToken.getUserId());
+        Profile fb_profile = Profile.getCurrentProfile();
+        TextView sidebar_name = (TextView) headerView.findViewById(R.id.sidebar_header_name);
+        sidebar_name.setText(fb_profile.getFirstName());
         header.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -128,7 +138,6 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void onNavBarHeaderClick() {
-        finish();
         Intent intent = new Intent(this, ProfileActivity.class);
         startActivity(intent);
         overridePendingTransition(R.anim.right_in, R.anim.right_out);

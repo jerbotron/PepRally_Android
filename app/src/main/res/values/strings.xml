@@ -8,6 +8,7 @@
     <!-- Strings related to Profile Activity -->
     <string name="profile_fist_bumps"> Fistbumps</string>
     <string name="profile_followers"> Followers</string>
+    <string name="profile_following"> Following</string>
     <string name="profile_btn_follow">+ Follow</string>
 
     <string name="title_activity_profile">ProfileActivity</string>
@@ -18,4 +19,11 @@
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <!-- Default Profile Content Strings -->
+    <string name="default_motto">What\'s the motto\' with you?</string>
+    <string name="default_fav_team">Pick your favorite team!</string>
+    <string name="default_fav_player">Pick your favorite player!</string>
+    <string name="default_pep_talk">Team needs you, let\'s hear it!</string>
+    <string name="default_trash_talk">Let em\' know what\'s up!</string>
 </resources>
