@@ -20,7 +20,7 @@
             android:id="@+id/profile_edit_motto"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="YOLO is the MOTTOoooo"
+            android:text="YOLO is the MOTTO"
             android:textSize="14sp"
             android:textColor="@android:color/tertiary_text_dark"
             android:editable="true"
@@ -38,12 +38,12 @@
             android:layout_height="wrap_content"
             android:text="Favourite Team"
             android:textStyle="bold" />
-        <EditText
+        <TextView
+            android:id="@+id/profile_edit_fav_team"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="content"
-            android:textSize="14sp"
-            android:textColor="@android:color/tertiary_text_dark"
+            android:clickable="true"
             android:editable="true"
             android:background="@drawable/edit_text_box" />
     </LinearLayout>
@@ -59,13 +59,12 @@
             android:layout_height="wrap_content"
             android:text="Favourite Player"
             android:textStyle="bold"/>
-        <EditText
+        <TextView
+            android:id="@+id/profile_edit_fav_player"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="content"
-            android:textSize="14sp"
-            android:textColor="@android:color/tertiary_text_dark"
-            android:editable="true"
+            android:clickable="true"
             android:background="@drawable/edit_text_box" />
     </LinearLayout>
 
@@ -81,6 +80,7 @@
             android:text="Pre-game Pep talk"
             android:textStyle="bold"/>
         <EditText
+            android:id="@+id/profile_edit_pep_talk"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="content"
@@ -102,6 +102,7 @@
             android:text="Best Trash Talk"
             android:textStyle="bold"/>
         <EditText
+            android:id="@+id/profile_edit_trash_talk"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="content"

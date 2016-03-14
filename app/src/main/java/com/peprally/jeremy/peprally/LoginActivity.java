@@ -1,26 +1,38 @@
 package com.peprally.jeremy.peprally;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.Toast;
 import android.util.Log;
 
+import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException;
+import com.amazonaws.services.dynamodbv2.model.ExpectedAttributeValue;
+import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
+import com.facebook.Profile;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.facebook.AccessToken;
 
-import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
-public class LoginActivity extends AppCompatActivity implements Serializable{
+public class LoginActivity extends AppCompatActivity {
 
     public interface AWSLoginTaskCallback {
-        void onTaskDone();
+        void onTaskDone(CognitoCachingCredentialsProvider credentialsProvider);
     }
 
     // AWS/FB Variables
@@ -110,19 +122,50 @@ public class LoginActivity extends AppCompatActivity implements Serializable{
         setContentView(R.layout.splash_screen);
         AWSCredentialProvider credentialProviderTask = new AWSCredentialProvider(getApplicationContext(), new AWSLoginTaskCallback() {
             @Override
-            public void onTaskDone() {
-                safeLoginToApp();
+            public void onTaskDone(CognitoCachingCredentialsProvider credentialsProvider) {
+                safeLoginToApp(credentialsProvider);
             }
         });
         credentialProviderTask.execute();
     }
 
-    private void safeLoginToApp() {
+    private void safeLoginToApp(CognitoCachingCredentialsProvider credentialsProvider) {
         AWSLoginVerified = true;
-        finish();
-        Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
-        startActivity(intent);
-        overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+        new CreateNewUserProfileDBEntryTask().execute(credentialsProvider);
+    }
+
+    private class CreateNewUserProfileDBEntryTask extends AsyncTask<CognitoCachingCredentialsProvider, Void, Void> {
+        @Override
+        protected Void doInBackground(CognitoCachingCredentialsProvider... params) {
+            CognitoCachingCredentialsProvider credentialsProvider = params[0];
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            Profile FBProfile = Profile.getCurrentProfile();
+            HashMap<String, AttributeValue> primaryKey = new HashMap<>();
+            primaryKey.put("CognitoId", new AttributeValue().withS(credentialsProvider.getIdentityId()));
+            primaryKey.put("FirstName", new AttributeValue().withS(FBProfile.getFirstName()));
+            primaryKey.put("LastName", new AttributeValue().withS(FBProfile.getLastName()));
+            primaryKey.put("NewUser", new AttributeValue().withBOOL(true));
+            Map<String, ExpectedAttributeValue> expected = new HashMap<>();
+            expected.put("CognitoId", new ExpectedAttributeValue(false));
+            PutItemRequest request = new PutItemRequest().withTableName("UserProfile")
+                    .withItem(primaryKey)
+                    .withExpected(expected);
+            try {
+                ddbClient.putItem(request);
+                Log.d(TAG, "New cognito ID added");
+            } catch (ConditionalCheckFailedException e) {
+                Log.d(TAG, "ID already existed, not creating a new entry");
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void v) {
+            finish();
+            Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
+            startActivity(intent);
+            overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+        }
     }
 }
 

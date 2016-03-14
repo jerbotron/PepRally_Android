@@ -13,10 +13,10 @@ import com.facebook.FacebookSdk;
 import java.util.HashMap;
 import java.util.Map;
 
-public class AWSCredentialProvider extends AsyncTask<Void, Void, Void> {
+public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingCredentialsProvider> {
 
-    final String IDENTITY_POOL_ID = "us-east-1:62a77974-d33d-4131-8a1d-122db8e07dfa";
-    final Regions COGNITO_REGION = Regions.US_EAST_1;
+    final static String IDENTITY_POOL_ID = "us-east-1:62a77974-d33d-4131-8a1d-122db8e07dfa";
+    final static Regions COGNITO_REGION = Regions.US_EAST_1;
 
     private Context callingContext;
     private LoginActivity.AWSLoginTaskCallback loginTaskCallback;
@@ -28,18 +28,18 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, Void> {
         loginTaskCallback = taskCallback;
     }
 
-    protected Void doInBackground(Void... params) {
+    protected CognitoCachingCredentialsProvider doInBackground(Void... params) {
         FacebookSdk.sdkInitialize(callingContext);
         AccessToken currentToken = AccessToken.getCurrentAccessToken();
 
         CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                callingContext,          // Context
+                callingContext,     // Context
                 IDENTITY_POOL_ID,   // Identity Pool ID
                 COGNITO_REGION      // Region
         );
         credentialsProvider.clear();
         credentialsProvider = new CognitoCachingCredentialsProvider(
-                callingContext,          // Context
+                callingContext,     // Context
                 IDENTITY_POOL_ID,   // Identity Pool ID
                 COGNITO_REGION      // Region
         );
@@ -54,13 +54,13 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, Void> {
 //                COGNITO_REGION,
 //                credentialsProvider);
 
-        return null;
+        return credentialsProvider;
     }
 
     @Override
-    protected void onPostExecute(Void result) {
+    protected void onPostExecute(CognitoCachingCredentialsProvider credentialsProvider) {
         Log.d(TAG, "credentials verified");
-        loginTaskCallback.onTaskDone();
+        loginTaskCallback.onTaskDone(credentialsProvider);
 //        Profile fb_profile = Profile.getCurrentProfile();
 //        Dataset dataset = client.openOrCreateDataset(fb_profile.getFirstName());
 //        dataset.put("myKey2", fb_profile.getFirstName() + " Wang");
@@ -71,4 +71,5 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, Void> {
 //        });
 //        Toast.makeText(callingContext, "data upload success", Toast.LENGTH_SHORT).show();
     }
+
 }

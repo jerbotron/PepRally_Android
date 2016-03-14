@@ -1,6 +1,7 @@
 package com.peprally.jeremy.peprally;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -19,9 +20,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
-import com.facebook.Profile;
 import com.facebook.login.widget.ProfilePictureView;
 
 public class ProfileActivity extends AppCompatActivity {
@@ -30,25 +33,34 @@ public class ProfileActivity extends AppCompatActivity {
     private Fragment viewFragment, editFragment;
     private FragmentManager fragmentManager;
     private FragmentTransaction fragmentTransaction;
-
     private MenuItem editMenuItem;
+
+    private Bundle userProfileBundle;
+    private CognitoCachingCredentialsProvider credentialsProvider;
+    private DynamoDBMapper mapper;
 
     private Boolean editMode = false;
     private Boolean following = false;
-    private Integer numFistBumps = 0;
-    private Integer numFollowers = 0;
-    private Integer numFollowing = 0;
 
-    private String userFirstName;
-    private Integer userAge;
+    private final int FAV_TEAM_REQUEST_CODE = 0;
+    private final int FAV_PLAYER_REQUEST_CODE = 1;
 
-    private String motto, favoriteTeam, favoritePlayer, pepTalk, trashTalk;
     private static final String TAG = ProfileActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext());
+
+        credentialsProvider = new CognitoCachingCredentialsProvider(
+                getApplicationContext(),                    // Context
+                AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
+                AWSCredentialProvider.COGNITO_REGION        // Region
+        );
+        AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+        mapper = new DynamoDBMapper(ddbClient);
+
+        userProfileBundle = getIntent().getBundleExtra("USER_PROFILE_BUNDLE");
 
         setContentView(R.layout.activity_profile);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_profile);
@@ -59,21 +71,15 @@ public class ProfileActivity extends AppCompatActivity {
         // Facebook related setups
         AccessToken currentToken = AccessToken.getCurrentAccessToken();
         String userId = currentToken.getUserId();
-        Profile fb_profile = Profile.getCurrentProfile();
-        userFirstName = fb_profile.getFirstName();
-        userAge = 23; // REPLACE WITH FB GET FIRST NAME
         ProfilePictureView profilePicture = (ProfilePictureView) findViewById(R.id.profile_image_profile);
         profilePicture.setProfileId(userId);
-        Bundle bundleUserInfo = new Bundle();
-        bundleUserInfo.putString("firstName", userFirstName);
-        bundleUserInfo.putInt("age", userAge);
 
         fragmentManager = getSupportFragmentManager();
         fragmentTransaction = fragmentManager.beginTransaction();
         viewFragment = new ProfileViewFragment();
-        viewFragment.setArguments(bundleUserInfo);
         editFragment = new ProfileEditFragment();
-        editFragment.setArguments(bundleUserInfo);
+        viewFragment.setArguments(userProfileBundle);
+        editFragment.setArguments(userProfileBundle);
         fragmentTransaction.replace(R.id.profile_fragment_container, viewFragment);
         fragmentTransaction.addToBackStack(null);
         fragmentTransaction.commit();
@@ -82,12 +88,15 @@ public class ProfileActivity extends AppCompatActivity {
         TextView followersTextView = (TextView) findViewById(R.id.profile_followers);
         TextView followingTextView = (TextView) findViewById(R.id.profile_following);
 
-        fistBumpsTextView.setText(Html.fromHtml("<b>" + Integer.toString(numFistBumps) + "</b> "
-                + getString(R.string.profile_fist_bumps)));
-        followersTextView.setText(Html.fromHtml("<b>" + Integer.toString(numFollowers) + "</b> "
-                + getString(R.string.profile_followers)));
-        followingTextView.setText(Html.fromHtml("<b>" + Integer.toString(numFollowing) + "</b> "
-                + getString(R.string.profile_following)));
+        fistBumpsTextView.setText(Html.fromHtml("<b>"
+                + Integer.toString(userProfileBundle.getInt("FISTBUMPS"))
+                + "</b> " + getString(R.string.profile_fist_bumps)));
+        followersTextView.setText(Html.fromHtml("<b>"
+                + Integer.toString(userProfileBundle.getInt("FOLLOWERS"))
+                + "</b> " + getString(R.string.profile_followers)));
+        followingTextView.setText(Html.fromHtml("<b>"
+                + Integer.toString(userProfileBundle.getInt("FOLLOWING"))
+                + "</b> " + getString(R.string.profile_following)));
 
         // Follow Button Action
         final LinearLayout followButton = (LinearLayout) findViewById(R.id.button_follow_wrapper);
@@ -117,7 +126,6 @@ public class ProfileActivity extends AppCompatActivity {
         fistbumpFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                Log.d(TAG, "FAB CLICKED");
                 Toast.makeText(ProfileActivity.this, "FIST BUMP", Toast.LENGTH_SHORT).show();
             }
         });
@@ -133,7 +141,7 @@ public class ProfileActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                handleEditButton();
+                handleBackPressed();
                 return true;
             case R.id.edit_profile_item:
                 if (!editMode) {
@@ -158,13 +166,11 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onBackPressed() {
-        handleEditButton();
-    }
-
-    private void handleEditButton() {
+    private void handleBackPressed() {
         if (editMode) {
+            // Push profile changes to DB
+            new pushProfileChangesToDBTask().execute(credentialsProvider);
+
             // Switch Fragment back to viewFragment
             fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.replace(R.id.profile_fragment_container, viewFragment);
@@ -178,15 +184,113 @@ public class ProfileActivity extends AppCompatActivity {
 
             // Change back Actionbar title
             supportActionBar.setTitle(R.string.app_name);
-
-            // Show Toast to let user know changes are saved
-            Toast.makeText(ProfileActivity.this, "Profile Updated", Toast.LENGTH_SHORT).show();
         }
         else {
             finish();
             Intent intent = new Intent(this, HomeActivity.class);
             startActivity(intent);
             overridePendingTransition(R.anim.left_in, R.anim.left_out);
+        }
+    }
+
+    public void editFavoriteTeam() {
+        Intent intent = new Intent(this, FavoriteTeamActivity.class);
+        startActivityForResult(intent, FAV_TEAM_REQUEST_CODE);
+        overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+    }
+
+    public void editFavoritePlayer() {
+        Intent intent = new Intent(this, FavoritePlayerActivity.class);
+        startActivityForResult(intent, FAV_PLAYER_REQUEST_CODE);
+        overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+    }
+
+    public void updateUserProfileBundleString(String key, String value) {
+        userProfileBundle.putString(key, value);
+    }
+
+    public void updateUserProfileBundleInt(String key, int value) {
+        userProfileBundle.putInt(key, value);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == FAV_TEAM_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                String newFavoriteTeam = data.getStringExtra("FAVORITE_TEAM");
+                userProfileBundle.putString("FAVORITE_TEAM", newFavoriteTeam);
+                ((ProfileEditFragment) editFragment).updateFavTeam(editFragment.getView(), newFavoriteTeam);
+            }
+        }
+        else if (requestCode == FAV_PLAYER_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                Log.d(TAG, "updateFavPlayer not supported yet");
+//                ((ProfileEditFragment) editFragment).updateFavPlayer(editFragment.getView(), data.getStringExtra("FAVORITE_PLAYER"));
+            }
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        handleBackPressed();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(TAG, "profile activity resumed");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG, "profile activity paused");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG, "profile activity started");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG, "profile activity stopped");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "profile activity destroyed");
+    }
+
+    private class pushProfileChangesToDBTask extends AsyncTask<CognitoCachingCredentialsProvider, Void, Void> {
+        private UserProfile userProfile;
+        @Override
+        protected Void doInBackground(CognitoCachingCredentialsProvider... params) {
+            CognitoCachingCredentialsProvider credentialsProvider = params[0];
+            userProfile = mapper.load(UserProfile.class, credentialsProvider.getIdentityId(), userProfileBundle.getString("FIRST_NAME"));
+            pushUserProfileChanges();
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void v) {
+            Log.d(TAG, "task done");
+            Toast.makeText(ProfileActivity.this, "Profile Updated", Toast.LENGTH_SHORT).show();
+        }
+
+        private void pushUserProfileChanges() {
+            userProfile.setFollowing(userProfileBundle.getInt("FOLLOWING"));
+            userProfile.setFistbumps(userProfileBundle.getInt("FISTBUMPS"));
+            userProfile.setMotto(userProfileBundle.getString("MOTTO"));
+            userProfile.setFavoriteTeam(userProfileBundle.getString("FAVORITE_TEAM"));
+            userProfile.setFavoritePlayer(userProfileBundle.getString("FAVORITE_PLAYER"));
+            userProfile.setPepTalk(userProfileBundle.getString("PEP_TALK"));
+            userProfile.setTrashTalk(userProfileBundle.getString("TRASH_TALK"));
+            mapper.save(userProfile);
         }
     }
 }

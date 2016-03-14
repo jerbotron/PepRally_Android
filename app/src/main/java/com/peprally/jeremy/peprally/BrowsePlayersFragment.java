@@ -6,14 +6,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-public class TrendingFragment extends Fragment {
+public class BrowsePlayersFragment extends Fragment {
 
-    public TrendingFragment() {
+    public BrowsePlayersFragment() {
 
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_trending, container, false);
+        return inflater.inflate(R.layout.fragment_browse_player, container, false);
     }
 }
