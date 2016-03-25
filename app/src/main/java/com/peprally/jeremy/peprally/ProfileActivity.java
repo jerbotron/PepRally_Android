@@ -209,10 +209,6 @@ public class ProfileActivity extends AppCompatActivity {
         userProfileBundle.putString(key, value);
     }
 
-    public void updateUserProfileBundleInt(String key, int value) {
-        userProfileBundle.putInt(key, value);
-    }
-
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);

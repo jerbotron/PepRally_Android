@@ -88,31 +88,6 @@ public class ProfileEditFragment extends Fragment {
             textViewFavPlayer.setText(UPB.getString("FAVORITE_PLAYER"));
             editTextPepTalk.setText(UPB.getString("PEP_TALK"));
             editTextTrashTalk.setText(UPB.getString("TRASH_TALK"));
-//            if (UPB.getString("MOTTO") == null) {
-//                editTextMotto.setText(getResources().getString(R.string.default_motto));
-//            } else {
-//                editTextMotto.setText(UPB.getString("MOTTO"));
-//            }
-//            if (UPB.getString("FAVORITE_TEAM") == null) {
-//                textViewFavTeam.setText(getResources().getString(R.string.default_fav_team));
-//            } else {
-//                textViewFavTeam.setText(UPB.getString("FAVORITE_TEAM"));
-//            }
-//            if (UPB.getString("FAVORITE_PLAYER") == null) {
-//                textViewFavPlayer.setText(getResources().getString(R.string.default_fav_player));
-//            } else {
-//                textViewFavPlayer.setText(UPB.getString("FAVORITE_PLAYER"));
-//            }
-//            if (UPB.getString("PEP_TALK") == null) {
-//                editTextPepTalk.setText(getResources().getString(R.string.default_pep_talk));
-//            } else {
-//                editTextPepTalk.setText(UPB.getString("PEP_TALK"));
-//            }
-//            if (UPB.getString("TRASH_TALK") == null) {
-//                editTextTrashTalk.setText(getResources().getString(R.string.default_trash_talk));
-//            } else {
-//                editTextTrashTalk.setText(UPB.getString("TRASH_TALK"));
-//            }
         }
     }
 

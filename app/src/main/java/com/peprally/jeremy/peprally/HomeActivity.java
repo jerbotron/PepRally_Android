@@ -4,6 +4,9 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -40,6 +43,9 @@ public class HomeActivity extends AppCompatActivity
     private CognitoCachingCredentialsProvider credentialsProvider;
     private DynamoDBMapper mapper;
 
+    private FragmentManager fragmentManager;
+    private FragmentTransaction fragmentTransaction;
+
     private Bundle userProfileBundle;
 
     private static final String TAG = HomeActivity.class.getSimpleName();
@@ -60,6 +66,9 @@ public class HomeActivity extends AppCompatActivity
         mapper = new DynamoDBMapper(ddbClient);
 
         new LoadUserProfileFromDBTask().execute(credentialsProvider);
+
+        fragmentManager = getSupportFragmentManager();
+        fragmentTransaction = fragmentManager.beginTransaction();
 
         setContentView(R.layout.activity_home);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_home);
@@ -132,14 +141,14 @@ public class HomeActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-        viewPager = (ViewPager) findViewById(R.id.viewpager_home);
-        if (id == R.id.nav_trending) {
-            viewPager.setCurrentItem(0);
-        } else if (id == R.id.nav_events) {
-            viewPager.setCurrentItem(1);
-        } else if (id == R.id.nav_browse_teams) {
-            viewPager.setCurrentItem(2);
-        } else if (id == R.id.nav_settings) {
+//        viewPager = (ViewPager) findViewById(R.id.viewpager_home);
+//        if (id == R.id.nav_trending) {
+//            viewPager.setCurrentItem(0);
+//        } else if (id == R.id.nav_events) {
+//            viewPager.setCurrentItem(1);
+//        } else if (id == R.id.nav_browse_teams) {
+//            viewPager.setCurrentItem(2);
+        if (id == R.id.nav_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
             overridePendingTransition(R.anim.right_in, R.anim.right_out);
@@ -168,6 +177,13 @@ public class HomeActivity extends AppCompatActivity
         adapter.addFrag(new EventsFragment(), "Events");
         adapter.addFrag(new BrowseTeamsFragment(), "Teams");
         viewPager.setAdapter(adapter);
+    }
+
+    public void launchBrowsePlayerActivity(String team) {
+        Intent intent = new Intent(this, FavoritePlayerActivity.class);
+        intent.putExtra("TEAM", team);
+        startActivity(intent);
+        overridePendingTransition(R.anim.left_in, R.anim.left_out);
     }
 
     private class LoadUserProfileFromDBTask extends AsyncTask<CognitoCachingCredentialsProvider, Void, Void> {

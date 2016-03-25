@@ -3,25 +3,25 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:id="@+id/cv"
+    android:id="@+id/cv_teams"
     android:layout_marginTop="8dp"
     android:clickable="true">
     <RelativeLayout
-        android:id="@+id/rv_item_container"
+        android:id="@+id/rv_team_card_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp">
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/browse_photo"
+            android:id="@+id/team_card_photo"
             android:layout_alignParentLeft="true"
             android:layout_marginRight="16dp" />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/browse_name"
-            android:layout_toRightOf="@+id/browse_photo"
+            android:id="@+id/team_card_name"
+            android:layout_toRightOf="@+id/team_card_photo"
             android:gravity="center"
             android:textSize="24sp" />
     </RelativeLayout>

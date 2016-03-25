@@ -18,9 +18,6 @@ public class ProfileViewFragment extends Fragment {
 
     private static final String TAG = ProfileViewFragment.class.getSimpleName();
 
-    public ProfileViewFragment() {
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile_view, container, false);

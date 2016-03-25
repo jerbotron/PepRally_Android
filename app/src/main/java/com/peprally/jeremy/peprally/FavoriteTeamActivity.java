@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
@@ -23,24 +22,9 @@ import java.util.List;
 
 public class FavoriteTeamActivity extends AppCompatActivity {
 
-    class Team implements Comparable<Team>{
-        String name;
-        int photoId;
-
-        Team(String name, int photoId) {
-            this.name = name;
-            this.photoId = photoId;
-        }
-
-        @Override
-        public int compareTo(Team another) {
-            return name.compareTo(another.name);
-        }
-    }
-
     private List<Team> teams;
     private RecyclerView rv;
-    private RVAdapter rvAdapter;
+    private RVTeamsAdapter rvTeamsAdapter;
     private boolean dataFetched = false;
 
     @Override
@@ -78,9 +62,9 @@ public class FavoriteTeamActivity extends AppCompatActivity {
     }
 
     private void initializeAdapter() {
-        rvAdapter = new RVAdapter(teams);
-        rv.setAdapter(rvAdapter);
-        rvAdapter.setOnItemClickListener(new RVAdapter.MyClickListener() {
+        rvTeamsAdapter = new RVTeamsAdapter(teams);
+        rv.setAdapter(rvTeamsAdapter);
+        rvTeamsAdapter.setOnItemClickListener(new RVTeamsAdapter.TeamsAdapterClickListener() {
             @Override
             public void onItemClick(View v, int position) {
                 Intent intent = new Intent();

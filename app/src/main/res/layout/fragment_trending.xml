@@ -11,10 +11,9 @@
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context=".TrendingFragment">
 
-    <TextView
-        android:layout_width="match_parent"
+    <ImageView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="TRENDINGS PAGE"
-        android:gravity="center_horizontal"/>
+        android:id="@+id/test_s3_image" />
 
 </ScrollView>

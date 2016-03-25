@@ -5,5 +5,5 @@
     android:layout_height="match_parent"
     tools:context="com.peprally.jeremy.peprally.FavoritePlayerActivity">
 
-    <include layout="@layout/fragment_browse_player"/>
+    <include layout="@layout/fragment_browse_players"/>
 </LinearLayout>
