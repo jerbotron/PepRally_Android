@@ -72,6 +72,7 @@ public class HomeActivity extends AppCompatActivity
 
         setContentView(R.layout.activity_home);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_home);
+        toolbar.setTitle("Pep Rally");
         setSupportActionBar(toolbar);
 
         viewPager = (ViewPager) findViewById(R.id.viewpager_home);
@@ -181,6 +182,7 @@ public class HomeActivity extends AppCompatActivity
 
     public void launchBrowsePlayerActivity(String team) {
         Intent intent = new Intent(this, FavoritePlayerActivity.class);
+        intent.putExtra("CALLING_ACTIVITY", "HomeActivity");
         intent.putExtra("TEAM", team);
         startActivity(intent);
         overridePendingTransition(R.anim.left_in, R.anim.left_out);

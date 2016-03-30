@@ -51,6 +51,19 @@ public class PlayerProfile {
         this.lastName = lastName;
     }
 
+    public String getFavPlayerText() {
+        switch (team) {
+            case "Golf":
+            case "Rowing":
+            case "Swimming and Diving":
+            case "Tennis":
+            case "Track and Field":
+                return firstName + " " + lastName;
+            default:
+                return "#" + number + " " + firstName + " " + lastName;
+        }
+    }
+
     @DynamoDBAttribute(attributeName = "imageURL")
     public String getImageURL() {
         return imageURL;

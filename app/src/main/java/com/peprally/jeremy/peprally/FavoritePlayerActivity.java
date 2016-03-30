@@ -37,6 +37,7 @@ public class FavoritePlayerActivity extends AppCompatActivity {
     private PaginatedQueryList<PlayerProfile> roster;
     private RecyclerView rv;
     private RVPlayersAdapter rvPlayersAdapter;
+    private String callingActivity;
     private boolean dataFetched = false;
 
     private static final String TAG = FavoriteTeamActivity.class.getSimpleName();
@@ -46,16 +47,17 @@ public class FavoritePlayerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_favorite_player);
 
+        callingActivity = getIntent().getStringExtra("CALLING_ACTIVITY");
         String team = getIntent().getStringExtra("TEAM");
         ActionBar supportActionBar = getSupportActionBar();
-        supportActionBar.setTitle("UT " + team);
+        supportActionBar.setTitle(team);
 
         rv = (RecyclerView) findViewById(R.id.rv_browse_players);
         LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getApplicationContext());
         rv.setHasFixedSize(true);
         rv.setLayoutManager(rvLayoutManager);
 
-        Log.d(TAG, "loading players for: " + team);
+//        Log.d(TAG, "loading players for: " + team);
         new FetchTeamRosterTask().execute(team);
     }
 
@@ -74,7 +76,18 @@ public class FavoritePlayerActivity extends AppCompatActivity {
         rvPlayersAdapter.setOnItemClickListener(new RVPlayersAdapter.PlayersAdapterClickListener() {
             @Override
             public void onItemClick(View v, int position) {
-                Log.d(TAG, roster.get(position).getFirstName());
+                if (callingActivity.equals("ProfileActivity")) {
+                    Intent intent = new Intent();
+                    intent.putExtra("FAVORITE_PLAYER", roster.get(position).getFavPlayerText());
+                    setResult(Activity.RESULT_OK, intent);
+                    finish();
+                }
+                else if (callingActivity.equals("HomeActivity")) {
+                    Intent intent = new Intent(FavoritePlayerActivity.this, ProfileActivity.class);
+                    intent.putExtra("CALLING_ACTIVITY", "FavoritePlayerActivity");
+                    startActivity(intent);
+                    finish();
+                }
             }
         });
     }

@@ -61,11 +61,11 @@ public class TrendingFragment extends Fragment {
 //
 //        URL s = s3.generatePresignedUrl(generatePresignedUrlRequest);
 
-        String s = "https://s3.amazonaws.com/rosterphotos/Soccer/adams_alexa_8.jpg";
+        String s = "https://s3.amazonaws.com/rosterphotos/Swimming+and+Diving/anderson_mark.jpg";
 
         ImageView iv = (ImageView) view.findViewById(R.id.test_s3_image);
 
-        Picasso.with(callingContext).load(s).into(iv);
+//        Picasso.with(callingContext).load(s).into(iv);
 
         return view;
     }

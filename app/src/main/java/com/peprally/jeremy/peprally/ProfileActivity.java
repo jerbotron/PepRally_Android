@@ -67,6 +67,7 @@ public class ProfileActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         supportActionBar = getSupportActionBar();
         supportActionBar.setDisplayHomeAsUpEnabled(true);
+        supportActionBar.setTitle(userProfileBundle.getString("FIRST_NAME"));
 
         // Facebook related setups
         AccessToken currentToken = AccessToken.getCurrentAccessToken();
@@ -200,9 +201,17 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     public void editFavoritePlayer() {
-        Intent intent = new Intent(this, FavoritePlayerActivity.class);
-        startActivityForResult(intent, FAV_PLAYER_REQUEST_CODE);
-        overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+        String favTeam = ((ProfileEditFragment) editFragment).getFavTeam(editFragment.getView());
+        if (favTeam.isEmpty()) {
+            Toast.makeText(ProfileActivity.this, "Pick a favorite team first!", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            Intent intent = new Intent(this, FavoritePlayerActivity.class);
+            intent.putExtra("CALLING_ACTIVITY", "ProfileActivity");
+            intent.putExtra("TEAM", favTeam);
+            startActivityForResult(intent, FAV_PLAYER_REQUEST_CODE);
+            overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+        }
     }
 
     public void updateUserProfileBundleString(String key, String value) {
@@ -214,15 +223,16 @@ public class ProfileActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == FAV_TEAM_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-                String newFavoriteTeam = data.getStringExtra("FAVORITE_TEAM");
-                userProfileBundle.putString("FAVORITE_TEAM", newFavoriteTeam);
-                ((ProfileEditFragment) editFragment).updateFavTeam(editFragment.getView(), newFavoriteTeam);
+                String favoriteTeam = data.getStringExtra("FAVORITE_TEAM");
+                userProfileBundle.putString("FAVORITE_TEAM", favoriteTeam);
+                ((ProfileEditFragment) editFragment).setFavTeam(editFragment.getView(), favoriteTeam);
             }
         }
         else if (requestCode == FAV_PLAYER_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-                Log.d(TAG, "updateFavPlayer not supported yet");
-//                ((ProfileEditFragment) editFragment).updateFavPlayer(editFragment.getView(), data.getStringExtra("FAVORITE_PLAYER"));
+                String favoritePlayer = data.getStringExtra("FAVORITE_PLAYER");
+                userProfileBundle.putString("FAVORITE_PLAYER", favoritePlayer);
+                ((ProfileEditFragment) editFragment).setFavPlayer(editFragment.getView(), favoritePlayer);
             }
         }
     }

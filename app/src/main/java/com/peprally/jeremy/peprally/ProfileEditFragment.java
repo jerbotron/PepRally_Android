@@ -43,15 +43,19 @@ public class ProfileEditFragment extends Fragment {
         return view;
     }
 
-    public void updateFavTeam(View view, String newFavTeam) {
-        Log.d(TAG, "update edit fragment");
-        if (view == null) {
-            Log.d(TAG, "view is null");
-            return;
-        }
-        Log.d(TAG, newFavTeam);
+    public void setFavTeam(View view, String favoriteTeam) {
         TextView favTeam = (TextView) view.findViewById(R.id.profile_edit_fav_team);
-        favTeam.setText(newFavTeam);
+        favTeam.setText(favoriteTeam);
+    }
+
+    public String getFavTeam(View view) {
+        TextView favTeam = (TextView) view.findViewById(R.id.profile_edit_fav_team);
+        return favTeam.getText().toString();
+    }
+
+    public void setFavPlayer(View view, String favoritePlayer) {
+        TextView favPlayer = (TextView) view.findViewById(R.id.profile_edit_fav_player);
+        favPlayer.setText(favoritePlayer);
     }
 
     private void updateUserProfileBundleData(View view) {

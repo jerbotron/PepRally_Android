@@ -3,6 +3,7 @@ package com.peprally.jeremy.peprally;
 import android.content.Context;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -74,16 +75,38 @@ public class RVPlayersAdapter extends RecyclerView.Adapter<RVPlayersAdapter.Play
 
     @Override
     public void onBindViewHolder(PlayerCardHolder playerCardHolder, int position) {
-        String extension = roster.get(position).getTeam() + "/" +roster.get(position).getImageURL();
+        PlayerProfile curPlayer = roster.get(position);
+        String extension = curPlayer.getTeam().replace(" ","+") + "/" + curPlayer.getImageURL();
         String url = rootImageURL + extension;
         Picasso.with(callingContext)
                 .load(url)
                 .placeholder(R.drawable.default_placeholder)
                 .error(R.drawable.default_placeholder)
                 .into(playerCardHolder.playerPhoto);
-        playerCardHolder.playerName.setText("#" + String.valueOf(roster.get(position).getNumber()) + " " + roster.get(position).getFirstName() + " " + roster.get(position).getLastName());
-        String playerInfo = roster.get(position).getHometown();
-        playerCardHolder.playerInfo.setText(playerInfo);
+        String playerNameText = curPlayer.getFirstName() + " " + curPlayer.getLastName();
+        String playerInfoText;
+        switch (curPlayer.getTeam()) {
+            case "Golf":
+            case "Rowing":
+            case "Swimming and Diving":
+            case "Tennis":
+            case "Track and Field":
+                playerCardHolder.playerName.setText(Html.fromHtml("<b>"
+                        + playerNameText + "</b>"));
+                break;
+            default:
+                playerCardHolder.playerName.setText(Html.fromHtml("<b>#"
+                        + String.valueOf(curPlayer.getNumber()) + " "
+                        + playerNameText + "</b>"));
+                break;
+        }
+        if (curPlayer.getPosition() == null) {
+            playerInfoText = curPlayer.getHometown();
+        }
+        else {
+            playerInfoText = curPlayer.getPosition() + " | " + roster.get(position).getHometown();
+        }
+        playerCardHolder.playerInfo.setText(playerInfoText);
     }
 
     @Override

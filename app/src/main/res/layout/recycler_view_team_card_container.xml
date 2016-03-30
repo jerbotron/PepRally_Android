@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:id="@+id/cv_teams"
-    android:layout_marginTop="8dp"
+    android:layout_marginBottom="8dp"
     android:clickable="true">
     <RelativeLayout
         android:id="@+id/rv_team_card_container"
@@ -23,6 +23,7 @@
             android:id="@+id/team_card_name"
             android:layout_toRightOf="@+id/team_card_photo"
             android:gravity="center"
-            android:textSize="24sp" />
+            android:textSize="20sp"
+            android:textStyle="bold"/>
     </RelativeLayout>
 </android.support.v7.widget.CardView>
