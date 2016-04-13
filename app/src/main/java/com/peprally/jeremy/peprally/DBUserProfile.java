@@ -2,9 +2,10 @@ package com.peprally.jeremy.peprally;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 
-@DynamoDBTable(tableName = "UserProfile")
-public class UserProfile {
-    private String cognitoId;
+@DynamoDBTable(tableName = "UserProfiles")
+public class DBUserProfile {
+    private String cognitoID;
+    private String facebookID;
     private boolean newUser;
     private String firstName;
     private String lastName;
@@ -12,20 +13,32 @@ public class UserProfile {
     private int followers;
     private int following;
     private int fistbumps;
-    private String motto;
+    private String nickname;
     private String favoriteTeam;
     private String favoritePlayer;
     private String pepTalk;
     private String trashTalk;
     private String dateJoined;
+    private boolean isVarsityPlayer;
+    private String team;
+    private int playerIndex;
 
-    @DynamoDBHashKey(attributeName = "CognitoId")
+    @DynamoDBHashKey(attributeName = "CognitoID")
     public String getCognitoId() {
-        return cognitoId;
+        return cognitoID;
     }
 
     public void setCognitoId(String cognitoId) {
-        this.cognitoId = cognitoId;
+        this.cognitoID = cognitoId;
+    }
+
+    @DynamoDBAttribute(attributeName = "FacebookID")
+    public String getFacebookID() {
+        return facebookID;
+    }
+
+    public void setFacebookID(String facebookID) {
+        this.facebookID = facebookID;
     }
 
     @DynamoDBAttribute(attributeName = "NewUser")
@@ -91,13 +104,13 @@ public class UserProfile {
         this.fistbumps = fistbumps;
     }
 
-    @DynamoDBAttribute(attributeName = "Motto")
-    public String getMotto() {
-        return motto;
+    @DynamoDBAttribute(attributeName = "Nickname")
+    public String getNickname() {
+        return nickname;
     }
 
-    public void setMotto(String motto) {
-        this.motto = motto;
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
     }
 
     @DynamoDBAttribute(attributeName = "FavoriteTeam")
@@ -143,5 +156,32 @@ public class UserProfile {
 
     public void setDateJoined(String dateJoined) {
         this.dateJoined = dateJoined;
+    }
+
+    @DynamoDBAttribute(attributeName = "IsVarsityPlayer")
+    public boolean getIsVarsityPlayer() {
+        return isVarsityPlayer;
+    }
+
+    public void setIsVarsityPlayer(boolean isVarsityPlayer) {
+        this.isVarsityPlayer = isVarsityPlayer;
+    }
+
+    @DynamoDBIndexHashKey(attributeName = "Team")
+    public String getTeam() {
+        return team;
+    }
+
+    public void setTeam(String team) {
+        this.team = team;
+    }
+
+    @DynamoDBAttribute(attributeName = "Index")
+    public int getPlayerIndex() {
+        return playerIndex;
+    }
+
+    public void setPlayerIndex(int index) {
+        this.playerIndex = index;
     }
 }

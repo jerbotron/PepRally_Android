@@ -3,7 +3,7 @@ package com.peprally.jeremy.peprally;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 
 @DynamoDBTable(tableName = "Sports")
-public class Sport {
+public class DBSport {
     private String name;
     private String icon;
 

@@ -1,10 +1,8 @@
 package com.peprally.jeremy.peprally;
 
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
@@ -21,17 +19,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
 import com.facebook.login.widget.ProfilePictureView;
-
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 
 public class HomeActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -40,13 +32,9 @@ public class HomeActivity extends AppCompatActivity
     private ViewPager viewPager;
 
     private Profile fbProfile;
-    private CognitoCachingCredentialsProvider credentialsProvider;
-    private DynamoDBMapper mapper;
 
     private FragmentManager fragmentManager;
     private FragmentTransaction fragmentTransaction;
-
-    private Bundle userProfileBundle;
 
     private static final String TAG = HomeActivity.class.getSimpleName();
 
@@ -56,16 +44,6 @@ public class HomeActivity extends AppCompatActivity
         FacebookSdk.sdkInitialize(getApplicationContext());
         AccessToken currentToken = AccessToken.getCurrentAccessToken();
         fbProfile = Profile.getCurrentProfile();
-
-        credentialsProvider = new CognitoCachingCredentialsProvider(
-                getApplicationContext(),                    // Context
-                AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
-                AWSCredentialProvider.COGNITO_REGION        // Region
-        );
-        AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-        mapper = new DynamoDBMapper(ddbClient);
-
-        new LoadUserProfileFromDBTask().execute(credentialsProvider);
 
         fragmentManager = getSupportFragmentManager();
         fragmentTransaction = fragmentManager.beginTransaction();
@@ -120,10 +98,6 @@ public class HomeActivity extends AppCompatActivity
         });
     }
 
-    void showToast(String msg) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-    }
-
     @Override
     public void onBackPressed() {
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout_home);
@@ -166,7 +140,13 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void onNavBarHeaderClick() {
+        finish();
         Intent intent = new Intent(this, ProfileActivity.class);
+        Bundle userProfileBundle = new Bundle();
+        userProfileBundle.putString("FIRST_NAME", fbProfile.getFirstName());
+        userProfileBundle.putString("LAST_NAME", fbProfile.getLastName());
+        userProfileBundle.putString("NICKNAME", fbProfile.getFirstName() + " " + fbProfile.getLastName());
+        userProfileBundle.putString("FACEBOOK_ID", fbProfile.getId());
         intent.putExtra("USER_PROFILE_BUNDLE", userProfileBundle);
         startActivity(intent);
         overridePendingTransition(R.anim.right_in, R.anim.right_out);
@@ -174,10 +154,11 @@ public class HomeActivity extends AppCompatActivity
 
     private void setupViewPager(ViewPager viewPager) {
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
-        adapter.addFrag(new TrendingFragment(), "Trending");
         adapter.addFrag(new EventsFragment(), "Events");
+        adapter.addFrag(new TrendingFragment(), "Trending");
         adapter.addFrag(new BrowseTeamsFragment(), "Teams");
         viewPager.setAdapter(adapter);
+        viewPager.setCurrentItem(1);
     }
 
     public void launchBrowsePlayerActivity(String team) {
@@ -186,58 +167,5 @@ public class HomeActivity extends AppCompatActivity
         intent.putExtra("TEAM", team);
         startActivity(intent);
         overridePendingTransition(R.anim.left_in, R.anim.left_out);
-    }
-
-    private class LoadUserProfileFromDBTask extends AsyncTask<CognitoCachingCredentialsProvider, Void, Void> {
-        private UserProfile userProfile;
-        @Override
-        protected Void doInBackground(CognitoCachingCredentialsProvider... params) {
-            CognitoCachingCredentialsProvider credentialsProvider = params[0];
-            userProfile = mapper.load(UserProfile.class, credentialsProvider.getIdentityId(), fbProfile.getFirstName());
-            if (userProfile.getNewUser()) {
-                SetupNewUserProfile();
-            }
-            else {
-                Log.d(TAG, "default user already created, fetching user data");
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void v) {
-            userProfileBundle = BundleUserProfileData();
-            Log.d(TAG, "task done");
-        }
-
-        private void SetupNewUserProfile() {
-            Calendar c = Calendar.getInstance();
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            userProfile.setFollowers(0);
-            userProfile.setFollowing(0);
-            userProfile.setFistbumps(0);
-            userProfile.setMotto(null);
-            userProfile.setFavoriteTeam(null);
-            userProfile.setFavoritePlayer(null);
-            userProfile.setPepTalk(null);
-            userProfile.setTrashTalk(null);
-            userProfile.setDateJoined(df.format(c.getTime()));
-            userProfile.setNewUser(false);
-            mapper.save(userProfile);
-        }
-
-        private Bundle BundleUserProfileData() {
-            Bundle userProfileBundle = new Bundle();
-            userProfileBundle.putString("FIRST_NAME", userProfile.getFirstName());
-            userProfileBundle.putString("LAST_NAME", userProfile.getLastName());
-            userProfileBundle.putString("MOTTO", userProfile.getMotto());
-            userProfileBundle.putInt("FOLLOWERS", userProfile.getFollowers());
-            userProfileBundle.putInt("FOLLOWING", userProfile.getFollowing());
-            userProfileBundle.putInt("FISTBUMPS", userProfile.getFistbumps());
-            userProfileBundle.putString("FAVORITE_TEAM", userProfile.getFavoriteTeam());
-            userProfileBundle.putString("FAVORITE_PLAYER", userProfile.getFavoritePlayer());
-            userProfileBundle.putString("PEP_TALK", userProfile.getPepTalk());
-            userProfileBundle.putString("TRASH_TALK", userProfile.getTrashTalk());
-            return userProfileBundle;
-        }
     }
 }

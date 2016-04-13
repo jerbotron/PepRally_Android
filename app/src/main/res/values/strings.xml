@@ -21,7 +21,7 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <!-- Default Profile Content Strings -->
-    <string name="default_motto">What\'s the motto\' with you?</string>
+    <string name="default_nickname">Pick a unique nickname!</string>
     <string name="default_fav_team">Pick your favorite team!</string>
     <string name="default_fav_player">Pick your favorite player!</string>
     <string name="default_pep_talk">Team needs you, let\'s hear it!</string>

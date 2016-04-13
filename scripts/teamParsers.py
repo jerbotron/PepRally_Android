@@ -74,16 +74,17 @@ def parseTeamData(table, team, data, addToDb=True):
     print "Done parsing all teams"
 
 def parse_wvball(table, team, data, addToDb=True):
-    item = {'team': teamNames[team],
-            'MF': 'F'}
+    item = {'Team': teamNames[team],
+            'MF': 'F',
+            'HasUserProfile': False}
     count = 0
     for line in data:
         if "roster_dgrd_no" in line:
             n = line.find("roster_dgrd_no")
             e = line.find(" ", n)
             number = int(line[n + len("roster_dgrd_no") + 2:e])
-            item['number'] = number
-            item['index'] = count
+            item['Number'] = number
+            item['Index'] = count
             count += 1
         if "roster_dgrd_full_name" in line:
             i = line.find(team)
@@ -91,72 +92,76 @@ def parse_wvball(table, team, data, addToDb=True):
             k = line.find("</a>")
             firstname = line[i+len(team)+2:j].strip()
             lastname = line[j+7:k]
-            item['lastname'] = lastname
-            item['firstname'] = firstname
-            item['imageURL'] = regex.sub('',lastname).lower() + "_" + regex.sub('',firstname).lower() + "_" + str(item['number']) + ".jpg"
+            item['LastName'] = lastname
+            item['FirstName'] = firstname
+            item['ImageURL'] = regex.sub('',lastname).lower() + "_" + regex.sub('',firstname).lower() + "_" + str(item['Number']) + ".jpg"
         if "roster_dgrd_academic_year" in line:
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
-            item['year'] = year
+            item['Year'] = year
         if "roster_dgrd_rp_position_long" in line:
             p = line.find("roster_dgrd_rp_position_long")
             e = line.find("</td>", p)
             position = line[p + len("roster_dgrd_rp_position_long") + 2:e]
-            item['position'] = position
+            item['Position'] = position
             h = line.find("roster_dgrd_height")
             e = line.find("</td>", h)
             height = line[h + len("roster_dgrd_height") + 8:e - 7]
-            item['height'] = height
+            item['Height'] = height
             h = line.find("roster_dgrd_hometownhighschool")
             e = line.find("</td>", h)
             hometown = line[h + len("roster_dgrd_hometownhighschool") + 2:e]
-            item['hometown'] = hometown
+            item['Hometown'] = hometown
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
-            item = {'team': teamNames[team],
-                    'MF': 'F'}
+            item = {'Team': teamNames[team],
+                    'MF': 'F',
+                    'HasUserProfile': False}
     print "Team size = " + str(count)
 
 def parse_wten(table, team, data, addToDb=True):
-    item = {'team': teamNames[team],
-            'MF': 'F'}
+    item = {'Team': teamNames[team],
+            'MF': 'F',
+            'HasUserProfile': False}
     count = 0
     for line in data:
         if "roster_dgrd_full_name" in line:
             i = line.find(team)
             j = line.find("<i>")
             k = line.find("</a>")
-            firstname = regex.sub("", line[i+len(team)+2:j])
-            lastname = regex.sub("", line[j+7:k])
-            item['lastname'] = lastname
-            item['firstname'] = firstname
-            item['imageURL'] = lastname.lower() + "_" + firstname.lower() + ".jpg"
-            item['index'] = count + teamSizes['mten']
+            firstname = line[i+len(team)+2:j].strip()
+            lastname = line[j+7:k]
+            item['LastName'] = lastname
+            item['FirstName'] = firstname
+            item['ImageURL'] = regex.sub("",lastname).lower() + "_" + regex.sub("",firstname).lower() + ".jpg"
+            item['Index'] = count + teamSizes['mten']
             count += 1
         if "roster_dgrd_height" in line:
             h = line.find("roster_dgrd_height")
             e = line.find("</td>", h)
             height = line[h + len("roster_dgrd_height") + 8:e - 7]
-            item['height'] = height
+            item['Height'] = height
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
-            item['year'] = year
+            item['Year'] = year
         if "roster_dgrd_hometownhighschool" in line:
             h = line.find("roster_dgrd_hometownhighschool")
             e = line.find("</td>", h)
             hometown = line[h + len("roster_dgrd_hometownhighschool") + 2:e]
-            item['hometown'] = hometown
+            item['Hometown'] = hometown
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
-            item = {'team': teamNames[team],
-                    'MF': 'F'}
+            item = {'Team': teamNames[team],
+                    'MF': 'F',
+                    'HasUserProfile': False}
     print "Team size = " + str(count)
 
 def parse_wswim(table, team, data, addToDb=True):
-    item = {'team': teamNames[team],
-            'MF': 'F'}
+    item = {'Team': teamNames[team],
+            'MF': 'F',
+            'HasUserProfile': False}
     count = 0
     for line in data:
         if "roster_dgrd_full_name" in line:
@@ -165,46 +170,48 @@ def parse_wswim(table, team, data, addToDb=True):
             k = line.find("</a>")
             firstname = line[i+len(team)+2:j].strip()
             lastname = line[j+7:k]
-            item['lastname'] = lastname
-            item['firstname'] = firstname
-            item['imageURL'] = lastname.lower() + "_" + firstname.lower() + ".jpg"
-            item['index'] = count + teamSizes['wswim']
+            item['LastName'] = lastname
+            item['FirstName'] = firstname
+            item['ImageURL'] = regex.sub("",lastname).lower() + "_" + regex.sub("",firstname).lower() + ".jpg"
+            item['Index'] = count + teamSizes['wswim']
             count += 1
         if "roster_dgrd_height" in line:
             h = line.find("roster_dgrd_height")
             e = line.find("</td>", h)
             height = line[h + len("roster_dgrd_height") + 8:e - 7]
-            if height: item['height'] = height
+            if height: item['Height'] = height
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
-            item['year'] = year
+            item['Year'] = year
         if "roster_dgrd_rp_position_short" in line:
             p = line.find("roster_dgrd_rp_position_short")
             e = line.find("</td>", p)
             position = line[p + len("roster_dgrd_rp_position_short") + 2:e]
-            item['position'] = position
+            item['Position'] = position
             h = line.find("roster_dgrd_hometownhighschool")
             e = line.find("</td>", h)
             hometown = line[h + len("roster_dgrd_hometownhighschool") + 2:e]
-            item['hometown'] = hometown
+            item['Hometown'] = hometown
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
-            item = {'team': teamNames[team],
-                    'MF': 'F'}
+            item = {'Team': teamNames[team],
+                    'MF': 'F',
+                    'HasUserProfile': False}
     print "Team size = " + str(count)
 
 def parse_softball(table, team, data, addToDb=True):
-    item = {'team': teamNames[team],
-            'MF': 'F'}
+    item = {'Team': teamNames[team],
+            'MF': 'F',
+            'HasUserProfile': False}
     count = 0
     for line in data:
         if "roster_dgrd_no" in line:
             n = line.find("roster_dgrd_no")
             e = line.find(" ", n)
             number = int(line[n + len("roster_dgrd_no") + 2:e])
-            item['number'] = number
-            item['index'] = count
+            item['Number'] = number
+            item['Index'] = count
             count += 1
         if "roster_dgrd_full_name" in line:
             i = line.find(team)
@@ -212,48 +219,50 @@ def parse_softball(table, team, data, addToDb=True):
             k = line.find("</a>")
             firstname = line[i+len(team)+2:j].strip()
             lastname = line[j+7:k]
-            item['lastname'] = lastname
-            item['firstname'] = firstname
-            item['imageURL'] = lastname.replace(" ","_").lower() + "_" + firstname.replace(" ","_").lower() + "_" + str(item['number']) + ".jpg"
+            item['LastName'] = lastname
+            item['FirstName'] = firstname
+            item['ImageURL'] = regex.sub("",lastname).lower() + "_" + regex.sub("",firstname).lower() + "_" + str(item['Number']) + ".jpg"
         if "roster_dgrd_height" in line:
             h = line.find("roster_dgrd_height")
             e = line.find("</td>", h)
             height = line[h + len("roster_dgrd_height") + 8:e - 7]
-            item['height'] = height
+            item['Height'] = height
             c = line.find("roster_dgrd_rp_custom1")
             e = line.find("</td>", c)
             custom = line[c + len("roster_dgrd_rp_custom1") + 2:e]
-            item['bt'] = custom
+            item['BT'] = custom
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
-            item['year'] = year
+            item['Year'] = year
         if "roster_dgrd_rp_position_short" in line:
             p = line.find("roster_dgrd_rp_position_short")
             e = line.find("</td>", p)
             position = line[p + len("roster_dgrd_rp_position_short") + 2:e]
-            item['position'] = position
+            item['Position'] = position
             h = line.find("roster_dgrd_hometownhighschool")
             e = line.find("</td>", h)
             hometown = line[h + len("roster_dgrd_hometownhighschool") + 2:e]
-            item['hometown'] = hometown
+            item['Hometown'] = hometown
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
-            item = {'team': teamNames[team],
-                    'MF': 'F'}
+            item = {'Team': teamNames[team],
+                    'MF': 'F',
+                    'HasUserProfile': False}
     print "Team size = " + str(count)
 
 def parse_wsoc(table, team, data, addToDb=True):
-    item = {'team': teamNames[team],
-            'MF': 'F'}
+    item = {'Team': teamNames[team],
+            'MF': 'F',
+            'HasUserProfile': False}
     count = 0
     for line in data:
         if "roster_dgrd_no" in line:
             n = line.find("roster_dgrd_no")
             e = line.find(" ", n)
             number = int(line[n + len("roster_dgrd_no") + 2:e])
-            item['number'] = number
-            item['index'] = count
+            item['Number'] = number
+            item['Index'] = count
             count += 1
         if "roster_dgrd_full_name" in line:
             i = line.find(team)
@@ -261,100 +270,104 @@ def parse_wsoc(table, team, data, addToDb=True):
             k = line.find("</a>")
             firstname = line[i+len(team)+2:j].strip()
             lastname = line[j+7:k]
-            item['lastname'] = lastname
-            item['firstname'] = firstname
-            if item['number'] == 0:
-                item['imageURL'] = lastname.replace(" ","_").lower() + "_" + firstname.replace(" ","_").lower() + "_" + "00.jpg"
+            item['LastName'] = lastname
+            item['FirstName'] = firstname
+            if item['Number'] == 0:
+                item['ImageURL'] = regex.sub("",lastname).lower() + "_" + regex.sub("",firstname).lower() + "_" + "00.jpg"
             else:
-                item['imageURL'] = lastname.replace(" ","_").lower() + "_" + firstname.replace(" ","_").lower() + "_" + str(item['number']) + ".jpg"
+                item['ImageURL'] = regex.sub("",lastname).lower() + "_" + regex.sub("",firstname).lower() + "_" + str(item['Number']) + ".jpg"
         if "roster_dgrd_rp_position_short" in line:
             p = line.find("roster_dgrd_rp_position_short")
             e = line.find("</td>", p)
             position = line[p + len("roster_dgrd_rp_position_short") + 2:e]
-            item['position'] = position
+            item['Position'] = position
             h = line.find("roster_dgrd_height")
             e = line.find("</td>", h)
             height = line[h + len("roster_dgrd_height") + 8:e - 7]
-            item['height'] = height
+            item['Height'] = height
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
-            item['year'] = year
+            item['Year'] = year
         if "roster_dgrd_hometownhighschool" in line:
             h = line.find("roster_dgrd_hometownhighschool")
             e = line.find("</td>", h)
             hometown = line[h + len("roster_dgrd_hometownhighschool") + 2:e]
-            item['hometown'] = hometown
+            item['Hometown'] = hometown
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
-            item = {'team': teamNames[team],
-                    'MF': 'F'}
+            item = {'Team': teamNames[team],
+                    'MF': 'F',
+                    'HasUserProfile': False}
     print "Team size = " + str(count)
 
 def parse_wrow(table, team, data, addToDb=True):
-    item = {'team': teamNames[team],
-            'MF': 'F'}
+    item = {'Team': teamNames[team],
+            'MF': 'F',
+            'HasUserProfile': False}
     count = 0
     for line in data:
         if "roster_dgrd_full_name" in line:
             i = line.find(team)
             j = line.find("<i>")
             k = line.find("</a>")
-            firstname = regex.sub("", line[i+len(team)+2:j])
-            lastname = regex.sub("", line[j+7:k])
-            item['lastname'] = lastname
-            item['firstname'] = firstname
-            item['imageURL'] = lastname.lower() + "_" + firstname.lower() + ".jpg"
-            item['index'] = count
+            firstname = line[i+len(team)+2:j].strip()
+            lastname = line[j+7:k]
+            item['LastName'] = lastname
+            item['FirstName'] = firstname
+            item['ImageURL'] = regex.sub("",lastname).lower() + "_" + regex.sub("",firstname).lower() + ".jpg"
+            item['Index'] = count
             count += 1
         if "roster_dgrd_height" in line:
             h = line.find("roster_dgrd_height")
             e = line.find("</td>", h)
             height = line[h + len("roster_dgrd_height") + 8:e - 7]
             if height:
-                item['height'] = height
+                item['Height'] = height
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
-            item['year'] = year
+            item['Year'] = year
         if "roster_dgrd_rp_position_short" in line:
             p = line.find("roster_dgrd_rp_position_short")
             e = line.find("</td>", p)
             position = line[p + len("roster_dgrd_rp_position_short") + 2:e]
             if position:
-                item['position'] = position
+                item['Position'] = position
             h = line.find("roster_dgrd_hometownhighschool")
             e = line.find("</td>", h)
             hometown = line[h + len("roster_dgrd_hometownhighschool") + 2:e]
             if hometown:
-                item['hometown'] = hometown
+                item['Hometown'] = hometown
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
-            item = {'team': teamNames[team],
-                    'MF': 'F'}
+            item = {'Team': teamNames[team],
+                    'MF': 'F',
+                    'HasUserProfile': False}
     print "Team size = " + str(count)
 
 def parse_wgolf(table, team, data, addToDb=True):
-    item = {'team': teamNames[team],
-            'MF': 'F'}
+    item = {'Team': teamNames[team],
+            'MF': 'F',
+            'HasUserProfile': False}
     count = 0
     for line in data:
         if "roster_dgrd_full_name" in line:
             i = line.find(team)
             j = line.find("<i>")
             k = line.find("</a>")
-            firstname = regex.sub("", line[i+len(team)+2:j])
-            lastname = regex.sub("", line[j+7:k])
-            item['lastname'] = lastname
-            item['firstname'] = firstname
-            item['imageURL'] = lastname.lower() + "_" + firstname.lower() + ".jpg"
-            item['index'] = count + teamSizes['mgolf']
+            firstname = line[i+len(team)+2:j].strip()
+            lastname = line[j+7:k]
+            item['LastName'] = lastname
+            item['FirstName'] = firstname
+            item['ImageURL'] = regex.sub("",lastname).lower() + "_" + regex.sub("",firstname).lower() + ".jpg"
+            item['Index'] = count + teamSizes['mgolf']
             count += 1
         if "roster_dgrd_academic_year" in line:
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
-            item['year'] = year
+            item['Year'] = year
         if "roster_dgrd_player_hometown" in line:
             h = line.find("roster_dgrd_player_hometown")
             e = line.find("</td>", h)
@@ -362,47 +375,49 @@ def parse_wgolf(table, team, data, addToDb=True):
             hs = line.find("roster_dgrd_player_highschool")
             e = line.find("</td>", hs)
             highschool = line[hs + len("roster_dgrd_player_highschool") + 2:e]
-            item['hometown'] = hometown + " / " + highschool
+            item['Hometown'] = hometown + " / " + highschool
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
-            item = {'team': teamNames[team],
-                    'MF': 'F'}
+            item = {'Team': teamNames[team],
+                    'MF': 'F',
+                    'HasUserProfile': False}
     print "Team size = " + str(count)
 
 def parse_wbball(table, team, data, addToDb=True):
-    item = {'team': teamNames[team],
-            'MF': 'F'}
+    item = {'Team': teamNames[team],
+            'MF': 'F',
+            'HasUserProfile': False}
     count = 0
     for line in data:
         if "roster_dgrd_no" in line:
             n = line.find("roster_dgrd_no")
             e = line.find(" ", n)
             number = int(line[n + len("roster_dgrd_no") + 2:e])
-            item['number'] = number
-            item['index'] = count + teamSizes['mbball']
+            item['Number'] = number
+            item['Index'] = count + teamSizes['mbball']
             count += 1
         if "roster_dgrd_full_name" in line:
             i = line.find(team)
             j = line.find("<i>")
             k = line.find("</a>")
             firstname = line[i+len(team)+2:j].strip()
-            lastname = line[j+7:k].replace(" ","").replace(","," ").replace(".","")
-            item['lastname'] = lastname
-            item['firstname'] = firstname
-            item['imageURL'] = lastname.replace(" ","_").lower() + "_" + firstname.replace(" ","_").lower() + "_" + str(item['number']) + ".jpg"
+            lastname = line[j+7:k]
+            item['LastName'] = lastname
+            item['FirstName'] = firstname
+            item['ImageURL'] = regex.sub("",lastname.lower()) + "_" + regex.sub("",firstname).lower() + "_" + str(item['Number']) + ".jpg"
         if "roster_dgrd_rp_position_short" in line:
             p = line.find("roster_dgrd_rp_position_short")
             e = line.find("</td>", p)
             position = line[p + len("roster_dgrd_rp_position_short") + 2:e]
-            item['position'] = position
+            item['Position'] = position
             h = line.find("roster_dgrd_height")
             e = line.find("</td>", h)
             height = line[h + len("roster_dgrd_height") + 8:e - 7]
-            item['height'] = height
+            item['Height'] = height
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
-            item['year'] = year
+            item['Year'] = year
         if "roster_dgrd_player_hometown" in line:
             h = line.find("roster_dgrd_player_hometown")
             e = line.find("</td>", h)
@@ -410,156 +425,164 @@ def parse_wbball(table, team, data, addToDb=True):
             hs = line.find("roster_dgrd_player_highschool")
             e = line.find("</td>", hs)
             highschool = line[hs + len("roster_dgrd_player_highschool") + 2:e]
-            item['hometown'] = hometown + " / " + highschool
+            item['Hometown'] = hometown + " / " + highschool
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
-            item = {'team': teamNames[team],
-                    'MF': 'F'}
+            item = {'Team': teamNames[team],
+                    'MF': 'F',
+                    'HasUserProfile': False}
     print "Team size = " + str(count)
 
 def parse_xc_tf(table, team, data, addToDb=True):
-    item = {'team': teamNames[team],
-            'MF': 'M'}
+    item = {'Team': teamNames[team],
+            'MF': 'M',
+            'HasUserProfile': False}
     count = 0
     for line in data:
         if "roster_dgrd_full_name" in line:
             i = line.find(team)
             j = line.find("<i>")
             k = line.find("</a>")
-            firstname = line[i+len(team)+2:j-1]
+            firstname = line[i+len(team)+2:j].strip()
             lastname = line[j+7:k]
-            item['lastname'] = lastname.replace(",","")
-            item['firstname'] = firstname
-            item['imageURL'] = regex.sub("",lastname).lower() + "_" + regex.sub("",firstname).lower() + ".jpg"
-            item['index'] = count
+            item['LastName'] = lastname.replace(",","")
+            item['FirstName'] = firstname
+            item['ImageURL'] = regex.sub("",lastname).lower() + "_" + regex.sub("",firstname).lower() + ".jpg"
+            item['Index'] = count
             count += 1
         if "roster_dgrd_height" in line:
             h = line.find("roster_dgrd_height")
             e = line.find("</td>", h)
             height = line[h + len("roster_dgrd_height") + 8:e - 7]
-            item['height'] = height
+            item['Height'] = height
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
-            item['year'] = year
+            item['Year'] = year
         if "roster_dgrd_rp_position_short" in line:
             p = line.find("roster_dgrd_rp_position_short")
             e = line.find("</td>", p)
             position = line[p + len("roster_dgrd_rp_position_short") + 2:e]
-            item['position'] = position
+            item['Position'] = position
             h = line.find("roster_dgrd_hometownhighschool")
             e = line.find("</td>", h)
             hometown = line[h + len("roster_dgrd_hometownhighschool") + 2:e]
-            item['hometown'] = hometown
+            item['Hometown'] = hometown
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
-            item = {'team': teamNames[team],
-                    'MF': 'M'}
+            item = {'Team': teamNames[team],
+                    'MF': 'M',
+                    'HasUserProfile': False}
             if count >= 53:
                 item['MF'] = 'F'
     print "Team size = " + str(count)
 
 def parse_mten(table, team, data, addToDb=True):
-    item = {'team': teamNames[team],
-            'MF': 'M'}
+    item = {'Team': teamNames[team],
+            'MF': 'M',
+            'HasUserProfile': False}
     count = 0
     for line in data:
         if "roster_dgrd_full_name" in line:
             i = line.find(team)
             j = line.find("<i>")
             k = line.find("</a>")
-            firstname = regex.sub("", line[i+len(team)+2:j])
-            lastname = regex.sub("", line[j+7:k])
-            item['lastname'] = lastname
-            item['firstname'] = firstname
-            item['imageURL'] = lastname.lower() + "_" + firstname.lower() + ".jpg"
-            item['index'] = count
+            firstname = line[i+len(team)+2:j].strip()
+            lastname = line[j+7:k]
+            item['LastName'] = lastname
+            item['FirstName'] = firstname
+            item['ImageURL'] = regex.sub("",lastname).lower() + "_" + regex.sub("",firstname).lower() + ".jpg"
+            item['Index'] = count
             count += 1
         if "roster_dgrd_height" in line:
             h = line.find("roster_dgrd_height")
             e = line.find("</td>", h)
             height = line[h + len("roster_dgrd_height") + 8:e - 7]
-            item['height'] = height
+            item['Height'] = height
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
-            item['year'] = year
+            item['Year'] = year
         if "roster_dgrd_hometownhighschool" in line:
             h = line.find("roster_dgrd_hometownhighschool")
             e = line.find("</td>", h)
             hometown = line[h + len("roster_dgrd_hometownhighschool") + 2:e]
-            item['hometown'] = hometown
+            item['Hometown'] = hometown
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
-            item = {'team': teamNames[team],
-                    'MF': 'M'}
+            item = {'Team': teamNames[team],
+                    'MF': 'M',
+                    'HasUserProfile': False}
     print "Team size = " + str(count)
 
 def parse_mswim(table, team, data, addToDb=True):
-    item = {'team': teamNames[team],
-            'MF': 'M'}
+    item = {'Team': teamNames[team],
+            'MF': 'M',
+            'HasUserProfile': False}
     count = 0
     for line in data:
         if "roster_dgrd_full_name" in line:
             i = line.find(team)
             j = line.find("<i>")
             k = line.find("</a>")
-            firstname = regex.sub("", line[j+7:k].split()[1])
-            lastname = regex.sub("", line[j+7:k].split()[0])
-            item['lastname'] = lastname
-            item['firstname'] = firstname
-            item['imageURL'] = lastname.lower() + "_" + firstname.lower() + ".jpg"
-            item['index'] = count
+            firstname = line[j+7:k].split()[1]
+            lastname = line[j+7:k].split()[0]
+            item['LastName'] = lastname
+            item['FirstName'] = firstname
+            item['ImageURL'] = regex.sub("",lastname).lower() + "_" + regex.sub("",firstname).lower() + ".jpg"
+            item['Index'] = count
             count += 1
         if "roster_dgrd_height" in line:
             h = line.find("roster_dgrd_height")
             e = line.find("</td>", h)
             height = line[h + len("roster_dgrd_height") + 8:e - 7]
-            item['height'] = height
+            item['Height'] = height
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
-            item['year'] = year
+            item['Year'] = year
         if "roster_dgrd_rp_position_short" in line:
             p = line.find("roster_dgrd_rp_position_short")
             e = line.find("</td>", p)
             position = line[p + len("roster_dgrd_rp_position_short") + 2:e]
-            item['position'] = position
+            item['Position'] = position
             h = line.find("roster_dgrd_hometownhighschool")
             e = line.find("</td>", h)
             hometown = line[h + len("roster_dgrd_hometownhighschool") + 2:e]
-            item['hometown'] = hometown
+            item['Hometown'] = hometown
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
-            item = {'team': teamNames[team],
-                    'MF': 'M'}
+            item = {'Team': teamNames[team],
+                    'MF': 'M',
+                    'HasUserProfile': False}
     print "Team size = " + str(count)
 
 def parse_mgolf(table, team, data, addToDb=True):
-    item = {'team': teamNames[team],
-            'MF': 'M'}
+    item = {'Team': teamNames[team],
+            'MF': 'M',
+            'HasUserProfile': False}
     count = 0
     for line in data:
         if "roster_dgrd_full_name" in line:
             i = line.find(team)
             j = line.find("<i>")
             k = line.find("</a>")
-            firstname = regex.sub("", line[i+len(team)+2:j])
-            lastname = regex.sub("", line[j+7:k])
-            item['lastname'] = lastname
-            item['firstname'] = firstname
-            item['imageURL'] = lastname.lower() + "_" + firstname.lower() + ".jpg"
-            item['index'] = count
+            firstname = line[i+len(team)+2:j].strip()
+            lastname = line[j+7:k]
+            item['LastName'] = lastname
+            item['FirstName'] = firstname
+            item['ImageURL'] = regex.sub("",lastname).lower() + "_" + regex.sub("",firstname).lower() + ".jpg"
+            item['Index'] = count
             count += 1
         if "roster_dgrd_height" in line:
             h = line.find("roster_dgrd_height")
             e = line.find("</td>", h)
             height = line[h + len("roster_dgrd_height") + 8:e - 7]
-            item['height'] = height
+            item['Height'] = height
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
-            item['year'] = year
+            item['Year'] = year
         if "roster_dgrd_player_hometown" in line:
             h = line.find("roster_dgrd_player_hometown")
             e = line.find("</td>", h)
@@ -567,24 +590,26 @@ def parse_mgolf(table, team, data, addToDb=True):
             hs = line.find("roster_dgrd_player_highschool")
             e = line.find("</td>", hs)
             highschool = line[hs + len("roster_dgrd_player_highschool") + 2:e]
-            item['hometown'] = hometown + " / " + highschool
+            item['Hometown'] = hometown + " / " + highschool
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
-            item = {'team': teamNames[team],
-                    'MF': 'M'}
+            item = {'Team': teamNames[team],
+                    'MF': 'M',
+                    'HasUserProfile': False}
     print "Team size = " + str(count)
 
 def parse_football(table, team, data, addToDb=True):
-    item = {'team': teamNames[team],
-            'MF': 'M'}
+    item = {'Team': teamNames[team],
+            'MF': 'M',
+            'HasUserProfile': False}
     count = 0
     for line in data:
         if "roster_dgrd_no" in line:
             n = line.find("roster_dgrd_no")
             e = line.find(" ", n)
             number = int(line[n + len("roster_dgrd_no") + 2:e])
-            item['number'] = number
-            item['index'] = count
+            item['Number'] = number
+            item['Index'] = count
             count+=1
         if "roster_dgrd_full_name" in line:
             i = line.find(team)
@@ -592,82 +617,84 @@ def parse_football(table, team, data, addToDb=True):
             k = line.find("</a>")
             firstname = line[i+len(team)+2:j].strip()
             lastname = line[j+7:k]
-            item['lastname'] = lastname
-            item['firstname'] = firstname
-            item['imageURL'] = regex.sub("",lastname).lower() + "_" + regex.sub("",firstname).lower() + "_" + str(item['number']) + ".jpg"
+            item['LastName'] = lastname
+            item['FirstName'] = firstname
+            item['ImageURL'] = regex.sub("",lastname).lower() + "_" + regex.sub("",firstname).lower() + "_" + str(item['Number']) + ".jpg"
         if "roster_dgrd_rp_position_short" in line:
             p = line.find("roster_dgrd_rp_position_short")
             e = line.find("</td>", p)
             position = line[p + len("roster_dgrd_rp_position_short") + 2:e]
-            item['position'] = position
+            item['Position'] = position
             h = line.find("roster_dgrd_height")
             e = line.find("</td>", h)
             height = line[h + len("roster_dgrd_height") + 8:e - 7]
-            item['height'] = height
+            item['Height'] = height
             w = line.find("roster_dgrd_rp_weight")
             e = line.find("</td>", w)
             weight = line[w + len("roster_dgrd_rp_weight") + 2:e]
-            item['weight'] = weight
+            item['Weight'] = weight
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
-            item['year'] = year
+            item['Year'] = year
         if "roster_dgrd_rp_custom1" in line:
             c = line.find("roster_dgrd_rp_custom1")
             e = line.find("</td>", c)
             custom = line[c + len("roster_dgrd_rp_custom1") + 2:e]
-            item['exp'] = custom
+            item['Exp'] = custom
             h = line.find("roster_dgrd_player_hometown")
             e = line.find("</td>", h)
             hometown = line[h + len("roster_dgrd_player_hometown") + 2:e]
             hs = line.find("roster_dgrd_player_highschool")
             e = line.find("</td>", hs)
             highschool = line[hs + len("roster_dgrd_player_highschool") + 2:e]
-            item['hometown'] = hometown + " / " + highschool
+            item['Hometown'] = hometown + " / " + highschool
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
-            item = {'team': teamNames[team],
-                    'MF': 'M'}
+            item = {'Team': teamNames[team],
+                    'MF': 'M',
+                    'HasUserProfile': False}
     print "Team size = " + str(count)
 
 def parse_mbball(table, team, data, addToDb=True):
-    item = {'team': teamNames[team],
-            'MF': 'M'}
+    item = {'Team': teamNames[team],
+            'MF': 'M',
+            'HasUserProfile': False}
     count = 0
     for line in data:
         if "roster_dgrd_no" in line:
             n = line.find("roster_dgrd_no")
             e = line.find(" ", n)
             number = int(line[n + len("roster_dgrd_no") + 2:e])
-            item['number'] = number
-            item['index'] = count
+            item['Number'] = number
+            item['Index'] = count
             count += 1
         if "roster_dgrd_full_name" in line:
             i = line.find(team)
             j = line.find("<i>")
             k = line.find("</a>")
             firstname = line[i+len(team)+2:j].strip()
-            lastname = line[j+7:k].replace(" ","").replace(","," ").replace(".","")
-            item['lastname'] = lastname
-            item['firstname'] = firstname
-            item['imageURL'] = lastname.replace(" ","_").lower() + "_" + firstname.replace(" ","_").lower() + "_" + str(item['number']) + ".jpg"
+            lastname = line[j+7:k]
+            item['LastName'] = lastname
+            item['FirstName'] = firstname
+            item['ImageURL'] = regex.sub("",lastname).lower() + "_" + regex.sub("",firstname).lower() + "_" + str(item['Number']) + ".jpg"
         if "roster_dgrd_rp_position_short" in line:
             p = line.find("roster_dgrd_rp_position_short")
             e = line.find("</td>", p)
             position = line[p + len("roster_dgrd_rp_position_short") + 2:e]
-            item['position'] = position
+            item['Position'] = position
             h = line.find("roster_dgrd_height")
             e = line.find("</td>", h)
             height = line[h + len("roster_dgrd_height") + 8:e - 7]
-            item['height'] = height
+            item['Height'] = height
             w = line.find("roster_dgrd_rp_weight")
             e = line.find("</td>", w)
             weight = line[w + len("roster_dgrd_rp_weight") + 2:e]
-            item['weight'] = weight
+            item['Weight'] = weight
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
-            item['year'] = year
+            item['Year'] = year
         if "roster_dgrd_player_hometown" in line:
             h = line.find("roster_dgrd_player_hometown")
             e = line.find("</td>", h)
@@ -675,24 +702,26 @@ def parse_mbball(table, team, data, addToDb=True):
             hs = line.find("roster_dgrd_player_highschool")
             e = line.find("</td>", hs)
             highschool = line[hs + len("roster_dgrd_player_highschool") + 2:e]
-            item['hometown'] = hometown + " / " + highschool
+            item['Hometown'] = hometown + " / " + highschool
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
-            item = {'team': teamNames[team],
-                    'MF': 'M'}
+            item = {'Team': teamNames[team],
+                    'MF': 'M',
+                    'HasUserProfile': False}
     print "Team size = " + str(count)
 
 def parse_baseball(table, team, data, addToDb=True):
-    item = {'team': teamNames[team],
-            'MF': 'M'}
+    item = {'Team': teamNames[team],
+            'MF': 'M',
+            'HasUserProfile': False}
     count = 0
     for line in data:
         if "roster_dgrd_no" in line:
             n = line.find("roster_dgrd_no")
             e = line.find(" ", n)
             number = int(line[n + len("roster_dgrd_no") + 2:e])
-            item['number'] = number
-            item['index'] = count
+            item['Number'] = number
+            item['Index'] = count
             count+=1
         if "roster_dgrd_full_name" in line:
             i = line.find(team)
@@ -700,37 +729,38 @@ def parse_baseball(table, team, data, addToDb=True):
             k = line.find("</a>")
             firstname = line[i+len(team)+2:j].strip()
             lastname = line[j+7:k]
-            item['lastname'] = lastname
-            item['firstname'] = firstname
-            item['imageURL'] = lastname.replace(" ","_").lower() + "_" + firstname.replace(" ","_").lower() + "_" + str(item['number']) + ".jpg"
+            item['LastName'] = lastname
+            item['FirstName'] = firstname
+            item['ImageURL'] = regex.sub("",lastname).lower() + "_" + regex.sub("",firstname).lower() + "_" + str(item['Number']) + ".jpg"
         if "roster_dgrd_rp_position_short" in line:
             p = line.find("roster_dgrd_rp_position_short")
             e = line.find("</td>", p)
             position = line[p + len("roster_dgrd_rp_position_short") + 2:e]
-            item['position'] = position
+            item['Position'] = position
             c = line.find("roster_dgrd_rp_custom1")
             e = line.find("</td>", c)
             custom = line[c + len("roster_dgrd_rp_custom1") + 2:e]
-            item['bt'] = custom
+            item['BT'] = custom
             h = line.find("roster_dgrd_height")
             e = line.find("</td>", h)
             height = line[h + len("roster_dgrd_height") + 8:e - 7]
-            item['height'] = height
+            item['Height'] = height
             w = line.find("roster_dgrd_rp_weight")
             e = line.find("</td>", w)
             weight = line[w + len("roster_dgrd_rp_weight") + 2:e]
-            item['weight'] = weight
+            item['Weight'] = weight
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
-            item['year'] = year
+            item['Year'] = year
         if "roster_dgrd_hometownhighschool" in line:
             h = line.find("roster_dgrd_hometownhighschool")
             e = line.find("</td>", h)
             hometown = line[h + len("roster_dgrd_hometownhighschool") + 2:e]
-            item['hometown'] = hometown
+            item['Hometown'] = hometown
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
-            item = {'team': teamNames[team],
-                    'MF': 'M'}
+            item = {'Team': teamNames[team],
+                    'MF': 'M',
+                    'HasUserProfile': False}
     print "Team size = " + str(count)

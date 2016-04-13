@@ -54,11 +54,11 @@ public class BrowseTeamsFragment extends Fragment {
         return view;
     }
 
-    private void initializeData(PaginatedScanList<Sport> result){
+    private void initializeData(PaginatedScanList<DBSport> result){
         teams = new ArrayList<>();
-        for (Sport sport : result) {
-            final int drawableId = getResources().getIdentifier(sport.getIcon(), "drawable", this.getActivity().getPackageName());
-            teams.add(new Team(sport.getName(), drawableId));
+        for (DBSport DBSport : result) {
+            final int drawableId = getResources().getIdentifier(DBSport.getIcon(), "drawable", this.getActivity().getPackageName());
+            teams.add(new Team(DBSport.getName(), drawableId));
         }
         // Sort teams
         Collections.sort(teams);
@@ -96,18 +96,18 @@ public class BrowseTeamsFragment extends Fragment {
         Log.d(TAG, "browse fragment destroyed");
     }
 
-    private class FetchSportsTableTask extends AsyncTask<CognitoCachingCredentialsProvider, Void, PaginatedScanList<Sport>> {
+    private class FetchSportsTableTask extends AsyncTask<CognitoCachingCredentialsProvider, Void, PaginatedScanList<DBSport>> {
         @Override
-        protected PaginatedScanList<Sport> doInBackground(CognitoCachingCredentialsProvider... params) {
+        protected PaginatedScanList<DBSport> doInBackground(CognitoCachingCredentialsProvider... params) {
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(params[0]);
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
             DynamoDBScanExpression scanExpression = new DynamoDBScanExpression();
-            PaginatedScanList<Sport> result = mapper.scan(Sport.class, scanExpression);
+            PaginatedScanList<DBSport> result = mapper.scan(DBSport.class, scanExpression);
             return result;
         }
 
         @Override
-        protected void onPostExecute(PaginatedScanList<Sport> result) {
+        protected void onPostExecute(PaginatedScanList<DBSport> result) {
             initializeData(result);
             dataFetched = true;
             initializeAdapter();

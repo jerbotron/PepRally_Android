@@ -29,7 +29,7 @@
         app:backgroundTint="@android:color/holo_green_light"
         app:layout_anchor="@id/profile_app_bar"
         app:layout_anchorGravity="bottom|end"
-        android:clickable="true"/>
+        android:clickable="true" />
 
     <include layout="@layout/content_profile_body" />
 

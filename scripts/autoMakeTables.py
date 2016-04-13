@@ -6,21 +6,21 @@ def createTable():
         TableName='PlayerProfiles',
         KeySchema=[
             {
-                'AttributeName': 'team',
+                'AttributeName': 'Team',
                 'KeyType': 'HASH'   #Partition key
             },
             {
-                'AttributeName': 'index',
+                'AttributeName': 'Index',
                 'KeyType': 'RANGE'  #Sort key
             }
         ],
         AttributeDefinitions=[
             {
-                'AttributeName': 'team',
+                'AttributeName': 'Team',
                 'AttributeType': 'S'
             },
             {
-                'AttributeName': 'index',
+                'AttributeName': 'Index',
                 'AttributeType': 'N'
             }
         ],
@@ -54,16 +54,16 @@ rosters_urls = {
 "wvball": "http://www.texassports.com/roster.aspx?path=wvball"
 }
 
-# for team, url in rosters_urls.iteritems():
-#     print "Team = " + team
-#     data = urllib2.urlopen(url)
-#     parseTeamData(table, team, data)
+for team, url in rosters_urls.iteritems():
+    print "Team = " + team
+    data = urllib2.urlopen(url)
+    parseTeamData(table, team, data)
 
 print("Table status:", table.table_status)
 
 # parse_baseball(table, js, team)
 # parse_mbball(table, js, team)
-parse_football(table, 'football', urllib2.urlopen(rosters_urls['football']))
+# parse_football(table, 'football', urllib2.urlopen(rosters_urls['football']))
 # parse_mgolf(table, js, team)
 # parse_mswim(table, js, team)
 # parse_mten(table, js, team)

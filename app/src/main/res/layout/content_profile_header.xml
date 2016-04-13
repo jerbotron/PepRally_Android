@@ -10,11 +10,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
-        <com.facebook.login.widget.ProfilePictureView
-            android:id="@+id/profile_image_profile"
+        <!--<com.facebook.login.widget.ProfilePictureView-->
+            <!--android:id="@+id/profile_image_profile"-->
+            <!--android:layout_width="128dp"-->
+            <!--android:layout_height="128dp"-->
+            <!--android:layout_gravity="left" />-->
+        <ImageView
+            android:id="@+id/profile_roster_image"
             android:layout_width="128dp"
             android:layout_height="128dp"
-            android:layout_gravity="left" />
+            android:layout_gravity="left"
+            android:background="@color/colorPrimaryDark"/>
         <LinearLayout
             android:id="@+id/profile_header_info"
             android:layout_width="match_parent"
@@ -76,6 +82,7 @@
                     android:layout_height="wrap_content"
                     android:drawableLeft="@drawable/ic_follow"
                     android:text="Follow"
+                    android:textSize="12dp"
                     android:drawablePadding="8dp"
                     android:textColor="@color/colorPrimary"
                     android:gravity="center"/>

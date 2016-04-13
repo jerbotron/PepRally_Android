@@ -4,24 +4,19 @@ import android.content.Context;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.amazonaws.http.HttpClient;
-import com.amazonaws.http.HttpResponse;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.squareup.picasso.Picasso;
-
-import java.util.List;
 
 public class RVPlayersAdapter extends RecyclerView.Adapter<RVPlayersAdapter.PlayerCardHolder>{
 
     private  Context callingContext;
-    private PaginatedQueryList<PlayerProfile> roster;
+    private PaginatedQueryList<DBPlayerProfile> roster;
     private static PlayersAdapterClickListener myClickListener;
     private static final String TAG = ProfileActivity.class.getSimpleName();
 
@@ -56,7 +51,7 @@ public class RVPlayersAdapter extends RecyclerView.Adapter<RVPlayersAdapter.Play
         this.myClickListener = myClickListener;
     }
 
-    public RVPlayersAdapter(Context callingContext, PaginatedQueryList<PlayerProfile> roster) {
+    public RVPlayersAdapter(Context callingContext, PaginatedQueryList<DBPlayerProfile> roster) {
         this.callingContext = callingContext;
         this.roster = roster;
     }
@@ -75,7 +70,7 @@ public class RVPlayersAdapter extends RecyclerView.Adapter<RVPlayersAdapter.Play
 
     @Override
     public void onBindViewHolder(PlayerCardHolder playerCardHolder, int position) {
-        PlayerProfile curPlayer = roster.get(position);
+        DBPlayerProfile curPlayer = roster.get(position);
         String extension = curPlayer.getTeam().replace(" ","+") + "/" + curPlayer.getImageURL();
         String url = rootImageURL + extension;
         Picasso.with(callingContext)

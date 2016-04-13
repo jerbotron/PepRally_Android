@@ -51,11 +51,11 @@ public class FavoriteTeamActivity extends AppCompatActivity {
         }
     }
 
-    private void initializeData(PaginatedScanList<Sport> result){
+    private void initializeData(PaginatedScanList<DBSport> result){
         teams = new ArrayList<>();
-        for (Sport sport : result) {
-            final int drawableId = getResources().getIdentifier(sport.getIcon(), "drawable", getPackageName());
-            teams.add(new Team(sport.getName(), drawableId));
+        for (DBSport DBSport : result) {
+            final int drawableId = getResources().getIdentifier(DBSport.getIcon(), "drawable", getPackageName());
+            teams.add(new Team(DBSport.getName(), drawableId));
         }
         // Sort teams
         Collections.sort(teams);
@@ -67,6 +67,7 @@ public class FavoriteTeamActivity extends AppCompatActivity {
         rvTeamsAdapter.setOnItemClickListener(new RVTeamsAdapter.TeamsAdapterClickListener() {
             @Override
             public void onItemClick(View v, int position) {
+
                 Intent intent = new Intent();
                 intent.putExtra("FAVORITE_TEAM", teams.get(position).name);
                 setResult(Activity.RESULT_OK, intent);
@@ -75,9 +76,9 @@ public class FavoriteTeamActivity extends AppCompatActivity {
         });
     }
 
-    private class FetchSportsTableTask extends AsyncTask<Void, Void, PaginatedScanList<Sport>> {
+    private class FetchSportsTableTask extends AsyncTask<Void, Void, PaginatedScanList<DBSport>> {
         @Override
-        protected PaginatedScanList<Sport> doInBackground(Void... params) {
+        protected PaginatedScanList<DBSport> doInBackground(Void... params) {
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getApplicationContext(),                  // Context
                     AWSCredentialProvider.IDENTITY_POOL_ID,   // Identity Pool ID
@@ -87,12 +88,12 @@ public class FavoriteTeamActivity extends AppCompatActivity {
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
             DynamoDBScanExpression scanExpression = new DynamoDBScanExpression();
-            PaginatedScanList<Sport> result = mapper.scan(Sport.class, scanExpression);
+            PaginatedScanList<DBSport> result = mapper.scan(DBSport.class, scanExpression);
             return result;
         }
 
         @Override
-        protected void onPostExecute(PaginatedScanList<Sport> result) {
+        protected void onPostExecute(PaginatedScanList<DBSport> result) {
             initializeData(result);
             dataFetched = true;
             initializeAdapter();

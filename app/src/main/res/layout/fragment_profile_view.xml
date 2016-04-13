@@ -1,29 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/profile_view_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="@dimen/activity_horizontal_margin">
-    <LinearLayout
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/profile_view_name_age"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:divider="@drawable/default_divider"
-        android:showDividers="end">
-        <TextView
-            android:id="@+id/profile_view_name_age"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="NAME, AGE"
-            android:textSize="24sp" />
-        <TextView
-            android:id="@+id/profile_view_motto"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="YOLO is the MOTTO"/>
-    </LinearLayout>
+        android:text="NAME, AGE"
+        android:textSize="24sp"
+        android:paddingTop="@dimen/activity_horizontal_margin"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"/>
+    <TextView
+        android:id="@+id/profile_view_nickname"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Nickname"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:layout_marginBottom="@dimen/activity_vertical_margin"/>
 
     <LinearLayout
+        android:id="@+id/profile_layout_fav_team"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -33,15 +34,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Favourite Team"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"/>
         <TextView
             android:id="@+id/profile_view_fav_team"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="content"/>
+            android:text="content"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"/>
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/profile_layout_fav_player"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -51,15 +57,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Favourite Player"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"/>
         <TextView
             android:id="@+id/profile_view_fav_player"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="content"/>
+            android:text="content"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"/>
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/profile_layout_pep_talk"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -69,15 +80,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Pre-game Pep talk"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"/>
         <TextView
             android:id="@+id/profile_view_pep_talk"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="content"/>
+            android:text="content"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"/>
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/profile_layout_trash_talk"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -87,11 +103,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Best Trash Talk"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"/>
         <TextView
             android:id="@+id/profile_view_trash_talk"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="content"/>
+            android:text="content"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"/>
     </LinearLayout>
 </LinearLayout>

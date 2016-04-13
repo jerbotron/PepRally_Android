@@ -2,8 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="@dimen/activity_horizontal_margin">
+    android:orientation="vertical">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -15,16 +14,21 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="NAME, AGE"
-            android:textSize="24sp"/>
+            android:textSize="24sp"
+            android:paddingTop="@dimen/activity_horizontal_margin"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"/>
         <EditText
-            android:id="@+id/profile_edit_motto"
+            android:id="@+id/profile_edit_nickname"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="YOLO is the MOTTO"
+            android:text="Nickname"
             android:textSize="14sp"
             android:textColor="@android:color/tertiary_text_dark"
             android:editable="true"
-            android:background="@drawable/edit_text_box"/>
+            android:background="@drawable/edit_text_box"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"/>
     </LinearLayout>
 
     <LinearLayout
@@ -37,7 +41,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Favourite Team"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"/>
         <TextView
             android:id="@+id/profile_edit_fav_team"
             android:layout_width="match_parent"
@@ -45,7 +51,9 @@
             android:text="content"
             android:clickable="true"
             android:editable="true"
-            android:background="@drawable/edit_text_box" />
+            android:background="@drawable/edit_text_box"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"/>
     </LinearLayout>
 
     <LinearLayout
@@ -58,14 +66,18 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Favourite Player"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"/>
         <TextView
             android:id="@+id/profile_edit_fav_player"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="content"
             android:clickable="true"
-            android:background="@drawable/edit_text_box" />
+            android:background="@drawable/edit_text_box"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"/>
     </LinearLayout>
 
     <LinearLayout
@@ -78,7 +90,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Pre-game Pep talk"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"/>
         <EditText
             android:id="@+id/profile_edit_pep_talk"
             android:layout_width="match_parent"
@@ -87,7 +101,9 @@
             android:textSize="14sp"
             android:textColor="@android:color/tertiary_text_dark"
             android:editable="true"
-            android:background="@drawable/edit_text_box" />
+            android:background="@drawable/edit_text_box"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"/>
     </LinearLayout>
 
     <LinearLayout
@@ -100,7 +116,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Best Trash Talk"
-            android:textStyle="bold"/>
+            android:textStyle="bold"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"/>
         <EditText
             android:id="@+id/profile_edit_trash_talk"
             android:layout_width="match_parent"
@@ -109,6 +127,8 @@
             android:textSize="14sp"
             android:textColor="@android:color/tertiary_text_dark"
             android:editable="true"
-            android:background="@drawable/edit_text_box" />
+            android:background="@drawable/edit_text_box"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:layout_marginLeft="@dimen/activity_horizontal_margin"/>
     </LinearLayout>
 </LinearLayout>

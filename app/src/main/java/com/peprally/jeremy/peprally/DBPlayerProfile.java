@@ -3,8 +3,9 @@ package com.peprally.jeremy.peprally;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 
 @DynamoDBTable(tableName = "PlayerProfiles")
-public class PlayerProfile {
+public class DBPlayerProfile {
     private String team;
+    private int index;
     private int number;
     private String firstName;
     private String lastName;
@@ -14,8 +15,9 @@ public class PlayerProfile {
     private String weight;
     private String position;
     private String hometown;
+    private boolean hasUserProfile;
 
-    @DynamoDBHashKey(attributeName = "team")
+    @DynamoDBHashKey(attributeName = "Team")
     public String getTeam() {
         return team;
     }
@@ -24,7 +26,16 @@ public class PlayerProfile {
         this.team = team;
     }
 
-    @DynamoDBRangeKey(attributeName = "number")
+    @DynamoDBRangeKey(attributeName = "Index")
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+
+    @DynamoDBAttribute(attributeName = "Number")
     public int getNumber() {
         return number;
     }
@@ -33,7 +44,7 @@ public class PlayerProfile {
         this.number = number;
     }
 
-    @DynamoDBAttribute(attributeName = "firstname")
+    @DynamoDBAttribute(attributeName = "FirstName")
     public String getFirstName() {
         return firstName;
     }
@@ -42,7 +53,7 @@ public class PlayerProfile {
         this.firstName = firstName;
     }
 
-    @DynamoDBAttribute(attributeName = "lastname")
+    @DynamoDBAttribute(attributeName = "LastName")
     public String getLastName() {
         return lastName;
     }
@@ -64,7 +75,7 @@ public class PlayerProfile {
         }
     }
 
-    @DynamoDBAttribute(attributeName = "imageURL")
+    @DynamoDBAttribute(attributeName = "ImageURL")
     public String getImageURL() {
         return imageURL;
     }
@@ -73,7 +84,7 @@ public class PlayerProfile {
         this.imageURL = imageURL;
     }
 
-    @DynamoDBAttribute(attributeName = "year")
+    @DynamoDBAttribute(attributeName = "Year")
     public String getYear() {
         return year;
     }
@@ -82,7 +93,7 @@ public class PlayerProfile {
         this.year = year;
     }
 
-    @DynamoDBAttribute(attributeName = "height")
+    @DynamoDBAttribute(attributeName = "Height")
     public String getHeight() {
         return height;
     }
@@ -91,7 +102,7 @@ public class PlayerProfile {
         this.height = height;
     }
 
-    @DynamoDBAttribute(attributeName = "weight")
+    @DynamoDBAttribute(attributeName = "Weight")
     public String getWeight() {
         return weight;
     }
@@ -100,7 +111,7 @@ public class PlayerProfile {
         this.weight = weight;
     }
 
-    @DynamoDBAttribute(attributeName = "position")
+    @DynamoDBAttribute(attributeName = "Position")
     public String getPosition() {
         return position;
     }
@@ -109,12 +120,21 @@ public class PlayerProfile {
         this.position = position;
     }
 
-    @DynamoDBAttribute(attributeName = "hometown")
+    @DynamoDBAttribute(attributeName = "Hometown")
     public String getHometown() {
         return hometown;
     }
 
     public void setHometown(String hometown) {
         this.hometown = hometown;
+    }
+
+    @DynamoDBAttribute(attributeName = "HasUserProfile")
+    public boolean getHasUserProfile() {
+        return hasUserProfile;
+    }
+
+    public void setHasUserProfile(boolean hasUserProfile) {
+        this.hasUserProfile = hasUserProfile;
     }
 }

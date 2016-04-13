@@ -8,9 +8,6 @@ import android.widget.Toast;
 import android.util.Log;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException;
@@ -26,6 +23,8 @@ import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.facebook.AccessToken;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -138,16 +137,22 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(CognitoCachingCredentialsProvider... params) {
             CognitoCachingCredentialsProvider credentialsProvider = params[0];
+            Calendar c = Calendar.getInstance();
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            Profile FBProfile = Profile.getCurrentProfile();
+            Profile fbProfile = Profile.getCurrentProfile();
             HashMap<String, AttributeValue> primaryKey = new HashMap<>();
-            primaryKey.put("CognitoId", new AttributeValue().withS(credentialsProvider.getIdentityId()));
-            primaryKey.put("FirstName", new AttributeValue().withS(FBProfile.getFirstName()));
-            primaryKey.put("LastName", new AttributeValue().withS(FBProfile.getLastName()));
+            primaryKey.put("CognitoID", new AttributeValue().withS(credentialsProvider.getIdentityId()));
+            primaryKey.put("FacebookID", new AttributeValue().withS(fbProfile.getId()));
+            primaryKey.put("FirstName", new AttributeValue().withS(fbProfile.getFirstName()));
+            primaryKey.put("LastName", new AttributeValue().withS(fbProfile.getLastName()));
+            primaryKey.put("Nickname", new AttributeValue().withS(fbProfile.getFirstName() + " " + fbProfile.getLastName()));
             primaryKey.put("NewUser", new AttributeValue().withBOOL(true));
+            primaryKey.put("IsVarsityPlayer", new AttributeValue().withBOOL(false));
+            primaryKey.put("DateJoined", new AttributeValue().withS(df.format(c.getTime())));
             Map<String, ExpectedAttributeValue> expected = new HashMap<>();
-            expected.put("CognitoId", new ExpectedAttributeValue(false));
-            PutItemRequest request = new PutItemRequest().withTableName("UserProfile")
+            expected.put("CognitoID", new ExpectedAttributeValue(false));
+            PutItemRequest request = new PutItemRequest().withTableName("UserProfiles")
                     .withItem(primaryKey)
                     .withExpected(expected);
             try {

@@ -8,33 +8,21 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
 
-import com.amazonaws.HttpMethod;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
-import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
-
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 public class FavoritePlayerActivity extends AppCompatActivity {
 
-    private PaginatedQueryList<PlayerProfile> roster;
+    private PaginatedQueryList<DBPlayerProfile> roster;
     private RecyclerView rv;
     private RVPlayersAdapter rvPlayersAdapter;
     private String callingActivity;
@@ -69,7 +57,7 @@ public class FavoritePlayerActivity extends AppCompatActivity {
         }
     }
 
-    private void initializeAdapter(PaginatedQueryList<PlayerProfile> result) {
+    private void initializeAdapter(PaginatedQueryList<DBPlayerProfile> result) {
         roster = result;
         rvPlayersAdapter = new RVPlayersAdapter(FavoritePlayerActivity.this, roster);
         rv.setAdapter(rvPlayersAdapter);
@@ -84,7 +72,12 @@ public class FavoritePlayerActivity extends AppCompatActivity {
                 }
                 else if (callingActivity.equals("HomeActivity")) {
                     Intent intent = new Intent(FavoritePlayerActivity.this, ProfileActivity.class);
-                    intent.putExtra("CALLING_ACTIVITY", "FavoritePlayerActivity");
+                    Bundle userProfileBundle = new Bundle();
+                    userProfileBundle.putString("FIRST_NAME", roster.get(position).getFirstName());
+                    userProfileBundle.putString("PLAYER_TEAM", roster.get(position).getTeam());
+                    userProfileBundle.putInt("PLAYER_INDEX", roster.get(position).getIndex());
+                    userProfileBundle.putString("FACEBOOK_ID", "NULL");
+                    intent.putExtra("USER_PROFILE_BUNDLE", userProfileBundle);
                     startActivity(intent);
                     finish();
                 }
@@ -92,9 +85,9 @@ public class FavoritePlayerActivity extends AppCompatActivity {
         });
     }
 
-    private class FetchTeamRosterTask extends AsyncTask<String, Void, PaginatedQueryList<PlayerProfile>> {
+    private class FetchTeamRosterTask extends AsyncTask<String, Void, PaginatedQueryList<DBPlayerProfile>> {
         @Override
-        protected PaginatedQueryList<PlayerProfile> doInBackground(String... params) {
+        protected PaginatedQueryList<DBPlayerProfile> doInBackground(String... params) {
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getApplicationContext(),                  // Context
                     AWSCredentialProvider.IDENTITY_POOL_ID,   // Identity Pool ID
@@ -106,17 +99,17 @@ public class FavoritePlayerActivity extends AppCompatActivity {
             s3.setRegion(Region.getRegion(Regions.US_EAST_1));
 
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
-            PlayerProfile playerProfile = new PlayerProfile();
+            DBPlayerProfile playerProfile = new DBPlayerProfile();
             playerProfile.setTeam(team);
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withHashKeyValues(playerProfile)
                     .withConsistentRead(false);
-            PaginatedQueryList<PlayerProfile> result = mapper.query(PlayerProfile.class, queryExpression);
+            PaginatedQueryList<DBPlayerProfile> result = mapper.query(DBPlayerProfile.class, queryExpression);
             return result;
         }
 
         @Override
-        protected void onPostExecute(PaginatedQueryList<PlayerProfile> result) {
+        protected void onPostExecute(PaginatedQueryList<DBPlayerProfile> result) {
             dataFetched = true;
             initializeAdapter(result);
         }

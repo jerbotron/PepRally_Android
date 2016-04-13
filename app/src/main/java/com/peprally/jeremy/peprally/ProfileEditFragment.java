@@ -1,8 +1,10 @@
 package com.peprally.jeremy.peprally;
 
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,9 +13,20 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+
+import java.util.List;
+
 
 public class ProfileEditFragment extends Fragment {
 
+    private List<String> nicknamesList;
+    private boolean nicknamesFetched = false;
+    private CognitoCachingCredentialsProvider credentialsProvider;
     private static final String TAG = ProfileEditFragment.class.getSimpleName();
 
     @Override
@@ -21,8 +34,28 @@ public class ProfileEditFragment extends Fragment {
         Log.d(TAG, "edit fragment view created");
         View view = inflater.inflate(R.layout.fragment_profile_edit, container, false);
 
-//        TextView textViewFirstName = (TextView) view.findViewById(R.id.profile_edit_name_age);
-//        textViewFirstName.setText(userFirstName + ", " + Integer.toString(userAge));
+        credentialsProvider = new CognitoCachingCredentialsProvider(
+                getActivity(),                              // Context
+                AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
+                AWSCredentialProvider.COGNITO_REGION        // Region
+        );
+
+        new FetchNicknamesTableTask().execute();
+
+        final EditText editTextNickname = (EditText) view.findViewById(R.id.profile_edit_nickname);
+        editTextNickname.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    if (!checkUniqueNickname(editTextNickname.getText().toString())) {
+                        Toast.makeText(getActivity(), "This nickname is taken!", Toast.LENGTH_SHORT).show();
+                    }
+                    else {
+
+                    }
+                }
+            }
+        });
 
         // Handle editing favorite team/player options
         TextView favTeam = (TextView) view.findViewById(R.id.profile_edit_fav_team);
@@ -43,6 +76,92 @@ public class ProfileEditFragment extends Fragment {
         return view;
     }
 
+    public void setupUserProfile(View view, Bundle UPB) {
+        if (UPB != null) {
+            TextView textViewFirstName = (TextView) view.findViewById(R.id.profile_edit_name_age);
+            EditText editTextNickname = (EditText) view.findViewById(R.id.profile_edit_nickname);
+            TextView textViewFavTeam = (TextView) view.findViewById(R.id.profile_edit_fav_team);
+            TextView textViewFavPlayer = (TextView) view.findViewById(R.id.profile_edit_fav_player);
+            EditText editTextPepTalk = (EditText) view.findViewById(R.id.profile_edit_pep_talk);
+            EditText editTextTrashTalk = (EditText) view.findViewById(R.id.profile_edit_trash_talk);
+
+            textViewFirstName.setText(UPB.getString("FIRST_NAME") + ", " + Integer.toString(23));
+            editTextNickname.setText(UPB.getString("NICKNAME"));
+            if (UPB.getString("NICKNAME") == null) {
+                editTextNickname.setText(Html.fromHtml("<i>"
+                        + getResources().getString(R.string.default_nickname)
+                        + "</i>"));
+            }
+            else {
+                editTextNickname.setText(UPB.getString("NICKNAME"));
+            }
+
+            if (UPB.getString("FAVORITE_TEAM") == null) {
+                textViewFavTeam.setText(Html.fromHtml("<i>"
+                        + getResources().getString(R.string.default_fav_team)
+                        + "</i>"));
+            }
+            else {
+                textViewFavTeam.setText(UPB.getString("FAVORITE_TEAM"));
+            }
+
+            if (UPB.getString("FAVORITE_PLAYER") == null) {
+                textViewFavPlayer.setText(Html.fromHtml("<i>"
+                        + getResources().getString(R.string.default_fav_player)
+                        + "</i>"));
+            }
+            else {
+                textViewFavPlayer.setText(UPB.getString("FAVORITE_PLAYER"));
+            }
+
+            if (UPB.getString("PEP_TALK") == null) {
+                editTextPepTalk.setText(Html.fromHtml("<i>"
+                        + getResources().getString(R.string.default_pep_talk)
+                        + "</i>"));
+            }
+            else {
+                editTextPepTalk.setText(UPB.getString("PEP_TALK"));
+            }
+
+            if (UPB.getString("TRASH_TALK") == null) {
+                editTextTrashTalk.setText(Html.fromHtml("<i>"
+                        + getResources().getString(R.string.default_trash_talk)
+                        + "</i>"));
+            }
+            else {
+                editTextTrashTalk.setText(UPB.getString("TRASH_TALK"));
+            }
+        }
+    }
+
+    private void updateUserProfileBundleData(View view) {
+        EditText editTextNickname = (EditText) view.findViewById(R.id.profile_edit_nickname);
+        String nickname = editTextNickname.getText().toString();
+        EditText editTextPepTalk = (EditText) view.findViewById(R.id.profile_edit_pep_talk);
+        String pepTalk = editTextPepTalk.getText().toString();
+        EditText editTextTrashTalk = (EditText) view.findViewById(R.id.profile_edit_trash_talk);
+        String trashTalk = editTextTrashTalk.getText().toString();
+
+        if (nickname.isEmpty() || nickname.equals(getResources().getString(R.string.default_nickname))) {
+            ((ProfileActivity) getActivity()).updateUserProfileBundleString("NICKNAME", null);
+        }
+        else {
+            ((ProfileActivity) getActivity()).updateUserProfileBundleString("NICKNAME", editTextNickname.getText().toString());
+        }
+        if (pepTalk.isEmpty() || pepTalk.equals(getResources().getString(R.string.default_pep_talk))) {
+            ((ProfileActivity) getActivity()).updateUserProfileBundleString("PEP_TALK", null);
+        }
+        else {
+            ((ProfileActivity) getActivity()).updateUserProfileBundleString("PEP_TALK", editTextPepTalk.getText().toString());
+        }
+        if (trashTalk.isEmpty() || trashTalk.equals(getResources().getString(R.string.default_trash_talk))) {
+            ((ProfileActivity) getActivity()).updateUserProfileBundleString("TRASH_TALK", null);
+        }
+        else {
+            ((ProfileActivity) getActivity()).updateUserProfileBundleString("TRASH_TALK", editTextTrashTalk.getText().toString());
+        }
+    }
+
     public void setFavTeam(View view, String favoriteTeam) {
         TextView favTeam = (TextView) view.findViewById(R.id.profile_edit_fav_team);
         favTeam.setText(favoriteTeam);
@@ -58,41 +177,13 @@ public class ProfileEditFragment extends Fragment {
         favPlayer.setText(favoritePlayer);
     }
 
-    private void updateUserProfileBundleData(View view) {
-        EditText editTextMotto = (EditText) view.findViewById(R.id.profile_edit_motto);
-        String motto = editTextMotto.getText().toString();
-        EditText editTextPepTalk = (EditText) view.findViewById(R.id.profile_edit_pep_talk);
-        String pepTalk = editTextPepTalk.getText().toString();
-        EditText editTextTrashTalk = (EditText) view.findViewById(R.id.profile_edit_trash_talk);
-        String trashTalk = editTextTrashTalk.getText().toString();
-
-        if (!motto.isEmpty() && !motto.equals(getResources().getString(R.string.default_motto))) {
-            ((ProfileActivity) getActivity()).updateUserProfileBundleString("MOTTO", editTextMotto.getText().toString());
+    private boolean checkUniqueNickname(String request) {
+        for (String nickname : nicknamesList) {
+            if (nickname.equals(request)) {
+                return false;
+            }
         }
-        if (!pepTalk.isEmpty() && !pepTalk.equals(getResources().getString(R.string.default_pep_talk))) {
-            ((ProfileActivity) getActivity()).updateUserProfileBundleString("PEP_TALK", editTextPepTalk.getText().toString());
-        }
-        if (!trashTalk.isEmpty() && !trashTalk.equals(getResources().getString(R.string.default_trash_talk))) {
-            ((ProfileActivity) getActivity()).updateUserProfileBundleString("TRASH_TALK", editTextTrashTalk.getText().toString());
-        }
-    }
-
-    public void setupUserProfile(View view, Bundle UPB) {
-        if (UPB != null) {
-            TextView textViewFirstName = (TextView) view.findViewById(R.id.profile_edit_name_age);
-            EditText editTextMotto = (EditText) view.findViewById(R.id.profile_edit_motto);
-            TextView textViewFavTeam = (TextView) view.findViewById(R.id.profile_edit_fav_team);
-            TextView textViewFavPlayer = (TextView) view.findViewById(R.id.profile_edit_fav_player);
-            EditText editTextPepTalk = (EditText) view.findViewById(R.id.profile_edit_pep_talk);
-            EditText editTextTrashTalk = (EditText) view.findViewById(R.id.profile_edit_trash_talk);
-
-            textViewFirstName.setText(UPB.getString("FIRST_NAME") + ", " + Integer.toString(23));
-            editTextMotto.setText(UPB.getString("MOTTO"));
-            textViewFavTeam.setText(UPB.getString("FAVORITE_TEAM"));
-            textViewFavPlayer.setText(UPB.getString("FAVORITE_PLAYER"));
-            editTextPepTalk.setText(UPB.getString("PEP_TALK"));
-            editTextTrashTalk.setText(UPB.getString("TRASH_TALK"));
-        }
+        return true;
     }
 
     @Override
@@ -102,7 +193,7 @@ public class ProfileEditFragment extends Fragment {
         setupUserProfile(getView(), getArguments());
 
         // Auto pop-up keyboard to show user edit is available
-        EditText editText = (EditText) getView().findViewById(R.id.profile_edit_motto);
+        EditText editText = (EditText) getView().findViewById(R.id.profile_edit_nickname);
         editText.requestFocus();
     }
 
@@ -116,5 +207,26 @@ public class ProfileEditFragment extends Fragment {
     public void onStop() {
         super.onStop();
         updateUserProfileBundleData(getView());
+    }
+
+    /********************************** AsyncTasks **********************************/
+
+    private class FetchNicknamesTableTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBScanExpression scanExpression = new DynamoDBScanExpression();
+            PaginatedScanList<DBUserNickname> result = mapper.scan(DBUserNickname.class, scanExpression);
+            for (DBUserNickname userNickname : result) {
+                nicknamesList.add(userNickname.getNickname());
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            nicknamesFetched = true;
+        }
     }
 }

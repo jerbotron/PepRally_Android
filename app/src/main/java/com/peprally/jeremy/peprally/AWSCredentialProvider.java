@@ -48,12 +48,6 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingC
         logins.put("graph.facebook.com", currentToken.getToken());
         credentialsProvider.setLogins(logins);
         credentialsProvider.refresh();
-
-//        CognitoSyncManager client = new CognitoSyncManager(
-//                callingContext,
-//                COGNITO_REGION,
-//                credentialsProvider);
-
         return credentialsProvider;
     }
 
@@ -61,15 +55,6 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingC
     protected void onPostExecute(CognitoCachingCredentialsProvider credentialsProvider) {
         Log.d(TAG, "credentials verified");
         loginTaskCallback.onTaskDone(credentialsProvider);
-//        Profile fb_profile = Profile.getCurrentProfile();
-//        Dataset dataset = client.openOrCreateDataset(fb_profile.getFirstName());
-//        dataset.put("myKey2", fb_profile.getFirstName() + " Wang");
-//        dataset.synchronize(new DefaultSyncCallback() {
-//            @Override
-//            public void onSuccess(Dataset dataset, List<Record> updatedRecords) {
-//            }
-//        });
-//        Toast.makeText(callingContext, "data upload success", Toast.LENGTH_SHORT).show();
     }
 
 }
