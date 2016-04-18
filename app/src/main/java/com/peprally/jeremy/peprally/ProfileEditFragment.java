@@ -18,15 +18,24 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 
 public class ProfileEditFragment extends Fragment {
 
+    private CognitoCachingCredentialsProvider credentialsProvider;
+    private AmazonDynamoDBClient ddbClient;
+    private DynamoDBMapper mapper;
+
     private List<String> nicknamesList;
     private boolean nicknamesFetched = false;
-    private CognitoCachingCredentialsProvider credentialsProvider;
+    private String localNickname;
+
     private static final String TAG = ProfileEditFragment.class.getSimpleName();
 
     @Override
@@ -39,19 +48,24 @@ public class ProfileEditFragment extends Fragment {
                 AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
                 AWSCredentialProvider.COGNITO_REGION        // Region
         );
+        ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+        mapper = new DynamoDBMapper(ddbClient);
 
+        localNickname = getArguments().getString("NICKNAME");
+        nicknamesList = new ArrayList<>();
         new FetchNicknamesTableTask().execute();
 
         final EditText editTextNickname = (EditText) view.findViewById(R.id.profile_edit_nickname);
         editTextNickname.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
-                if (!hasFocus) {
+                if (!hasFocus && !editTextNickname.getText().toString().equals(localNickname)) {
                     if (!checkUniqueNickname(editTextNickname.getText().toString())) {
                         Toast.makeText(getActivity(), "This nickname is taken!", Toast.LENGTH_SHORT).show();
                     }
                     else {
-
+                        new PushNewNicknameToDBTask().execute(editTextNickname.getText().toString().trim());
+                        localNickname = editTextNickname.getText().toString().trim();
                     }
                 }
             }
@@ -146,19 +160,19 @@ public class ProfileEditFragment extends Fragment {
             ((ProfileActivity) getActivity()).updateUserProfileBundleString("NICKNAME", null);
         }
         else {
-            ((ProfileActivity) getActivity()).updateUserProfileBundleString("NICKNAME", editTextNickname.getText().toString());
+            ((ProfileActivity) getActivity()).updateUserProfileBundleString("NICKNAME", editTextNickname.getText().toString().trim());
         }
         if (pepTalk.isEmpty() || pepTalk.equals(getResources().getString(R.string.default_pep_talk))) {
             ((ProfileActivity) getActivity()).updateUserProfileBundleString("PEP_TALK", null);
         }
         else {
-            ((ProfileActivity) getActivity()).updateUserProfileBundleString("PEP_TALK", editTextPepTalk.getText().toString());
+            ((ProfileActivity) getActivity()).updateUserProfileBundleString("PEP_TALK", editTextPepTalk.getText().toString().trim());
         }
         if (trashTalk.isEmpty() || trashTalk.equals(getResources().getString(R.string.default_trash_talk))) {
             ((ProfileActivity) getActivity()).updateUserProfileBundleString("TRASH_TALK", null);
         }
         else {
-            ((ProfileActivity) getActivity()).updateUserProfileBundleString("TRASH_TALK", editTextTrashTalk.getText().toString());
+            ((ProfileActivity) getActivity()).updateUserProfileBundleString("TRASH_TALK", editTextTrashTalk.getText().toString().trim());
         }
     }
 
@@ -227,6 +241,23 @@ public class ProfileEditFragment extends Fragment {
         @Override
         protected void onPostExecute(Void aVoid) {
             nicknamesFetched = true;
+        }
+    }
+
+    private class PushNewNicknameToDBTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... params) {
+            String nickname = params[0];
+            DBUserNickname userNickname = mapper.load(DBUserNickname.class, credentialsProvider.getIdentityId(), nickname);
+            if (userNickname != null) {
+                mapper.delete(userNickname);
+            }
+            HashMap<String, AttributeValue> primaryKey = new HashMap<>();
+            primaryKey.put("Nickname", new AttributeValue().withS(nickname));
+            primaryKey.put("CognitoID", new AttributeValue().withS(credentialsProvider.getIdentityId()));
+            primaryKey.put("FacebookID", new AttributeValue().withS(getArguments().getString("FACEBOOK_ID")));
+            ddbClient.putItem(new PutItemRequest().withTableName("UserNicknames").withItem(primaryKey));
+            return null;
         }
     }
 }

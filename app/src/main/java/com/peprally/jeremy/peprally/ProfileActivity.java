@@ -58,12 +58,20 @@ public class ProfileActivity extends AppCompatActivity {
 
     private boolean selfProfile;    // if user is editing his/her own profile
     private boolean userNicknameChanged = false;
-    private String oldNickname = null;
 
     private final int FAV_TEAM_REQUEST_CODE = 0;
     private final int FAV_PLAYER_REQUEST_CODE = 1;
 
     private static final String TAG = ProfileActivity.class.getSimpleName();
+
+    public static class UserNicknameDBAsyncTaskParams {
+        public CognitoCachingCredentialsProvider credentialsProvider;
+        public String nickname;
+        UserNicknameDBAsyncTaskParams(CognitoCachingCredentialsProvider credentialsProvider, String nickname) {
+            this.credentialsProvider = credentialsProvider;
+            this.nickname = nickname;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -297,7 +305,6 @@ public class ProfileActivity extends AppCompatActivity {
     public void updateUserProfileBundleString(String key, String value) {
         if (key.equals("NICKNAME")) {
             userNicknameChanged = true;
-            oldNickname = userProfileBundle.getString("NICKNAME");
 
         }
         userProfileBundle.putString(key, value);
@@ -482,8 +489,13 @@ public class ProfileActivity extends AppCompatActivity {
     private class PushNewNicknameToDBTask extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... params) {
+            String nickname = params[0];
+            DBUserNickname userNickname = mapper.load(DBUserNickname.class, credentialsProvider.getIdentityId(), nickname);
+            if (userNickname != null) {
+                mapper.delete(userNickname);
+            }
             HashMap<String, AttributeValue> primaryKey = new HashMap<>();
-            primaryKey.put("Nickname", new AttributeValue().withS(params[0]));
+            primaryKey.put("Nickname", new AttributeValue().withS(nickname));
             primaryKey.put("CognitoID", new AttributeValue().withS(credentialsProvider.getIdentityId()));
             primaryKey.put("FacebookID", new AttributeValue().withS(userProfileBundle.getString("FACEBOOK_ID")));
             ddbClient.putItem(new PutItemRequest().withTableName("UserNicknames").withItem(primaryKey));
@@ -496,17 +508,15 @@ public class ProfileActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(Void... params) {
             DBUserProfile = mapper.load(DBUserProfile.class, credentialsProvider.getIdentityId(), userProfileBundle.getString("FIRST_NAME"));
-            if (userNicknameChanged) {
-                DBUserNickname oldUserNickname = mapper.load(DBUserNickname.class, credentialsProvider.getIdentityId(), oldNickname);
-                mapper.delete(oldUserNickname);
-            }
             pushUserProfileChanges();
             return null;
         }
 
         @Override
         protected void onPostExecute(Void v) {
-            new PushNewNicknameToDBTask().execute(userProfileBundle.getString("NICKNAME"));
+            if (userNicknameChanged) {
+                new PushNewNicknameToDBTask().execute(userProfileBundle.getString("NICKNAME"));
+            }
             Toast.makeText(ProfileActivity.this, "Profile Updated", Toast.LENGTH_SHORT).show();
         }
 
