@@ -64,15 +64,6 @@ public class ProfileActivity extends AppCompatActivity {
 
     private static final String TAG = ProfileActivity.class.getSimpleName();
 
-    public static class UserNicknameDBAsyncTaskParams {
-        public CognitoCachingCredentialsProvider credentialsProvider;
-        public String nickname;
-        UserNicknameDBAsyncTaskParams(CognitoCachingCredentialsProvider credentialsProvider, String nickname) {
-            this.credentialsProvider = credentialsProvider;
-            this.nickname = nickname;
-        }
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -422,12 +413,12 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
         private void SetupNewUserProfile() {
-            userNickname = mapper.load(DBUserNickname.class, credentialsProvider.getIdentityId(), nickname);
+            userNickname = mapper.load(DBUserNickname.class, nickname);
             if (userNickname != null) {
                 Integer count = 0;
                 do {
-                    nickname = nickname + "_" + Integer.toString(count);
-                    userNickname = mapper.load(DBUserNickname.class, credentialsProvider.getIdentityId(), nickname);
+                    nickname = nickname + Integer.toString(count);
+                    userNickname = mapper.load(DBUserNickname.class, nickname);
                     count++;
                 }
                 while (userNickname != null);
@@ -490,7 +481,7 @@ public class ProfileActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(String... params) {
             String nickname = params[0];
-            DBUserNickname userNickname = mapper.load(DBUserNickname.class, credentialsProvider.getIdentityId(), nickname);
+            DBUserNickname userNickname = mapper.load(DBUserNickname.class, nickname);
             if (userNickname != null) {
                 mapper.delete(userNickname);
             }

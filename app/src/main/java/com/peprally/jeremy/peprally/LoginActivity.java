@@ -146,7 +146,8 @@ public class LoginActivity extends AppCompatActivity {
             primaryKey.put("FacebookID", new AttributeValue().withS(fbProfile.getId()));
             primaryKey.put("FirstName", new AttributeValue().withS(fbProfile.getFirstName()));
             primaryKey.put("LastName", new AttributeValue().withS(fbProfile.getLastName()));
-            primaryKey.put("Nickname", new AttributeValue().withS(fbProfile.getFirstName() + " " + fbProfile.getLastName()));
+            primaryKey.put("Nickname", new AttributeValue().withS(fbProfile.getFirstName().toLowerCase()
+                                                                  + fbProfile.getLastName().toLowerCase()));
             primaryKey.put("NewUser", new AttributeValue().withBOOL(true));
             primaryKey.put("IsVarsityPlayer", new AttributeValue().withBOOL(false));
             primaryKey.put("DateJoined", new AttributeValue().withS(df.format(c.getTime())));

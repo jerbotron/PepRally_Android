@@ -8,22 +8,22 @@ public class DBUserNickname {
     private String cognitoID;
     private String facebookID;
 
-    @DynamoDBHashKey(attributeName = "CognitoID")
-    public String getCognitoID() {
-        return cognitoID;
-    }
-
-    public void setCognitoID(String cognitoID) {
-        this.cognitoID = cognitoID;
-    }
-
-    @DynamoDBRangeKey(attributeName = "Nickname")
+    @DynamoDBHashKey(attributeName = "Nickname")
     public String getNickname() {
         return nickname;
     }
 
     public void setNickname(String nickname) {
         this.nickname = nickname;
+    }
+
+    @DynamoDBAttribute(attributeName = "CognitoID")
+    public String getCognitoID() {
+        return cognitoID;
+    }
+
+    public void setCognitoID(String cognitoID) {
+        this.cognitoID = cognitoID;
     }
 
     @DynamoDBAttribute(attributeName = "FacebookID")

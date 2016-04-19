@@ -145,7 +145,8 @@ public class HomeActivity extends AppCompatActivity
         Bundle userProfileBundle = new Bundle();
         userProfileBundle.putString("FIRST_NAME", fbProfile.getFirstName());
         userProfileBundle.putString("LAST_NAME", fbProfile.getLastName());
-        userProfileBundle.putString("NICKNAME", fbProfile.getFirstName() + " " + fbProfile.getLastName());
+        userProfileBundle.putString("NICKNAME", fbProfile.getFirstName().toLowerCase()
+                                                + fbProfile.getLastName().toLowerCase());
         userProfileBundle.putString("FACEBOOK_ID", fbProfile.getId());
         intent.putExtra("USER_PROFILE_BUNDLE", userProfileBundle);
         startActivity(intent);
