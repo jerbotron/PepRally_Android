@@ -57,7 +57,6 @@ public class ProfileActivity extends AppCompatActivity {
     private boolean following = false;
 
     private boolean selfProfile;    // if user is editing his/her own profile
-    private boolean userNicknameChanged = false;
 
     private final int FAV_TEAM_REQUEST_CODE = 0;
     private final int FAV_PLAYER_REQUEST_CODE = 1;
@@ -294,10 +293,6 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     public void updateUserProfileBundleString(String key, String value) {
-        if (key.equals("NICKNAME")) {
-            userNicknameChanged = true;
-
-        }
         userProfileBundle.putString(key, value);
     }
 
@@ -480,7 +475,7 @@ public class ProfileActivity extends AppCompatActivity {
     private class PushNewNicknameToDBTask extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... params) {
-            String nickname = params[0];
+            String nickname = params[0].toLowerCase();
             DBUserNickname userNickname = mapper.load(DBUserNickname.class, nickname);
             if (userNickname != null) {
                 mapper.delete(userNickname);
@@ -505,9 +500,6 @@ public class ProfileActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void v) {
-            if (userNicknameChanged) {
-                new PushNewNicknameToDBTask().execute(userProfileBundle.getString("NICKNAME"));
-            }
             Toast.makeText(ProfileActivity.this, "Profile Updated", Toast.LENGTH_SHORT).show();
         }
 

@@ -21,9 +21,9 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <!-- Default Profile Content Strings -->
-    <string name="default_nickname">Pick a unique nickname!</string>
-    <string name="default_fav_team">Pick your favorite team!</string>
-    <string name="default_fav_player">Pick your favorite player!</string>
-    <string name="default_pep_talk">Team needs you, let\'s hear it!</string>
-    <string name="default_trash_talk">Let em\' know what\'s up!</string>
+    <string name="default_nickname"><i>Must pick a nickname!</i></string>
+    <string name="default_fav_team"><i>Pick your favorite team!</i></string>
+    <string name="default_fav_player"><i>Pick your favorite player!</i></string>
+    <string name="default_pep_talk"><i>Team needs you, let\'s hear it!</i></string>
+    <string name="default_trash_talk"><i>Let em\' know what\'s up!</i></string>
 </resources>

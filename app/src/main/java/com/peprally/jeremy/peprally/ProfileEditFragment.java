@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,6 +25,7 @@ import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -38,16 +40,23 @@ public class ProfileEditFragment extends Fragment {
     private boolean nicknameTaken = false;
     private String localNickname;
     private EditText editTextNickname;
+    private TextView textViewFirstName;
+    private TextView textViewFavTeam;
+    private TextView textViewFavPlayer;
+    private EditText editTextPepTalk;
+    private EditText editTextTrashTalk;
 
     private static final String TAG = ProfileEditFragment.class.getSimpleName();
 
     private TextWatcher nicknameTextWatcher = new TextWatcher() {
 
         public void afterTextChanged(Editable s) {
-            if (!s.toString().equals(localNickname)) {
-                Log.d(TAG, s.toString());
-                Log.d(TAG, localNickname);
-                new CheckUniqueNicknameDBTask().execute(s.toString());
+            if (s.toString().trim().isEmpty()) {
+                editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_error, 0);
+            }
+            else if (!s.toString().trim().replace(" ","_").toLowerCase().equals(localNickname.toLowerCase()) &&
+                     !s.toString().trim().equals(getResources().getString(R.string.default_nickname))) {
+                new CheckUniqueNicknameDBTask().execute(s.toString().trim().replace(" ", "_"));
                 nicknameChanged = true;
             }
             else {
@@ -60,6 +69,7 @@ public class ProfileEditFragment extends Fragment {
 
         public void onTextChanged(CharSequence s, int start, int before,
                                   int count) {
+
         }
     };
 
@@ -79,13 +89,33 @@ public class ProfileEditFragment extends Fragment {
         localNickname = getArguments().getString("NICKNAME");
 
         editTextNickname = (EditText) view.findViewById(R.id.profile_edit_nickname);
+        textViewFirstName = (TextView) view.findViewById(R.id.profile_edit_name_age);
+        textViewFavTeam = (TextView) view.findViewById(R.id.profile_edit_fav_team);
+        textViewFavPlayer = (TextView) view.findViewById(R.id.profile_edit_fav_player);
+        editTextPepTalk = (EditText) view.findViewById(R.id.profile_edit_pep_talk);
+        editTextTrashTalk = (EditText) view.findViewById(R.id.profile_edit_trash_talk);
+
+        editTextNickname.setHint(R.string.default_nickname);
+        textViewFavTeam.setHint(R.string.default_fav_team);
+        textViewFavPlayer.setHint(R.string.default_fav_player);
+        editTextPepTalk.setHint(R.string.default_pep_talk);
+        editTextTrashTalk.setHint(R.string.default_trash_talk);
+
+        editTextNickname.setInputType(EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+
         editTextNickname.addTextChangedListener(nicknameTextWatcher);
         editTextNickname.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if (!hasFocus) {
+                    if (editTextNickname.getText().toString().isEmpty()) {
+                        editTextNickname.setText(localNickname);
+                    }
                     if (nicknameChanged && !nicknameTaken) {
-                        new PushNewNicknameToDBTask().execute(editTextNickname.getText().toString().trim());
+                        List<String> nicknames = new ArrayList<>(Arrays.asList(editTextNickname.getText().toString().trim().replace(" ", "_"),
+                                                                                localNickname));
+                        new PushNewNicknameToDBTask().execute(nicknames);
+                        localNickname = editTextNickname.getText().toString().trim().replace(" ", "_");
                     }
                 }
             }
@@ -112,84 +142,39 @@ public class ProfileEditFragment extends Fragment {
 
     public void setupUserProfile(View view, Bundle UPB) {
         if (UPB != null) {
-            TextView textViewFirstName = (TextView) view.findViewById(R.id.profile_edit_name_age);
-            TextView textViewFavTeam = (TextView) view.findViewById(R.id.profile_edit_fav_team);
-            TextView textViewFavPlayer = (TextView) view.findViewById(R.id.profile_edit_fav_player);
-            EditText editTextPepTalk = (EditText) view.findViewById(R.id.profile_edit_pep_talk);
-            EditText editTextTrashTalk = (EditText) view.findViewById(R.id.profile_edit_trash_talk);
-
-            textViewFirstName.setText(UPB.getString("FIRST_NAME") + ", " + Integer.toString(23));
+            // TODO: CALCULATE USER AGE FROM FB DATA
+            textViewFirstName.setText(UPB.getString("FIRST_NAME")); // + ", " + Integer.toString(23));
             editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
             editTextNickname.setText(UPB.getString("NICKNAME"));
-            if (UPB.getString("NICKNAME") == null) {
-                editTextNickname.setText(Html.fromHtml("<i>"
-                        + getResources().getString(R.string.default_nickname)
-                        + "</i>"));
-            }
-            else {
-                editTextNickname.setText(UPB.getString("NICKNAME"));
-            }
-
-            if (UPB.getString("FAVORITE_TEAM") == null) {
-                textViewFavTeam.setText(Html.fromHtml("<i>"
-                        + getResources().getString(R.string.default_fav_team)
-                        + "</i>"));
-            }
-            else {
-                textViewFavTeam.setText(UPB.getString("FAVORITE_TEAM"));
-            }
-
-            if (UPB.getString("FAVORITE_PLAYER") == null) {
-                textViewFavPlayer.setText(Html.fromHtml("<i>"
-                        + getResources().getString(R.string.default_fav_player)
-                        + "</i>"));
-            }
-            else {
-                textViewFavPlayer.setText(UPB.getString("FAVORITE_PLAYER"));
-            }
-
-            if (UPB.getString("PEP_TALK") == null) {
-                editTextPepTalk.setText(Html.fromHtml("<i>"
-                        + getResources().getString(R.string.default_pep_talk)
-                        + "</i>"));
-            }
-            else {
-                editTextPepTalk.setText(UPB.getString("PEP_TALK"));
-            }
-
-            if (UPB.getString("TRASH_TALK") == null) {
-                editTextTrashTalk.setText(Html.fromHtml("<i>"
-                        + getResources().getString(R.string.default_trash_talk)
-                        + "</i>"));
-            }
-            else {
-                editTextTrashTalk.setText(UPB.getString("TRASH_TALK"));
-            }
+            textViewFavTeam.setText(UPB.getString("FAVORITE_TEAM"));
+            textViewFavPlayer.setText(UPB.getString("FAVORITE_PLAYER"));
+            editTextPepTalk.setText(UPB.getString("PEP_TALK"));
+            editTextTrashTalk.setText(UPB.getString("TRASH_TALK"));
         }
     }
 
     private void updateUserProfileBundleData(View view) {
         EditText editTextNickname = (EditText) view.findViewById(R.id.profile_edit_nickname);
-        String nickname = editTextNickname.getText().toString();
+        String nickname = editTextNickname.getText().toString().trim().replace(" ", "_");
         EditText editTextPepTalk = (EditText) view.findViewById(R.id.profile_edit_pep_talk);
-        String pepTalk = editTextPepTalk.getText().toString();
+        String pepTalk = editTextPepTalk.getText().toString().trim();
         EditText editTextTrashTalk = (EditText) view.findViewById(R.id.profile_edit_trash_talk);
-        String trashTalk = editTextTrashTalk.getText().toString();
+        String trashTalk = editTextTrashTalk.getText().toString().trim();
 
         if (!nickname.isEmpty() && !nicknameTaken) {
-            ((ProfileActivity) getActivity()).updateUserProfileBundleString("NICKNAME", localNickname);
+            ((ProfileActivity) getActivity()).updateUserProfileBundleString("NICKNAME", nickname);
         }
         if (pepTalk.isEmpty() || pepTalk.equals(getResources().getString(R.string.default_pep_talk))) {
             ((ProfileActivity) getActivity()).updateUserProfileBundleString("PEP_TALK", null);
         }
         else {
-            ((ProfileActivity) getActivity()).updateUserProfileBundleString("PEP_TALK", editTextPepTalk.getText().toString().trim());
+            ((ProfileActivity) getActivity()).updateUserProfileBundleString("PEP_TALK", pepTalk);
         }
         if (trashTalk.isEmpty() || trashTalk.equals(getResources().getString(R.string.default_trash_talk))) {
             ((ProfileActivity) getActivity()).updateUserProfileBundleString("TRASH_TALK", null);
         }
         else {
-            ((ProfileActivity) getActivity()).updateUserProfileBundleString("TRASH_TALK", editTextTrashTalk.getText().toString().trim());
+            ((ProfileActivity) getActivity()).updateUserProfileBundleString("TRASH_TALK", trashTalk);
         }
     }
 
@@ -209,13 +194,17 @@ public class ProfileEditFragment extends Fragment {
     }
 
     private void showNicknameTaken() {
-        nicknameTaken = true;
-        editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_error,0);
+        if (!editTextNickname.getText().toString().trim().isEmpty()) {
+            nicknameTaken = true;
+            editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_error,0);
+        }
     }
 
     private void showNicknameAvailable() {
-        nicknameTaken = false;
-        editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_check,0);
+        if (!editTextNickname.getText().toString().trim().isEmpty()) {
+            nicknameTaken = false;
+            editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_check,0);
+        }
     }
 
     @Override
@@ -233,22 +222,16 @@ public class ProfileEditFragment extends Fragment {
     public void onPause() {
         super.onPause();
         Log.d(TAG, "edit fragment paused");
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
         updateUserProfileBundleData(getView());
     }
 
     /********************************** AsyncTasks **********************************/
-
     private class CheckUniqueNicknameDBTask extends AsyncTask<String, Void, Boolean> {
         @Override
         protected Boolean doInBackground(String... params) {
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
-            DBUserNickname userNickname = mapper.load(DBUserNickname.class, params[0]);
+            DBUserNickname userNickname = mapper.load(DBUserNickname.class, params[0].toLowerCase());
             if (userNickname == null) {
                 return false;
             }
@@ -266,21 +249,21 @@ public class ProfileEditFragment extends Fragment {
         }
     }
 
-    private class PushNewNicknameToDBTask extends AsyncTask<String, Void, Void> {
+    private class PushNewNicknameToDBTask extends AsyncTask<List<String>, Void, Void> {
         @Override
-        protected Void doInBackground(String... params) {
-            String nickname = params[0];
-            DBUserNickname oldUserNickname = mapper.load(DBUserNickname.class, localNickname);
+        protected Void doInBackground(List<String>... params) {
+            String newNickname = params[0].get(0).toLowerCase();
+            String oldNickname = params[0].get(1).toLowerCase();
+            DBUserNickname oldUserNickname = mapper.load(DBUserNickname.class, oldNickname);
             if (oldUserNickname != null) {
                 mapper.delete(oldUserNickname);
             }
             HashMap<String, AttributeValue> primaryKey = new HashMap<>();
-            primaryKey.put("Nickname", new AttributeValue().withS(nickname));
+            primaryKey.put("Nickname", new AttributeValue().withS(newNickname));
+            Log.d(TAG, "nickname = " + newNickname);
             primaryKey.put("CognitoID", new AttributeValue().withS(credentialsProvider.getIdentityId()));
             primaryKey.put("FacebookID", new AttributeValue().withS(getArguments().getString("FACEBOOK_ID")));
             ddbClient.putItem(new PutItemRequest().withTableName("UserNicknames").withItem(primaryKey));
-            // Update new localNickname
-            localNickname = params[0];
             return null;
         }
     }
