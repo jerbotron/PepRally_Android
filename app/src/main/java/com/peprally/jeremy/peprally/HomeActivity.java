@@ -29,7 +29,7 @@ public class HomeActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private DrawerLayout drawer;
-    private ViewPager viewPager;
+    private ViewPager viewPagerHome;
 
     private Profile fbProfile;
 
@@ -53,11 +53,11 @@ public class HomeActivity extends AppCompatActivity
         toolbar.setTitle("Pep Rally");
         setSupportActionBar(toolbar);
 
-        viewPager = (ViewPager) findViewById(R.id.viewpager_home);
-        setupViewPager(viewPager);
+        viewPagerHome = (ViewPager) findViewById(R.id.viewpager_home);
+        setupViewPager(viewPagerHome);
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tablayout_home);
-        tabLayout.setupWithViewPager(viewPager);
+        tabLayout.setupWithViewPager(viewPagerHome);
 
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout_home);
         ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(
@@ -85,7 +85,7 @@ public class HomeActivity extends AppCompatActivity
         tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                viewPager.setCurrentItem(tab.getPosition());
+                viewPagerHome.setCurrentItem(tab.getPosition());
             }
 
             @Override
@@ -116,13 +116,13 @@ public class HomeActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-//        viewPager = (ViewPager) findViewById(R.id.viewpager_home);
+//        viewPagerHome = (ViewPager) findViewById(R.id.viewpager_home);
 //        if (id == R.id.nav_trending) {
-//            viewPager.setCurrentItem(0);
+//            viewPagerHome.setCurrentItem(0);
 //        } else if (id == R.id.nav_events) {
-//            viewPager.setCurrentItem(1);
+//            viewPagerHome.setCurrentItem(1);
 //        } else if (id == R.id.nav_browse_teams) {
-//            viewPager.setCurrentItem(2);
+//            viewPagerHome.setCurrentItem(2);
         if (id == R.id.nav_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);

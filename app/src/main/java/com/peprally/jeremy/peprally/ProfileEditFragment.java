@@ -1,11 +1,11 @@
 package com.peprally.jeremy.peprally;
 
-import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
-import android.text.Html;
+import android.text.InputFilter;
+import android.text.Spanned;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,8 +18,6 @@ import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
@@ -49,7 +47,6 @@ public class ProfileEditFragment extends Fragment {
     private static final String TAG = ProfileEditFragment.class.getSimpleName();
 
     private TextWatcher nicknameTextWatcher = new TextWatcher() {
-
         public void afterTextChanged(Editable s) {
             if (s.toString().trim().isEmpty()) {
                 editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_error, 0);
@@ -67,8 +64,7 @@ public class ProfileEditFragment extends Fragment {
         public void beforeTextChanged(CharSequence s, int start, int count, int after) {
         }
 
-        public void onTextChanged(CharSequence s, int start, int before,
-                                  int count) {
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
 
         }
     };
@@ -88,6 +84,22 @@ public class ProfileEditFragment extends Fragment {
 
         localNickname = getArguments().getString("NICKNAME");
 
+        InputFilter nicknameFilter = new InputFilter() {
+            public CharSequence filter(CharSequence source, int start, int end,
+                                       Spanned dest, int dstart, int dend) {
+                for (int i = start; i < end; i++) {
+                    if (Character.isSpaceChar(source.charAt(i))) {
+                        return "_";
+                    }
+                    else if (!Character.isLetterOrDigit(source.charAt(i)) && !String.valueOf(source.charAt(i)).equals("_")) {
+                        Toast.makeText(getActivity(), R.string.invalid_characters_message, Toast.LENGTH_SHORT).show();
+                        return "";
+                    }
+                }
+                return null;
+            }
+        };
+
         editTextNickname = (EditText) view.findViewById(R.id.profile_edit_nickname);
         textViewFirstName = (TextView) view.findViewById(R.id.profile_edit_name_age);
         textViewFavTeam = (TextView) view.findViewById(R.id.profile_edit_fav_team);
@@ -101,6 +113,7 @@ public class ProfileEditFragment extends Fragment {
         editTextPepTalk.setHint(R.string.default_pep_talk);
         editTextTrashTalk.setHint(R.string.default_trash_talk);
 
+        editTextNickname.setFilters(new InputFilter[] {nicknameFilter});
         editTextNickname.setInputType(EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
 
         editTextNickname.addTextChangedListener(nicknameTextWatcher);
@@ -153,7 +166,7 @@ public class ProfileEditFragment extends Fragment {
         }
     }
 
-    private void updateUserProfileBundleData(View view) {
+    public void updateUserProfileBundleData(View view) {
         EditText editTextNickname = (EditText) view.findViewById(R.id.profile_edit_nickname);
         String nickname = editTextNickname.getText().toString().trim().replace(" ", "_");
         EditText editTextPepTalk = (EditText) view.findViewById(R.id.profile_edit_pep_talk);
@@ -260,7 +273,6 @@ public class ProfileEditFragment extends Fragment {
             }
             HashMap<String, AttributeValue> primaryKey = new HashMap<>();
             primaryKey.put("Nickname", new AttributeValue().withS(newNickname));
-            Log.d(TAG, "nickname = " + newNickname);
             primaryKey.put("CognitoID", new AttributeValue().withS(credentialsProvider.getIdentityId()));
             primaryKey.put("FacebookID", new AttributeValue().withS(getArguments().getString("FACEBOOK_ID")));
             ddbClient.putItem(new PutItemRequest().withTableName("UserNicknames").withItem(primaryKey));

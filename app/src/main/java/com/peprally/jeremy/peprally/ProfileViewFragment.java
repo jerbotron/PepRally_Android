@@ -25,18 +25,23 @@ public class ProfileViewFragment extends Fragment {
     Map<String, String>  baseballPositions = new HashMap<String, String>();
     Map<String, String>  basketballPositions = new HashMap<String, String>();
     Map<String, String>  footballPositions = new HashMap<String, String>();
-    Map<String, String>  soccerPositions = new HashMap<String, String>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        Log.d(TAG, "profile view fragment created");
         View view = inflater.inflate(R.layout.fragment_profile_view, container, false);
-//        setupUserProfile(view, getArguments());
         return view;
     }
 
     @Override
     public void onResume() {
+        Log.d(TAG, "profile view fragment resumed");
         super.onResume();
+        refresh();
+    }
+
+    public void refresh() {
+        Log.d(TAG, "profilew view refreshing");
         initializePositionMaps();
         setupUserProfile(getView(), getArguments());
     }
@@ -149,6 +154,8 @@ public class ProfileViewFragment extends Fragment {
                 profileLoaded = true;
             }
 
+            LinearLayout ll_container = (LinearLayout) view.findViewById(R.id.profile_view_container);
+
             TextView textViewFirstName = (TextView) view.findViewById(R.id.profile_view_name_age);
             TextView textViewNickname = (TextView) view.findViewById(R.id.profile_view_nickname);
             TextView textViewFavTeam = (TextView) view.findViewById(R.id.profile_view_fav_team);
@@ -156,47 +163,27 @@ public class ProfileViewFragment extends Fragment {
             TextView textViewPepTalk = (TextView) view.findViewById(R.id.profile_view_pep_talk);
             TextView textViewTrashTalk = (TextView) view.findViewById(R.id.profile_view_trash_talk);
 
-            textViewFirstName.setText(UPB.getString("FIRST_NAME") + ", " + Integer.toString(23));
-            if (UPB.getString("NICKNAME") == null) {
-                textViewNickname.setVisibility(View.INVISIBLE);
-                LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                llp.setMargins(0,0,0,0);
-                textViewNickname.setLayoutParams(llp);
-                textViewNickname.setTextSize(TypedValue.COMPLEX_UNIT_SP, 4);
-//                textViewNickname.setTypeface(null, Typeface.ITALIC);
-//                textViewNickname.setText(getResources().getString(R.string.default_nickname));
-            } else {
-                textViewNickname.setText(UPB.getString("NICKNAME"));
-            }
+            textViewFirstName.setText(UPB.getString("FIRST_NAME"));// + ", " + Integer.toString(23));
+            textViewNickname.setText(UPB.getString("NICKNAME"));
+
             if (UPB.getString("FAVORITE_TEAM") == null) {
-                LinearLayout ll = (LinearLayout) view.findViewById(R.id.profile_layout_fav_team);
-                ll.setVisibility(View.INVISIBLE);
-//                textViewFavTeam.setTypeface(null, Typeface.ITALIC);
-//                textViewFavTeam.setText(getResources().getString(R.string.default_fav_team));
+                ll_container.removeView(view.findViewById(R.id.profile_layout_fav_team));
             } else {
                 textViewFavTeam.setText(UPB.getString("FAVORITE_TEAM"));
             }
             if (UPB.getString("FAVORITE_PLAYER") == null) {
-                LinearLayout ll = (LinearLayout) view.findViewById(R.id.profile_layout_fav_player);
-                ll.setVisibility(View.INVISIBLE);
-//                textViewFavPlayer.setTypeface(null, Typeface.ITALIC);
-//                textViewFavPlayer.setText(getResources().getString(R.string.default_fav_player));
+                ll_container.removeView(view.findViewById(R.id.profile_layout_fav_player));
             } else {
                 textViewFavPlayer.setText(UPB.getString("FAVORITE_PLAYER"));
             }
             if (UPB.getString("PEP_TALK") == null) {
-                LinearLayout ll = (LinearLayout) view.findViewById(R.id.profile_layout_pep_talk);
-                ll.setVisibility(View.INVISIBLE);
-//                textViewPepTalk.setTypeface(null, Typeface.ITALIC);
-//                textViewPepTalk.setText(getResources().getString(R.string.default_pep_talk));
+                ll_container.removeView(view.findViewById(R.id.profile_layout_pep_talk));
             } else {
+                Log.d(TAG, "new peptalk: " + UPB.getString("PEP_TALK"));
                 textViewPepTalk.setText(UPB.getString("PEP_TALK"));
             }
             if (UPB.getString("TRASH_TALK") == null) {
-                LinearLayout ll = (LinearLayout) view.findViewById(R.id.profile_layout_trash_talk);
-                ll.setVisibility(View.INVISIBLE);
-//                textViewTrashTalk.setTypeface(null, Typeface.ITALIC);
-//                textViewTrashTalk.setText(getResources().getString(R.string.default_trash_talk));
+                ll_container.removeView(view.findViewById(R.id.profile_layout_trash_talk));
             } else {
                 textViewTrashTalk.setText(UPB.getString("TRASH_TALK"));
             }

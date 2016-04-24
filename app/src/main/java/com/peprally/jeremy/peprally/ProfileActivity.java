@@ -6,10 +6,12 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -28,7 +30,6 @@ import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
@@ -41,10 +42,13 @@ import java.util.HashMap;
 public class ProfileActivity extends AppCompatActivity {
 
     private ActionBar supportActionBar;
-    private Fragment viewFragment, editFragment;
+    private Fragment viewFragment, postsFragment, editFragment;
     private FragmentManager fragmentManager;
     private FragmentTransaction fragmentTransaction;
     private MenuItem editMenuItem;
+    private TabLayout tabLayout;
+    private ViewPager viewPagerProfile;
+    private ViewPagerAdapter adapter;
 
     private Bundle userProfileBundle;
     private String playerProfileTeam;
@@ -177,10 +181,11 @@ public class ProfileActivity extends AppCompatActivity {
             case R.id.edit_profile_item:
                 if (!editMode) {
                     // Switch Fragment to editFragment
-                    fragmentTransaction = fragmentManager.beginTransaction();
-                    fragmentTransaction.replace(R.id.profile_fragment_container, editFragment);
-                    fragmentTransaction.addToBackStack(null);
-                    fragmentTransaction.commit();
+                    tabLayout.setVisibility(View.GONE);
+                    adapter.addFrag(editFragment, "Edit Profile");
+                    adapter.attachFrag(2);
+                    adapter.notifyDataSetChanged();
+                    viewPagerProfile.setCurrentItem(2);
                     editMode = true;
                     editMenuItem = item;
 
@@ -206,14 +211,36 @@ public class ProfileActivity extends AppCompatActivity {
 
     private void createView() {
         fragmentManager = getSupportFragmentManager();
-        fragmentTransaction = fragmentManager.beginTransaction();
         viewFragment = new ProfileViewFragment();
+        postsFragment = new ProfilePostsFragment();
         editFragment = new ProfileEditFragment();
+
         viewFragment.setArguments(userProfileBundle);
         editFragment.setArguments(userProfileBundle);
-        fragmentTransaction.replace(R.id.profile_fragment_container, viewFragment);
-        fragmentTransaction.addToBackStack(null);
-        fragmentTransaction.commit();
+        viewPagerProfile = (ViewPager) findViewById(R.id.viewpager_profile);
+        adapter = new ViewPagerAdapter(fragmentManager);
+        adapter.addFrag(viewFragment, "Info");
+        adapter.addFrag(postsFragment, "Posts");
+        viewPagerProfile.setAdapter(adapter);
+        viewPagerProfile.setCurrentItem(0);
+
+        tabLayout = (TabLayout) findViewById(R.id.tablayout_profile);
+        tabLayout.setupWithViewPager(viewPagerProfile);
+
+        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                viewPagerProfile.setCurrentItem(tab.getPosition());
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+        });
 
         ImageView profilePicture = (ImageView) findViewById(R.id.profile_roster_image);
         if (selfProfile) {
@@ -249,10 +276,12 @@ public class ProfileActivity extends AppCompatActivity {
             new PushProfileChangesToDBTask().execute();
 
             // Switch Fragment back to viewFragment
-            fragmentTransaction = fragmentManager.beginTransaction();
-            fragmentTransaction.replace(R.id.profile_fragment_container, viewFragment);
-            fragmentTransaction.addToBackStack(null);
-            fragmentTransaction.commit();
+            tabLayout.setVisibility(View.VISIBLE);
+            adapter.detachFrag(2);
+            adapter.removeFrag(2);
+            adapter.notifyDataSetChanged();
+            viewPagerProfile.setCurrentItem(0);
+            Log.d(TAG, "returning to profile view: " + userProfileBundle.getString("PEP_TALK"));
 
             // Re-enable Edit Icon
             editMenuItem.setEnabled(true);
