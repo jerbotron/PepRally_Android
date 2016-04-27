@@ -1,11 +1,10 @@
-package com.peprally.jeremy.peprally;
+package com.peprally.jeremy.peprally.utils;
 
 public class Team implements Comparable<Team> {
-    String name;
-    int photoId;
-    int s;
+    public String name;
+    public int photoId;
 
-    Team(String name, int photoId) {
+    public Team(String name, int photoId) {
         this.name = name;
         this.photoId = photoId;
     }

@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally;
+package com.peprally.jeremy.peprally.activities;
 
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -22,6 +22,8 @@ import com.facebook.Profile;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.facebook.AccessToken;
+import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

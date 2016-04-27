@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally;
+package com.peprally.jeremy.peprally.utils;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -9,14 +9,16 @@ import com.amazonaws.regions.Regions;
 
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
+import com.peprally.jeremy.peprally.activities.HomeActivity;
+import com.peprally.jeremy.peprally.activities.LoginActivity;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingCredentialsProvider> {
 
-    final static String IDENTITY_POOL_ID = "us-east-1:62a77974-d33d-4131-8a1d-122db8e07dfa";
-    final static Regions COGNITO_REGION = Regions.US_EAST_1;
+    public final static String IDENTITY_POOL_ID = "us-east-1:62a77974-d33d-4131-8a1d-122db8e07dfa";
+    public final static Regions COGNITO_REGION = Regions.US_EAST_1;
 
     private Context callingContext;
     private LoginActivity.AWSLoginTaskCallback loginTaskCallback;

@@ -1,9 +1,11 @@
-package com.peprally.jeremy.peprally;
+package com.peprally.jeremy.peprally.activities;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.support.design.widget.AppBarLayout;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
@@ -33,6 +35,16 @@ import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
+import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.adapter.ProfileViewPagerAdapter;
+import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
+import com.peprally.jeremy.peprally.db_models.DBUserNickname;
+import com.peprally.jeremy.peprally.db_models.DBUserProfile;
+import com.peprally.jeremy.peprally.fragments.ProfileEditFragment;
+import com.peprally.jeremy.peprally.fragments.ProfilePostsFragment;
+import com.peprally.jeremy.peprally.fragments.ProfileViewFragment;
+import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.utils.ProfileViewPager;
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
@@ -48,7 +60,7 @@ public class ProfileActivity extends AppCompatActivity {
     private MenuItem editMenuItem;
     private TabLayout tabLayout;
     private ViewPager viewPagerProfile;
-    private ViewPagerAdapter adapter;
+    private ProfileViewPagerAdapter adapter;
 
     private Bundle userProfileBundle;
     private String playerProfileTeam;
@@ -82,7 +94,9 @@ public class ProfileActivity extends AppCompatActivity {
         mapper = new DynamoDBMapper(ddbClient);
 
         userProfileBundle = getIntent().getBundleExtra("USER_PROFILE_BUNDLE");
-        String userFacebookID = userProfileBundle.getString("FACEBOOK_ID");
+        final String userFirstname = userProfileBundle.getString("FIRST_NAME");
+        final String userFacebookID = userProfileBundle.getString("FACEBOOK_ID");
+        assert userFirstname != null && userFacebookID != null;
 
         // 3 Profile Activity cases currently:
         // - view/edit your own profile as a fan
@@ -101,16 +115,37 @@ public class ProfileActivity extends AppCompatActivity {
         new LoadUserProfileFromDBTask().execute(userFacebookID);
 
         setContentView(R.layout.activity_profile);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_profile);
+        final CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.profile_collapse_toolbar);
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_profile);
+        assert collapsingToolbarLayout != null && toolbar != null;
+        collapsingToolbarLayout.setTitleEnabled(false);
         setSupportActionBar(toolbar);
         supportActionBar = getSupportActionBar();
+        assert supportActionBar != null;
         supportActionBar.setTitle(null);
         supportActionBar.setDisplayHomeAsUpEnabled(true);
+
+        final AppBarLayout appBarLayout = (AppBarLayout) findViewById(R.id.profile_app_bar_layout);
+        assert appBarLayout != null;
+        appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+            @Override
+            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                if (!editMode) {
+                    if (verticalOffset == 0 && supportActionBar.getTitle() != null) {
+                        supportActionBar.setTitle(null);
+                    }
+                    else if(verticalOffset <= -375 && supportActionBar.getTitle() == null) {
+                        supportActionBar.setTitle(userFirstname);
+                    }
+                }
+            }
+        });
 
         // Follow Button and FAB
         final LinearLayout followButton = (LinearLayout) findViewById(R.id.button_follow_wrapper);
         final TextView followButtonContent = (TextView) findViewById(R.id.button_follow_content);
-        FloatingActionButton fistbumpFab = (FloatingActionButton) findViewById(R.id.profile_firstbump_fab);
+        final FloatingActionButton fistbumpFab = (FloatingActionButton) findViewById(R.id.profile_firstbump_fab);
+        assert followButton != null && followButtonContent != null && fistbumpFab != null;
         CoordinatorLayout.LayoutParams fistbumpFabLayoutParams = (CoordinatorLayout.LayoutParams) fistbumpFab.getLayoutParams();
         // If user is viewing their own profile
         if (selfProfile) {
@@ -151,7 +186,7 @@ public class ProfileActivity extends AppCompatActivity {
                 }
             });
 
-            fistbumpFabLayoutParams.setAnchorId(R.id.profile_app_bar);
+            fistbumpFabLayoutParams.setAnchorId(R.id.profile_app_bar_layout);
             fistbumpFab.setLayoutParams(fistbumpFabLayoutParams);
             fistbumpFab.setVisibility(View.VISIBLE);
             fistbumpFab.setOnClickListener(new View.OnClickListener() {
@@ -186,6 +221,7 @@ public class ProfileActivity extends AppCompatActivity {
                     adapter.attachFrag(2);
                     adapter.notifyDataSetChanged();
                     viewPagerProfile.setCurrentItem(2);
+                    ((ProfileViewPager) viewPagerProfile).setAllowedSwipeDirection(ProfileViewPager.SwipeDirection.none);
                     editMode = true;
                     editMenuItem = item;
 
@@ -204,8 +240,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     private Bitmap getFacebookProfilePicture(String userID) throws IOException {
         URL imageURL = new URL("https://graph.facebook.com/" + userID + "/picture?type=large");
-        Bitmap bitmap = BitmapFactory.decodeStream(imageURL.openConnection().getInputStream());
-        return bitmap;
+        return BitmapFactory.decodeStream(imageURL.openConnection().getInputStream());
     }
 
 
@@ -217,14 +252,16 @@ public class ProfileActivity extends AppCompatActivity {
 
         viewFragment.setArguments(userProfileBundle);
         editFragment.setArguments(userProfileBundle);
-        viewPagerProfile = (ViewPager) findViewById(R.id.viewpager_profile);
-        adapter = new ViewPagerAdapter(fragmentManager);
+        postsFragment.setArguments(userProfileBundle);
+        viewPagerProfile = (ProfileViewPager) findViewById(R.id.viewpager_profile);
+        adapter = new ProfileViewPagerAdapter(fragmentManager);
         adapter.addFrag(viewFragment, "Info");
         adapter.addFrag(postsFragment, "Posts");
         viewPagerProfile.setAdapter(adapter);
         viewPagerProfile.setCurrentItem(0);
 
         tabLayout = (TabLayout) findViewById(R.id.tablayout_profile);
+        assert tabLayout != null;
         tabLayout.setupWithViewPager(viewPagerProfile);
 
         tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
@@ -248,16 +285,19 @@ public class ProfileActivity extends AppCompatActivity {
         }
         else {
             String rootImageURL = "https://s3.amazonaws.com/rosterphotos/";
-            String extension = userProfileBundle.getString("TEAM").replace(" ", "+") + "/" + userProfileBundle.getString("ROSTER_IMAGE_URL");
+            String team = userProfileBundle.getString("TEAM");
+            assert team != null;
+            String extension = team.replace(" ", "+") + "/" + userProfileBundle.getString("ROSTER_IMAGE_URL");
             String url = rootImageURL + extension;
             Picasso.with(ProfileActivity.this)
                     .load(url)
                     .into(profilePicture);
         }
 
-        TextView fistBumpsTextView = (TextView) findViewById(R.id.profile_fist_bumps);
-        TextView followersTextView = (TextView) findViewById(R.id.profile_followers);
-        TextView followingTextView = (TextView) findViewById(R.id.profile_following);
+        final TextView fistBumpsTextView = (TextView) findViewById(R.id.profile_fist_bumps);
+        final TextView followersTextView = (TextView) findViewById(R.id.profile_followers);
+        final TextView followingTextView = (TextView) findViewById(R.id.profile_following);
+        assert fistBumpsTextView != null && followersTextView != null && followingTextView != null;
 
         fistBumpsTextView.setText(Html.fromHtml("<b>"
                 + Integer.toString(userProfileBundle.getInt("FISTBUMPS"))
@@ -281,7 +321,7 @@ public class ProfileActivity extends AppCompatActivity {
             adapter.removeFrag(2);
             adapter.notifyDataSetChanged();
             viewPagerProfile.setCurrentItem(0);
-            Log.d(TAG, "returning to profile view: " + userProfileBundle.getString("PEP_TALK"));
+            ((ProfileViewPager) viewPagerProfile).setAllowedSwipeDirection(ProfileViewPager.SwipeDirection.all);
 
             // Re-enable Edit Icon
             editMenuItem.setEnabled(true);
@@ -397,7 +437,8 @@ public class ProfileActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Bitmap bitmap) {
             if (bitmap != null) {
-                ImageView profilePicture = (ImageView) findViewById(R.id.profile_roster_image);
+                final ImageView profilePicture = (ImageView) findViewById(R.id.profile_roster_image);
+                assert profilePicture != null;
                 profilePicture.setImageBitmap(bitmap);
             }
         }
@@ -473,6 +514,7 @@ public class ProfileActivity extends AppCompatActivity {
                 userProfileBundle.putString("TRASH_TALK", userProfile.getTrashTalk());
                 userProfileBundle.putBoolean("IS_VARSITY_PLAYER", userProfile.getIsVarsityPlayer());
                 userProfileBundle.putString("TEAM", userProfile.getTeam());
+                userProfileBundle.putBoolean("SELF_PROFILE", true);
             }
             else {
                 userProfileBundle.putString("FIRST_NAME", playerProfile.getFirstName());
@@ -485,6 +527,7 @@ public class ProfileActivity extends AppCompatActivity {
                 userProfileBundle.putString("FAVORITE_PLAYER", null);
                 userProfileBundle.putString("PEP_TALK", null);
                 userProfileBundle.putString("TRASH_TALK", null);
+                userProfileBundle.putBoolean("SELF_PROFILE", false);
                 // TODO: fix hardcoded true for IS_VARSITY_PLAYER
                 // TODO: allow users to view non-player profiles
                 userProfileBundle.putBoolean("IS_VARSITY_PLAYER", true);

@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally;
+package com.peprally.jeremy.peprally.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.CardView;
@@ -11,6 +11,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
+import com.peprally.jeremy.peprally.activities.ProfileActivity;
+import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.squareup.picasso.Picasso;
 
 public class RVPlayersAdapter extends RecyclerView.Adapter<RVPlayersAdapter.PlayerCardHolder>{

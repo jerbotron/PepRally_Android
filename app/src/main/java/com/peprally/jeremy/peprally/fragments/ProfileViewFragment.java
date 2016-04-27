@@ -1,17 +1,18 @@
-package com.peprally.jeremy.peprally;
+package com.peprally.jeremy.peprally.fragments;
 
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.Html;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.peprally.jeremy.peprally.R;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,15 +42,29 @@ public class ProfileViewFragment extends Fragment {
     }
 
     public void refresh() {
-        Log.d(TAG, "profilew view refreshing");
         initializePositionMaps();
         setupUserProfile(getView(), getArguments());
     }
 
     public void setupUserProfile(View view, Bundle UPB) {
         if (UPB != null) {
+            final LinearLayout parent = (LinearLayout) view.findViewById(R.id.profile_view_container);
+            final LinearLayout ll_container = (LinearLayout) view.findViewById(R.id.profile_view_container);
+            final TextView textViewFirstName = (TextView) view.findViewById(R.id.profile_view_name_age);
+            final TextView textViewNickname = (TextView) view.findViewById(R.id.profile_view_nickname);
+            final TextView textViewFavTeam = (TextView) view.findViewById(R.id.profile_view_fav_team);
+            final TextView textViewFavPlayer = (TextView) view.findViewById(R.id.profile_view_fav_player);
+            final TextView textViewPepTalk = (TextView) view.findViewById(R.id.profile_view_pep_talk);
+            final TextView textViewTrashTalk = (TextView) view.findViewById(R.id.profile_view_trash_talk);
+
+            textViewFirstName.setText("");    // set to empty so I can check later if populated under varsity profile
+
             if (UPB.getBoolean("IS_VARSITY_PLAYER") && !profileLoaded) {
-                LinearLayout parent = (LinearLayout) view.findViewById(R.id.profile_view_container);
+                String name = UPB.getString("FIRST_NAME") + " "
+                                + UPB.getString("LAST_NAME") + " #"
+                                + String.valueOf(UPB.getInt("NUMBER"));
+                textViewFirstName.setText(name);
+
                 LinearLayout playerInfoLayout = new LinearLayout(getActivity());
                 playerInfoLayout.setOrientation(LinearLayout.VERTICAL);
                 LinearLayout.LayoutParams llparams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -59,7 +74,7 @@ public class ProfileViewFragment extends Fragment {
                         (int) getResources().getDimension(R.dimen.activity_horizontal_margin));
                 playerInfoLayout.setLayoutParams(llparams);
 
-                LinearLayout.LayoutParams tvparams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                final LinearLayout.LayoutParams tvparams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                 tvparams.setMargins(0, 0, 0, 4);
                 if (UPB.getString("POSITION") != null) {
                     String text = "Position: <b>";
@@ -143,8 +158,7 @@ public class ProfileViewFragment extends Fragment {
                             0,
                             0);
                     tv_no_profile.setText(UPB.getString("FIRST_NAME") +
-                            " has not made a Pep Rally profile yet. Tell your friends about Pep Rally to" +
-                            " help promote school spirit!");
+                            " has not made a Pep Rally profile yet. Tell your friends about Pep Rally!");
                     tv_no_profile.setTypeface(null, Typeface.ITALIC);
                     tv_no_profile.setLayoutParams(msg_params);
                     tv_no_profile.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -154,17 +168,15 @@ public class ProfileViewFragment extends Fragment {
                 profileLoaded = true;
             }
 
-            LinearLayout ll_container = (LinearLayout) view.findViewById(R.id.profile_view_container);
-
-            TextView textViewFirstName = (TextView) view.findViewById(R.id.profile_view_name_age);
-            TextView textViewNickname = (TextView) view.findViewById(R.id.profile_view_nickname);
-            TextView textViewFavTeam = (TextView) view.findViewById(R.id.profile_view_fav_team);
-            TextView textViewFavPlayer = (TextView) view.findViewById(R.id.profile_view_fav_player);
-            TextView textViewPepTalk = (TextView) view.findViewById(R.id.profile_view_pep_talk);
-            TextView textViewTrashTalk = (TextView) view.findViewById(R.id.profile_view_trash_talk);
-
-            textViewFirstName.setText(UPB.getString("FIRST_NAME"));// + ", " + Integer.toString(23));
-            textViewNickname.setText(UPB.getString("NICKNAME"));
+            if (textViewFirstName.getText().toString().isEmpty()) {
+                textViewFirstName.setText(UPB.getString("FIRST_NAME"));// + ", " + Integer.toString(23));
+            }
+            if (UPB.getString("NICKNAME") == null) {
+                parent.removeView(textViewNickname);
+            }
+            else {
+                textViewNickname.setText(UPB.getString("NICKNAME"));
+            }
 
             if (UPB.getString("FAVORITE_TEAM") == null) {
                 ll_container.removeView(view.findViewById(R.id.profile_layout_fav_team));
@@ -179,7 +191,6 @@ public class ProfileViewFragment extends Fragment {
             if (UPB.getString("PEP_TALK") == null) {
                 ll_container.removeView(view.findViewById(R.id.profile_layout_pep_talk));
             } else {
-                Log.d(TAG, "new peptalk: " + UPB.getString("PEP_TALK"));
                 textViewPepTalk.setText(UPB.getString("PEP_TALK"));
             }
             if (UPB.getString("TRASH_TALK") == null) {

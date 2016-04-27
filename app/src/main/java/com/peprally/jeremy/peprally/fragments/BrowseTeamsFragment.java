@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally;
+package com.peprally.jeremy.peprally.fragments;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -15,6 +15,12 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.peprally.jeremy.peprally.activities.HomeActivity;
+import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.adapter.RVTeamsAdapter;
+import com.peprally.jeremy.peprally.utils.Team;
+import com.peprally.jeremy.peprally.db_models.DBSport;
+import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 
 import java.util.ArrayList;
 import java.util.Collections;

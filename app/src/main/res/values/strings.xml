@@ -23,12 +23,17 @@
     <string name="invalid_characters_message">Nicknames cannot contain special characters or spaces. Letters, numbers and underscores only.</string>
 
     <!-- Default Profile Content Strings -->
+    <string name="default_firstname"><i>NAME, AGE</i></string>
     <string name="default_nickname"><i>Must pick a nickname!</i></string>
     <string name="default_fav_team"><i>Pick your favorite team!</i></string>
     <string name="default_fav_player"><i>Pick your favorite player!</i></string>
     <string name="default_pep_talk"><i>Team needs you, let\'s hear it!</i></string>
     <string name="default_trash_talk"><i>Let em\' know what\'s up!</i></string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="default_post_question_1"><i>What\'s on your mind?</i></string>
+    <string name="default_post_question_2"><i>Shout out your favorite player!</i></string>
+    <string name="default_post_question_3"><i>Say something encouraging about a team!</i></string>
+    <string name="default_post_question_5"><i>Share your best trash talk about another school!</i></string>
+    <string name="default_post_question_4"><i>You win a FREE BURRITO! (After you make a post)</i></string>
+
 </resources>

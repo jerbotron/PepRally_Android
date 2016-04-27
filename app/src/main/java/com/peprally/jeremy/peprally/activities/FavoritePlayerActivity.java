@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally;
+package com.peprally.jeremy.peprally.activities;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -19,6 +19,11 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.adapter.RVPlayersAdapter;
+import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
+import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+
 
 public class FavoritePlayerActivity extends AppCompatActivity {
 

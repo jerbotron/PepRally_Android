@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally;
+package com.peprally.jeremy.peprally.activities;
 
 import android.content.Intent;
 import android.support.design.widget.NavigationView;
@@ -12,18 +12,21 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
 import com.facebook.login.widget.ProfilePictureView;
+import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.adapter.ProfileViewPagerAdapter;
+import com.peprally.jeremy.peprally.fragments.BrowseTeamsFragment;
+import com.peprally.jeremy.peprally.fragments.EventsFragment;
+import com.peprally.jeremy.peprally.fragments.TrendingFragment;
 
 public class HomeActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -154,7 +157,7 @@ public class HomeActivity extends AppCompatActivity
     }
 
     private void setupViewPager(ViewPager viewPager) {
-        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
+        ProfileViewPagerAdapter adapter = new ProfileViewPagerAdapter(getSupportFragmentManager());
         adapter.addFrag(new EventsFragment(), "Events");
         adapter.addFrag(new TrendingFragment(), "Trending");
         adapter.addFrag(new BrowseTeamsFragment(), "Teams");

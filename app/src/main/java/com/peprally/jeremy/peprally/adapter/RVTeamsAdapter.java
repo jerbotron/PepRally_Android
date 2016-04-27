@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally;
+package com.peprally.jeremy.peprally.adapter;
 
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -7,6 +7,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.peprally.jeremy.peprally.activities.ProfileActivity;
+import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.utils.Team;
 
 import java.util.List;
 

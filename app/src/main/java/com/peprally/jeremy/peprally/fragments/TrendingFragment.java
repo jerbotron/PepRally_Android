@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally;
+package com.peprally.jeremy.peprally.fragments;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -9,17 +9,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.amazonaws.HttpMethod;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
-import com.squareup.picasso.Picasso;
-
-import java.net.URL;
+import com.peprally.jeremy.peprally.activities.HomeActivity;
+import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 
 public class TrendingFragment extends Fragment {
 
