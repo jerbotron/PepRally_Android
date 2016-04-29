@@ -16,4 +16,13 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
 
+    <style name="NewPostTheme" parent="Theme.AppCompat.Light">
+        <item name="android:actionBarStyle">@style/NewPostActionBar</item>
+        <item name="android:homeAsUpIndicator">@drawable/ic_x</item>
+    </style>
+
+    <style name="NewPostActionBar" parent="@android:style/Widget.Holo.Light.ActionBar">
+        <item name="android:logo">@drawable/ic_x</item>
+    </style>
+
 </resources>

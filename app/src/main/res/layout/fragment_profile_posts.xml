@@ -1,34 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
     <LinearLayout
-        android:id="@+id/profile_posts_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-        <EditText
-            android:id="@+id/profile_new_post_editbox"
+        <TextView
+            android:id="@+id/profile_posts_empty_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/default_post_question_1"
-            android:textSize="14sp"
-            android:textColor="@android:color/tertiary_text_dark"
-            android:editable="true"
-            android:background="@drawable/edit_text_box"
-            android:layout_margin="@dimen/activity_horizontal_margin"/>
+            android:padding="@dimen/activity_vertical_margin"
+            android:text="some sample text"
+            android:textStyle="italic"
+            android:gravity="center"/>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/profile_posts_empty_text"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="100dp"
-        android:padding="@dimen/activity_vertical_margin"
-        android:text="some sample text"
-        android:textStyle="italic"
-        android:gravity="center"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="@dimen/activity_horizontal_margin"/>
 </RelativeLayout>

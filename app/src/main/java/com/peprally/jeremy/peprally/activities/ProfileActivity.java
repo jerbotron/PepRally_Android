@@ -23,8 +23,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -76,6 +78,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     private final int FAV_TEAM_REQUEST_CODE = 0;
     private final int FAV_PLAYER_REQUEST_CODE = 1;
+    private final int NEW_POST_REQUEST_CODE = 2;
 
     private static final String TAG = ProfileActivity.class.getSimpleName();
 
@@ -115,6 +118,7 @@ public class ProfileActivity extends AppCompatActivity {
         new LoadUserProfileFromDBTask().execute(userFacebookID);
 
         setContentView(R.layout.activity_profile);
+        togglePostButtons(false);
         final CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.profile_collapse_toolbar);
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_profile);
         assert collapsingToolbarLayout != null && toolbar != null;
@@ -196,6 +200,28 @@ public class ProfileActivity extends AppCompatActivity {
                 }
             });
         }
+
+        // Post Buttons OnPress Handlers
+        final ImageButton newTextPostButton = (ImageButton) findViewById(R.id.new_text_post_button);
+        final ImageButton newImagePostButton = (ImageButton) findViewById(R.id.new_image_post_button);
+
+        assert newTextPostButton != null;
+        newTextPostButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), NewPostActivity.class);
+                startActivityForResult(intent, NEW_POST_REQUEST_CODE);
+                overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+            }
+        });
+
+        assert newImagePostButton != null;
+        newImagePostButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
     }
 
     @Override
@@ -243,7 +269,6 @@ public class ProfileActivity extends AppCompatActivity {
         return BitmapFactory.decodeStream(imageURL.openConnection().getInputStream());
     }
 
-
     private void createView() {
         fragmentManager = getSupportFragmentManager();
         viewFragment = new ProfileViewFragment();
@@ -259,6 +284,28 @@ public class ProfileActivity extends AppCompatActivity {
         adapter.addFrag(postsFragment, "Posts");
         viewPagerProfile.setAdapter(adapter);
         viewPagerProfile.setCurrentItem(0);
+
+        viewPagerProfile.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                if (position == 1 && selfProfile) {
+                    togglePostButtons(true);
+                }
+                else {
+                    togglePostButtons(false);
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
 
         tabLayout = (TabLayout) findViewById(R.id.tablayout_profile);
         assert tabLayout != null;
@@ -308,6 +355,17 @@ public class ProfileActivity extends AppCompatActivity {
         followingTextView.setText(Html.fromHtml("<b>"
                 + Integer.toString(userProfileBundle.getInt("FOLLOWING"))
                 + "</b> " + getString(R.string.profile_following)));
+    }
+
+    public void togglePostButtons(boolean show) {
+        final RelativeLayout postButtonsContainer = (RelativeLayout) findViewById(R.id.profile_post_buttons_container);
+        assert postButtonsContainer != null;
+        if (show) {
+            postButtonsContainer.setVisibility(View.VISIBLE);
+        }
+        else {
+            postButtonsContainer.setVisibility(View.INVISIBLE);
+        }
     }
 
     private void handleBackPressed() {
@@ -383,6 +441,8 @@ public class ProfileActivity extends AppCompatActivity {
             }
         }
     }
+
+
 
     @Override
     public void onBackPressed() {

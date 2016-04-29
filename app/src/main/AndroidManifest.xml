@@ -43,10 +43,11 @@
             android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
             android:label="@string/app_name"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-        <activity
-            android:name=".activities.FavoriteTeamActivity" />
-        <activity
-            android:name=".activities.FavoritePlayerActivity" />
+        <activity android:name=".activities.FavoriteTeamActivity" />
+        <activity android:name=".activities.FavoritePlayerActivity" />
+        <activity android:name=".activities.NewPostActivity"
+            android:theme="@style/NewPostTheme"
+            android:windowSoftInputMode="adjustResize"/>
 
         <provider
             android:name="com.facebook.FacebookContentProvider"
@@ -67,6 +68,7 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
     </application>
 
 </manifest>

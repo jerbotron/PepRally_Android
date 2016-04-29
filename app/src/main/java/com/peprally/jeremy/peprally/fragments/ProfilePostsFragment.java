@@ -10,6 +10,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.activities.ProfileActivity;
 
 import java.util.Random;
 
@@ -46,12 +47,6 @@ public class ProfilePostsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile_posts, container, false);
         Bundle UPB = getArguments();
-        final EditText editTextNewPost = (EditText) view.findViewById(R.id.profile_new_post_editbox);
-        NewPostHint newPostHint = new NewPostHint();
-        Random rand = new Random();
-        String s = newPostHint.getHint(rand.nextInt(4));
-        Log.d(TAG, s);
-        editTextNewPost.setHint(s);
         final TextView emptyMsgView = (TextView) view.findViewById(R.id.profile_posts_empty_text);
         if (UPB.getBoolean("SELF_PROFILE")) {
             emptyMsgView.setText("You have not created any posts yet!");
