@@ -201,12 +201,9 @@ public class ProfileActivity extends AppCompatActivity {
             });
         }
 
-        // Post Buttons OnPress Handlers
-        final ImageButton newTextPostButton = (ImageButton) findViewById(R.id.new_text_post_button);
-        final ImageButton newImagePostButton = (ImageButton) findViewById(R.id.new_image_post_button);
-
-        assert newTextPostButton != null;
-        newTextPostButton.setOnClickListener(new View.OnClickListener() {
+        final FloatingActionButton newPostFab = (FloatingActionButton) findViewById(R.id.fab_profile_new_post);
+        assert newPostFab != null;
+        newPostFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), NewPostActivity.class);
@@ -215,13 +212,27 @@ public class ProfileActivity extends AppCompatActivity {
             }
         });
 
-        assert newImagePostButton != null;
-        newImagePostButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
+//        // Post Buttons OnPress Handlers
+//        final ImageButton newTextPostButton = (ImageButton) findViewById(R.id.new_text_post_button);
+//        final ImageButton newImagePostButton = (ImageButton) findViewById(R.id.new_image_post_button);
+//
+//        assert newTextPostButton != null;
+//        newTextPostButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                Intent intent = new Intent(getApplicationContext(), NewPostActivity.class);
+//                startActivityForResult(intent, NEW_POST_REQUEST_CODE);
+//                overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+//            }
+//        });
+//
+//        assert newImagePostButton != null;
+//        newImagePostButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//
+//            }
+//        });
     }
 
     @Override
@@ -261,6 +272,28 @@ public class ProfileActivity extends AppCompatActivity {
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+                case FAV_TEAM_REQUEST_CODE:
+                    String favoriteTeam = data.getStringExtra("FAVORITE_TEAM");
+                    userProfileBundle.putString("FAVORITE_TEAM", favoriteTeam);
+                    ((ProfileEditFragment) editFragment).setFavTeam(editFragment.getView(), favoriteTeam);
+                    break;
+                case FAV_PLAYER_REQUEST_CODE:
+                    String favoritePlayer = data.getStringExtra("FAVORITE_PLAYER");
+                    userProfileBundle.putString("FAVORITE_PLAYER", favoritePlayer);
+                    ((ProfileEditFragment) editFragment).setFavPlayer(editFragment.getView(), favoritePlayer);
+                    break;
+                case NEW_POST_REQUEST_CODE:
+                    ((ProfilePostsFragment) postsFragment).addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
+                    break;
+            }
         }
     }
 
@@ -357,17 +390,6 @@ public class ProfileActivity extends AppCompatActivity {
                 + "</b> " + getString(R.string.profile_following)));
     }
 
-    public void togglePostButtons(boolean show) {
-        final RelativeLayout postButtonsContainer = (RelativeLayout) findViewById(R.id.profile_post_buttons_container);
-        assert postButtonsContainer != null;
-        if (show) {
-            postButtonsContainer.setVisibility(View.VISIBLE);
-        }
-        else {
-            postButtonsContainer.setVisibility(View.INVISIBLE);
-        }
-    }
-
     private void handleBackPressed() {
         if (editMode) {
             // Push profile changes to DB
@@ -399,6 +421,17 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
+    public void togglePostButtons(boolean show) {
+        final RelativeLayout postButtonsContainer = (RelativeLayout) findViewById(R.id.profile_post_buttons_container);
+        assert postButtonsContainer != null;
+        if (show) {
+            postButtonsContainer.setVisibility(View.VISIBLE);
+        }
+        else {
+            postButtonsContainer.setVisibility(View.INVISIBLE);
+        }
+    }
+
     public void editFavoriteTeam() {
         Intent intent = new Intent(this, FavoriteTeamActivity.class);
         startActivityForResult(intent, FAV_TEAM_REQUEST_CODE);
@@ -422,27 +455,6 @@ public class ProfileActivity extends AppCompatActivity {
     public void updateUserProfileBundleString(String key, String value) {
         userProfileBundle.putString(key, value);
     }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == FAV_TEAM_REQUEST_CODE) {
-            if (resultCode == RESULT_OK) {
-                String favoriteTeam = data.getStringExtra("FAVORITE_TEAM");
-                userProfileBundle.putString("FAVORITE_TEAM", favoriteTeam);
-                ((ProfileEditFragment) editFragment).setFavTeam(editFragment.getView(), favoriteTeam);
-            }
-        }
-        else if (requestCode == FAV_PLAYER_REQUEST_CODE) {
-            if (resultCode == RESULT_OK) {
-                String favoritePlayer = data.getStringExtra("FAVORITE_PLAYER");
-                userProfileBundle.putString("FAVORITE_PLAYER", favoritePlayer);
-                ((ProfileEditFragment) editFragment).setFavPlayer(editFragment.getView(), favoritePlayer);
-            }
-        }
-    }
-
-
 
     @Override
     public void onBackPressed() {
@@ -557,6 +569,7 @@ public class ProfileActivity extends AppCompatActivity {
             userProfile.setPepTalk(null);
             userProfile.setTrashTalk(null);
             userProfile.setNewUser(false);
+            userProfile.setPostsCount(0);
             mapper.save(userProfile);
         }
 
@@ -575,6 +588,7 @@ public class ProfileActivity extends AppCompatActivity {
                 userProfileBundle.putBoolean("IS_VARSITY_PLAYER", userProfile.getIsVarsityPlayer());
                 userProfileBundle.putString("TEAM", userProfile.getTeam());
                 userProfileBundle.putBoolean("SELF_PROFILE", true);
+                userProfileBundle.putInt("POSTS_COUNT", userProfile.getPostsCount());
             }
             else {
                 userProfileBundle.putString("FIRST_NAME", playerProfile.getFirstName());
@@ -588,6 +602,7 @@ public class ProfileActivity extends AppCompatActivity {
                 userProfileBundle.putString("PEP_TALK", null);
                 userProfileBundle.putString("TRASH_TALK", null);
                 userProfileBundle.putBoolean("SELF_PROFILE", false);
+                userProfileBundle.putInt("POSTS_COUNT", 0);
                 // TODO: fix hardcoded true for IS_VARSITY_PLAYER
                 // TODO: allow users to view non-player profiles
                 userProfileBundle.putBoolean("IS_VARSITY_PLAYER", true);

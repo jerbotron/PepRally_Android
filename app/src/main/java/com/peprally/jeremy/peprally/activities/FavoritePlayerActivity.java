@@ -20,7 +20,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.adapter.RVPlayersAdapter;
+import com.peprally.jeremy.peprally.adapter.PlayersCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 
@@ -28,8 +28,8 @@ import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 public class FavoritePlayerActivity extends AppCompatActivity {
 
     private PaginatedQueryList<DBPlayerProfile> roster;
-    private RecyclerView rv;
-    private RVPlayersAdapter rvPlayersAdapter;
+    private RecyclerView recyclerView;
+    private PlayersCardAdapter playersCardAdapter;
     private String callingActivity;
     private boolean dataFetched = false;
 
@@ -45,12 +45,11 @@ public class FavoritePlayerActivity extends AppCompatActivity {
         ActionBar supportActionBar = getSupportActionBar();
         supportActionBar.setTitle(team);
 
-        rv = (RecyclerView) findViewById(R.id.rv_browse_players);
+        recyclerView = (RecyclerView) findViewById(R.id.rv_browse_players);
         LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getApplicationContext());
-        rv.setHasFixedSize(true);
-        rv.setLayoutManager(rvLayoutManager);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(rvLayoutManager);
 
-//        Log.d(TAG, "loading players for: " + team);
         new FetchTeamRosterTask().execute(team);
     }
 
@@ -63,10 +62,10 @@ public class FavoritePlayerActivity extends AppCompatActivity {
     }
 
     private void initializeAdapter(PaginatedQueryList<DBPlayerProfile> result) {
-        roster = result;
-        rvPlayersAdapter = new RVPlayersAdapter(FavoritePlayerActivity.this, roster);
-        rv.setAdapter(rvPlayersAdapter);
-        rvPlayersAdapter.setOnItemClickListener(new RVPlayersAdapter.PlayersAdapterClickListener() {
+        this.roster = result;
+        playersCardAdapter = new PlayersCardAdapter(FavoritePlayerActivity.this, roster);
+        recyclerView.setAdapter(playersCardAdapter);
+        playersCardAdapter.setOnItemClickListener(new PlayersCardAdapter.PlayersAdapterClickListener() {
             @Override
             public void onItemClick(View v, int position) {
                 if (callingActivity.equals("ProfileActivity")) {
@@ -89,6 +88,8 @@ public class FavoritePlayerActivity extends AppCompatActivity {
             }
         });
     }
+
+    /********************************** AsyncTasks **********************************/
 
     private class FetchTeamRosterTask extends AsyncTask<String, Void, PaginatedQueryList<DBPlayerProfile>> {
         @Override

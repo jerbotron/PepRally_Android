@@ -36,4 +36,7 @@
     <string name="default_post_question_5"><i>Share your best trash talk about another school!</i></string>
     <string name="default_post_question_4"><i>You win a FREE BURRITO! (After you make a post)</i></string>
 
+    <string name="example_text">This is a sample post message to see what the view would
+        look like on a card. This sentence has no meaning, it\'s a waste of time to read it. Okay thanks bye.</string>
+
 </resources>

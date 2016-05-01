@@ -22,6 +22,7 @@ public class DBUserProfile {
     private boolean isVarsityPlayer;
     private String team;
     private int playerIndex;
+    private int postsCount;
 
     @DynamoDBHashKey(attributeName = "CognitoID")
     public String getCognitoId() {
@@ -183,5 +184,14 @@ public class DBUserProfile {
 
     public void setPlayerIndex(int index) {
         this.playerIndex = index;
+    }
+
+    @DynamoDBAttribute(attributeName = "PostsCount")
+    public int getPostsCount() {
+        return postsCount;
+    }
+
+    public void setPostsCount(int postsCount) {
+        this.postsCount = postsCount;
     }
 }

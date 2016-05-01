@@ -57,28 +57,38 @@
         android:id="@+id/profile_post_buttons_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <LinearLayout
-            android:layout_width="match_parent"
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab_profile_new_post"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_alignParentBottom="true">
+            android:layout_margin="@dimen/fab_margin"
+            android:src="@drawable/ic_post_msg"
+            app:backgroundTint="@android:color/holo_red_light"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:clickable="true" />
+        <!--<LinearLayout-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:orientation="horizontal"-->
+            <!--android:layout_alignParentBottom="true">-->
 
-            <ImageButton
-                android:id="@+id/new_text_post_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:src="@drawable/ic_post_msg"
-                android:clickable="true"/>
+            <!--<ImageButton-->
+                <!--android:id="@+id/new_text_post_button"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_weight="1"-->
+                <!--android:src="@drawable/ic_post_msg"-->
+                <!--android:clickable="true"/>-->
 
-            <ImageButton
-                android:id="@+id/new_image_post_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:src="@drawable/ic_photo"
-                android:clickable="true"/>
-        </LinearLayout>
+            <!--<ImageButton-->
+                <!--android:id="@+id/new_image_post_button"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_weight="1"-->
+                <!--android:src="@drawable/ic_photo"-->
+                <!--android:clickable="true"/>-->
+        <!--</LinearLayout>-->
     </RelativeLayout>
 
     <android.support.design.widget.FloatingActionButton

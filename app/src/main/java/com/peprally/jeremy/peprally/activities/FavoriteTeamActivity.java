@@ -16,7 +16,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpr
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.adapter.RVTeamsAdapter;
+import com.peprally.jeremy.peprally.adapter.TeamsCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBSport;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.Team;
@@ -28,8 +28,8 @@ import java.util.List;
 public class FavoriteTeamActivity extends AppCompatActivity {
 
     private List<Team> teams;
-    private RecyclerView rv;
-    private RVTeamsAdapter rvTeamsAdapter;
+    private RecyclerView recyclerView;
+    private TeamsCardAdapter teamsCardAdapter;
     private boolean dataFetched = false;
 
     @Override
@@ -40,10 +40,10 @@ public class FavoriteTeamActivity extends AppCompatActivity {
         ActionBar supportActionBar = getSupportActionBar();
         supportActionBar.setTitle("Pick a favorite team");
 
-        rv = (RecyclerView) findViewById(R.id.rv_browse_teams);
+        recyclerView = (RecyclerView) findViewById(R.id.rv_browse_teams);
         LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getApplicationContext());
-        rv.setHasFixedSize(true);
-        rv.setLayoutManager(rvLayoutManager);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(rvLayoutManager);
 
         new FetchSportsTableTask().execute();
     }
@@ -67,12 +67,11 @@ public class FavoriteTeamActivity extends AppCompatActivity {
     }
 
     private void initializeAdapter() {
-        rvTeamsAdapter = new RVTeamsAdapter(teams);
-        rv.setAdapter(rvTeamsAdapter);
-        rvTeamsAdapter.setOnItemClickListener(new RVTeamsAdapter.TeamsAdapterClickListener() {
+        teamsCardAdapter = new TeamsCardAdapter(teams);
+        recyclerView.setAdapter(teamsCardAdapter);
+        teamsCardAdapter.setOnItemClickListener(new TeamsCardAdapter.TeamsAdapterClickListener() {
             @Override
             public void onItemClick(View v, int position) {
-
                 Intent intent = new Intent();
                 intent.putExtra("FAVORITE_TEAM", teams.get(position).name);
                 setResult(Activity.RESULT_OK, intent);

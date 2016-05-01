@@ -16,9 +16,9 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.squareup.picasso.Picasso;
 
-public class RVPlayersAdapter extends RecyclerView.Adapter<RVPlayersAdapter.PlayerCardHolder>{
+public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.PlayerCardHolder>{
 
-    private  Context callingContext;
+    private Context callingContext;
     private PaginatedQueryList<DBPlayerProfile> roster;
     private static PlayersAdapterClickListener myClickListener;
     private static final String TAG = ProfileActivity.class.getSimpleName();
@@ -54,7 +54,7 @@ public class RVPlayersAdapter extends RecyclerView.Adapter<RVPlayersAdapter.Play
         this.myClickListener = myClickListener;
     }
 
-    public RVPlayersAdapter(Context callingContext, PaginatedQueryList<DBPlayerProfile> roster) {
+    public PlayersCardAdapter(Context callingContext, PaginatedQueryList<DBPlayerProfile> roster) {
         this.callingContext = callingContext;
         this.roster = roster;
     }

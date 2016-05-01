@@ -14,7 +14,7 @@ import com.peprally.jeremy.peprally.utils.Team;
 
 import java.util.List;
 
-public class RVTeamsAdapter extends RecyclerView.Adapter<RVTeamsAdapter.TeamCardHolder>{
+public class TeamsCardAdapter extends RecyclerView.Adapter<TeamsCardAdapter.TeamCardHolder>{
 
     private List<Team> teams;
     private static TeamsAdapterClickListener myClickListener;
@@ -47,7 +47,7 @@ public class RVTeamsAdapter extends RecyclerView.Adapter<RVTeamsAdapter.TeamCard
         this.myClickListener = myClickListener;
     }
 
-    public RVTeamsAdapter(List<Team> teams) {
+    public TeamsCardAdapter(List<Team> teams) {
         this.teams = teams;
     }
 

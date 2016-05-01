@@ -17,7 +17,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanLis
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.peprally.jeremy.peprally.activities.HomeActivity;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.adapter.RVTeamsAdapter;
+import com.peprally.jeremy.peprally.adapter.TeamsCardAdapter;
 import com.peprally.jeremy.peprally.utils.Team;
 import com.peprally.jeremy.peprally.db_models.DBSport;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
@@ -30,7 +30,7 @@ public class BrowseTeamsFragment extends Fragment {
 
     private List<Team> teams;
     private RecyclerView rv;
-    private RVTeamsAdapter rvTeamsAdapter;
+    private TeamsCardAdapter rvTeamsAdapter;
     private boolean dataFetched = false;
 
     private static final String TAG = HomeActivity.class.getSimpleName();
@@ -71,9 +71,9 @@ public class BrowseTeamsFragment extends Fragment {
     }
 
     private void initializeAdapter() {
-        rvTeamsAdapter = new RVTeamsAdapter(teams);
+        rvTeamsAdapter = new TeamsCardAdapter(teams);
         rv.setAdapter(rvTeamsAdapter);
-        rvTeamsAdapter.setOnItemClickListener(new RVTeamsAdapter.TeamsAdapterClickListener() {
+        rvTeamsAdapter.setOnItemClickListener(new TeamsCardAdapter.TeamsAdapterClickListener() {
             @Override
             public void onItemClick(View v, int position) {
                 ((HomeActivity) getActivity()).launchBrowsePlayerActivity(teams.get(position).name);
