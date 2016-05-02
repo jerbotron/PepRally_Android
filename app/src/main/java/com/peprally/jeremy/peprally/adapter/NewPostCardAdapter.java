@@ -3,7 +3,6 @@ package com.peprally.jeremy.peprally.adapter;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.Image;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.widget.CardView;
@@ -15,15 +14,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.db_models.DBUserNickname;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
+import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 
 import java.io.IOException;
@@ -37,6 +37,7 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
 
     private CognitoCachingCredentialsProvider credentialsProvider;
     private AmazonDynamoDBClient ddbClient;
+    private DynamoDBMapper mapper;
 
     private List<DBUserPost> posts;
 
@@ -67,6 +68,7 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
                 AWSCredentialProvider.COGNITO_REGION        // Region
         );
         ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+        mapper = new DynamoDBMapper(ddbClient);
     }
 
     @Override
@@ -118,6 +120,7 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
         newPost.setTimeStamp(df.format(c.getTime()));
         newPost.setTextContent(newPostText);
         new PushNewUserPostToDBTask().execute(newPost);
+        new PushPostsCountToDBTask().execute(bundle.getString("FIRST_NAME"));
         posts.add(0, newPost);
         notifyItemInserted(0);
     }
@@ -161,6 +164,8 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
         }
     }
 
+    /********************************** AsyncTasks **********************************/
+
     private class PushNewUserPostToDBTask extends AsyncTask<DBUserPost, Void, Void> {
         @Override
         protected Void doInBackground(DBUserPost... params) {
@@ -174,6 +179,22 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
             newUserPostMap.put("TextContent", new AttributeValue().withS(newUserPost.getTextContent()));
             ddbClient.putItem(new PutItemRequest().withTableName("UserPosts").withItem(newUserPostMap));
             return null;
+        }
+    }
+
+    private class PushPostsCountToDBTask extends AsyncTask<String, Void, Void> {
+        private com.peprally.jeremy.peprally.db_models.DBUserProfile userProfile;
+        @Override
+        protected Void doInBackground(String... params) {
+            userProfile = mapper.load(DBUserProfile.class, credentialsProvider.getIdentityId(), params[0]);
+            incrementPostsCount();
+            return null;
+        }
+
+        private void incrementPostsCount() {
+            int curPostCount = userProfile.getPostsCount();
+            userProfile.setPostsCount(curPostCount+1);
+            mapper.save(userProfile);
         }
     }
 }

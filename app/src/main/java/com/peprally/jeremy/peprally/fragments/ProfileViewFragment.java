@@ -13,7 +13,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.activities.ProfileActivity;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -9,4 +9,7 @@
     <color name="colorWhite">#FFFFFF</color>
     <color name="colorBackground">#F9F9F9</color>
     <color name="colorFollowing">#66BD2B</color>
+
+    <color name="colorFABFistbump">#CC5D00</color>
+    <color name="colorFABPost">#FF4444</color>
 </resources>

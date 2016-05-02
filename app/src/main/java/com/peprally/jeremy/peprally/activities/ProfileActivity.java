@@ -1,6 +1,8 @@
 package com.peprally.jeremy.peprally.activities;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
@@ -23,7 +25,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageButton;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
@@ -56,6 +58,8 @@ import java.util.HashMap;
 public class ProfileActivity extends AppCompatActivity {
 
     private ActionBar supportActionBar;
+    private AppBarLayout appBarLayout;
+    private FloatingActionButton actionFAB;
     private Fragment viewFragment, postsFragment, editFragment;
     private FragmentManager fragmentManager;
     private FragmentTransaction fragmentTransaction;
@@ -118,7 +122,7 @@ public class ProfileActivity extends AppCompatActivity {
         new LoadUserProfileFromDBTask().execute(userFacebookID);
 
         setContentView(R.layout.activity_profile);
-        togglePostButtons(false);
+//        togglePostButtons(false);
         final CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.profile_collapse_toolbar);
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_profile);
         assert collapsingToolbarLayout != null && toolbar != null;
@@ -129,7 +133,7 @@ public class ProfileActivity extends AppCompatActivity {
         supportActionBar.setTitle(null);
         supportActionBar.setDisplayHomeAsUpEnabled(true);
 
-        final AppBarLayout appBarLayout = (AppBarLayout) findViewById(R.id.profile_app_bar_layout);
+        appBarLayout = (AppBarLayout) findViewById(R.id.profile_app_bar_layout);
         assert appBarLayout != null;
         appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
             @Override
@@ -148,9 +152,9 @@ public class ProfileActivity extends AppCompatActivity {
         // Follow Button and FAB
         final LinearLayout followButton = (LinearLayout) findViewById(R.id.button_follow_wrapper);
         final TextView followButtonContent = (TextView) findViewById(R.id.button_follow_content);
-        final FloatingActionButton fistbumpFab = (FloatingActionButton) findViewById(R.id.profile_firstbump_fab);
-        assert followButton != null && followButtonContent != null && fistbumpFab != null;
-        CoordinatorLayout.LayoutParams fistbumpFabLayoutParams = (CoordinatorLayout.LayoutParams) fistbumpFab.getLayoutParams();
+        actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
+        assert followButton != null && followButtonContent != null && actionFAB != null;
+//        CoordinatorLayout.LayoutParams fistbumpFabLayoutParams = (CoordinatorLayout.LayoutParams) actionFAB.getLayoutParams();
         // If user is viewing their own profile
         if (selfProfile) {
             followButton.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_view_fistbumps));
@@ -164,9 +168,16 @@ public class ProfileActivity extends AppCompatActivity {
                 }
             });
 
-            fistbumpFabLayoutParams.setAnchorId(View.NO_ID);
-            fistbumpFab.setLayoutParams(fistbumpFabLayoutParams);
-            fistbumpFab.setVisibility(View.GONE);
+            actionFAB.setImageDrawable(getResources().getDrawable(R.drawable.ic_post_msg));
+            actionFAB.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colorFABPost)));
+            actionFAB.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(getApplicationContext(), NewPostActivity.class);
+                    startActivityForResult(intent, NEW_POST_REQUEST_CODE);
+                    overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+                }
+            });
         }
         // If user is viewing another user's profile
         else {
@@ -190,49 +201,15 @@ public class ProfileActivity extends AppCompatActivity {
                 }
             });
 
-            fistbumpFabLayoutParams.setAnchorId(R.id.profile_app_bar_layout);
-            fistbumpFab.setLayoutParams(fistbumpFabLayoutParams);
-            fistbumpFab.setVisibility(View.VISIBLE);
-            fistbumpFab.setOnClickListener(new View.OnClickListener() {
+            actionFAB.setImageDrawable(getResources().getDrawable(R.drawable.icon_fist_bump));
+            actionFAB.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colorFABFistbump)));
+            actionFAB.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Toast.makeText(ProfileActivity.this, "FIST BUMP", Toast.LENGTH_SHORT).show();
                 }
             });
         }
-
-        final FloatingActionButton newPostFab = (FloatingActionButton) findViewById(R.id.fab_profile_new_post);
-        assert newPostFab != null;
-        newPostFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), NewPostActivity.class);
-                startActivityForResult(intent, NEW_POST_REQUEST_CODE);
-                overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
-            }
-        });
-
-//        // Post Buttons OnPress Handlers
-//        final ImageButton newTextPostButton = (ImageButton) findViewById(R.id.new_text_post_button);
-//        final ImageButton newImagePostButton = (ImageButton) findViewById(R.id.new_image_post_button);
-//
-//        assert newTextPostButton != null;
-//        newTextPostButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Intent intent = new Intent(getApplicationContext(), NewPostActivity.class);
-//                startActivityForResult(intent, NEW_POST_REQUEST_CODE);
-//                overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
-//            }
-//        });
-//
-//        assert newImagePostButton != null;
-//        newImagePostButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//
-//            }
-//        });
     }
 
     @Override
@@ -253,7 +230,9 @@ public class ProfileActivity extends AppCompatActivity {
             case R.id.edit_profile_item:
                 if (!editMode) {
                     // Switch Fragment to editFragment
+                    appBarLayout.setExpanded(false, false);
                     tabLayout.setVisibility(View.GONE);
+                    actionFAB.setVisibility(View.INVISIBLE);
                     adapter.addFrag(editFragment, "Edit Profile");
                     adapter.attachFrag(2);
                     adapter.notifyDataSetChanged();
@@ -326,12 +305,12 @@ public class ProfileActivity extends AppCompatActivity {
 
             @Override
             public void onPageSelected(int position) {
-                if (position == 1 && selfProfile) {
-                    togglePostButtons(true);
-                }
-                else {
-                    togglePostButtons(false);
-                }
+//                if (position == 1 && selfProfile) {
+//                    togglePostButtons(true);
+//                }
+//                else {
+//                    togglePostButtons(false);
+//                }
             }
 
             @Override
@@ -396,7 +375,9 @@ public class ProfileActivity extends AppCompatActivity {
             new PushProfileChangesToDBTask().execute();
 
             // Switch Fragment back to viewFragment
+            appBarLayout.setExpanded(true, false);
             tabLayout.setVisibility(View.VISIBLE);
+            actionFAB.setVisibility(View.VISIBLE);
             adapter.detachFrag(2);
             adapter.removeFrag(2);
             adapter.notifyDataSetChanged();
@@ -421,16 +402,16 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
-    public void togglePostButtons(boolean show) {
-        final RelativeLayout postButtonsContainer = (RelativeLayout) findViewById(R.id.profile_post_buttons_container);
-        assert postButtonsContainer != null;
-        if (show) {
-            postButtonsContainer.setVisibility(View.VISIBLE);
-        }
-        else {
-            postButtonsContainer.setVisibility(View.INVISIBLE);
-        }
-    }
+//    public void togglePostButtons(boolean show) {
+//        final RelativeLayout postButtonsContainer = (RelativeLayout) findViewById(R.id.profile_post_buttons_container);
+//        assert postButtonsContainer != null;
+//        if (show) {
+//            postButtonsContainer.setVisibility(View.VISIBLE);
+//        }
+//        else {
+//            postButtonsContainer.setVisibility(View.INVISIBLE);
+//        }
+//    }
 
     public void editFavoriteTeam() {
         Intent intent = new Intent(this, FavoriteTeamActivity.class);
@@ -464,7 +445,10 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-//        Log.d(TAG, "profile activity resumed");
+        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+//        imm.hideSoftInputFromWindow(findViewById(R.id.profile_activity_root).getWindowToken(), 0);
+        Log.d(TAG, "profile activity resumed");
     }
 
     @Override

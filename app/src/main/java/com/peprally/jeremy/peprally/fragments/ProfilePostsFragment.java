@@ -32,9 +32,11 @@ import java.util.List;
 public class ProfilePostsFragment extends Fragment {
 
     private List<DBUserPost> posts;
-    private RecyclerView recyclerView;
+    private LinearLayout profilePostsContainer;
     private NewPostCardAdapter newPostCardAdapter;
-    private boolean dataFetched= false;
+    private RecyclerView recyclerView;
+    private TextView emptyMsgView;
+    private boolean dataFetched = false, emptyPosts = false;
 
     private Bundle userProfileBundle;
     private static final String TAG = ProfilePostsFragment.class.getSimpleName();
@@ -43,8 +45,17 @@ public class ProfilePostsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile_posts, container, false);
         userProfileBundle = getArguments();
-        final TextView emptyMsgView = (TextView) view.findViewById(R.id.profile_posts_empty_text);
+
+        recyclerView = (RecyclerView) view.findViewById(R.id.recycler_view_profile_posts);
+        LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getActivity());
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(rvLayoutManager);
+
+        emptyMsgView = (TextView) view.findViewById(R.id.profile_posts_empty_text);
+        profilePostsContainer = (LinearLayout) view.findViewById(R.id.container_profile_posts);
+
         if (userProfileBundle.getInt("POSTS_COUNT") == 0) {
+            emptyPosts = true;
             if (userProfileBundle.getBoolean("SELF_PROFILE")) {
                 emptyMsgView.setText("You have not created any posts yet!");
             }
@@ -53,12 +64,7 @@ public class ProfilePostsFragment extends Fragment {
             }
         }
         else {
-            final LinearLayout profilePostsContainer = (LinearLayout) view.findViewById(R.id.container_profile_posts);
             profilePostsContainer.removeView(emptyMsgView);
-            recyclerView = (RecyclerView) view.findViewById(R.id.recycler_view_profile_posts);
-            LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getActivity());
-            recyclerView.setHasFixedSize(true);
-            recyclerView.setLayoutManager(rvLayoutManager);
             new FetchUserPostsTask().execute(userProfileBundle.getString("NICKNAME"));
         }
         return view;
@@ -67,9 +73,9 @@ public class ProfilePostsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (dataFetched) {
-            initializeAdapter(posts);
-        }
+//        if (dataFetched && !emptyPosts) {
+//            initializeAdapter(posts);
+//        }
     }
 
     private void initializeAdapter(List<DBUserPost> result) {
@@ -85,6 +91,15 @@ public class ProfilePostsFragment extends Fragment {
         Bundle bundle = new Bundle();
         bundle.putString("NICKNAME", userProfileBundle.getString("NICKNAME"));
         bundle.putString("FACEBOOK_ID", userProfileBundle.getString("FACEBOOK_ID"));
+        bundle.putString("FIRST_NAME", userProfileBundle.getString("FIRST_NAME"));
+        if (newPostCardAdapter == null) {
+            posts = new ArrayList<>();
+            newPostCardAdapter = new NewPostCardAdapter(getActivity(), posts);
+            recyclerView.setAdapter(newPostCardAdapter);
+        }
+        if (userProfileBundle.getInt("POSTS_COUNT") == 0) {
+            profilePostsContainer.removeView(emptyMsgView);
+        }
         newPostCardAdapter.addPost(newPostText, bundle);
     }
 

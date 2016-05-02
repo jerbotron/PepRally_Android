@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/profile_activity_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
@@ -58,15 +59,15 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
         <android.support.design.widget.FloatingActionButton
-            android:id="@+id/fab_profile_new_post"
+            android:id="@+id/fab_profile_action"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="@dimen/fab_margin"
-            android:src="@drawable/ic_post_msg"
-            app:backgroundTint="@android:color/holo_red_light"
+            android:src="@drawable/icon_fist_bump"
+            android:clickable="true"
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
-            android:clickable="true" />
+            app:backgroundTint="@color/colorFABFistbump" />
         <!--<LinearLayout-->
             <!--android:layout_width="match_parent"-->
             <!--android:layout_height="wrap_content"-->
@@ -90,16 +91,5 @@
                 <!--android:clickable="true"/>-->
         <!--</LinearLayout>-->
     </RelativeLayout>
-
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/profile_firstbump_fab"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="@dimen/fab_margin"
-        android:src="@drawable/icon_fist_bump"
-        app:backgroundTint="@android:color/holo_green_light"
-        app:layout_anchor="@id/profile_app_bar_layout"
-        app:layout_anchorGravity="bottom|end"
-        android:clickable="true" />
 
 </android.support.design.widget.CoordinatorLayout>
