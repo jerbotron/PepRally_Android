@@ -2,6 +2,8 @@ package com.peprally.jeremy.peprally.db_models;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 
+import java.util.Set;
+
 @DynamoDBTable(tableName = "UserPosts")
 public class DBUserPost {
     private String nickname;
@@ -10,6 +12,10 @@ public class DBUserPost {
     private String facebookID;
     private String timeStamp;
     private String textContent;
+    private int numberOfLikes;
+    private int numberOfComments;
+    private Set<String> likedUsers;
+    private Set<String> dislikedUsers;
 
     @DynamoDBHashKey(attributeName = "Nickname")
     public String getNickname() {
@@ -63,5 +69,57 @@ public class DBUserPost {
 
     public void setTextContent(String textContent) {
         this.textContent = textContent;
+    }
+
+    @DynamoDBAttribute(attributeName = "NumberOfLikes")
+    public int getNumberOfLikes() {
+        return numberOfLikes;
+    }
+
+    public void setNumberOfLikes(int numberOfLikes) {
+        this.numberOfLikes = numberOfLikes;
+    }
+
+    @DynamoDBAttribute(attributeName = "NumberOfComments")
+    public int getNumberOfComments() {
+        return numberOfComments;
+    }
+
+    public void setNumberOfComments(int numberOfComments) {
+        this.numberOfComments = numberOfComments;
+    }
+
+    @DynamoDBAttribute(attributeName = "LikedUsers")
+    public Set<String> getLikedUsers() {
+        return likedUsers;
+    }
+
+    public void setLikedUsers(Set<String> likedUsers) {
+        this.likedUsers = likedUsers;
+    }
+
+    public void addLikedUsers(String user) {
+        likedUsers.add(user);
+    }
+
+    public void removeLikedUsers(String user) {
+        likedUsers.remove(user);
+    }
+
+    @DynamoDBAttribute(attributeName = "DislikedUsers")
+    public Set<String> getDislikedUsers() {
+        return dislikedUsers;
+    }
+
+    public void setDislikedUsers(Set<String> dislikedUsers) {
+        this.dislikedUsers = dislikedUsers;
+    }
+
+    public void adddislikedUsers(String user) {
+        dislikedUsers.add(user);
+    }
+
+    public void removedislikedUsers(String user) {
+        dislikedUsers.remove(user);
     }
 }

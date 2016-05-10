@@ -437,6 +437,10 @@ public class ProfileActivity extends AppCompatActivity {
         userProfileBundle.putString(key, value);
     }
 
+    public String getUserProfileBundleString(String key) {
+        return userProfileBundle.getString(key);
+    }
+
     @Override
     public void onBackPressed() {
         handleBackPressed();
@@ -445,9 +449,9 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        // Hide soft keyboard
         InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
-//        imm.hideSoftInputFromWindow(findViewById(R.id.profile_activity_root).getWindowToken(), 0);
         Log.d(TAG, "profile activity resumed");
     }
 

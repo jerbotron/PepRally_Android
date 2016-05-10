@@ -47,12 +47,13 @@
             </LinearLayout>
         </RelativeLayout>
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:clickable="true">
             <LinearLayout
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
                 <!--<TextView-->
@@ -77,19 +78,53 @@
                     android:textStyle="italic"
                     android:text="nickname" />
             </LinearLayout>
+            <TextView
+                android:id="@+id/text_view_post_content"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/example_text"
+                android:textColor="@android:color/black">
+            </TextView>
             <LinearLayout
-                android:id="@+id/new_post_view_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:orientation="vertical">
-                <TextView
-                    android:id="@+id/text_view_post_content"
-                    android:layout_width="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <ImageButton
+                    android:id="@+id/image_button_post_thumbs_up"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="string/example_text"
-                    android:textColor="@android:color/black">
-                </TextView>
+                    android:src="@drawable/ic_thumb_up"
+                    android:backgroundTint="@color/colorWhite"
+                    android:clickable="true"/>
+                <TextView
+                    android:id="@+id/text_view_post_likes"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textStyle="bold"
+                    android:textColor="@color/colorAccent"/>
+                <ImageButton
+                    android:id="@+id/image_button_post_thumbs_down"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_thumb_down"
+                    android:backgroundTint="@color/colorWhite"
+                    android:clickable="true"/>
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1" />
+                <TextView
+                    android:id="@+id/text_view_post_comments"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="0"
+                    android:textStyle="bold"
+                    android:drawablePadding="4dp"
+                    android:drawableRight="@drawable/ic_replies"
+                    android:clickable="true"/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

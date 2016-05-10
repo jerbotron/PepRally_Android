@@ -6,10 +6,13 @@
     <color name="colorAccent">#A5A5A5</color>
     <color name="colorAccentDark">#343434</color>
 
-    <color name="colorWhite">#FFFFFF</color>
     <color name="colorBackground">#F9F9F9</color>
     <color name="colorFollowing">#66BD2B</color>
 
     <color name="colorFABFistbump">#CC5D00</color>
     <color name="colorFABPost">#FF4444</color>
+
+    <color name="colorWhite">#FFFFFF</color>
+    <color name="colorRed">#FF4422</color>
+    <color name="colorGreen">#66CD2B</color>
 </resources>
