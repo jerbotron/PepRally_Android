@@ -8,7 +8,6 @@ import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
-import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -28,7 +27,6 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -122,7 +120,6 @@ public class ProfileActivity extends AppCompatActivity {
         new LoadUserProfileFromDBTask().execute(userFacebookID);
 
         setContentView(R.layout.activity_profile);
-//        togglePostButtons(false);
         final CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.profile_collapse_toolbar);
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_profile);
         assert collapsingToolbarLayout != null && toolbar != null;
@@ -297,28 +294,6 @@ public class ProfileActivity extends AppCompatActivity {
         viewPagerProfile.setAdapter(adapter);
         viewPagerProfile.setCurrentItem(0);
 
-        viewPagerProfile.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-            @Override
-            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-
-            }
-
-            @Override
-            public void onPageSelected(int position) {
-//                if (position == 1 && selfProfile) {
-//                    togglePostButtons(true);
-//                }
-//                else {
-//                    togglePostButtons(false);
-//                }
-            }
-
-            @Override
-            public void onPageScrollStateChanged(int state) {
-
-            }
-        });
-
         tabLayout = (TabLayout) findViewById(R.id.tablayout_profile);
         assert tabLayout != null;
         tabLayout.setupWithViewPager(viewPagerProfile);
@@ -402,17 +377,6 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
-//    public void togglePostButtons(boolean show) {
-//        final RelativeLayout postButtonsContainer = (RelativeLayout) findViewById(R.id.profile_post_buttons_container);
-//        assert postButtonsContainer != null;
-//        if (show) {
-//            postButtonsContainer.setVisibility(View.VISIBLE);
-//        }
-//        else {
-//            postButtonsContainer.setVisibility(View.INVISIBLE);
-//        }
-//    }
-
     public void editFavoriteTeam() {
         Intent intent = new Intent(this, FavoriteTeamActivity.class);
         startActivityForResult(intent, FAV_TEAM_REQUEST_CODE);
@@ -451,8 +415,10 @@ public class ProfileActivity extends AppCompatActivity {
         super.onResume();
         // Hide soft keyboard
         InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
-        Log.d(TAG, "profile activity resumed");
+        if (imm.isAcceptingText()) {
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+        }
+//        Log.d(TAG, "profile activity resumed");
     }
 
     @Override

@@ -129,7 +129,7 @@ public class HomeActivity extends AppCompatActivity
         if (id == R.id.nav_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
-            overridePendingTransition(R.anim.right_in, R.anim.right_out);
+            overridePendingTransition(R.anim.right_in, R.anim.left_out);
         } else if (id == R.id.nav_logout) {
             finish();
             LoginManager.getInstance().logOut();
@@ -153,7 +153,7 @@ public class HomeActivity extends AppCompatActivity
         userProfileBundle.putString("FACEBOOK_ID", fbProfile.getId());
         intent.putExtra("USER_PROFILE_BUNDLE", userProfileBundle);
         startActivity(intent);
-        overridePendingTransition(R.anim.right_in, R.anim.right_out);
+        overridePendingTransition(R.anim.right_in, R.anim.left_out);
     }
 
     private void setupViewPager(ViewPager viewPager) {
@@ -170,6 +170,6 @@ public class HomeActivity extends AppCompatActivity
         intent.putExtra("CALLING_ACTIVITY", "HomeActivity");
         intent.putExtra("TEAM", team);
         startActivity(intent);
-        overridePendingTransition(R.anim.left_in, R.anim.left_out);
+        overridePendingTransition(R.anim.left_in, R.anim.right_out);
     }
 }

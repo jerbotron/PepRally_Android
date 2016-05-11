@@ -27,8 +27,8 @@
             android:name=".activities.ProfileActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustPan|stateHidden"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:theme="@style/AppTheme.NoActionBar"
+            android:windowSoftInputMode="adjustPan|stateHidden" />
         <activity
             android:name=".activities.HomeActivity"
             android:label="@string/app_name"
@@ -44,14 +44,17 @@
             android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
             android:label="@string/app_name"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-        <activity android:name=".activities.FavoriteTeamActivity"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".activities.FavoritePlayerActivity"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".activities.NewPostActivity"
-            android:theme="@style/NewPostTheme"
+        <activity
+            android:name=".activities.FavoriteTeamActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".activities.FavoritePlayerActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".activities.NewPostActivity"
             android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustResize"/>
+            android:theme="@style/NewPostTheme"
+            android:windowSoftInputMode="adjustResize" />
 
         <provider
             android:name="com.facebook.FacebookContentProvider"
@@ -73,6 +76,7 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
+        <activity android:name=".activities.NewPostCommentActivity"></activity>
     </application>
 
 </manifest>
