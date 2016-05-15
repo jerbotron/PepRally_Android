@@ -110,7 +110,7 @@ public class NewPostActivity extends AppCompatActivity {
                 finish();
                 // Hide soft keyboard if keyboard is up
                 EditText et = (EditText) findViewById(R.id.id_edit_text_new_post);
-                Helpers.hideSoftkeyboard(NewPostActivity.this, et);
+                Helpers.hideSoftKeyboard(NewPostActivity.this, et);
             }
         });
     }
@@ -122,7 +122,7 @@ public class NewPostActivity extends AppCompatActivity {
                 finish();
                 // Hide soft keyboard if keyboard is up
                 EditText et = (EditText) findViewById(R.id.id_edit_text_new_post);
-                Helpers.hideSoftkeyboard(this, et);
+                Helpers.hideSoftKeyboard(this, et);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

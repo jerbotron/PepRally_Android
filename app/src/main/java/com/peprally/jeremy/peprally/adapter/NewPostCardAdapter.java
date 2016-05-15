@@ -164,7 +164,8 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
                     }
                     // Remove user from likedUsers set
                     curPost.removeLikedUsers(userNickName);
-                    new PushUserPostChangesToDBTask().execute(curPost);
+                    new AsyncHelpers.PushUserPostChangesToDBTask().execute(
+                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper));
                 }
                 // If user has not liked the post yet
                 else {
@@ -187,7 +188,8 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
                     // Remove user from dislikedUsers set and add to likedUsers set
                     curPost.addLikedUsers(userNickName);
                     curPost.removedislikedUsers(userNickName);
-                    new PushUserPostChangesToDBTask().execute(curPost);
+                    new AsyncHelpers.PushUserPostChangesToDBTask().execute(
+                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper));
                 }
             }
         });
@@ -212,7 +214,8 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
                     }
                     // Remove user from likedUsers set
                     curPost.removedislikedUsers(userNickName);
-                    new PushUserPostChangesToDBTask().execute(curPost);
+                    new AsyncHelpers.PushUserPostChangesToDBTask().execute(
+                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper));
                 }
                 // If user has not disliked the post yet
                 else {
@@ -235,7 +238,8 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
                     // Remove user from dislikedUsers set and add to likedUsers set
                     curPost.adddislikedUsers(userNickName);
                     curPost.removeLikedUsers(userNickName);
-                    new PushUserPostChangesToDBTask().execute(curPost);
+                    new AsyncHelpers.PushUserPostChangesToDBTask().execute(
+                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper));
                 }
             }
         });
@@ -253,7 +257,7 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
                 postCommentBundle.putInt("COMMENTS_COUNT", curPost.getNumberOfComments());
                 Intent intent = new Intent(callingContext, NewPostCommentActivity.class);
                 intent.putExtra("POST_COMMENT_BUNDLE", postCommentBundle);
-                ((ProfileActivity) callingContext).startActivityForResult(intent, ProfileActivity.DELETE_POST_REQUEST_CODE);
+                ((ProfileActivity) callingContext).startActivityForResult(intent, ProfileActivity.POST_COMMENT_REQUEST_CODE);
                 ((ProfileActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
 //                ((ProfileActivity) callingContext).finish();
             }
@@ -288,14 +292,6 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
     }
 
     /********************************** AsyncTasks **********************************/
-    private class PushUserPostChangesToDBTask extends AsyncTask<DBUserPost, Void, Void> {
-        @Override
-        protected Void doInBackground(DBUserPost... params) {
-            mapper.save(params[0]);
-            return null;
-        }
-    }
-
     private class PushNewUserPostToDBTask extends AsyncTask<DBUserPost, Void, DBUserPost> {
         @Override
         protected DBUserPost doInBackground(DBUserPost... params) {

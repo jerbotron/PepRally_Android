@@ -26,7 +26,7 @@ public class Helpers {
         return isKeyboardShown;
     }
 
-    public static void hideSoftkeyboard(Activity context, View view) {
+    public static void hideSoftKeyboard(Activity context, View view) {
         // Hide soft keyboard if keyboard is up
         if (isKeyboardShown(view.getRootView())) {
             InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);

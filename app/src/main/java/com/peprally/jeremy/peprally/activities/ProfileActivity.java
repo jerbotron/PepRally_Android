@@ -60,7 +60,7 @@ public class ProfileActivity extends AppCompatActivity {
     public final static int FAV_TEAM_REQUEST_CODE = 0;
     public final static int FAV_PLAYER_REQUEST_CODE = 1;
     public final static int NEW_POST_REQUEST_CODE = 2;
-    public final static int DELETE_POST_REQUEST_CODE = 3;
+    public final static int POST_COMMENT_REQUEST_CODE = 3;
 
     // PRIVATE MEMBER VARs:
     private ActionBar supportActionBar;
@@ -273,7 +273,7 @@ public class ProfileActivity extends AppCompatActivity {
                 case NEW_POST_REQUEST_CODE:
                     ((ProfilePostsFragment) postsFragment).addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
                     break;
-                case DELETE_POST_REQUEST_CODE:
+                case POST_COMMENT_REQUEST_CODE:
                     new AsyncHelpers.PushUserProfilePostsCountToDBTask().execute(
                             new AsyncHelpers.asyncTaskObjectUserInfoBundle(
                                     credentialsProvider.getIdentityId(),
@@ -281,6 +281,16 @@ public class ProfileActivity extends AppCompatActivity {
                                     false,      // decrement post count
                                     mapper));
                     refreshPostsFragment();
+                    break;
+            }
+        }
+        else if (resultCode == RESULT_CANCELED) {
+            switch (requestCode) {
+                case POST_COMMENT_REQUEST_CODE:
+                    assert (data != null);
+                    if (data.getBooleanExtra("POST_DATA_CHANGED", false)) {
+                        refreshPostsFragment();
+                    }
                     break;
             }
         }
@@ -432,14 +442,6 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Hide soft keyboard
-//        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-//        imm.hideSoftInputFromInputMethod(getCurrentFocus().getWindowToken(), 0);
-//        imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
-//        if (imm.isAcceptingText()) {
-//            Log.d(TAG, "hide keyboard");
-//            imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
-//        }
 //        Log.d(TAG, "profile activity resumed");
     }
 

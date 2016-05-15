@@ -8,11 +8,14 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
+
+import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.net.URL;
@@ -38,16 +41,19 @@ public class AsyncHelpers {
     public static class asyncTaskObjectThumbsUpDownButtons {
         public ImageButton thumbsUp;
         public ImageButton thumbsDown;
+        public TextView likesCount;
         public Context callingContext;
         public Bundle dataBundle;
         public DynamoDBMapper mapper;
         public asyncTaskObjectThumbsUpDownButtons(ImageButton thumbsUp,
-                                           ImageButton thumbsDown,
-                                           Context callingContext,
-                                           Bundle dataBundle,
-                                           DynamoDBMapper mapper) {
+                                                  ImageButton thumbsDown,
+                                                  TextView likesCount,
+                                                  Context callingContext,
+                                                  Bundle dataBundle,
+                                                  DynamoDBMapper mapper) {
             this.thumbsUp = thumbsUp;
             this.thumbsDown = thumbsDown;
+            this.likesCount = likesCount;
             this.callingContext = callingContext;
             this.dataBundle = dataBundle;
             this.mapper = mapper;
@@ -59,7 +65,6 @@ public class AsyncHelpers {
         public String firstName;
         public boolean incrementPost;
         public DynamoDBMapper mapper;
-
         public asyncTaskObjectUserInfoBundle(String cognitoID,
                                              String firstName,
                                              boolean incrementPost,
@@ -67,6 +72,16 @@ public class AsyncHelpers {
             this.cognitoID = cognitoID;
             this.firstName = firstName;
             this.incrementPost = incrementPost;
+            this.mapper = mapper;
+        }
+    }
+
+    public static class asyncTaskObjectUserPostBundle {
+        public DBUserPost userPost;
+        public DynamoDBMapper mapper;
+        public asyncTaskObjectUserPostBundle(DBUserPost userPost,
+                                             DynamoDBMapper mapper) {
+            this.userPost = userPost;
             this.mapper = mapper;
         }
     }
@@ -93,6 +108,14 @@ public class AsyncHelpers {
             if (bitmap != null) {
                 imageView.setImageBitmap(bitmap);
             }
+        }
+    }
+
+    public static class PushUserPostChangesToDBTask extends AsyncTask<asyncTaskObjectUserPostBundle, Void, Void> {
+        @Override
+        protected Void doInBackground(asyncTaskObjectUserPostBundle... params) {
+            params[0].mapper.save(params[0].userPost);
+            return null;
         }
     }
 
@@ -146,7 +169,7 @@ public class AsyncHelpers {
                 incrementPostsCount();
             }
             else {
-                deccrementPostsCount();
+                decrementPostsCount();
             }
             return null;
         }
@@ -157,7 +180,7 @@ public class AsyncHelpers {
             mapper.save(userProfile);
         }
 
-        private void deccrementPostsCount() {
+        private void decrementPostsCount() {
             int curPostCount = userProfile.getPostsCount();
             userProfile.setPostsCount(curPostCount - 1);
             mapper.save(userProfile);

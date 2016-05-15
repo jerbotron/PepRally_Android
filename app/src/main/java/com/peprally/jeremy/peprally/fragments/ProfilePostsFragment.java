@@ -78,15 +78,6 @@ public class ProfilePostsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        // Hide soft keyboard
-//        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-//        if (imm.isAcceptingText()) {
-//            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
-//        }
-//        Log.d(TAG, "posts fragment resumed");
-//        if (dataFetched && !emptyPosts) {
-//            initializeAdapter(posts);
-//        }
     }
 
     private void initializeAdapter(List<DBUserPost> result) {
@@ -115,7 +106,6 @@ public class ProfilePostsFragment extends Fragment {
     }
 
     public void refreshAdapter() {
-        Log.d(TAG, "refreshing adapter");
         new FetchUserPostsTask().execute(userProfileBundle.getString("NICKNAME"));
     }
 
