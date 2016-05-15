@@ -17,11 +17,11 @@ import com.peprally.jeremy.peprally.R;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ProfileViewFragment extends Fragment {
+public class ProfileInfoFragment extends Fragment {
 
     private boolean profileLoaded = false;
 
-    private static final String TAG = ProfileViewFragment.class.getSimpleName();
+    private static final String TAG = ProfileInfoFragment.class.getSimpleName();
 
     Map<String, String>  baseballPositions = new HashMap<String, String>();
     Map<String, String>  basketballPositions = new HashMap<String, String>();
@@ -30,13 +30,13 @@ public class ProfileViewFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log.d(TAG, "profile view fragment created");
-        View view = inflater.inflate(R.layout.fragment_profile_view, container, false);
+        View view = inflater.inflate(R.layout.fragment_profile_info, container, false);
         return view;
     }
 
     @Override
     public void onResume() {
-        Log.d(TAG, "profile view fragment resumed");
+        Log.d(TAG, "profile info fragment resumed");
         super.onResume();
         refresh();
     }

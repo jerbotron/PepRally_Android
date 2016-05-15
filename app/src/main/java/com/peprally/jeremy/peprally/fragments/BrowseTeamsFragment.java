@@ -17,6 +17,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanLis
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.peprally.jeremy.peprally.activities.HomeActivity;
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.adapter.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapter.TeamsCardAdapter;
 import com.peprally.jeremy.peprally.utils.Team;
 import com.peprally.jeremy.peprally.db_models.DBSport;
@@ -29,7 +30,7 @@ import java.util.List;
 public class BrowseTeamsFragment extends Fragment {
 
     private List<Team> teams;
-    private RecyclerView rv;
+    private RecyclerView recyclerView;
     private TeamsCardAdapter rvTeamsAdapter;
     private boolean dataFetched = false;
 
@@ -38,7 +39,6 @@ public class BrowseTeamsFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "browse fragment created");
         CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                 this.getActivity(),                       // Context
                 AWSCredentialProvider.IDENTITY_POOL_ID,   // Identity Pool ID
@@ -50,13 +50,12 @@ public class BrowseTeamsFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Log.d(TAG, "browse fragment created view");
         View view = inflater.inflate(R.layout.fragment_browse_teams, container, false);
-        rv = (RecyclerView) view.findViewById(R.id.rv_browse_teams);
-        LinearLayoutManager rvLayoutManager = new LinearLayoutManager(this.getActivity());
-        rv.setHasFixedSize(true);
-        rv.setLayoutManager(rvLayoutManager);
-
+        recyclerView = (RecyclerView) view.findViewById(R.id.rv_browse_teams);
+        recyclerView.setHasFixedSize(true);
+        // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
+        recyclerView.setAdapter(new EmptyAdapter());
+        recyclerView.setLayoutManager(new LinearLayoutManager(this.getActivity()));
         return view;
     }
 
@@ -72,7 +71,7 @@ public class BrowseTeamsFragment extends Fragment {
 
     private void initializeAdapter() {
         rvTeamsAdapter = new TeamsCardAdapter(teams);
-        rv.setAdapter(rvTeamsAdapter);
+        recyclerView.setAdapter(rvTeamsAdapter);
         rvTeamsAdapter.setOnItemClickListener(new TeamsCardAdapter.TeamsAdapterClickListener() {
             @Override
             public void onItemClick(View v, int position) {

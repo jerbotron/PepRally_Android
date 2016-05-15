@@ -44,8 +44,9 @@ import com.peprally.jeremy.peprally.db_models.DBUserNickname;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.fragments.ProfileEditFragment;
 import com.peprally.jeremy.peprally.fragments.ProfilePostsFragment;
-import com.peprally.jeremy.peprally.fragments.ProfileViewFragment;
+import com.peprally.jeremy.peprally.fragments.ProfileInfoFragment;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.ProfileViewPager;
 import com.squareup.picasso.Picasso;
 
@@ -55,10 +56,17 @@ import java.util.HashMap;
 
 public class ProfileActivity extends AppCompatActivity {
 
+    // PUBLIC MEMBERS VARs:
+    public final static int FAV_TEAM_REQUEST_CODE = 0;
+    public final static int FAV_PLAYER_REQUEST_CODE = 1;
+    public final static int NEW_POST_REQUEST_CODE = 2;
+    public final static int DELETE_POST_REQUEST_CODE = 3;
+
+    // PRIVATE MEMBER VARs:
     private ActionBar supportActionBar;
     private AppBarLayout appBarLayout;
     private FloatingActionButton actionFAB;
-    private Fragment viewFragment, postsFragment, editFragment;
+    private Fragment infoFragment, postsFragment, editFragment;
     private FragmentManager fragmentManager;
     private FragmentTransaction fragmentTransaction;
     private MenuItem editMenuItem;
@@ -77,10 +85,6 @@ public class ProfileActivity extends AppCompatActivity {
     private boolean following = false;
 
     private boolean selfProfile;    // if user is editing his/her own profile
-
-    private final int FAV_TEAM_REQUEST_CODE = 0;
-    private final int FAV_PLAYER_REQUEST_CODE = 1;
-    private final int NEW_POST_REQUEST_CODE = 2;
 
     private static final String TAG = ProfileActivity.class.getSimpleName();
 
@@ -213,7 +217,7 @@ public class ProfileActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_edit_profile, menu);
         if (!selfProfile) {
-            menu.findItem(R.id.edit_profile_item).setVisible(false);
+            menu.findItem(R.id.id_item_edit_profile).setVisible(false);
         }
         return true;
     }
@@ -224,7 +228,7 @@ public class ProfileActivity extends AppCompatActivity {
             case android.R.id.home:
                 handleBackPressed();
                 return true;
-            case R.id.edit_profile_item:
+            case R.id.id_item_edit_profile:
                 if (!editMode) {
                     // Switch Fragment to editFragment
                     appBarLayout.setExpanded(false, false);
@@ -269,6 +273,15 @@ public class ProfileActivity extends AppCompatActivity {
                 case NEW_POST_REQUEST_CODE:
                     ((ProfilePostsFragment) postsFragment).addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
                     break;
+                case DELETE_POST_REQUEST_CODE:
+                    new AsyncHelpers.PushUserProfilePostsCountToDBTask().execute(
+                            new AsyncHelpers.asyncTaskObjectUserInfoBundle(
+                                    credentialsProvider.getIdentityId(),
+                                    userProfileBundle.getString("FIRST_NAME"),
+                                    false,      // decrement post count
+                                    mapper));
+                    refreshPostsFragment();
+                    break;
             }
         }
     }
@@ -280,16 +293,16 @@ public class ProfileActivity extends AppCompatActivity {
 
     private void createView() {
         fragmentManager = getSupportFragmentManager();
-        viewFragment = new ProfileViewFragment();
+        infoFragment = new ProfileInfoFragment();
         postsFragment = new ProfilePostsFragment();
         editFragment = new ProfileEditFragment();
 
-        viewFragment.setArguments(userProfileBundle);
+        infoFragment.setArguments(userProfileBundle);
         editFragment.setArguments(userProfileBundle);
         postsFragment.setArguments(userProfileBundle);
         viewPagerProfile = (ProfileViewPager) findViewById(R.id.viewpager_profile);
         adapter = new ProfileViewPagerAdapter(fragmentManager);
-        adapter.addFrag(viewFragment, "Info");
+        adapter.addFrag(infoFragment, "Info");
         adapter.addFrag(postsFragment, "Posts");
         viewPagerProfile.setAdapter(adapter);
         viewPagerProfile.setCurrentItem(0);
@@ -314,10 +327,7 @@ public class ProfileActivity extends AppCompatActivity {
         });
 
         ImageView profilePicture = (ImageView) findViewById(R.id.profile_roster_image);
-        if (selfProfile) {
-//            profilePicture.setImageBitmap(profileBitmap);
-        }
-        else {
+        if (!selfProfile) {
             String rootImageURL = "https://s3.amazonaws.com/rosterphotos/";
             String team = userProfileBundle.getString("TEAM");
             assert team != null;
@@ -344,12 +354,18 @@ public class ProfileActivity extends AppCompatActivity {
                 + "</b> " + getString(R.string.profile_following)));
     }
 
+    private void refreshPostsFragment() {
+        // Set view pager to postsFragment
+        viewPagerProfile.setCurrentItem(1);
+        ((ProfilePostsFragment) postsFragment).refreshAdapter();
+    }
+
     private void handleBackPressed() {
         if (editMode) {
             // Push profile changes to DB
             new PushProfileChangesToDBTask().execute();
 
-            // Switch Fragment back to viewFragment
+            // Switch Fragment back to infoFragment
             appBarLayout.setExpanded(true, false);
             tabLayout.setVisibility(View.VISIBLE);
             actionFAB.setVisibility(View.VISIBLE);
@@ -368,11 +384,14 @@ public class ProfileActivity extends AppCompatActivity {
             supportActionBar.setTitle(null);
         }
         else {
-            finish();
             if (selfProfile) {
                 Intent intent = new Intent(this, HomeActivity.class);
                 startActivity(intent);
-                overridePendingTransition(R.anim.left_in, R.anim.left_out);
+                overridePendingTransition(R.anim.left_in, R.anim.right_out);
+            }
+            else {
+                finish();
+                overridePendingTransition(R.anim.left_in, R.anim.right_out);
             }
         }
     }
@@ -380,7 +399,7 @@ public class ProfileActivity extends AppCompatActivity {
     public void editFavoriteTeam() {
         Intent intent = new Intent(this, FavoriteTeamActivity.class);
         startActivityForResult(intent, FAV_TEAM_REQUEST_CODE);
-        overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+        overridePendingTransition(R.anim.right_in, R.anim.left_out);
     }
 
     public void editFavoritePlayer() {
@@ -393,7 +412,7 @@ public class ProfileActivity extends AppCompatActivity {
             intent.putExtra("CALLING_ACTIVITY", "ProfileActivity");
             intent.putExtra("TEAM", favTeam);
             startActivityForResult(intent, FAV_PLAYER_REQUEST_CODE);
-            overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+            overridePendingTransition(R.anim.right_in, R.anim.left_out);
         }
     }
 
@@ -414,10 +433,13 @@ public class ProfileActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         // Hide soft keyboard
-        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm.isAcceptingText()) {
-            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
-        }
+//        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+//        imm.hideSoftInputFromInputMethod(getCurrentFocus().getWindowToken(), 0);
+//        imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+//        if (imm.isAcceptingText()) {
+//            Log.d(TAG, "hide keyboard");
+//            imm.toggleSoftInput(InputMethodManager.HIDE_IMPLICIT_ONLY, 0);
+//        }
 //        Log.d(TAG, "profile activity resumed");
     }
 

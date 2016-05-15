@@ -1,5 +1,6 @@
 package com.peprally.jeremy.peprally.fragments;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -9,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -22,6 +24,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.adapter.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapter.NewPostCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
@@ -49,6 +52,8 @@ public class ProfilePostsFragment extends Fragment {
         recyclerView = (RecyclerView) view.findViewById(R.id.recycler_view_profile_posts);
         LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setHasFixedSize(true);
+        // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
+        recyclerView.setAdapter(new EmptyAdapter());
         recyclerView.setLayoutManager(rvLayoutManager);
 
         emptyMsgView = (TextView) view.findViewById(R.id.profile_posts_empty_text);
@@ -73,6 +78,12 @@ public class ProfilePostsFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        // Hide soft keyboard
+//        InputMethodManager imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+//        if (imm.isAcceptingText()) {
+//            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+//        }
+//        Log.d(TAG, "posts fragment resumed");
 //        if (dataFetched && !emptyPosts) {
 //            initializeAdapter(posts);
 //        }
@@ -101,6 +112,11 @@ public class ProfilePostsFragment extends Fragment {
             profilePostsContainer.removeView(emptyMsgView);
         }
         newPostCardAdapter.addPost(newPostText, bundle);
+    }
+
+    public void refreshAdapter() {
+        Log.d(TAG, "refreshing adapter");
+        new FetchUserPostsTask().execute(userProfileBundle.getString("NICKNAME"));
     }
 
     /********************************** AsyncTasks **********************************/

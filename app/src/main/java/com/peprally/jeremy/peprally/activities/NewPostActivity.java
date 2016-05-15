@@ -17,6 +17,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.utils.Helpers;
 
 import java.util.Random;
 
@@ -88,10 +89,11 @@ public class NewPostActivity extends AppCompatActivity {
         final NewPostHints newPostHints = new NewPostHints();
 
         supportActionBar = getSupportActionBar();
+        assert (supportActionBar != null);
         supportActionBar.setTitle("New Post");
         supportActionBar.setDisplayHomeAsUpEnabled(true);
 
-        editTextNewPost = (EditText) findViewById(R.id.new_text_post_container);
+        editTextNewPost = (EditText) findViewById(R.id.id_edit_text_new_post);
         textViewCharCount = (TextView) findViewById(R.id.new_post_char_count);
 
         editTextNewPost.setHint(newPostHints.getRandomHint());
@@ -106,6 +108,9 @@ public class NewPostActivity extends AppCompatActivity {
                 intent.putExtra("NEW_POST_TEXT", editTextNewPost.getText().toString());
                 setResult(Activity.RESULT_OK, intent);
                 finish();
+                // Hide soft keyboard if keyboard is up
+                EditText et = (EditText) findViewById(R.id.id_edit_text_new_post);
+                Helpers.hideSoftkeyboard(NewPostActivity.this, et);
             }
         });
     }
@@ -115,6 +120,9 @@ public class NewPostActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case android.R.id.home:
                 finish();
+                // Hide soft keyboard if keyboard is up
+                EditText et = (EditText) findViewById(R.id.id_edit_text_new_post);
+                Helpers.hideSoftkeyboard(this, et);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -122,10 +130,14 @@ public class NewPostActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
     public void onBackPressed() {
         super.onBackPressed();
-        // Hide soft keyboard
-        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+        finish();
     }
+
 }

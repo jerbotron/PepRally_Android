@@ -2,10 +2,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".activities.ProfileActivity">
+    tools:context=".activities.NewPostCommentActivity">
     <item
-        android:id="@+id/id_item_edit_profile"
+        android:id="@+id/id_item_delete_post"
         android:title="Edit Profile"
-        android:icon="@drawable/ic_edit"
+        android:icon="@drawable/ic_delete"
         app:showAsAction="always" />
 </menu>

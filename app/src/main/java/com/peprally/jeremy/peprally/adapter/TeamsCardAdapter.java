@@ -18,7 +18,6 @@ public class TeamsCardAdapter extends RecyclerView.Adapter<TeamsCardAdapter.Team
 
     private List<Team> teams;
     private static TeamsAdapterClickListener myClickListener;
-    private static final String TAG = ProfileActivity.class.getSimpleName();
 
     public interface TeamsAdapterClickListener {
         void onItemClick(View v, int position);

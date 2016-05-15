@@ -3,15 +3,10 @@ package com.peprally.jeremy.peprally.adapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.text.Html;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,24 +22,18 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.activities.HomeActivity;
 import com.peprally.jeremy.peprally.activities.NewPostCommentActivity;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 
-import org.w3c.dom.Text;
-
-import java.io.IOException;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -102,14 +91,13 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
     @Override
     public NewPostHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.recycler_view_new_post_container, parent, false);
-        NewPostHolder newPostHolder = new NewPostHolder(view);
-        return newPostHolder;
+        return new NewPostHolder(view);
     }
 
     @Override
     public void onBindViewHolder(final NewPostHolder newPostHolder, int position) {
         final DBUserPost curPost = posts.get(position);
-        new LoadFBProfilePictureTask().execute(new asyncTaskObject(curPost.getFacebookID(), newPostHolder.profilePhoto));
+        new AsyncHelpers.LoadFBProfilePictureTask().execute(new AsyncHelpers.asyncTaskObjectProfileImage(curPost.getFacebookID(), newPostHolder.profilePhoto));
 
         final String userNickName = ((ProfileActivity) callingContext).getUserProfileBundleString("NICKNAME");
         Set<String> likedUsers = curPost.getLikedUsers();
@@ -256,10 +244,18 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
         newPostHolder.postContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Bundle postCommentBundle = new Bundle();
+                postCommentBundle.putString("TEXT_CONTENT", curPost.getTextContent());
+                postCommentBundle.putString("NICKNAME", curPost.getNickname());
+                postCommentBundle.putLong("TIME_IN_SECONDS", curPost.getTimeInSeconds());
+                postCommentBundle.putString("FACEBOOK_ID", curPost.getFacebookID());
+                postCommentBundle.putInt("LIKES_COUNT", curPost.getNumberOfLikes());
+                postCommentBundle.putInt("COMMENTS_COUNT", curPost.getNumberOfComments());
                 Intent intent = new Intent(callingContext, NewPostCommentActivity.class);
-                callingContext.startActivity(intent);
+                intent.putExtra("POST_COMMENT_BUNDLE", postCommentBundle);
+                ((ProfileActivity) callingContext).startActivityForResult(intent, ProfileActivity.DELETE_POST_REQUEST_CODE);
                 ((ProfileActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
-                ((ProfileActivity) callingContext).finish();
+//                ((ProfileActivity) callingContext).finish();
             }
         });
 
@@ -283,48 +279,15 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
         newPost.setLikedUsers(new HashSet<String>(Arrays.asList("_")));
         newPost.setDislikedUsers(new HashSet<String>(Arrays.asList("_")));
         new PushNewUserPostToDBTask().execute(newPost);
-        new PushUserProfilePostsCountToDBTask().execute(bundle.getString("FIRST_NAME"));
-    }
-
-    private Bitmap getFacebookProfilePicture(String userID) throws IOException {
-        URL imageURL = new URL("https://graph.facebook.com/" + userID + "/picture?type=small");
-        return BitmapFactory.decodeStream(imageURL.openConnection().getInputStream());
+        new AsyncHelpers.PushUserProfilePostsCountToDBTask().execute(
+                new AsyncHelpers.asyncTaskObjectUserInfoBundle(
+                        credentialsProvider.getIdentityId(),
+                        bundle.getString("FIRST_NAME"),
+                        true,       // increment post count
+                        mapper));
     }
 
     /********************************** AsyncTasks **********************************/
-
-    private class asyncTaskObject {
-        public String facebookID;
-        public ImageView imageView;
-        asyncTaskObject(String facebookID, ImageView imageView) {
-            this.facebookID = facebookID;
-            this.imageView = imageView;
-        }
-    }
-
-    private class LoadFBProfilePictureTask extends AsyncTask<asyncTaskObject, Void, Bitmap> {
-        private ImageView imageView;
-        @Override
-        protected Bitmap doInBackground(asyncTaskObject... params) {
-            Bitmap profileBitmap = null;
-            try {
-                profileBitmap = getFacebookProfilePicture(params[0].facebookID);
-            } catch (IOException e) {
-                e.printStackTrace();
-                Log.d(TAG, "COULD NOT GET USER PROFILE");
-            }
-            imageView = params[0].imageView;
-            return profileBitmap;
-        }
-
-        @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            if (bitmap != null) {
-                imageView.setImageBitmap(bitmap);
-            }
-        }
-    }
-
     private class PushUserPostChangesToDBTask extends AsyncTask<DBUserPost, Void, Void> {
         @Override
         protected Void doInBackground(DBUserPost... params) {
@@ -356,22 +319,6 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
         protected void onPostExecute(DBUserPost newUserPost) {
             posts.add(0, newUserPost);
             notifyItemInserted(0);
-        }
-    }
-
-    private class PushUserProfilePostsCountToDBTask extends AsyncTask<String, Void, Void> {
-        private com.peprally.jeremy.peprally.db_models.DBUserProfile userProfile;
-        @Override
-        protected Void doInBackground(String... params) {
-            userProfile = mapper.load(DBUserProfile.class, credentialsProvider.getIdentityId(), params[0]);
-            incrementPostsCount();
-            return null;
-        }
-
-        private void incrementPostsCount() {
-            int curPostCount = userProfile.getPostsCount();
-            userProfile.setPostsCount(curPostCount + 1);
-            mapper.save(userProfile);
         }
     }
 }

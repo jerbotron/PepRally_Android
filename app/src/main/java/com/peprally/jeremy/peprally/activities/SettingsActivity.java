@@ -29,7 +29,7 @@ public class SettingsActivity extends AppCompatActivity {
         finish();
         Intent intent = new Intent(this, HomeActivity.class);
         startActivity(intent);
-        overridePendingTransition(R.anim.left_in, R.anim.left_out);
+        overridePendingTransition(R.anim.left_in, R.anim.right_out);
     }
 
     @Override
@@ -39,7 +39,7 @@ public class SettingsActivity extends AppCompatActivity {
                 finish();
                 Intent intent = new Intent(this, HomeActivity.class);
                 startActivity(intent);
-                overridePendingTransition(R.anim.left_in, R.anim.left_out);
+                overridePendingTransition(R.anim.left_in, R.anim.right_out);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

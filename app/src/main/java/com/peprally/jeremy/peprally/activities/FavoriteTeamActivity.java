@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.MenuItem;
 import android.view.View;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
@@ -16,6 +17,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpr
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.adapter.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapter.TeamsCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBSport;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
@@ -39,11 +41,14 @@ public class FavoriteTeamActivity extends AppCompatActivity {
 
         ActionBar supportActionBar = getSupportActionBar();
         supportActionBar.setTitle("Pick a favorite team");
+        supportActionBar.setDisplayHomeAsUpEnabled(true);
 
         recyclerView = (RecyclerView) findViewById(R.id.rv_browse_teams);
-        LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getApplicationContext());
+        assert (recyclerView != null);
         recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(rvLayoutManager);
+        // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
+        recyclerView.setAdapter(new EmptyAdapter());
+        recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
 
         new FetchSportsTableTask().execute();
     }
@@ -52,6 +57,7 @@ public class FavoriteTeamActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (dataFetched) {
+            recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
             initializeAdapter();
         }
     }
@@ -76,9 +82,30 @@ public class FavoriteTeamActivity extends AppCompatActivity {
                 intent.putExtra("FAVORITE_TEAM", teams.get(position).name);
                 setResult(Activity.RESULT_OK, intent);
                 finish();
+                overridePendingTransition(R.anim.left_in, R.anim.right_out);
             }
         });
     }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
+        overridePendingTransition(R.anim.left_in, R.anim.right_out);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    /********************************** AsyncTasks **********************************/
 
     private class FetchSportsTableTask extends AsyncTask<Void, Void, PaginatedScanList<DBSport>> {
         @Override

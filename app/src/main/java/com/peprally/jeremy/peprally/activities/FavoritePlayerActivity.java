@@ -8,6 +8,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
@@ -20,6 +22,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.adapter.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapter.PlayersCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
@@ -44,11 +47,14 @@ public class FavoritePlayerActivity extends AppCompatActivity {
         String team = getIntent().getStringExtra("TEAM");
         ActionBar supportActionBar = getSupportActionBar();
         supportActionBar.setTitle(team);
+        supportActionBar.setDisplayHomeAsUpEnabled(true);
 
         recyclerView = (RecyclerView) findViewById(R.id.rv_browse_players);
-        LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getApplicationContext());
+        assert (recyclerView != null);
         recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(rvLayoutManager);
+        // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
+        recyclerView.setAdapter(new EmptyAdapter());
+        recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
 
         new FetchTeamRosterTask().execute(team);
     }
@@ -57,6 +63,7 @@ public class FavoritePlayerActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (dataFetched) {
+            recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
             initializeAdapter(roster);
         }
     }
@@ -73,8 +80,8 @@ public class FavoritePlayerActivity extends AppCompatActivity {
                     intent.putExtra("FAVORITE_PLAYER", roster.get(position).getFavPlayerText());
                     setResult(Activity.RESULT_OK, intent);
                     finish();
-                }
-                else if (callingActivity.equals("HomeActivity")) {
+                    overridePendingTransition(R.anim.left_in, R.anim.right_out);
+                } else if (callingActivity.equals("HomeActivity")) {
                     Intent intent = new Intent(FavoritePlayerActivity.this, ProfileActivity.class);
                     Bundle userProfileBundle = new Bundle();
                     userProfileBundle.putString("FIRST_NAME", roster.get(position).getFirstName());
@@ -83,10 +90,29 @@ public class FavoritePlayerActivity extends AppCompatActivity {
                     userProfileBundle.putString("FACEBOOK_ID", "NULL");
                     intent.putExtra("USER_PROFILE_BUNDLE", userProfileBundle);
                     startActivity(intent);
-                    finish();
+                    overridePendingTransition(R.anim.right_in, R.anim.left_out);
+//                    finish();
                 }
             }
         });
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
+        overridePendingTransition(R.anim.left_in, R.anim.right_out);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 
     /********************************** AsyncTasks **********************************/

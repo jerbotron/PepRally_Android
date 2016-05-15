@@ -158,11 +158,11 @@ public class HomeActivity extends AppCompatActivity
 
     private void setupViewPager(ViewPager viewPager) {
         ProfileViewPagerAdapter adapter = new ProfileViewPagerAdapter(getSupportFragmentManager());
-        adapter.addFrag(new EventsFragment(), "Events");
+//        adapter.addFrag(new EventsFragment(), "Events");
         adapter.addFrag(new TrendingFragment(), "Trending");
         adapter.addFrag(new BrowseTeamsFragment(), "Teams");
         viewPager.setAdapter(adapter);
-        viewPager.setCurrentItem(1);
+        viewPager.setCurrentItem(0);
     }
 
     public void launchBrowsePlayerActivity(String team) {
@@ -170,6 +170,6 @@ public class HomeActivity extends AppCompatActivity
         intent.putExtra("CALLING_ACTIVITY", "HomeActivity");
         intent.putExtra("TEAM", team);
         startActivity(intent);
-        overridePendingTransition(R.anim.left_in, R.anim.right_out);
+        overridePendingTransition(R.anim.right_in, R.anim.left_out);
     }
 }
