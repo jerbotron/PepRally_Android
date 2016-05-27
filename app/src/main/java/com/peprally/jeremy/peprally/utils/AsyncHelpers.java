@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 
@@ -60,29 +61,32 @@ public class AsyncHelpers {
         }
     }
 
-    public static class asyncTaskObjectUserInfoBundle {
-        public String cognitoID;
-        public String firstName;
-        public boolean incrementPost;
+    public static class asyncTaskObjectUserPostBundle {
+        public DBUserPost post;
         public DynamoDBMapper mapper;
-        public asyncTaskObjectUserInfoBundle(String cognitoID,
-                                             String firstName,
-                                             boolean incrementPost,
-                                             DynamoDBMapper mapper) {
-            this.cognitoID = cognitoID;
-            this.firstName = firstName;
-            this.incrementPost = incrementPost;
+        public UserProfileParcel parcel;
+        public Bundle data;
+        public asyncTaskObjectUserPostBundle(DBUserPost post,
+                                             DynamoDBMapper mapper,
+                                             UserProfileParcel parcel,
+                                             Bundle data) {
+            this.post = post;
             this.mapper = mapper;
+            this.parcel = parcel;
+            this.data = data;
         }
     }
 
-    public static class asyncTaskObjectUserPostBundle {
-        public DBUserPost userPost;
+    public static class asyncTaskObjectUserCommentBundle {
+        public DBUserComment comment;
         public DynamoDBMapper mapper;
-        public asyncTaskObjectUserPostBundle(DBUserPost userPost,
-                                             DynamoDBMapper mapper) {
-            this.userPost = userPost;
+        public Bundle data;
+        public asyncTaskObjectUserCommentBundle(DBUserComment comment,
+                                                DynamoDBMapper mapper,
+                                                Bundle data) {
+            this.comment = comment;
             this.mapper = mapper;
+            this.data = data;
         }
     }
 
@@ -114,7 +118,7 @@ public class AsyncHelpers {
     public static class PushUserPostChangesToDBTask extends AsyncTask<asyncTaskObjectUserPostBundle, Void, Void> {
         @Override
         protected Void doInBackground(asyncTaskObjectUserPostBundle... params) {
-            params[0].mapper.save(params[0].userPost);
+            params[0].mapper.save(params[0].post);
             return null;
         }
     }
@@ -158,19 +162,27 @@ public class AsyncHelpers {
         }
     }
 
-    public static class PushUserProfilePostsCountToDBTask extends AsyncTask<asyncTaskObjectUserInfoBundle, Void, Void> {
+    public static class PushUserProfilePostsCountToDBTask extends AsyncTask<asyncTaskObjectUserPostBundle, Void, Void> {
         private com.peprally.jeremy.peprally.db_models.DBUserProfile userProfile;
         private DynamoDBMapper mapper;
         @Override
-        protected Void doInBackground(asyncTaskObjectUserInfoBundle... params) {
+        protected Void doInBackground(asyncTaskObjectUserPostBundle... params) {
             mapper = params[0].mapper;
-            userProfile = mapper.load(DBUserProfile.class, params[0].cognitoID, params[0].firstName);
-            if (params[0].incrementPost) {
-                incrementPostsCount();
+            DBUserPost userPost = params[0].post;
+            UserProfileParcel parcel = params[0].parcel;
+            Bundle data = params[0].data;
+            if (userPost == null) {
+                userProfile = mapper.load(DBUserProfile.class, parcel.getCognitoID(), parcel.getFirstname());
+            } else {
+                userProfile = mapper.load(DBUserProfile.class, userPost.getCognitoID(), userPost.getFirstname());
             }
-            else {
-                decrementPostsCount();
-            }
+            if (data != null)
+                if (data.getBoolean("INCREMENT_POSTS_COUNT")) {
+                    incrementPostsCount();
+                }
+                else if (!data.getBoolean("INCREMENT_POSTS_COUNT")){
+                    decrementPostsCount();
+                }
             return null;
         }
 
@@ -184,6 +196,39 @@ public class AsyncHelpers {
             int curPostCount = userProfile.getPostsCount();
             userProfile.setPostsCount(curPostCount - 1);
             mapper.save(userProfile);
+        }
+    }
+
+    public static class PushPostCommentsCountToDBTask extends AsyncTask<asyncTaskObjectUserCommentBundle, Void, Void> {
+        private DBUserPost userPost;
+        private DynamoDBMapper mapper;
+        @Override
+        protected Void doInBackground(asyncTaskObjectUserCommentBundle... params) {
+            mapper = params[0].mapper;
+            DBUserComment userComment = params[0].comment;
+            Bundle data = params[0].data;
+            userPost = mapper.load(DBUserPost.class, userComment.getNickname(), data.getLong("POST_TIME_IN_SECONDS"));
+            if (data != null) {
+                if (data.getBoolean("INCREMENT_COMMENTS_COUNT")) {
+                    incrementCommentsCount();
+                }
+                else if (!data.getBoolean("INCREMENT_COMMENTS_COUNT")){
+                    decrementCommentsCount();
+                }
+            }
+            return null;
+        }
+
+        private void incrementCommentsCount() {
+            int curCommentsCount = userPost.getNumberOfComments();
+            userPost.setNumberOfComments(curCommentsCount + 1);
+            mapper.save(userPost);
+        }
+
+        private void decrementCommentsCount() {
+            int curCommentsCount = userPost.getNumberOfComments();
+            userPost.setNumberOfComments(curCommentsCount - 1);
+            mapper.save(userPost);
         }
     }
 }

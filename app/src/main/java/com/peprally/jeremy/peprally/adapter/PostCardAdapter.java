@@ -14,31 +14,28 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.activities.NewPostCommentActivity;
+import com.peprally.jeremy.peprally.activities.NewCommentActivity;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
-import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
-public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.NewPostHolder> {
+public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHolder> {
 
+    private String callingActivity;
     private Context callingContext;
 
     private AmazonDynamoDBClient ddbClient;
@@ -47,9 +44,9 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
 
     private List<DBUserPost> posts;
 
-    private static final String TAG = "NewPostCardAdapter: ";
+    private static final String TAG = "PostCardAdapter: ";
 
-    public static class NewPostHolder extends RecyclerView.ViewHolder {
+    public static class PostHolder extends RecyclerView.ViewHolder {
         LinearLayout postContainer;
         CardView cardView;
         ImageView profilePhoto;
@@ -61,7 +58,7 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
         TextView postLikesCount;
         TextView postComments;
 
-        public NewPostHolder(View itemView) {
+        public PostHolder(View itemView) {
             super(itemView);
             postContainer = (LinearLayout) itemView.findViewById(R.id.id_container_post_clickable);
             cardView = (CardView) itemView.findViewById(R.id.id_card_view_new_post);
@@ -76,7 +73,7 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
         }
     }
 
-    public NewPostCardAdapter(Context callingContext, List<DBUserPost> posts) {
+    public PostCardAdapter(Context callingContext, List<DBUserPost> posts) {
         this.posts = posts;
         this.callingContext = callingContext;
         credentialsProvider = new CognitoCachingCredentialsProvider(
@@ -89,17 +86,17 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
     }
 
     @Override
-    public NewPostHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public PostHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.recycler_view_new_post_container, parent, false);
-        return new NewPostHolder(view);
+        return new PostHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(final NewPostHolder newPostHolder, int position) {
+    public void onBindViewHolder(final PostHolder newPostHolder, int position) {
         final DBUserPost curPost = posts.get(position);
         new AsyncHelpers.LoadFBProfilePictureTask().execute(new AsyncHelpers.asyncTaskObjectProfileImage(curPost.getFacebookID(), newPostHolder.profilePhoto));
 
-        final String userNickName = ((ProfileActivity) callingContext).getUserProfileBundleString("NICKNAME");
+        final String userNickName = ProfileActivity.getInstance().userProfileParcel.getNickname();
         Set<String> likedUsers = curPost.getLikedUsers();
         Set<String> dislikedUsers = curPost.getDislikedUsers();
 
@@ -112,7 +109,7 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
 
         newPostHolder.nickname.setText(curPost.getNickname());
         newPostHolder.postContent.setText(curPost.getTextContent());
-        int numOfLikes = curPost.getNumberOfLikes();
+        final int numOfLikes = curPost.getNumberOfLikes();
         if (numOfLikes > 0) {
             newPostHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorGreen)));
         }
@@ -165,7 +162,7 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
                     // Remove user from likedUsers set
                     curPost.removeLikedUsers(userNickName);
                     new AsyncHelpers.PushUserPostChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper));
+                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper, null, null));
                 }
                 // If user has not liked the post yet
                 else {
@@ -189,7 +186,7 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
                     curPost.addLikedUsers(userNickName);
                     curPost.removedislikedUsers(userNickName);
                     new AsyncHelpers.PushUserPostChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper));
+                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper, null, null));
                 }
             }
         });
@@ -215,7 +212,7 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
                     // Remove user from likedUsers set
                     curPost.removedislikedUsers(userNickName);
                     new AsyncHelpers.PushUserPostChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper));
+                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper, null, null));
                 }
                 // If user has not disliked the post yet
                 else {
@@ -239,7 +236,7 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
                     curPost.adddislikedUsers(userNickName);
                     curPost.removeLikedUsers(userNickName);
                     new AsyncHelpers.PushUserPostChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper));
+                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper, null, null));
                 }
             }
         });
@@ -249,13 +246,14 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
             @Override
             public void onClick(View v) {
                 Bundle postCommentBundle = new Bundle();
+                postCommentBundle.putString("POST_ID", curPost.getPostID());
                 postCommentBundle.putString("TEXT_CONTENT", curPost.getTextContent());
                 postCommentBundle.putString("NICKNAME", curPost.getNickname());
                 postCommentBundle.putLong("TIME_IN_SECONDS", curPost.getTimeInSeconds());
                 postCommentBundle.putString("FACEBOOK_ID", curPost.getFacebookID());
                 postCommentBundle.putInt("LIKES_COUNT", curPost.getNumberOfLikes());
                 postCommentBundle.putInt("COMMENTS_COUNT", curPost.getNumberOfComments());
-                Intent intent = new Intent(callingContext, NewPostCommentActivity.class);
+                Intent intent = new Intent(callingContext, NewCommentActivity.class);
                 intent.putExtra("POST_COMMENT_BUNDLE", postCommentBundle);
                 ((ProfileActivity) callingContext).startActivityForResult(intent, ProfileActivity.POST_COMMENT_REQUEST_CODE);
                 ((ProfileActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
@@ -273,47 +271,43 @@ public class NewPostCardAdapter extends RecyclerView.Adapter<NewPostCardAdapter.
     public void addPost(String newPostText, Bundle bundle) {
         DBUserPost newPost = new DBUserPost();
         Calendar c = Calendar.getInstance();
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
         newPost.setNickname(bundle.getString("NICKNAME"));
-        newPost.setTimeInSeconds(System.currentTimeMillis() / 1000);
+        Long timeInSeconds = System.currentTimeMillis() / 1000;
+        newPost.setTimeInSeconds(timeInSeconds);
+        newPost.setPostID(bundle.getString("NICKNAME") + "_" + timeInSeconds.toString());
         newPost.setCognitoID(credentialsProvider.getIdentityId());
         newPost.setFacebookID(bundle.getString("FACEBOOK_ID"));
+        newPost.setFirstname(bundle.getString("FIRST_NAME"));
         newPost.setTimeStamp(df.format(c.getTime()));
         newPost.setTextContent(newPostText);
-        newPost.setLikedUsers(new HashSet<String>(Arrays.asList("_")));
-        newPost.setDislikedUsers(new HashSet<String>(Arrays.asList("_")));
+        newPost.setLikedUsers(new HashSet<>(Collections.singletonList("_")));
+        newPost.setDislikedUsers(new HashSet<>(Collections.singletonList("_")));
+        newPost.setNumberOfLikes(0);
+        newPost.setNumberOfComments(0);
         new PushNewUserPostToDBTask().execute(newPost);
+        Bundle asyncData = new Bundle();
+        asyncData.putBoolean("INCREMENT_POSTS_COUNT", true);
         new AsyncHelpers.PushUserProfilePostsCountToDBTask().execute(
-                new AsyncHelpers.asyncTaskObjectUserInfoBundle(
-                        credentialsProvider.getIdentityId(),
-                        bundle.getString("FIRST_NAME"),
-                        true,       // increment post count
-                        mapper));
+                new AsyncHelpers.asyncTaskObjectUserPostBundle(
+                        newPost,
+                        mapper,
+                        null,
+                        asyncData));
     }
 
     /********************************** AsyncTasks **********************************/
     private class PushNewUserPostToDBTask extends AsyncTask<DBUserPost, Void, DBUserPost> {
         @Override
         protected DBUserPost doInBackground(DBUserPost... params) {
-            DBUserPost newUserPost= params[0];
-            HashMap<String, AttributeValue> newUserPostMap = new HashMap<>();
-            newUserPostMap.put("Nickname", new AttributeValue().withS(newUserPost.getNickname()));
-            newUserPostMap.put("TimeInSeconds", new AttributeValue().withN(String.valueOf(newUserPost.getTimeInSeconds())));
-            newUserPostMap.put("CognitoID", new AttributeValue().withS(newUserPost.getCognitoID()));
-            newUserPostMap.put("FacebookID", new AttributeValue().withS(newUserPost.getFacebookID()));
-            newUserPostMap.put("TimeStamp", new AttributeValue().withS(newUserPost.getTimeStamp()));
-            newUserPostMap.put("TextContent", new AttributeValue().withS(newUserPost.getTextContent()));
-            newUserPostMap.put("NumberOfLikes", new AttributeValue().withN(String.valueOf(0)));
-            newUserPostMap.put("NumberOfComments", new AttributeValue().withN(String.valueOf(0)));
-            newUserPostMap.put("LikedUsers", new AttributeValue().withSS(newUserPost.getLikedUsers()));
-            newUserPostMap.put("DislikedUsers", new AttributeValue().withSS(newUserPost.getDislikedUsers()));
-            ddbClient.putItem(new PutItemRequest().withTableName("UserPosts").withItem(newUserPostMap));
-            return newUserPost;
+            DBUserPost newPost= params[0];
+            mapper.save(newPost);
+            return newPost;
         }
 
         @Override
-        protected void onPostExecute(DBUserPost newUserPost) {
-            posts.add(0, newUserPost);
+        protected void onPostExecute(DBUserPost newPost) {
+            posts.add(0, newPost);
             notifyItemInserted(0);
         }
     }

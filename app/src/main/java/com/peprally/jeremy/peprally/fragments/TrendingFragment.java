@@ -1,68 +1,81 @@
 package com.peprally.jeremy.peprally.fragments;
 
 import android.content.Context;
+import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.peprally.jeremy.peprally.activities.HomeActivity;
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.activities.NewPostActivity;
+import com.peprally.jeremy.peprally.activities.ProfileActivity;
+import com.peprally.jeremy.peprally.adapter.EmptyAdapter;
+import com.peprally.jeremy.peprally.adapter.PostCardAdapter;
+import com.peprally.jeremy.peprally.db_models.DBSport;
+import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 
-public class TrendingFragment extends Fragment {
+import java.util.ArrayList;
+import java.util.List;
 
-    CognitoCachingCredentialsProvider credentialsProvider;
-    private Context callingContext;
+public class TrendingFragment extends Fragment {
+    private List<DBUserPost> posts;
+    private ScrollView postsContainer;
+    private PostCardAdapter postCardAdapter;
+    private RecyclerView recyclerView;
+
+    private Bundle userProfileBundle;
 
     private static final String TAG = HomeActivity.class.getSimpleName();
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Log.d(TAG, "trending fragment created");
-        callingContext = this.getActivity();
-        credentialsProvider = new CognitoCachingCredentialsProvider(
-                callingContext,                             // Context
-                AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
-                AWSCredentialProvider.COGNITO_REGION        // Region
-        );
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Log.d(TAG, "trending fragment created view");
         View view = inflater.inflate(R.layout.fragment_trending, container, false);
-        // Create an S3 client
-        AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
-        // Set the region of your S3 bucket
-        s3.setRegion(Region.getRegion(Regions.US_EAST_1));
+        userProfileBundle = getArguments();
 
-//        java.util.Date expiration = new java.util.Date();
-//        long msec = expiration.getTime();
-//        msec += 1000 * 60; // 1 min
-//        expiration.setTime(msec);
-//
-//        GeneratePresignedUrlRequest generatePresignedUrlRequest =
-//                new GeneratePresignedUrlRequest("rosterphotos", "Baseball/barrera_tres_1.jpg");
-//        generatePresignedUrlRequest.setMethod(HttpMethod.GET); // Default.
-//        generatePresignedUrlRequest.setExpiration(expiration);
-//
-//        URL s = s3.generatePresignedUrl(generatePresignedUrlRequest);
+        recyclerView = (RecyclerView) view.findViewById(R.id.id_recycler_view_trending_posts);
+        LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getActivity());
+        recyclerView.setHasFixedSize(true);
+        // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
+        recyclerView.setAdapter(new EmptyAdapter());
+        recyclerView.setLayoutManager(rvLayoutManager);
 
-        String s = "https://s3.amazonaws.com/rosterphotos/Swimming+and+Diving/anderson_mark.jpg";
+        postsContainer = (ScrollView) view.findViewById(R.id.container_trending_posts);
 
-        ImageView iv = (ImageView) view.findViewById(R.id.test_s3_image);
+//        refreshAdapter();
 
-//        Picasso.with(callingContext).load(s).into(iv);
+        FloatingActionButton actionFAB = (FloatingActionButton) view.findViewById(R.id.fab_trending_action);
+        actionFAB.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getContext(), NewPostActivity.class);
+                startActivityForResult(intent, ProfileActivity.NEW_POST_REQUEST_CODE);
+                getActivity().overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+            }
+        });
 
         return view;
     }
@@ -70,18 +83,56 @@ public class TrendingFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        Log.d(TAG, "trending fragment resumed");
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        Log.d(TAG, "trending fragment paused");
+    private void initializeAdapter(List<DBUserPost> result) {
+        posts = new ArrayList<>();
+        for (DBUserPost userPost : result) {
+            posts.add(userPost);
+        }
+        postCardAdapter = new PostCardAdapter(getActivity(), posts);
+        recyclerView.setAdapter(postCardAdapter);
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        Log.d(TAG, "trending fragment destroyed");
+    public void addPostToAdapter(String newPostText) {
+        Bundle bundle = new Bundle();
+        bundle.putString("NICKNAME", userProfileBundle.getString("NICKNAME"));
+        bundle.putString("FACEBOOK_ID", userProfileBundle.getString("FACEBOOK_ID"));
+        bundle.putString("FIRST_NAME", userProfileBundle.getString("FIRST_NAME"));
+        if (postCardAdapter == null) {
+            posts = new ArrayList<>();
+            postCardAdapter = new PostCardAdapter(getActivity(), posts);
+            recyclerView.setAdapter(postCardAdapter);
+        }
+        postCardAdapter.addPost(newPostText, bundle);
+    }
+
+    public void refreshAdapter() {
+        new FetchTrendingPostsTask().execute();
+    }
+
+    /********************************** AsyncTasks **********************************/
+
+    private class FetchTrendingPostsTask extends AsyncTask<Void, Void, PaginatedScanList<DBUserPost>> {
+        @Override
+        protected PaginatedScanList<DBUserPost> doInBackground(Void... params) {
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    getActivity(),                            // Context
+                    AWSCredentialProvider.IDENTITY_POOL_ID,   // Identity Pool ID
+                    AWSCredentialProvider.COGNITO_REGION      // Region
+            );
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
+            s3.setRegion(Region.getRegion(Regions.US_EAST_1));
+
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBScanExpression scanExpression = new DynamoDBScanExpression();
+            return mapper.scan(DBUserPost.class, scanExpression);
+        }
+
+        @Override
+        protected void onPostExecute(PaginatedScanList<DBUserPost> result) {
+            initializeAdapter(result);
+        }
     }
 }

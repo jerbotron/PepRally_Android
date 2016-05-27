@@ -79,30 +79,39 @@ public class DBUserProfile {
     }
 
     @DynamoDBAttribute(attributeName = "Followers")
-    public int getFollowers() {
+    public int getFollowersCount() {
         return followers;
     }
 
-    public void setFollowers(int followers) {
+    public void setFollowersCount(int followers) {
         this.followers = followers;
     }
 
     @DynamoDBAttribute(attributeName = "Following")
-    public int getFollowing() {
+    public int getFollowingCount() {
         return following;
     }
 
-    public void setFollowing(int following) {
+    public void setFollowingCount(int following) {
         this.following = following;
     }
 
     @DynamoDBAttribute(attributeName = "FistBumps")
-    public int getFistbumps() {
+    public int getFistbumpsCount() {
         return fistbumps;
     }
 
-    public void setFistbumps(int fistbumps) {
+    public void setFistbumpsCount(int fistbumps) {
         this.fistbumps = fistbumps;
+    }
+
+    @DynamoDBAttribute(attributeName = "PostsCount")
+    public int getPostsCount() {
+        return postsCount;
+    }
+
+    public void setPostsCount(int postsCount) {
+        this.postsCount = postsCount;
     }
 
     @DynamoDBAttribute(attributeName = "Nickname")
@@ -184,14 +193,5 @@ public class DBUserProfile {
 
     public void setPlayerIndex(int index) {
         this.playerIndex = index;
-    }
-
-    @DynamoDBAttribute(attributeName = "PostsCount")
-    public int getPostsCount() {
-        return postsCount;
-    }
-
-    public void setPostsCount(int postsCount) {
-        this.postsCount = postsCount;
     }
 }

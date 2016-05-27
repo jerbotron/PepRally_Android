@@ -48,6 +48,7 @@ import com.peprally.jeremy.peprally.fragments.ProfileInfoFragment;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.ProfileViewPager;
+import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
@@ -61,6 +62,7 @@ public class ProfileActivity extends AppCompatActivity {
     public final static int FAV_PLAYER_REQUEST_CODE = 1;
     public final static int NEW_POST_REQUEST_CODE = 2;
     public final static int POST_COMMENT_REQUEST_CODE = 3;
+    public UserProfileParcel userProfileParcel;
 
     // PRIVATE MEMBER VARs:
     private ActionBar supportActionBar;
@@ -74,19 +76,24 @@ public class ProfileActivity extends AppCompatActivity {
     private ViewPager viewPagerProfile;
     private ProfileViewPagerAdapter adapter;
 
-    private Bundle userProfileBundle;
-    private String playerProfileTeam;
-    private int playerProfileIndex;
     private AmazonDynamoDBClient ddbClient;
     private CognitoCachingCredentialsProvider credentialsProvider;
     private DynamoDBMapper mapper;
 
+    private boolean following = false;  // TODO: TEMP FLAG, REMOVE ONCE FOLLOW FEATURE IS IMPLEMENTED
     private boolean editMode = false;
-    private boolean following = false;
-
-    private boolean selfProfile;    // if user is editing his/her own profile
+    private boolean selfProfile;        // if user is editing his/her own profile
 
     private static final String TAG = ProfileActivity.class.getSimpleName();
+
+    // Singleton ProfileActivity Instance
+    private static ProfileActivity instance;
+
+    public static ProfileActivity getInstance() {
+        if (instance == null)
+            instance = new ProfileActivity();
+        return instance;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,26 +109,20 @@ public class ProfileActivity extends AppCompatActivity {
         ddbClient = new AmazonDynamoDBClient(credentialsProvider);
         mapper = new DynamoDBMapper(ddbClient);
 
-        userProfileBundle = getIntent().getBundleExtra("USER_PROFILE_BUNDLE");
-        final String userFirstname = userProfileBundle.getString("FIRST_NAME");
-        final String userFacebookID = userProfileBundle.getString("FACEBOOK_ID");
-        assert userFirstname != null && userFacebookID != null;
+        userProfileParcel = getIntent().getExtras().getParcelable("USER_PROFILE_PARCEL");
+        assert userProfileParcel != null;
+        selfProfile = userProfileParcel.getIsSelfProfile();
+        final String userFacebookID = userProfileParcel.getFacebookID();
 
         // 3 Profile Activity cases currently:
         // - view/edit your own profile as a fan
         // - view/edit your own profile as a player
         // - view a varsity player profile
-        if (userFacebookID.equals(currentToken.getUserId())) {
-            selfProfile = true;
+        if (selfProfile = userProfileParcel.getIsSelfProfile()) {
             new LoadFBProfilePictureTask().execute(userFacebookID);
         }
-        else {
-            selfProfile = false;
-            playerProfileTeam = userProfileBundle.getString("PLAYER_TEAM");
-            playerProfileIndex = userProfileBundle.getInt("PLAYER_INDEX", -1);
-        }
 
-        new LoadUserProfileFromDBTask().execute(userFacebookID);
+        new LoadUserProfileFromDBTask().execute(selfProfile);
 
         setContentView(R.layout.activity_profile);
         final CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.profile_collapse_toolbar);
@@ -144,7 +145,7 @@ public class ProfileActivity extends AppCompatActivity {
                         supportActionBar.setTitle(null);
                     }
                     else if(verticalOffset <= -375 && supportActionBar.getTitle() == null) {
-                        supportActionBar.setTitle(userFirstname);
+                        supportActionBar.setTitle(userProfileParcel.getFirstname());
                     }
                 }
             }
@@ -262,34 +263,26 @@ public class ProfileActivity extends AppCompatActivity {
             switch (requestCode) {
                 case FAV_TEAM_REQUEST_CODE:
                     String favoriteTeam = data.getStringExtra("FAVORITE_TEAM");
-                    userProfileBundle.putString("FAVORITE_TEAM", favoriteTeam);
+                    userProfileParcel.setFavoriteTeam(favoriteTeam);
                     ((ProfileEditFragment) editFragment).setFavTeam(editFragment.getView(), favoriteTeam);
                     break;
                 case FAV_PLAYER_REQUEST_CODE:
                     String favoritePlayer = data.getStringExtra("FAVORITE_PLAYER");
-                    userProfileBundle.putString("FAVORITE_PLAYER", favoritePlayer);
+                    userProfileParcel.setFavoritePlayer(favoritePlayer);
                     ((ProfileEditFragment) editFragment).setFavPlayer(editFragment.getView(), favoritePlayer);
                     break;
                 case NEW_POST_REQUEST_CODE:
                     ((ProfilePostsFragment) postsFragment).addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
                     break;
                 case POST_COMMENT_REQUEST_CODE:
-                    new AsyncHelpers.PushUserProfilePostsCountToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserInfoBundle(
-                                    credentialsProvider.getIdentityId(),
-                                    userProfileBundle.getString("FIRST_NAME"),
-                                    false,      // decrement post count
-                                    mapper));
-                    refreshPostsFragment();
-                    break;
-            }
-        }
-        else if (resultCode == RESULT_CANCELED) {
-            switch (requestCode) {
-                case POST_COMMENT_REQUEST_CODE:
-                    assert (data != null);
-                    if (data.getBooleanExtra("POST_DATA_CHANGED", false)) {
-                        refreshPostsFragment();
+                    if (data.getStringExtra("ACTION").equals("DELETE_POST")) {
+                        userProfileParcel.setCognitoID(credentialsProvider.getIdentityId());
+                        new AsyncHelpers.PushUserProfilePostsCountToDBTask().execute(
+                                new AsyncHelpers.asyncTaskObjectUserPostBundle(
+                                        null,
+                                        mapper,
+                                        userProfileParcel,
+                                        null));
                     }
                     break;
             }
@@ -307,9 +300,6 @@ public class ProfileActivity extends AppCompatActivity {
         postsFragment = new ProfilePostsFragment();
         editFragment = new ProfileEditFragment();
 
-        infoFragment.setArguments(userProfileBundle);
-        editFragment.setArguments(userProfileBundle);
-        postsFragment.setArguments(userProfileBundle);
         viewPagerProfile = (ProfileViewPager) findViewById(R.id.viewpager_profile);
         adapter = new ProfileViewPagerAdapter(fragmentManager);
         adapter.addFrag(infoFragment, "Info");
@@ -339,9 +329,9 @@ public class ProfileActivity extends AppCompatActivity {
         ImageView profilePicture = (ImageView) findViewById(R.id.profile_roster_image);
         if (!selfProfile) {
             String rootImageURL = "https://s3.amazonaws.com/rosterphotos/";
-            String team = userProfileBundle.getString("TEAM");
+            String team = userProfileParcel.getTeam();
             assert team != null;
-            String extension = team.replace(" ", "+") + "/" + userProfileBundle.getString("ROSTER_IMAGE_URL");
+            String extension = team.replace(" ", "+") + "/" + userProfileParcel.getRosterImageURL();
             String url = rootImageURL + extension;
             Picasso.with(ProfileActivity.this)
                     .load(url)
@@ -354,13 +344,13 @@ public class ProfileActivity extends AppCompatActivity {
         assert fistBumpsTextView != null && followersTextView != null && followingTextView != null;
 
         fistBumpsTextView.setText(Html.fromHtml("<b>"
-                + Integer.toString(userProfileBundle.getInt("FISTBUMPS"))
+                + Integer.toString(userProfileParcel.getFistbumpsCount())
                 + "</b> " + getString(R.string.profile_fist_bumps)));
         followersTextView.setText(Html.fromHtml("<b>"
-                + Integer.toString(userProfileBundle.getInt("FOLLOWERS"))
+                + Integer.toString(userProfileParcel.getFollowersCount())
                 + "</b> " + getString(R.string.profile_followers)));
         followingTextView.setText(Html.fromHtml("<b>"
-                + Integer.toString(userProfileBundle.getInt("FOLLOWING"))
+                + Integer.toString(userProfileParcel.getFollowingCount())
                 + "</b> " + getString(R.string.profile_following)));
     }
 
@@ -426,14 +416,6 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
-    public void updateUserProfileBundleString(String key, String value) {
-        userProfileBundle.putString(key, value);
-    }
-
-    public String getUserProfileBundleString(String key) {
-        return userProfileBundle.getString(key);
-    }
-
     @Override
     public void onBackPressed() {
         handleBackPressed();
@@ -494,40 +476,44 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
-    private class LoadUserProfileFromDBTask extends AsyncTask<String, Void, Void> {
+    private class LoadUserProfileFromDBTask extends AsyncTask<Boolean, Void, Boolean> {
         private DBUserProfile userProfile;
         private DBPlayerProfile playerProfile;
-        private DBUserNickname userNickname = null;
-        String nickname = userProfileBundle.getString("NICKNAME");
-        boolean newProfile = false;
+        private DBUserNickname userNickname;
+        String nickname = userProfileParcel.getNickname();
         @Override
-        protected Void doInBackground(String... params) {
-            if (selfProfile) {
-                userProfile = mapper.load(DBUserProfile.class, credentialsProvider.getIdentityId(), userProfileBundle.getString("FIRST_NAME"));
+        protected Boolean doInBackground(Boolean... params) {
+            // If loading ProfileActivity for user's own profile
+            if (params[0]) {
+                userProfile = mapper.load(DBUserProfile.class, credentialsProvider.getIdentityId(), userProfileParcel.getFirstname());
                 if (userProfile.getNewUser()) {
-                    newProfile = true;
                     SetupNewUserProfile();
+                    return true;
                 }
                 else {
                     Log.d(TAG, "default user already created, fetching user data");
                 }
             }
             else {
-                playerProfile = mapper.load(DBPlayerProfile.class, playerProfileTeam, playerProfileIndex);
+                playerProfile = mapper.load(DBPlayerProfile.class, userProfileParcel.getTeam(), userProfileParcel.getIndex());
             }
-            return null;
+            return false;
         }
 
         @Override
-        protected void onPostExecute(Void v) {
-            if (newProfile) {
+        protected void onPostExecute(Boolean newUserProfile) {
+            if (newUserProfile) {
                 new PushNewNicknameToDBTask().execute(nickname);
             }
-            BundleUserProfileData();
+            UpdateUserProfileParcel();
             createView();
         }
 
         private void SetupNewUserProfile() {
+            /*
+            Handle cases of duplicate first/last name users,
+            append a number in the back of default nicknames.
+             */
             userNickname = mapper.load(DBUserNickname.class, nickname);
             if (userNickname != null) {
                 Integer count = 0;
@@ -538,61 +524,61 @@ public class ProfileActivity extends AppCompatActivity {
                 }
                 while (userNickname != null);
             }
-            userProfile.setFollowers(0);
-            userProfile.setFollowing(0);
-            userProfile.setFistbumps(0);
+            // Set default user profile values
+            userProfile.setFollowersCount(0);
+            userProfile.setFollowingCount(0);
+            userProfile.setFistbumpsCount(0);
+            userProfile.setPostsCount(0);
             userProfile.setNickname(nickname);
             userProfile.setFavoriteTeam(null);
             userProfile.setFavoritePlayer(null);
             userProfile.setPepTalk(null);
             userProfile.setTrashTalk(null);
             userProfile.setNewUser(false);
-            userProfile.setPostsCount(0);
             mapper.save(userProfile);
         }
 
-        private void BundleUserProfileData() {
+        private void UpdateUserProfileParcel() {
             if (selfProfile) {
-                userProfileBundle.putString("FIRST_NAME", userProfile.getFirstName());
-                userProfileBundle.putString("LAST_NAME", userProfile.getLastName());
-                userProfileBundle.putString("NICKNAME", userProfile.getNickname());
-                userProfileBundle.putInt("FOLLOWERS", userProfile.getFollowers());
-                userProfileBundle.putInt("FOLLOWING", userProfile.getFollowing());
-                userProfileBundle.putInt("FISTBUMPS", userProfile.getFistbumps());
-                userProfileBundle.putString("FAVORITE_TEAM", userProfile.getFavoriteTeam());
-                userProfileBundle.putString("FAVORITE_PLAYER", userProfile.getFavoritePlayer());
-                userProfileBundle.putString("PEP_TALK", userProfile.getPepTalk());
-                userProfileBundle.putString("TRASH_TALK", userProfile.getTrashTalk());
-                userProfileBundle.putBoolean("IS_VARSITY_PLAYER", userProfile.getIsVarsityPlayer());
-                userProfileBundle.putString("TEAM", userProfile.getTeam());
-                userProfileBundle.putBoolean("SELF_PROFILE", true);
-                userProfileBundle.putInt("POSTS_COUNT", userProfile.getPostsCount());
+                userProfileParcel.setFirstname(userProfile.getFirstName());
+                userProfileParcel.setLastname(userProfile.getLastName());
+                userProfileParcel.setNickname(userProfile.getNickname());
+                userProfileParcel.setFollowersCount(userProfile.getFollowersCount());
+                userProfileParcel.setFollowingCount(userProfile.getFollowingCount());
+                userProfileParcel.setFistbumpsCount(userProfile.getFistbumpsCount());
+                userProfileParcel.setPostsCount(userProfile.getPostsCount());
+                userProfileParcel.setFavoriteTeam(userProfile.getFavoriteTeam());
+                userProfileParcel.setFavoritePlayer(userProfile.getFavoritePlayer());
+                userProfileParcel.setPepTalk(userProfile.getPepTalk());
+                userProfileParcel.setTrashTalk(userProfile.getTrashTalk());
+                userProfileParcel.setIsVarsityPlayer(userProfile.getIsVarsityPlayer());
+                userProfileParcel.setIsSelfProfile(true);
             }
             else {
-                userProfileBundle.putString("FIRST_NAME", playerProfile.getFirstName());
-                userProfileBundle.putString("LAST_NAME", playerProfile.getLastName());
-                userProfileBundle.putString("NICKNAME", null);
-                userProfileBundle.putInt("FOLLOWERS", 0);
-                userProfileBundle.putInt("FOLLOWING", 0);
-                userProfileBundle.putInt("FISTBUMPS", 0);
-                userProfileBundle.putString("FAVORITE_TEAM", null);
-                userProfileBundle.putString("FAVORITE_PLAYER", null);
-                userProfileBundle.putString("PEP_TALK", null);
-                userProfileBundle.putString("TRASH_TALK", null);
-                userProfileBundle.putBoolean("SELF_PROFILE", false);
-                userProfileBundle.putInt("POSTS_COUNT", 0);
+                userProfileParcel.setFirstname(playerProfile.getFirstName());
+                userProfileParcel.setLastname(playerProfile.getLastName());
+                userProfileParcel.setNickname(null);
+                userProfileParcel.setFollowersCount(0);
+                userProfileParcel.setFollowingCount(0);
+                userProfileParcel.setFistbumpsCount(0);
+                userProfileParcel.setPostsCount(0);
+                userProfileParcel.setFavoriteTeam(null);
+                userProfileParcel.setFavoritePlayer(null);
+                userProfileParcel.setPepTalk(null);
+                userProfileParcel.setTrashTalk(null);
+                userProfileParcel.setIsVarsityPlayer(true);
+                userProfileParcel.setIsSelfProfile(false);
                 // TODO: fix hardcoded true for IS_VARSITY_PLAYER
                 // TODO: allow users to view non-player profiles
-                userProfileBundle.putBoolean("IS_VARSITY_PLAYER", true);
-                userProfileBundle.putString("TEAM", playerProfile.getTeam());
-                userProfileBundle.putInt("NUMBER", playerProfile.getNumber());
-                userProfileBundle.putString("YEAR", playerProfile.getYear());
-                userProfileBundle.putString("HEIGHT", playerProfile.getHeight());
-                userProfileBundle.putString("WEIGHT", playerProfile.getWeight());
-                userProfileBundle.putString("POSITION", playerProfile.getPosition());
-                userProfileBundle.putString("HOMETOWN", playerProfile.getHometown());
-                userProfileBundle.putString("ROSTER_IMAGE_URL", playerProfile.getImageURL());
-                userProfileBundle.putBoolean("HAS_USER_PROFILE", playerProfile.getHasUserProfile());
+                userProfileParcel.setTeam(playerProfile.getTeam());
+                userProfileParcel.setNumber(playerProfile.getNumber());
+                userProfileParcel.setYear(playerProfile.getYear());
+                userProfileParcel.setHeight(playerProfile.getHeight());
+                userProfileParcel.setWeight(playerProfile.getWeight());
+                userProfileParcel.setPosition(playerProfile.getPosition());
+                userProfileParcel.setHometown(playerProfile.getHometown());
+                userProfileParcel.setRosterImageURL(playerProfile.getImageURL());
+                userProfileParcel.setHasUserProfile(playerProfile.getHasUserProfile());
             }
         }
     }
@@ -605,11 +591,11 @@ public class ProfileActivity extends AppCompatActivity {
             if (userNickname != null) {
                 mapper.delete(userNickname);
             }
-            HashMap<String, AttributeValue> primaryKey = new HashMap<>();
-            primaryKey.put("Nickname", new AttributeValue().withS(nickname));
-            primaryKey.put("CognitoID", new AttributeValue().withS(credentialsProvider.getIdentityId()));
-            primaryKey.put("FacebookID", new AttributeValue().withS(userProfileBundle.getString("FACEBOOK_ID")));
-            ddbClient.putItem(new PutItemRequest().withTableName("UserNicknames").withItem(primaryKey));
+            HashMap<String, AttributeValue> newEntry = new HashMap<>();
+            newEntry.put("Nickname", new AttributeValue().withS(nickname));
+            newEntry.put("CognitoID", new AttributeValue().withS(credentialsProvider.getIdentityId()));
+            newEntry.put("FacebookID", new AttributeValue().withS(userProfileParcel.getFacebookID()));
+            ddbClient.putItem(new PutItemRequest().withTableName("UserNicknames").withItem(newEntry));
             return null;
         }
     }
@@ -618,7 +604,7 @@ public class ProfileActivity extends AppCompatActivity {
         private DBUserProfile DBUserProfile;
         @Override
         protected Void doInBackground(Void... params) {
-            DBUserProfile = mapper.load(DBUserProfile.class, credentialsProvider.getIdentityId(), userProfileBundle.getString("FIRST_NAME"));
+            DBUserProfile = mapper.load(DBUserProfile.class, credentialsProvider.getIdentityId(), userProfileParcel.getFirstname());
             pushUserProfileChanges();
             return null;
         }
@@ -629,13 +615,13 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
         private void pushUserProfileChanges() {
-            DBUserProfile.setFollowing(userProfileBundle.getInt("FOLLOWING"));
-            DBUserProfile.setFistbumps(userProfileBundle.getInt("FISTBUMPS"));
-            DBUserProfile.setNickname(userProfileBundle.getString("NICKNAME"));
-            DBUserProfile.setFavoriteTeam(userProfileBundle.getString("FAVORITE_TEAM"));
-            DBUserProfile.setFavoritePlayer(userProfileBundle.getString("FAVORITE_PLAYER"));
-            DBUserProfile.setPepTalk(userProfileBundle.getString("PEP_TALK"));
-            DBUserProfile.setTrashTalk(userProfileBundle.getString("TRASH_TALK"));
+            DBUserProfile.setFollowingCount(userProfileParcel.getFollowingCount());
+            DBUserProfile.setFistbumpsCount(userProfileParcel.getFistbumpsCount());
+            DBUserProfile.setNickname(userProfileParcel.getNickname());
+            DBUserProfile.setFavoriteTeam(userProfileParcel.getFavoriteTeam());
+            DBUserProfile.setFavoritePlayer(userProfileParcel.getFavoritePlayer());
+            DBUserProfile.setPepTalk(userProfileParcel.getPepTalk());
+            DBUserProfile.setTrashTalk(userProfileParcel.getTrashTalk());
             mapper.save(DBUserProfile);
         }
     }

@@ -1,16 +1,13 @@
 package com.peprally.jeremy.peprally.fragments;
 
-import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -24,10 +21,12 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.adapter.EmptyAdapter;
-import com.peprally.jeremy.peprally.adapter.NewPostCardAdapter;
+import com.peprally.jeremy.peprally.adapter.PostCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,19 +34,18 @@ import java.util.List;
 public class ProfilePostsFragment extends Fragment {
 
     private List<DBUserPost> posts;
-    private LinearLayout profilePostsContainer;
-    private NewPostCardAdapter newPostCardAdapter;
+    private LinearLayout postsContainer;
+    private PostCardAdapter postCardAdapter;
     private RecyclerView recyclerView;
-    private TextView emptyMsgView;
-    private boolean dataFetched = false, emptyPosts = false;
+    private TextView noPostsText;
 
-    private Bundle userProfileBundle;
+    private UserProfileParcel parcel;
     private static final String TAG = ProfilePostsFragment.class.getSimpleName();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile_posts, container, false);
-        userProfileBundle = getArguments();
+        parcel = ProfileActivity.getInstance().userProfileParcel;
 
         recyclerView = (RecyclerView) view.findViewById(R.id.recycler_view_profile_posts);
         LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getActivity());
@@ -56,28 +54,15 @@ public class ProfilePostsFragment extends Fragment {
         recyclerView.setAdapter(new EmptyAdapter());
         recyclerView.setLayoutManager(rvLayoutManager);
 
-        emptyMsgView = (TextView) view.findViewById(R.id.profile_posts_empty_text);
-        profilePostsContainer = (LinearLayout) view.findViewById(R.id.container_profile_posts);
-
-        if (userProfileBundle.getInt("POSTS_COUNT") == 0) {
-            emptyPosts = true;
-            if (userProfileBundle.getBoolean("SELF_PROFILE")) {
-                emptyMsgView.setText("You have not created any posts yet!");
-            }
-            else {
-                emptyMsgView.setText(userProfileBundle.getString("FIRST_NAME") + " has not created any posts yet!");
-            }
-        }
-        else {
-            profilePostsContainer.removeView(emptyMsgView);
-            new FetchUserPostsTask().execute(userProfileBundle.getString("NICKNAME"));
-        }
+        noPostsText = (TextView) view.findViewById(R.id.profile_posts_empty_text);
+        postsContainer = (LinearLayout) view.findViewById(R.id.container_profile_posts);
         return view;
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        refreshAdapter();
     }
 
     private void initializeAdapter(List<DBUserPost> result) {
@@ -85,28 +70,40 @@ public class ProfilePostsFragment extends Fragment {
         for (DBUserPost userPost : result) {
             posts.add(userPost);
         }
-        newPostCardAdapter = new NewPostCardAdapter(getActivity(), posts);
-        recyclerView.setAdapter(newPostCardAdapter);
+        postCardAdapter = new PostCardAdapter(getActivity(), posts);
+        recyclerView.setAdapter(postCardAdapter);
     }
 
     public void addPostToAdapter(String newPostText) {
         Bundle bundle = new Bundle();
-        bundle.putString("NICKNAME", userProfileBundle.getString("NICKNAME"));
-        bundle.putString("FACEBOOK_ID", userProfileBundle.getString("FACEBOOK_ID"));
-        bundle.putString("FIRST_NAME", userProfileBundle.getString("FIRST_NAME"));
-        if (newPostCardAdapter == null) {
+        bundle.putString("NICKNAME", parcel.getNickname());
+        bundle.putString("FACEBOOK_ID", parcel.getFacebookID());
+        bundle.putString("FIRST_NAME", parcel.getFirstname());
+        if (postCardAdapter == null) {
             posts = new ArrayList<>();
-            newPostCardAdapter = new NewPostCardAdapter(getActivity(), posts);
-            recyclerView.setAdapter(newPostCardAdapter);
+            postCardAdapter = new PostCardAdapter(getActivity(), posts);
+            recyclerView.setAdapter(postCardAdapter);
         }
-        if (userProfileBundle.getInt("POSTS_COUNT") == 0) {
-            profilePostsContainer.removeView(emptyMsgView);
+        // Checks is this post is the first user post
+        if (parcel.getPostsCount() == 0) {
+            postsContainer.removeView(noPostsText);
         }
-        newPostCardAdapter.addPost(newPostText, bundle);
+        postCardAdapter.addPost(newPostText, bundle);
     }
 
     public void refreshAdapter() {
-        new FetchUserPostsTask().execute(userProfileBundle.getString("NICKNAME"));
+        if (parcel.getPostsCount() == 0) {
+            if (parcel.getIsSelfProfile()) {
+                noPostsText.setText("You have not created any posts yet!");
+            }
+            else {
+                noPostsText.setText(parcel.getFirstname() + " has not created any posts yet!");
+            }
+        }
+        else {
+            postsContainer.removeView(noPostsText);
+            new FetchUserPostsTask().execute(parcel.getNickname());
+        }
     }
 
     /********************************** AsyncTasks **********************************/
@@ -131,13 +128,11 @@ public class ProfilePostsFragment extends Fragment {
                     .withHashKeyValues(userPost)
                     .withConsistentRead(false)
                     .withScanIndexForward(false);
-            PaginatedQueryList<DBUserPost> result = mapper.query(DBUserPost.class, queryExpression);
-            return result;
+            return mapper.query(DBUserPost.class, queryExpression);
         }
 
         @Override
         protected void onPostExecute(PaginatedQueryList<DBUserPost> result) {
-            dataFetched = true;
             initializeAdapter(result);
         }
     }

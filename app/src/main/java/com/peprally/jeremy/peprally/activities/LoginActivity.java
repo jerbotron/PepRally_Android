@@ -28,6 +28,7 @@ import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class LoginActivity extends AppCompatActivity {
@@ -140,7 +141,7 @@ public class LoginActivity extends AppCompatActivity {
         protected Void doInBackground(CognitoCachingCredentialsProvider... params) {
             CognitoCachingCredentialsProvider credentialsProvider = params[0];
             Calendar c = Calendar.getInstance();
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
             Profile fbProfile = Profile.getCurrentProfile();
             HashMap<String, AttributeValue> primaryKey = new HashMap<>();

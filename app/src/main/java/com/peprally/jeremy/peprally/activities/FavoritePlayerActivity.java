@@ -26,6 +26,7 @@ import com.peprally.jeremy.peprally.adapter.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapter.PlayersCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 
 public class FavoritePlayerActivity extends AppCompatActivity {
@@ -75,20 +76,20 @@ public class FavoritePlayerActivity extends AppCompatActivity {
         playersCardAdapter.setOnItemClickListener(new PlayersCardAdapter.PlayersAdapterClickListener() {
             @Override
             public void onItemClick(View v, int position) {
+                DBPlayerProfile playerProfile = roster.get(position);
                 if (callingActivity.equals("ProfileActivity")) {
                     Intent intent = new Intent();
-                    intent.putExtra("FAVORITE_PLAYER", roster.get(position).getFavPlayerText());
+                    intent.putExtra("FAVORITE_PLAYER", playerProfile.getFavPlayerText());
                     setResult(Activity.RESULT_OK, intent);
                     finish();
                     overridePendingTransition(R.anim.left_in, R.anim.right_out);
                 } else if (callingActivity.equals("HomeActivity")) {
+                    UserProfileParcel parcel = new UserProfileParcel(playerProfile.getFirstName(),
+                                                                     playerProfile.getTeam(),
+                                                                     playerProfile.getIndex(),
+                                                                     false); // user not viewing self profile
                     Intent intent = new Intent(FavoritePlayerActivity.this, ProfileActivity.class);
-                    Bundle userProfileBundle = new Bundle();
-                    userProfileBundle.putString("FIRST_NAME", roster.get(position).getFirstName());
-                    userProfileBundle.putString("PLAYER_TEAM", roster.get(position).getTeam());
-                    userProfileBundle.putInt("PLAYER_INDEX", roster.get(position).getIndex());
-                    userProfileBundle.putString("FACEBOOK_ID", "NULL");
-                    intent.putExtra("USER_PROFILE_BUNDLE", userProfileBundle);
+                    intent.putExtra("USER_PROFILE_PARCEL", parcel);
                     startActivity(intent);
                     overridePendingTransition(R.anim.right_in, R.anim.left_out);
 //                    finish();
@@ -136,8 +137,7 @@ public class FavoritePlayerActivity extends AppCompatActivity {
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withHashKeyValues(playerProfile)
                     .withConsistentRead(false);
-            PaginatedQueryList<DBPlayerProfile> result = mapper.query(DBPlayerProfile.class, queryExpression);
-            return result;
+            return mapper.query(DBPlayerProfile.class, queryExpression);
         }
 
         @Override

@@ -4,14 +4,13 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 
 import java.util.Set;
 
-@DynamoDBTable(tableName = "UserPosts")
-public class DBUserPost {
-    private String nickname;
-    private long timeInSeconds;
+@DynamoDBTable(tableName = "UserComments")
+public class DBUserComment {
     private String postID;
+    private long timeInSeconds;
+    private String nickname;
     private String cognitoID;
     private String facebookID;
-    private String firstname;
     private String timeStamp;
     private String textContent;
     private int numberOfLikes;
@@ -19,13 +18,13 @@ public class DBUserPost {
     private Set<String> likedUsers;
     private Set<String> dislikedUsers;
 
-    @DynamoDBHashKey(attributeName = "Nickname")
-    public String getNickname() {
-        return nickname;
+    @DynamoDBHashKey(attributeName = "PostID")
+    public String getPostID() {
+        return postID;
     }
 
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
+    public void setPostID(String postID) {
+        this.postID = postID;
     }
 
     @DynamoDBRangeKey(attributeName = "TimeInSeconds")
@@ -37,13 +36,13 @@ public class DBUserPost {
         this.timeInSeconds = timeInSeconds;
     }
 
-    @DynamoDBAttribute(attributeName = "PostID")
-    public String getPostID() {
-        return postID;
+    @DynamoDBAttribute(attributeName = "Nickname")
+    public String getNickname() {
+        return nickname;
     }
 
-    public void setPostID(String postID) {
-        this.postID = postID;
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
     }
 
     @DynamoDBAttribute(attributeName = "CognitoID")
@@ -62,15 +61,6 @@ public class DBUserPost {
 
     public void setFacebookID(String facebookID) {
         this.facebookID = facebookID;
-    }
-
-    @DynamoDBAttribute(attributeName = "Firstname")
-    public String getFirstname() {
-        return firstname;
-    }
-
-    public void setFirstname(String firstname) {
-        this.firstname = firstname;
     }
 
     @DynamoDBAttribute(attributeName = "TimeStamp")
@@ -98,15 +88,6 @@ public class DBUserPost {
 
     public void setNumberOfLikes(int numberOfLikes) {
         this.numberOfLikes = numberOfLikes;
-    }
-
-    @DynamoDBAttribute(attributeName = "NumberOfComments")
-    public int getNumberOfComments() {
-        return numberOfComments;
-    }
-
-    public void setNumberOfComments(int numberOfComments) {
-        this.numberOfComments = numberOfComments;
     }
 
     @DynamoDBAttribute(attributeName = "LikedUsers")

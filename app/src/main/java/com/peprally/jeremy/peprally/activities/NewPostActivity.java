@@ -109,8 +109,7 @@ public class NewPostActivity extends AppCompatActivity {
                 setResult(Activity.RESULT_OK, intent);
                 finish();
                 // Hide soft keyboard if keyboard is up
-                EditText et = (EditText) findViewById(R.id.id_edit_text_new_post);
-                Helpers.hideSoftKeyboard(NewPostActivity.this, et);
+                Helpers.hideSoftKeyboard(NewPostActivity.this, editTextNewPost);
             }
         });
     }

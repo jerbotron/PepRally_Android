@@ -25,6 +25,7 @@ import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.db_models.DBUserNickname;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -86,7 +87,7 @@ public class ProfileEditFragment extends Fragment {
         ddbClient = new AmazonDynamoDBClient(credentialsProvider);
         mapper = new DynamoDBMapper(ddbClient);
 
-        localNickname = getArguments().getString("NICKNAME");
+        localNickname = ProfileActivity.getInstance().userProfileParcel.getNickname();
 
         InputFilter nicknameFilter = new InputFilter() {
             public CharSequence filter(CharSequence source, int start, int end,
@@ -157,17 +158,16 @@ public class ProfileEditFragment extends Fragment {
         return view;
     }
 
-    public void setupUserProfile(View view, Bundle UPB) {
-        if (UPB != null) {
-            // TODO: CALCULATE USER AGE FROM FB DATA
-            textViewFirstName.setText(UPB.getString("FIRST_NAME")); // + ", " + Integer.toString(23));
-            editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
-            editTextNickname.setText(UPB.getString("NICKNAME"));
-            textViewFavTeam.setText(UPB.getString("FAVORITE_TEAM"));
-            textViewFavPlayer.setText(UPB.getString("FAVORITE_PLAYER"));
-            editTextPepTalk.setText(UPB.getString("PEP_TALK"));
-            editTextTrashTalk.setText(UPB.getString("TRASH_TALK"));
-        }
+    public void setupUserProfile(View view) {
+        UserProfileParcel parcel = ProfileActivity.getInstance().userProfileParcel;
+        // TODO: CALCULATE USER AGE FROM FB DATA
+        textViewFirstName.setText(parcel.getFirstname()); // + ", " + Integer.toString(23));
+        editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+        editTextNickname.setText(parcel.getNickname());
+        textViewFavTeam.setText(parcel.getFavoriteTeam());
+        textViewFavPlayer.setText(parcel.getFavoritePlayer());
+        editTextPepTalk.setText(parcel.getPepTalk());
+        editTextTrashTalk.setText(parcel.getTrashTalk());
     }
 
     public void updateUserProfileBundleData(View view) {
@@ -179,19 +179,19 @@ public class ProfileEditFragment extends Fragment {
         String trashTalk = editTextTrashTalk.getText().toString().trim();
 
         if (!nickname.isEmpty() && !nicknameTaken) {
-            ((ProfileActivity) getActivity()).updateUserProfileBundleString("NICKNAME", nickname);
+            ProfileActivity.getInstance().userProfileParcel.setNickname(nickname);
         }
         if (pepTalk.isEmpty() || pepTalk.equals(getResources().getString(R.string.default_pep_talk))) {
-            ((ProfileActivity) getActivity()).updateUserProfileBundleString("PEP_TALK", null);
+            ProfileActivity.getInstance().userProfileParcel.setPepTalk(null);
         }
         else {
-            ((ProfileActivity) getActivity()).updateUserProfileBundleString("PEP_TALK", pepTalk);
+            ProfileActivity.getInstance().userProfileParcel.setPepTalk(pepTalk);
         }
         if (trashTalk.isEmpty() || trashTalk.equals(getResources().getString(R.string.default_trash_talk))) {
-            ((ProfileActivity) getActivity()).updateUserProfileBundleString("TRASH_TALK", null);
+            ProfileActivity.getInstance().userProfileParcel.setTrashTalk(null);
         }
         else {
-            ((ProfileActivity) getActivity()).updateUserProfileBundleString("TRASH_TALK", trashTalk);
+            ProfileActivity.getInstance().userProfileParcel.setTrashTalk(trashTalk);
         }
     }
 
@@ -228,7 +228,7 @@ public class ProfileEditFragment extends Fragment {
     public void onResume() {
         super.onResume();
         Log.d(TAG, "edit fragment resumed");
-        setupUserProfile(getView(), getArguments());
+        setupUserProfile(getView());
 
         // Auto pop-up keyboard to show user edit is available
         EditText editText = (EditText) getView().findViewById(R.id.profile_edit_nickname);
@@ -278,7 +278,7 @@ public class ProfileEditFragment extends Fragment {
             HashMap<String, AttributeValue> primaryKey = new HashMap<>();
             primaryKey.put("Nickname", new AttributeValue().withS(newNickname));
             primaryKey.put("CognitoID", new AttributeValue().withS(credentialsProvider.getIdentityId()));
-            primaryKey.put("FacebookID", new AttributeValue().withS(getArguments().getString("FACEBOOK_ID")));
+            primaryKey.put("FacebookID", new AttributeValue().withS(ProfileActivity.getInstance().userProfileParcel.getFacebookID()));
             ddbClient.putItem(new PutItemRequest().withTableName("UserNicknames").withItem(primaryKey));
             return null;
         }

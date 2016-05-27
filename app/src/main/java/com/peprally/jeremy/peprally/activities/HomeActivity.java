@@ -25,8 +25,8 @@ import com.facebook.login.widget.ProfilePictureView;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapter.ProfileViewPagerAdapter;
 import com.peprally.jeremy.peprally.fragments.BrowseTeamsFragment;
-import com.peprally.jeremy.peprally.fragments.EventsFragment;
 import com.peprally.jeremy.peprally.fragments.TrendingFragment;
+import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 public class HomeActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -144,14 +144,15 @@ public class HomeActivity extends AppCompatActivity
 
     private void onNavBarHeaderClick() {
         finish();
+        UserProfileParcel parcel = new UserProfileParcel(fbProfile.getFirstName(),
+                fbProfile.getLastName(),
+                (fbProfile.getFirstName().toLowerCase()
+                        + fbProfile.getLastName().toLowerCase()),
+                fbProfile.getId(),
+                true);  // user is viewing self profile
+
         Intent intent = new Intent(this, ProfileActivity.class);
-        Bundle userProfileBundle = new Bundle();
-        userProfileBundle.putString("FIRST_NAME", fbProfile.getFirstName());
-        userProfileBundle.putString("LAST_NAME", fbProfile.getLastName());
-        userProfileBundle.putString("NICKNAME", fbProfile.getFirstName().toLowerCase()
-                                                + fbProfile.getLastName().toLowerCase());
-        userProfileBundle.putString("FACEBOOK_ID", fbProfile.getId());
-        intent.putExtra("USER_PROFILE_BUNDLE", userProfileBundle);
+        intent.putExtra("USER_PROFILE_PARCEL", parcel);
         startActivity(intent);
         overridePendingTransition(R.anim.right_in, R.anim.left_out);
     }
