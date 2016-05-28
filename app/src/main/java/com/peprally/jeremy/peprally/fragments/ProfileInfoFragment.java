@@ -2,6 +2,7 @@ package com.peprally.jeremy.peprally.fragments;
 
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.Html;
 import android.util.Log;
@@ -21,6 +22,8 @@ import java.util.Map;
 
 public class ProfileInfoFragment extends Fragment {
 
+    private UserProfileParcel userProfileParcel;
+
     private boolean profileLoaded = false;
 
     private static final String TAG = ProfileInfoFragment.class.getSimpleName();
@@ -28,6 +31,13 @@ public class ProfileInfoFragment extends Fragment {
     Map<String, String>  baseballPositions = new HashMap<String, String>();
     Map<String, String>  basketballPositions = new HashMap<String, String>();
     Map<String, String>  footballPositions = new HashMap<String, String>();
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Get copy of userProfileParcel from ProfileActivity
+        userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -49,9 +59,7 @@ public class ProfileInfoFragment extends Fragment {
     }
 
     public void setupUserProfile(View view) {
-        UserProfileParcel parcel = ProfileActivity.getInstance().userProfileParcel;
-        final LinearLayout parent = (LinearLayout) view.findViewById(R.id.profile_view_container);
-        final LinearLayout ll_container = (LinearLayout) view.findViewById(R.id.profile_view_container);
+        final LinearLayout parent_container = (LinearLayout) view.findViewById(R.id.profile_view_container);
         final TextView textViewFirstName = (TextView) view.findViewById(R.id.profile_view_name_age);
         final TextView textViewNickname = (TextView) view.findViewById(R.id.profile_view_nickname);
         final TextView textViewFavTeam = (TextView) view.findViewById(R.id.profile_view_fav_team);
@@ -61,10 +69,10 @@ public class ProfileInfoFragment extends Fragment {
 
         textViewFirstName.setText("");    // set to empty so I can check later if populated under varsity profile
 
-        if (parcel.getIsVarsityPlayer() && !profileLoaded) {
-            String name = parcel.getFirstname() + " "
-                            + parcel.getLastname() + " #"
-                            + parcel.getNumber();
+        if (userProfileParcel.getIsVarsityPlayer() && !profileLoaded) {
+            String name = userProfileParcel.getFirstname() + " "
+                            + userProfileParcel.getLastname() + " #"
+                            + userProfileParcel.getNumber();
             textViewFirstName.setText(name);
 
             LinearLayout playerInfoLayout = new LinearLayout(getActivity());
@@ -78,35 +86,35 @@ public class ProfileInfoFragment extends Fragment {
 
             final LinearLayout.LayoutParams tvparams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             tvparams.setMargins(0, 0, 0, 4);
-            if (parcel.getPosition() != null) {
+            if (userProfileParcel.getPosition() != null) {
                 String text = "Position: <b>";
-                String pos = parcel.getPosition();
-                switch (parcel.getTeam()) {
+                String pos = userProfileParcel.getPosition();
+                switch (userProfileParcel.getTeam()) {
                     case "Baseball":
-                        if (pos.indexOf("/") != -1) {
+                        if (pos.contains("/")) {
                             text = text + baseballPositions.get(pos.split("/")[0]) + "/"
                                         + baseballPositions.get(pos.split("/")[1]);
                         }
                         else {
-                            text += baseballPositions.get(pos).toString();
+                            text += baseballPositions.get(pos);
                         }
                         break;
                     case "Basketball":
-                        if (pos.indexOf("/") != -1) {
+                        if (pos.contains("/")) {
                             text = text + basketballPositions.get(pos.split("/")[0]) + "/"
                                         + basketballPositions.get(pos.split("/")[1]);
                         }
                         else {
-                            text += basketballPositions.get(pos).toString();
+                            text += basketballPositions.get(pos);
                         }
                         break;
                     case "Football":
-                        if (pos.indexOf("/") != -1) {
+                        if (pos.contains("/")) {
                             text = text + footballPositions.get(pos.split("/")[0]) + "/"
                                         + footballPositions.get(pos.split("/")[1]);
                         }
                         else {
-                            text += footballPositions.get(pos).toString();
+                            text += footballPositions.get(pos);
                         }
                         break;
                     default:
@@ -119,29 +127,29 @@ public class ProfileInfoFragment extends Fragment {
                 playerInfoLayout.addView(tv_position);
             }
 
-            if (parcel.getHeight() != null) {
+            if (userProfileParcel.getHeight() != null) {
                 TextView tv_height = new TextView(getActivity());
-                tv_height.setText(Html.fromHtml("Height: <b>" + parcel.getHeight() + "</b>"));
+                tv_height.setText(Html.fromHtml("Height: <b>" + userProfileParcel.getHeight() + "</b>"));
                 tv_height.setLayoutParams(tvparams);
                 playerInfoLayout.addView(tv_height);
             }
 
-            if (parcel.getWeight() != null) {
+            if (userProfileParcel.getWeight() != null) {
                 TextView tv_weight = new TextView(getActivity());
-                tv_weight.setText(Html.fromHtml("Weight: <b>" + parcel.getWeight() + "</b>"));
+                tv_weight.setText(Html.fromHtml("Weight: <b>" + userProfileParcel.getWeight() + "</b>"));
                 tv_weight.setLayoutParams(tvparams);
                 playerInfoLayout.addView(tv_weight);
             }
 
-            if (parcel.getYear() != null) {
+            if (userProfileParcel.getYear() != null) {
                 TextView tv_year = new TextView(getActivity());
-                tv_year.setText(Html.fromHtml("Year: <b>" + parcel.getYear() + "</b>"));
+                tv_year.setText(Html.fromHtml("Year: <b>" + userProfileParcel.getYear() + "</b>"));
                 tv_year.setLayoutParams(tvparams);
                 playerInfoLayout.addView(tv_year);
             }
 
-            if (parcel.getHometown() != null) {
-                String[] sa = parcel.getHometown().split("/");
+            if (userProfileParcel.getHometown() != null) {
+                String[] sa = userProfileParcel.getHometown().split("/");
                 TextView tv_hometown = new TextView(getActivity());
                 tv_hometown.setText(Html.fromHtml("Hometown: <b>" + sa[0].substring(0, sa[0].length() - 1) + "</b>"));
                 tv_hometown.setLayoutParams(tvparams);
@@ -152,53 +160,53 @@ public class ProfileInfoFragment extends Fragment {
                 tv_highschool.setLayoutParams(tvparams);
                 playerInfoLayout.addView(tv_highschool);
             }
-            if (!parcel.getHasUserProfile()) {
+            if (!userProfileParcel.getHasUserProfile()) {
                 TextView tv_no_profile = new TextView(getActivity());
                 LinearLayout.LayoutParams msg_params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                 msg_params.setMargins(0,
                         (int) getResources().getDimension(R.dimen.activity_vertical_margin),
                         0,
                         0);
-                tv_no_profile.setText(parcel.getFirstname() +
+                tv_no_profile.setText(userProfileParcel.getFirstname() +
                         " has not made a Pep Rally profile yet. Tell your friends about Pep Rally!");
                 tv_no_profile.setTypeface(null, Typeface.ITALIC);
                 tv_no_profile.setLayoutParams(msg_params);
                 tv_no_profile.setGravity(Gravity.CENTER_HORIZONTAL);
                 playerInfoLayout.addView(tv_no_profile);
             }
-            parent.addView(playerInfoLayout, 2);
+            parent_container.addView(playerInfoLayout, 2);
             profileLoaded = true;
         }
 
         if (textViewFirstName.getText().toString().isEmpty()) {
-            textViewFirstName.setText(parcel.getFirstname());// + ", " + Integer.toString(23));
+            textViewFirstName.setText(userProfileParcel.getFirstname());// + ", " + Integer.toString(23));
         }
-        if (parcel.getNickname() == null) {
-            parent.removeView(textViewNickname);
+        if (userProfileParcel.getNickname() == null) {
+            parent_container.removeView(textViewNickname);
         }
         else {
-            textViewNickname.setText(parcel.getNickname());
+            textViewNickname.setText(userProfileParcel.getNickname());
         }
 
-        if (parcel.getFavoriteTeam() == null) {
-            ll_container.removeView(view.findViewById(R.id.profile_layout_fav_team));
+        if (userProfileParcel.getFavoriteTeam() == null) {
+            parent_container.removeView(view.findViewById(R.id.profile_layout_fav_team));
         } else {
-            textViewFavTeam.setText(parcel.getFavoriteTeam());
+            textViewFavTeam.setText(userProfileParcel.getFavoriteTeam());
         }
-        if (parcel.getFavoritePlayer() == null) {
-            ll_container.removeView(view.findViewById(R.id.profile_layout_fav_player));
+        if (userProfileParcel.getFavoritePlayer() == null) {
+            parent_container.removeView(view.findViewById(R.id.profile_layout_fav_player));
         } else {
-            textViewFavPlayer.setText(parcel.getFavoritePlayer());
+            textViewFavPlayer.setText(userProfileParcel.getFavoritePlayer());
         }
-        if (parcel.getPepTalk() == null) {
-            ll_container.removeView(view.findViewById(R.id.profile_layout_pep_talk));
+        if (userProfileParcel.getPepTalk() == null) {
+            parent_container.removeView(view.findViewById(R.id.profile_layout_pep_talk));
         } else {
-            textViewPepTalk.setText(parcel.getPepTalk());
+            textViewPepTalk.setText(userProfileParcel.getPepTalk());
         }
-        if (parcel.getTrashTalk() == null) {
-            ll_container.removeView(view.findViewById(R.id.profile_layout_trash_talk));
+        if (userProfileParcel.getTrashTalk() == null) {
+            parent_container.removeView(view.findViewById(R.id.profile_layout_trash_talk));
         } else {
-            textViewTrashTalk.setText(parcel.getTrashTalk());
+            textViewTrashTalk.setText(userProfileParcel.getTrashTalk());
         }
 
     }

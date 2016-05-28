@@ -2,6 +2,7 @@ package com.peprally.jeremy.peprally.fragments;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
 import android.text.InputFilter;
@@ -34,6 +35,8 @@ import java.util.List;
 
 
 public class ProfileEditFragment extends Fragment {
+
+    private UserProfileParcel userProfileParcel;
 
     private CognitoCachingCredentialsProvider credentialsProvider;
     private AmazonDynamoDBClient ddbClient;
@@ -75,6 +78,13 @@ public class ProfileEditFragment extends Fragment {
     };
 
     @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Get copy of userProfileParcel from ProfileActivity
+        userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log.d(TAG, "edit fragment view created");
         View view = inflater.inflate(R.layout.fragment_profile_edit, container, false);
@@ -87,7 +97,7 @@ public class ProfileEditFragment extends Fragment {
         ddbClient = new AmazonDynamoDBClient(credentialsProvider);
         mapper = new DynamoDBMapper(ddbClient);
 
-        localNickname = ProfileActivity.getInstance().userProfileParcel.getNickname();
+        localNickname = userProfileParcel.getNickname();
 
         InputFilter nicknameFilter = new InputFilter() {
             public CharSequence filter(CharSequence source, int start, int end,
@@ -159,15 +169,14 @@ public class ProfileEditFragment extends Fragment {
     }
 
     public void setupUserProfile(View view) {
-        UserProfileParcel parcel = ProfileActivity.getInstance().userProfileParcel;
         // TODO: CALCULATE USER AGE FROM FB DATA
-        textViewFirstName.setText(parcel.getFirstname()); // + ", " + Integer.toString(23));
+        textViewFirstName.setText(userProfileParcel.getFirstname()); // + ", " + Integer.toString(23));
         editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
-        editTextNickname.setText(parcel.getNickname());
-        textViewFavTeam.setText(parcel.getFavoriteTeam());
-        textViewFavPlayer.setText(parcel.getFavoritePlayer());
-        editTextPepTalk.setText(parcel.getPepTalk());
-        editTextTrashTalk.setText(parcel.getTrashTalk());
+        editTextNickname.setText(userProfileParcel.getNickname());
+        textViewFavTeam.setText(userProfileParcel.getFavoriteTeam());
+        textViewFavPlayer.setText(userProfileParcel.getFavoritePlayer());
+        editTextPepTalk.setText(userProfileParcel.getPepTalk());
+        editTextTrashTalk.setText(userProfileParcel.getTrashTalk());
     }
 
     public void updateUserProfileBundleData(View view) {
@@ -179,19 +188,19 @@ public class ProfileEditFragment extends Fragment {
         String trashTalk = editTextTrashTalk.getText().toString().trim();
 
         if (!nickname.isEmpty() && !nicknameTaken) {
-            ProfileActivity.getInstance().userProfileParcel.setNickname(nickname);
+            userProfileParcel.setNickname(nickname);
         }
         if (pepTalk.isEmpty() || pepTalk.equals(getResources().getString(R.string.default_pep_talk))) {
-            ProfileActivity.getInstance().userProfileParcel.setPepTalk(null);
+            userProfileParcel.setPepTalk(null);
         }
         else {
-            ProfileActivity.getInstance().userProfileParcel.setPepTalk(pepTalk);
+            userProfileParcel.setPepTalk(pepTalk);
         }
         if (trashTalk.isEmpty() || trashTalk.equals(getResources().getString(R.string.default_trash_talk))) {
-            ProfileActivity.getInstance().userProfileParcel.setTrashTalk(null);
+            userProfileParcel.setTrashTalk(null);
         }
         else {
-            ProfileActivity.getInstance().userProfileParcel.setTrashTalk(trashTalk);
+            userProfileParcel.setTrashTalk(trashTalk);
         }
     }
 
@@ -278,7 +287,7 @@ public class ProfileEditFragment extends Fragment {
             HashMap<String, AttributeValue> primaryKey = new HashMap<>();
             primaryKey.put("Nickname", new AttributeValue().withS(newNickname));
             primaryKey.put("CognitoID", new AttributeValue().withS(credentialsProvider.getIdentityId()));
-            primaryKey.put("FacebookID", new AttributeValue().withS(ProfileActivity.getInstance().userProfileParcel.getFacebookID()));
+            primaryKey.put("FacebookID", new AttributeValue().withS(userProfileParcel.getFacebookID()));
             ddbClient.putItem(new PutItemRequest().withTableName("UserNicknames").withItem(primaryKey));
             return null;
         }

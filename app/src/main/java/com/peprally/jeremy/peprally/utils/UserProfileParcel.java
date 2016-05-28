@@ -1,6 +1,7 @@
 package com.peprally.jeremy.peprally.utils;
 
 
+import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -46,6 +47,17 @@ public class UserProfileParcel implements Parcelable {
         this.nickname = nickname;
         this.facebookID = facebookID;
         this.isSelfProfile = isSelfProfile;
+
+        // Initialize un-used integer members to temporary invalid value
+        this.followersCount = Helpers.INTEGER_INVALID;
+        this.followingCount = Helpers.INTEGER_INVALID;
+        this.fistbumpsCount = Helpers.INTEGER_INVALID;
+        this.postsCount = Helpers.INTEGER_INVALID;
+        this.index = Helpers.INTEGER_INVALID;
+        this.number = Helpers.INTEGER_INVALID;
+        // Initialize un-used boolean members to temporary false value
+        this.isVarsityPlayer = false;
+        this.hasUserProfile = false;
     }
 
     // FavoritePlayerActivity Constructor, only used to initialize a few required members
@@ -58,6 +70,16 @@ public class UserProfileParcel implements Parcelable {
         this.team = team;
         this.index = index;
         this.isSelfProfile = isSelfProfile;
+        this.isVarsityPlayer = true;
+
+        // Initialize integer values to invalid value
+        this.followersCount = Helpers.INTEGER_INVALID;
+        this.followingCount = Helpers.INTEGER_INVALID;
+        this.fistbumpsCount = Helpers.INTEGER_INVALID;
+        this.postsCount = Helpers.INTEGER_INVALID;
+        this.number = Helpers.INTEGER_INVALID;
+        // Initialize un-used boolean members to temporary false value
+        this.hasUserProfile = false;
     }
 
     // Parcel Constructor

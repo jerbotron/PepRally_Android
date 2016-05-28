@@ -35,7 +35,6 @@ import java.util.Set;
 
 public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHolder> {
 
-    private String callingActivity;
     private Context callingContext;
 
     private AmazonDynamoDBClient ddbClient;
@@ -96,7 +95,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         final DBUserPost curPost = posts.get(position);
         new AsyncHelpers.LoadFBProfilePictureTask().execute(new AsyncHelpers.asyncTaskObjectProfileImage(curPost.getFacebookID(), newPostHolder.profilePhoto));
 
-        final String userNickName = ProfileActivity.getInstance().userProfileParcel.getNickname();
+        final String userNickName = ((ProfileActivity) callingContext).getUserProfileParcel().getNickname();
         Set<String> likedUsers = curPost.getLikedUsers();
         Set<String> dislikedUsers = curPost.getDislikedUsers();
 

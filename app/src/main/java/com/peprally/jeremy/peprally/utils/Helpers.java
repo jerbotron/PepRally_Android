@@ -8,6 +8,10 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 
 public class Helpers {
+
+    // CONSTANTS
+    public static final Integer INTEGER_INVALID = -1;
+
     private static boolean isKeyboardShown(View rootView) {
         // 128dp = 32dp * 4, minimum button height 32dp and generic 4 rows soft keyboard
         final int SOFT_KEYBOARD_HEIGHT_DP_THRESHOLD = 128;

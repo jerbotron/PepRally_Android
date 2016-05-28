@@ -88,6 +88,7 @@ public class FavoritePlayerActivity extends AppCompatActivity {
                                                                      playerProfile.getTeam(),
                                                                      playerProfile.getIndex(),
                                                                      false); // user not viewing self profile
+                    Log.d(TAG, "player index = " + String.valueOf(parcel.getIndex()));
                     Intent intent = new Intent(FavoritePlayerActivity.this, ProfileActivity.class);
                     intent.putExtra("USER_PROFILE_PARCEL", parcel);
                     startActivity(intent);

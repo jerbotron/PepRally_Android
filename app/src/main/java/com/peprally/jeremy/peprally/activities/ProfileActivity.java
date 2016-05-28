@@ -6,6 +6,8 @@ import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -62,15 +64,13 @@ public class ProfileActivity extends AppCompatActivity {
     public final static int FAV_PLAYER_REQUEST_CODE = 1;
     public final static int NEW_POST_REQUEST_CODE = 2;
     public final static int POST_COMMENT_REQUEST_CODE = 3;
-    public UserProfileParcel userProfileParcel;
+    public static UserProfileParcel userProfileParcel;
 
     // PRIVATE MEMBER VARs:
     private ActionBar supportActionBar;
     private AppBarLayout appBarLayout;
     private FloatingActionButton actionFAB;
     private Fragment infoFragment, postsFragment, editFragment;
-    private FragmentManager fragmentManager;
-    private FragmentTransaction fragmentTransaction;
     private MenuItem editMenuItem;
     private TabLayout tabLayout;
     private ViewPager viewPagerProfile;
@@ -86,14 +86,14 @@ public class ProfileActivity extends AppCompatActivity {
 
     private static final String TAG = ProfileActivity.class.getSimpleName();
 
-    // Singleton ProfileActivity Instance
-    private static ProfileActivity instance;
-
-    public static ProfileActivity getInstance() {
-        if (instance == null)
-            instance = new ProfileActivity();
-        return instance;
-    }
+//    // Singleton ProfileActivity Instance
+//    private static ProfileActivity instance;
+//
+//    public static ProfileActivity getInstance() {
+//        if (instance == null)
+//            instance = new ProfileActivity();
+//        return instance;
+//    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,6 +112,7 @@ public class ProfileActivity extends AppCompatActivity {
         userProfileParcel = getIntent().getExtras().getParcelable("USER_PROFILE_PARCEL");
         assert userProfileParcel != null;
         selfProfile = userProfileParcel.getIsSelfProfile();
+        Log.d(TAG, "player index = " + String.valueOf(userProfileParcel.getIndex()));
         final String userFacebookID = userProfileParcel.getFacebookID();
 
         // 3 Profile Activity cases currently:
@@ -295,7 +296,7 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void createView() {
-        fragmentManager = getSupportFragmentManager();
+        FragmentManager fragmentManager = getSupportFragmentManager();
         infoFragment = new ProfileInfoFragment();
         postsFragment = new ProfilePostsFragment();
         editFragment = new ProfileEditFragment();
@@ -352,6 +353,10 @@ public class ProfileActivity extends AppCompatActivity {
         followingTextView.setText(Html.fromHtml("<b>"
                 + Integer.toString(userProfileParcel.getFollowingCount())
                 + "</b> " + getString(R.string.profile_following)));
+    }
+
+    public UserProfileParcel getUserProfileParcel() {
+        return userProfileParcel;
     }
 
     private void refreshPostsFragment() {
@@ -495,6 +500,9 @@ public class ProfileActivity extends AppCompatActivity {
                 }
             }
             else {
+                if (userProfileParcel.getIndex() == null) {
+                    Log.d(TAG, "player index is null");
+                }
                 playerProfile = mapper.load(DBPlayerProfile.class, userProfileParcel.getTeam(), userProfileParcel.getIndex());
             }
             return false;

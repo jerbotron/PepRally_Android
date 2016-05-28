@@ -39,13 +39,19 @@ public class ProfilePostsFragment extends Fragment {
     private RecyclerView recyclerView;
     private TextView noPostsText;
 
-    private UserProfileParcel parcel;
+    private UserProfileParcel userProfileParcel;
     private static final String TAG = ProfilePostsFragment.class.getSimpleName();
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // Get copy of userProfileParcel from ProfileActivity
+        userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile_posts, container, false);
-        parcel = ProfileActivity.getInstance().userProfileParcel;
 
         recyclerView = (RecyclerView) view.findViewById(R.id.recycler_view_profile_posts);
         LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getActivity());
@@ -76,33 +82,33 @@ public class ProfilePostsFragment extends Fragment {
 
     public void addPostToAdapter(String newPostText) {
         Bundle bundle = new Bundle();
-        bundle.putString("NICKNAME", parcel.getNickname());
-        bundle.putString("FACEBOOK_ID", parcel.getFacebookID());
-        bundle.putString("FIRST_NAME", parcel.getFirstname());
+        bundle.putString("NICKNAME", userProfileParcel.getNickname());
+        bundle.putString("FACEBOOK_ID", userProfileParcel.getFacebookID());
+        bundle.putString("FIRST_NAME", userProfileParcel.getFirstname());
         if (postCardAdapter == null) {
             posts = new ArrayList<>();
             postCardAdapter = new PostCardAdapter(getActivity(), posts);
             recyclerView.setAdapter(postCardAdapter);
         }
         // Checks is this post is the first user post
-        if (parcel.getPostsCount() == 0) {
+        if (userProfileParcel.getPostsCount() == 0) {
             postsContainer.removeView(noPostsText);
         }
         postCardAdapter.addPost(newPostText, bundle);
     }
 
     public void refreshAdapter() {
-        if (parcel.getPostsCount() == 0) {
-            if (parcel.getIsSelfProfile()) {
+        if (userProfileParcel.getPostsCount() == 0) {
+            if (userProfileParcel.getIsSelfProfile()) {
                 noPostsText.setText("You have not created any posts yet!");
             }
             else {
-                noPostsText.setText(parcel.getFirstname() + " has not created any posts yet!");
+                noPostsText.setText(userProfileParcel.getFirstname() + " has not created any posts yet!");
             }
         }
         else {
             postsContainer.removeView(noPostsText);
-            new FetchUserPostsTask().execute(parcel.getNickname());
+            new FetchUserPostsTask().execute(userProfileParcel.getNickname());
         }
     }
 
