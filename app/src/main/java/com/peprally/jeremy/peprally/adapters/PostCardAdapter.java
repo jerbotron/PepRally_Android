@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally.adapter;
+package com.peprally.jeremy.peprally.adapters;
 
 import android.content.Context;
 import android.content.Intent;
@@ -96,6 +96,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         new AsyncHelpers.LoadFBProfilePictureTask().execute(new AsyncHelpers.asyncTaskObjectProfileImage(curPost.getFacebookID(), newPostHolder.profilePhoto));
 
         final String userNickName = ((ProfileActivity) callingContext).getUserProfileParcel().getNickname();
+
         Set<String> likedUsers = curPost.getLikedUsers();
         Set<String> dislikedUsers = curPost.getDislikedUsers();
 
@@ -256,7 +257,6 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                 intent.putExtra("POST_COMMENT_BUNDLE", postCommentBundle);
                 ((ProfileActivity) callingContext).startActivityForResult(intent, ProfileActivity.POST_COMMENT_REQUEST_CODE);
                 ((ProfileActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
-//                ((ProfileActivity) callingContext).finish();
             }
         });
 

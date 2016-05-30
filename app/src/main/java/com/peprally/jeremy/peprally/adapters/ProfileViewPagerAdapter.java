@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally.adapter;
+package com.peprally.jeremy.peprally.adapters;
 
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;

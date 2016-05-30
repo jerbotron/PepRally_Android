@@ -1,7 +1,5 @@
 package com.peprally.jeremy.peprally.utils;
 
-
-import android.bluetooth.le.BluetoothLeAdvertiser;
 import android.os.Parcel;
 import android.os.Parcelable;
 

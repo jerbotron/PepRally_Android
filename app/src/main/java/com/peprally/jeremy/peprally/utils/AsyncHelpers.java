@@ -172,9 +172,9 @@ public class AsyncHelpers {
             UserProfileParcel parcel = params[0].parcel;
             Bundle data = params[0].data;
             if (userPost == null) {
-                userProfile = mapper.load(DBUserProfile.class, parcel.getCognitoID(), parcel.getFirstname());
+                userProfile = mapper.load(DBUserProfile.class, parcel.getNickname());
             } else {
-                userProfile = mapper.load(DBUserProfile.class, userPost.getCognitoID(), userPost.getFirstname());
+                userProfile = mapper.load(DBUserProfile.class, userPost.getNickname());
             }
             if (data != null)
                 if (data.getBoolean("INCREMENT_POSTS_COUNT")) {

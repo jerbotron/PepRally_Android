@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally.adapter;
+package com.peprally.jeremy.peprally.adapters;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.View;

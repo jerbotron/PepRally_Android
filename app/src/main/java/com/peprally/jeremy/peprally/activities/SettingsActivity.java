@@ -11,16 +11,18 @@ import com.peprally.jeremy.peprally.R;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    private Toolbar toolbar;
-
+    /***********************************************************************************************
+     *************************************** ACTIVITY METHODS **************************************
+     **********************************************************************************************/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-        toolbar = (Toolbar) findViewById(R.id.toolbar_settings);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_settings);
         setSupportActionBar(toolbar);
         ActionBar supportActionBar = getSupportActionBar();
         supportActionBar.setTitle("Settings");
+        assert supportActionBar != null;
         supportActionBar.setDisplayHomeAsUpEnabled(true);
     }
 

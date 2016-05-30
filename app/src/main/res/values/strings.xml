@@ -4,6 +4,7 @@
 
     <!-- Strings related to Login Activity -->
     <string name="facebook_app_id">1006674646058120</string>
+    <string name="dialog_nickname_text">Pick a unique nickname!</string>
 
     <!-- Strings related to Profile Activity -->
     <string name="profile_fist_bumps"> Fistbumps</string>

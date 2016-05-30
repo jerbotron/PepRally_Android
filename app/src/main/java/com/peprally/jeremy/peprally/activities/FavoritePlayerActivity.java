@@ -8,7 +8,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 
@@ -22,8 +21,8 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.adapter.EmptyAdapter;
-import com.peprally.jeremy.peprally.adapter.PlayersCardAdapter;
+import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
+import com.peprally.jeremy.peprally.adapters.PlayersCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
@@ -31,14 +30,22 @@ import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 public class FavoritePlayerActivity extends AppCompatActivity {
 
-    private PaginatedQueryList<DBPlayerProfile> roster;
+    /***********************************************************************************************
+     *************************************** CLASS VARIABLES ***************************************
+     **********************************************************************************************/
+
+    // UI Variables
     private RecyclerView recyclerView;
-    private PlayersCardAdapter playersCardAdapter;
+
+    // General Variables
+    private static final String TAG = FavoriteTeamActivity.class.getSimpleName();
+    private PaginatedQueryList<DBPlayerProfile> roster;
     private String callingActivity;
     private boolean dataFetched = false;
 
-    private static final String TAG = FavoriteTeamActivity.class.getSimpleName();
-
+    /***********************************************************************************************
+     *************************************** ACTIVITY METHODS **************************************
+     **********************************************************************************************/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,6 +54,7 @@ public class FavoritePlayerActivity extends AppCompatActivity {
         callingActivity = getIntent().getStringExtra("CALLING_ACTIVITY");
         String team = getIntent().getStringExtra("TEAM");
         ActionBar supportActionBar = getSupportActionBar();
+        assert supportActionBar != null;
         supportActionBar.setTitle(team);
         supportActionBar.setDisplayHomeAsUpEnabled(true);
 
@@ -69,36 +77,6 @@ public class FavoritePlayerActivity extends AppCompatActivity {
         }
     }
 
-    private void initializeAdapter(PaginatedQueryList<DBPlayerProfile> result) {
-        this.roster = result;
-        playersCardAdapter = new PlayersCardAdapter(FavoritePlayerActivity.this, roster);
-        recyclerView.setAdapter(playersCardAdapter);
-        playersCardAdapter.setOnItemClickListener(new PlayersCardAdapter.PlayersAdapterClickListener() {
-            @Override
-            public void onItemClick(View v, int position) {
-                DBPlayerProfile playerProfile = roster.get(position);
-                if (callingActivity.equals("ProfileActivity")) {
-                    Intent intent = new Intent();
-                    intent.putExtra("FAVORITE_PLAYER", playerProfile.getFavPlayerText());
-                    setResult(Activity.RESULT_OK, intent);
-                    finish();
-                    overridePendingTransition(R.anim.left_in, R.anim.right_out);
-                } else if (callingActivity.equals("HomeActivity")) {
-                    UserProfileParcel parcel = new UserProfileParcel(playerProfile.getFirstName(),
-                                                                     playerProfile.getTeam(),
-                                                                     playerProfile.getIndex(),
-                                                                     false); // user not viewing self profile
-                    Log.d(TAG, "player index = " + String.valueOf(parcel.getIndex()));
-                    Intent intent = new Intent(FavoritePlayerActivity.this, ProfileActivity.class);
-                    intent.putExtra("USER_PROFILE_PARCEL", parcel);
-                    startActivity(intent);
-                    overridePendingTransition(R.anim.right_in, R.anim.left_out);
-//                    finish();
-                }
-            }
-        });
-    }
-
     @Override
     public void onBackPressed() {
         super.onBackPressed();
@@ -117,7 +95,41 @@ public class FavoritePlayerActivity extends AppCompatActivity {
         }
     }
 
-    /********************************** AsyncTasks **********************************/
+    /***********************************************************************************************
+     *********************************** GENERAL METHODS/INTERFACES ********************************
+     **********************************************************************************************/
+    private void initializeAdapter(PaginatedQueryList<DBPlayerProfile> result) {
+        this.roster = result;
+        PlayersCardAdapter playersCardAdapter = new PlayersCardAdapter(FavoritePlayerActivity.this, roster);
+        recyclerView.setAdapter(playersCardAdapter);
+        playersCardAdapter.setOnItemClickListener(new PlayersCardAdapter.PlayersAdapterClickListener() {
+            @Override
+            public void onItemClick(View v, int position) {
+                DBPlayerProfile playerProfile = roster.get(position);
+                if (callingActivity.equals("ProfileActivity")) {
+                    Intent intent = new Intent();
+                    intent.putExtra("FAVORITE_PLAYER", playerProfile.getFavPlayerText());
+                    setResult(Activity.RESULT_OK, intent);
+                    finish();
+                    overridePendingTransition(R.anim.left_in, R.anim.right_out);
+                } else if (callingActivity.equals("HomeActivity")) {
+                    UserProfileParcel parcel = new UserProfileParcel(playerProfile.getFirstName(),
+                                                                     playerProfile.getTeam(),
+                                                                     playerProfile.getIndex(),
+                                                                     false); // user not viewing self profile
+                    Intent intent = new Intent(FavoritePlayerActivity.this, ProfileActivity.class);
+                    intent.putExtra("USER_PROFILE_PARCEL", parcel);
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.right_in, R.anim.left_out);
+//                    finish();
+                }
+            }
+        });
+    }
+
+    /***********************************************************************************************
+     ****************************************** ASYNC TASKS ****************************************
+     **********************************************************************************************/
 
     private class FetchTeamRosterTask extends AsyncTask<String, Void, PaginatedQueryList<DBPlayerProfile>> {
         @Override

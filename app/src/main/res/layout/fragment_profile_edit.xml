@@ -13,7 +13,7 @@
         android:divider="@drawable/default_divider"
         android:showDividers="end">
         <TextView
-            android:id="@+id/profile_edit_name_age"
+            android:id="@+id/id_text_view_profile_edit_name_age"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="NAME, AGE"
@@ -21,14 +21,13 @@
             android:paddingTop="@dimen/activity_horizontal_margin"
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"/>
-        <EditText
-            android:id="@+id/profile_edit_nickname"
+        <TextView
+            android:id="@+id/id_text_view_profile_edit_nickname"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Nickname"
             android:textSize="14sp"
             android:textColor="@android:color/tertiary_text_dark"
-            android:editable="true"
             android:background="@drawable/edit_text_box"
             android:backgroundTint="@color/colorBackground"
             android:inputType="textNoSuggestions"
@@ -50,12 +49,11 @@
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"/>
         <TextView
-            android:id="@+id/profile_edit_fav_team"
+            android:id="@+id/id_text_view_profile_edit_fav_team"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="content"
             android:clickable="true"
-            android:editable="true"
             android:background="@drawable/edit_text_box"
             android:backgroundTint="@color/colorBackground"
             android:layout_marginRight="@dimen/activity_horizontal_margin"
@@ -76,7 +74,7 @@
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"/>
         <TextView
-            android:id="@+id/profile_edit_fav_player"
+            android:id="@+id/id_text_view_profile_edit_fav_player"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="content"
@@ -101,13 +99,12 @@
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"/>
         <EditText
-            android:id="@+id/profile_edit_pep_talk"
+            android:id="@+id/id_edit_text_profile_edit_pep_talk"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="content"
             android:textSize="14sp"
             android:textColor="@android:color/tertiary_text_dark"
-            android:editable="true"
             android:background="@drawable/edit_text_box"
             android:backgroundTint="@color/colorBackground"
             android:inputType="textNoSuggestions"
@@ -129,13 +126,12 @@
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"/>
         <EditText
-            android:id="@+id/profile_edit_trash_talk"
+            android:id="@+id/id_edit_text_profile_edit_trash_talk"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="content"
             android:textSize="14sp"
             android:textColor="@android:color/tertiary_text_dark"
-            android:editable="true"
             android:background="@drawable/edit_text_box"
             android:backgroundTint="@color/colorBackground"
             android:inputType="textNoSuggestions"

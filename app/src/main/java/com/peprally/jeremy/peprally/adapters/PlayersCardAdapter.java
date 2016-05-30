@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally.adapter;
+package com.peprally.jeremy.peprally.adapters;
 
 import android.content.Context;
 import android.support.v7.widget.CardView;

@@ -23,64 +23,20 @@ import java.util.Random;
 
 public class NewPostActivity extends AppCompatActivity {
 
-    private ActionBar supportActionBar;
+    /***********************************************************************************************
+     *************************************** CLASS VARIABLES ***************************************
+     **********************************************************************************************/
+    // UI Variables
     private EditText editTextNewPost;
     private TextView textViewCharCount;
 
+    // General Variables
+    private static final String TAG = NewPostActivity.class.getSimpleName();
     private int charCount = 200;
 
-    private static final String TAG = NewPostActivity.class.getSimpleName();
-
-    private final class NewPostHints {
-        private String new_post_hint_1 = getResources().getString(R.string.default_post_question_1);
-        private String new_post_hint_2 = getResources().getString(R.string.default_post_question_2);
-        private String new_post_hint_3 = getResources().getString(R.string.default_post_question_3);
-        private String new_post_hint_4 = getResources().getString(R.string.default_post_question_4);
-        private String new_post_hint_5 = getResources().getString(R.string.default_post_question_5);
-        Random rand;
-
-        NewPostHints() {
-            rand = new Random();
-        }
-
-        private String getRandomHint() {
-            int r = rand.nextInt(4);
-            switch (r) {
-                case 0:
-                    return new_post_hint_1;
-                case 1:
-                    return new_post_hint_2;
-                case 2:
-                    return new_post_hint_3;
-                case 3:
-                    return new_post_hint_4;
-                case 4:
-                    return new_post_hint_5;
-                default:
-                    return null;
-            }
-        }
-    }
-
-    private TextWatcher newPostTextWatcher = new TextWatcher() {
-        int prev_length = 0;
-        public void afterTextChanged(Editable s) {
-            if (prev_length >= 200) {
-                textViewCharCount.setTextColor(Color.RED);
-            }
-        }
-
-        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-        }
-
-        public void onTextChanged(CharSequence s, int start, int before, int count) {
-            charCount -= (s.length() - prev_length);
-            textViewCharCount.setText(String.valueOf(charCount));
-            prev_length = s.length();
-        }
-    };
-
+    /***********************************************************************************************
+     *************************************** ACTIVITY METHODS **************************************
+     **********************************************************************************************/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,7 +44,7 @@ public class NewPostActivity extends AppCompatActivity {
 
         final NewPostHints newPostHints = new NewPostHints();
 
-        supportActionBar = getSupportActionBar();
+        ActionBar supportActionBar = getSupportActionBar();
         assert (supportActionBar != null);
         supportActionBar.setTitle("New Post");
         supportActionBar.setDisplayHomeAsUpEnabled(true);
@@ -97,7 +53,24 @@ public class NewPostActivity extends AppCompatActivity {
         textViewCharCount = (TextView) findViewById(R.id.new_post_char_count);
 
         editTextNewPost.setHint(newPostHints.getRandomHint());
-        editTextNewPost.addTextChangedListener(newPostTextWatcher);
+        editTextNewPost.addTextChangedListener(new TextWatcher() {
+            int prev_length = 0;
+            public void afterTextChanged(Editable s) {
+                if (prev_length >= 200) {
+                    textViewCharCount.setTextColor(Color.RED);
+                }
+            }
+
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                charCount -= (s.length() - prev_length);
+                textViewCharCount.setText(String.valueOf(charCount));
+                prev_length = s.length();
+            }
+        });
 
         final Button newPostButton = (Button) findViewById(R.id.button_new_post);
         assert newPostButton != null;
@@ -137,6 +110,40 @@ public class NewPostActivity extends AppCompatActivity {
     public void onBackPressed() {
         super.onBackPressed();
         finish();
+    }
+
+    /***********************************************************************************************
+     *********************************** GENERAL METHODS/INTERFACES ********************************
+     **********************************************************************************************/
+    private final class NewPostHints {
+        private String new_post_hint_1 = getResources().getString(R.string.default_post_question_1);
+        private String new_post_hint_2 = getResources().getString(R.string.default_post_question_2);
+        private String new_post_hint_3 = getResources().getString(R.string.default_post_question_3);
+        private String new_post_hint_4 = getResources().getString(R.string.default_post_question_4);
+        private String new_post_hint_5 = getResources().getString(R.string.default_post_question_5);
+        Random rand;
+
+        NewPostHints() {
+            rand = new Random();
+        }
+
+        private String getRandomHint() {
+            int r = rand.nextInt(4);
+            switch (r) {
+                case 0:
+                    return new_post_hint_1;
+                case 1:
+                    return new_post_hint_2;
+                case 2:
+                    return new_post_hint_3;
+                case 3:
+                    return new_post_hint_4;
+                case 4:
+                    return new_post_hint_5;
+                default:
+                    return null;
+            }
+        }
     }
 
 }

@@ -17,8 +17,8 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpr
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.adapter.EmptyAdapter;
-import com.peprally.jeremy.peprally.adapter.TeamsCardAdapter;
+import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
+import com.peprally.jeremy.peprally.adapters.TeamsCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBSport;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.Team;
@@ -29,17 +29,26 @@ import java.util.List;
 
 public class FavoriteTeamActivity extends AppCompatActivity {
 
-    private List<Team> teams;
+    /***********************************************************************************************
+     *************************************** CLASS VARIABLES ***************************************
+     **********************************************************************************************/
+    // UI Variables
     private RecyclerView recyclerView;
-    private TeamsCardAdapter teamsCardAdapter;
+
+    // General Variables
+    private List<Team> teams;
     private boolean dataFetched = false;
 
+    /***********************************************************************************************
+     *************************************** ACTIVITY METHODS **************************************
+     **********************************************************************************************/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_favorite_team);
 
         ActionBar supportActionBar = getSupportActionBar();
+        assert supportActionBar != null;
         supportActionBar.setTitle("Pick a favorite team");
         supportActionBar.setDisplayHomeAsUpEnabled(true);
 
@@ -62,31 +71,6 @@ public class FavoriteTeamActivity extends AppCompatActivity {
         }
     }
 
-    private void initializeData(PaginatedScanList<DBSport> result){
-        teams = new ArrayList<>();
-        for (DBSport DBSport : result) {
-            final int drawableId = getResources().getIdentifier(DBSport.getIcon(), "drawable", getPackageName());
-            teams.add(new Team(DBSport.getName(), drawableId));
-        }
-        // Sort teams
-        Collections.sort(teams);
-    }
-
-    private void initializeAdapter() {
-        teamsCardAdapter = new TeamsCardAdapter(teams);
-        recyclerView.setAdapter(teamsCardAdapter);
-        teamsCardAdapter.setOnItemClickListener(new TeamsCardAdapter.TeamsAdapterClickListener() {
-            @Override
-            public void onItemClick(View v, int position) {
-                Intent intent = new Intent();
-                intent.putExtra("FAVORITE_TEAM", teams.get(position).name);
-                setResult(Activity.RESULT_OK, intent);
-                finish();
-                overridePendingTransition(R.anim.left_in, R.anim.right_out);
-            }
-        });
-    }
-
     @Override
     public void onBackPressed() {
         super.onBackPressed();
@@ -104,9 +88,37 @@ public class FavoriteTeamActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
+    /***********************************************************************************************
+     *********************************** GENERAL METHODS/INTERFACES ********************************
+     **********************************************************************************************/
+    private void initializeData(PaginatedScanList<DBSport> result){
+        teams = new ArrayList<>();
+        for (DBSport DBSport : result) {
+            final int drawableId = getResources().getIdentifier(DBSport.getIcon(), "drawable", getPackageName());
+            teams.add(new Team(DBSport.getName(), drawableId));
+        }
+        // Sort teams
+        Collections.sort(teams);
+    }
 
-    /********************************** AsyncTasks **********************************/
+    private void initializeAdapter() {
+        TeamsCardAdapter teamsCardAdapter = new TeamsCardAdapter(teams);
+        recyclerView.setAdapter(teamsCardAdapter);
+        teamsCardAdapter.setOnItemClickListener(new TeamsCardAdapter.TeamsAdapterClickListener() {
+            @Override
+            public void onItemClick(View v, int position) {
+                Intent intent = new Intent();
+                intent.putExtra("FAVORITE_TEAM", teams.get(position).name);
+                setResult(Activity.RESULT_OK, intent);
+                finish();
+                overridePendingTransition(R.anim.left_in, R.anim.right_out);
+            }
+        });
+    }
 
+    /***********************************************************************************************
+     ****************************************** UI METHODS *****************************************
+     **********************************************************************************************/
     private class FetchSportsTableTask extends AsyncTask<Void, Void, PaginatedScanList<DBSport>> {
         @Override
         protected PaginatedScanList<DBSport> doInBackground(Void... params) {

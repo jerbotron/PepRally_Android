@@ -24,7 +24,16 @@ public class DBUserProfile {
     private int playerIndex;
     private int postsCount;
 
-    @DynamoDBHashKey(attributeName = "CognitoID")
+    @DynamoDBHashKey(attributeName = "Nickname")
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "CognitoID-index", attributeName = "CognitoID")
     public String getCognitoId() {
         return cognitoID;
     }
@@ -51,7 +60,7 @@ public class DBUserProfile {
         this.newUser = newUser;
     }
 
-    @DynamoDBRangeKey(attributeName = "FirstName")
+    @DynamoDBAttribute(attributeName = "FirstName")
     public String getFirstName() {
         return firstName;
     }
@@ -114,15 +123,6 @@ public class DBUserProfile {
         this.postsCount = postsCount;
     }
 
-    @DynamoDBAttribute(attributeName = "Nickname")
-    public String getNickname() {
-        return nickname;
-    }
-
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
-    }
-
     @DynamoDBAttribute(attributeName = "FavoriteTeam")
     public String getFavoriteTeam() {
         return favoriteTeam;
@@ -177,7 +177,7 @@ public class DBUserProfile {
         this.isVarsityPlayer = isVarsityPlayer;
     }
 
-    @DynamoDBIndexHashKey(attributeName = "Team")
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "Team-index", attributeName = "Team")
     public String getTeam() {
         return team;
     }

@@ -23,7 +23,7 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingC
     private Context callingContext;
     private LoginActivity.AWSLoginTaskCallback loginTaskCallback;
 
-    private static final String TAG = HomeActivity.class.getSimpleName();
+    private static final String TAG = LoginActivity.class.getSimpleName();
 
     public AWSCredentialProvider(Context context, LoginActivity.AWSLoginTaskCallback taskCallback) {
         callingContext = context;

@@ -1,20 +1,16 @@
 package com.peprally.jeremy.peprally.activities;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
@@ -26,7 +22,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -37,10 +32,8 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
-import com.facebook.AccessToken;
-import com.facebook.FacebookSdk;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.adapter.ProfileViewPagerAdapter;
+import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserNickname;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
@@ -59,14 +52,15 @@ import java.util.HashMap;
 
 public class ProfileActivity extends AppCompatActivity {
 
-    // PUBLIC MEMBERS VARs:
-    public final static int FAV_TEAM_REQUEST_CODE = 0;
-    public final static int FAV_PLAYER_REQUEST_CODE = 1;
-    public final static int NEW_POST_REQUEST_CODE = 2;
-    public final static int POST_COMMENT_REQUEST_CODE = 3;
-    public static UserProfileParcel userProfileParcel;
+    /***********************************************************************************************
+     *************************************** CLASS VARIABLES ***************************************
+     **********************************************************************************************/
+    // AWS Variables
+    private AmazonDynamoDBClient ddbClient;
+    private CognitoCachingCredentialsProvider credentialsProvider;
+    private DynamoDBMapper mapper;
 
-    // PRIVATE MEMBER VARs:
+    // UI Variables
     private ActionBar supportActionBar;
     private AppBarLayout appBarLayout;
     private FloatingActionButton actionFAB;
@@ -76,30 +70,24 @@ public class ProfileActivity extends AppCompatActivity {
     private ViewPager viewPagerProfile;
     private ProfileViewPagerAdapter adapter;
 
-    private AmazonDynamoDBClient ddbClient;
-    private CognitoCachingCredentialsProvider credentialsProvider;
-    private DynamoDBMapper mapper;
+    // General Variables
+    public final static int FAV_TEAM_REQUEST_CODE = 0;
+    public final static int FAV_PLAYER_REQUEST_CODE = 1;
+    public final static int NEW_POST_REQUEST_CODE = 2;
+    public final static int POST_COMMENT_REQUEST_CODE = 3;
+    public static UserProfileParcel userProfileParcel;
 
+    private static final String TAG = ProfileActivity.class.getSimpleName();
     private boolean following = false;  // TODO: TEMP FLAG, REMOVE ONCE FOLLOW FEATURE IS IMPLEMENTED
     private boolean editMode = false;
     private boolean selfProfile;        // if user is editing his/her own profile
 
-    private static final String TAG = ProfileActivity.class.getSimpleName();
-
-//    // Singleton ProfileActivity Instance
-//    private static ProfileActivity instance;
-//
-//    public static ProfileActivity getInstance() {
-//        if (instance == null)
-//            instance = new ProfileActivity();
-//        return instance;
-//    }
-
+    /***********************************************************************************************
+     *************************************** ACTIVITY METHODS **************************************
+     **********************************************************************************************/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        FacebookSdk.sdkInitialize(getApplicationContext());
-        AccessToken currentToken = AccessToken.getCurrentAccessToken();
 
         credentialsProvider = new CognitoCachingCredentialsProvider(
                 getApplicationContext(),                    // Context
@@ -112,7 +100,6 @@ public class ProfileActivity extends AppCompatActivity {
         userProfileParcel = getIntent().getExtras().getParcelable("USER_PROFILE_PARCEL");
         assert userProfileParcel != null;
         selfProfile = userProfileParcel.getIsSelfProfile();
-        Log.d(TAG, "player index = " + String.valueOf(userProfileParcel.getIndex()));
         final String userFacebookID = userProfileParcel.getFacebookID();
 
         // 3 Profile Activity cases currently:
@@ -157,7 +144,6 @@ public class ProfileActivity extends AppCompatActivity {
         final TextView followButtonContent = (TextView) findViewById(R.id.button_follow_content);
         actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
         assert followButton != null && followButtonContent != null && actionFAB != null;
-//        CoordinatorLayout.LayoutParams fistbumpFabLayoutParams = (CoordinatorLayout.LayoutParams) actionFAB.getLayoutParams();
         // If user is viewing their own profile
         if (selfProfile) {
             followButton.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_view_fistbumps));
@@ -265,15 +251,16 @@ public class ProfileActivity extends AppCompatActivity {
                 case FAV_TEAM_REQUEST_CODE:
                     String favoriteTeam = data.getStringExtra("FAVORITE_TEAM");
                     userProfileParcel.setFavoriteTeam(favoriteTeam);
-                    ((ProfileEditFragment) editFragment).setFavTeam(editFragment.getView(), favoriteTeam);
+                    ((ProfileEditFragment) editFragment).setFavTeam(favoriteTeam);
                     break;
                 case FAV_PLAYER_REQUEST_CODE:
                     String favoritePlayer = data.getStringExtra("FAVORITE_PLAYER");
                     userProfileParcel.setFavoritePlayer(favoritePlayer);
-                    ((ProfileEditFragment) editFragment).setFavPlayer(editFragment.getView(), favoritePlayer);
+                    ((ProfileEditFragment) editFragment).setFavPlayer(favoritePlayer);
                     break;
                 case NEW_POST_REQUEST_CODE:
                     ((ProfilePostsFragment) postsFragment).addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
+                    viewPagerProfile.setCurrentItem(1);
                     break;
                 case POST_COMMENT_REQUEST_CODE:
                     if (data.getStringExtra("ACTION").equals("DELETE_POST")) {
@@ -290,11 +277,82 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        handleBackPressed();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+//        Log.d(TAG, "profile activity resumed");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+//        Log.d(TAG, "profile activity paused");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+//        Log.d(TAG, "profile activity started");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+//        Log.d(TAG, "profile activity stopped");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+//        Log.d(TAG, "profile activity destroyed");
+    }
+
+    /***********************************************************************************************
+     *********************************** GENERAL METHODS/INTERFACES ********************************
+     **********************************************************************************************/
+    public UserProfileParcel getUserProfileParcel() {
+        return userProfileParcel;
+    }
+
+    public void editFavoriteTeam() {
+        Intent intent = new Intent(this, FavoriteTeamActivity.class);
+        startActivityForResult(intent, FAV_TEAM_REQUEST_CODE);
+        overridePendingTransition(R.anim.right_in, R.anim.left_out);
+    }
+
+    public void editFavoritePlayer() {
+        String favTeam = ((ProfileEditFragment) editFragment).getFavTeam();
+        if (favTeam.isEmpty()) {
+            Toast.makeText(ProfileActivity.this, "Pick a favorite team first!", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            Intent intent = new Intent(this, FavoritePlayerActivity.class);
+            intent.putExtra("CALLING_ACTIVITY", "ProfileActivity");
+            intent.putExtra("TEAM", favTeam);
+            startActivityForResult(intent, FAV_PLAYER_REQUEST_CODE);
+            overridePendingTransition(R.anim.right_in, R.anim.left_out);
+        }
+    }
+
+    private void refreshPostsFragment() {
+        // Set view pager to postsFragment
+        viewPagerProfile.setCurrentItem(1);
+        ((ProfilePostsFragment) postsFragment).refreshAdapter();
+    }
+
     private Bitmap getFacebookProfilePicture(String userID) throws IOException {
         URL imageURL = new URL("https://graph.facebook.com/" + userID + "/picture?type=large");
         return BitmapFactory.decodeStream(imageURL.openConnection().getInputStream());
     }
 
+    /***********************************************************************************************
+     ****************************************** UI METHODS *****************************************
+     **********************************************************************************************/
     private void createView() {
         FragmentManager fragmentManager = getSupportFragmentManager();
         infoFragment = new ProfileInfoFragment();
@@ -355,16 +413,6 @@ public class ProfileActivity extends AppCompatActivity {
                 + "</b> " + getString(R.string.profile_following)));
     }
 
-    public UserProfileParcel getUserProfileParcel() {
-        return userProfileParcel;
-    }
-
-    private void refreshPostsFragment() {
-        // Set view pager to postsFragment
-        viewPagerProfile.setCurrentItem(1);
-        ((ProfilePostsFragment) postsFragment).refreshAdapter();
-    }
-
     private void handleBackPressed() {
         if (editMode) {
             // Push profile changes to DB
@@ -401,63 +449,9 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
-    public void editFavoriteTeam() {
-        Intent intent = new Intent(this, FavoriteTeamActivity.class);
-        startActivityForResult(intent, FAV_TEAM_REQUEST_CODE);
-        overridePendingTransition(R.anim.right_in, R.anim.left_out);
-    }
-
-    public void editFavoritePlayer() {
-        String favTeam = ((ProfileEditFragment) editFragment).getFavTeam(editFragment.getView());
-        if (favTeam.isEmpty()) {
-            Toast.makeText(ProfileActivity.this, "Pick a favorite team first!", Toast.LENGTH_SHORT).show();
-        }
-        else {
-            Intent intent = new Intent(this, FavoritePlayerActivity.class);
-            intent.putExtra("CALLING_ACTIVITY", "ProfileActivity");
-            intent.putExtra("TEAM", favTeam);
-            startActivityForResult(intent, FAV_PLAYER_REQUEST_CODE);
-            overridePendingTransition(R.anim.right_in, R.anim.left_out);
-        }
-    }
-
-    @Override
-    public void onBackPressed() {
-        handleBackPressed();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-//        Log.d(TAG, "profile activity resumed");
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-//        Log.d(TAG, "profile activity paused");
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-//        Log.d(TAG, "profile activity started");
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-//        Log.d(TAG, "profile activity stopped");
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-//        Log.d(TAG, "profile activity destroyed");
-    }
-
-    /********************************** AsyncTasks **********************************/
-
+    /***********************************************************************************************
+     ****************************************** ASYNC TASKS ****************************************
+     **********************************************************************************************/
     private class LoadFBProfilePictureTask extends AsyncTask<String, Void, Bitmap> {
         @Override
         protected Bitmap doInBackground(String... params) {
@@ -484,13 +478,11 @@ public class ProfileActivity extends AppCompatActivity {
     private class LoadUserProfileFromDBTask extends AsyncTask<Boolean, Void, Boolean> {
         private DBUserProfile userProfile;
         private DBPlayerProfile playerProfile;
-        private DBUserNickname userNickname;
-        String nickname = userProfileParcel.getNickname();
         @Override
         protected Boolean doInBackground(Boolean... params) {
             // If loading ProfileActivity for user's own profile
             if (params[0]) {
-                userProfile = mapper.load(DBUserProfile.class, credentialsProvider.getIdentityId(), userProfileParcel.getFirstname());
+                userProfile = mapper.load(DBUserProfile.class, userProfileParcel.getNickname());
                 if (userProfile.getNewUser()) {
                     SetupNewUserProfile();
                     return true;
@@ -500,9 +492,6 @@ public class ProfileActivity extends AppCompatActivity {
                 }
             }
             else {
-                if (userProfileParcel.getIndex() == null) {
-                    Log.d(TAG, "player index is null");
-                }
                 playerProfile = mapper.load(DBPlayerProfile.class, userProfileParcel.getTeam(), userProfileParcel.getIndex());
             }
             return false;
@@ -510,34 +499,30 @@ public class ProfileActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Boolean newUserProfile) {
-            if (newUserProfile) {
-                new PushNewNicknameToDBTask().execute(nickname);
-            }
             UpdateUserProfileParcel();
             createView();
         }
 
         private void SetupNewUserProfile() {
-            /*
-            Handle cases of duplicate first/last name users,
-            append a number in the back of default nicknames.
-             */
-            userNickname = mapper.load(DBUserNickname.class, nickname);
-            if (userNickname != null) {
-                Integer count = 0;
-                do {
-                    nickname = nickname + Integer.toString(count);
-                    userNickname = mapper.load(DBUserNickname.class, nickname);
-                    count++;
-                }
-                while (userNickname != null);
-            }
+//            /*
+//            Handle cases of duplicate first/last name users,
+//            append a number in the back of default nicknames.
+//             */
+//            userNickname = mapper.load(DBUserNickname.class, nickname);
+//            if (userNickname != null) {
+//                Integer count = 0;
+//                do {
+//                    nickname = nickname + Integer.toString(count);
+//                    userNickname = mapper.load(DBUserNickname.class, nickname);
+//                    count++;
+//                }
+//                while (userNickname != null);
+//            }
             // Set default user profile values
             userProfile.setFollowersCount(0);
             userProfile.setFollowingCount(0);
             userProfile.setFistbumpsCount(0);
             userProfile.setPostsCount(0);
-            userProfile.setNickname(nickname);
             userProfile.setFavoriteTeam(null);
             userProfile.setFavoritePlayer(null);
             userProfile.setPepTalk(null);
@@ -591,28 +576,11 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
-    private class PushNewNicknameToDBTask extends AsyncTask<String, Void, Void> {
-        @Override
-        protected Void doInBackground(String... params) {
-            String nickname = params[0].toLowerCase();
-            DBUserNickname userNickname = mapper.load(DBUserNickname.class, nickname);
-            if (userNickname != null) {
-                mapper.delete(userNickname);
-            }
-            HashMap<String, AttributeValue> newEntry = new HashMap<>();
-            newEntry.put("Nickname", new AttributeValue().withS(nickname));
-            newEntry.put("CognitoID", new AttributeValue().withS(credentialsProvider.getIdentityId()));
-            newEntry.put("FacebookID", new AttributeValue().withS(userProfileParcel.getFacebookID()));
-            ddbClient.putItem(new PutItemRequest().withTableName("UserNicknames").withItem(newEntry));
-            return null;
-        }
-    }
-
     private class PushProfileChangesToDBTask extends AsyncTask<Void, Void, Void> {
         private DBUserProfile DBUserProfile;
         @Override
         protected Void doInBackground(Void... params) {
-            DBUserProfile = mapper.load(DBUserProfile.class, credentialsProvider.getIdentityId(), userProfileParcel.getFirstname());
+            DBUserProfile = mapper.load(DBUserProfile.class, userProfileParcel.getNickname());
             pushUserProfileChanges();
             return null;
         }

@@ -3,13 +3,15 @@ package com.peprally.jeremy.peprally.activities;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,26 +20,21 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.adapter.CommentCardAdapter;
-import com.peprally.jeremy.peprally.adapter.EmptyAdapter;
+import com.peprally.jeremy.peprally.adapters.CommentCardAdapter;
+import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.Helpers;
-
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,21 +42,30 @@ import java.util.Set;
 
 public class NewCommentActivity extends AppCompatActivity {
 
-    private Bundle postCommentBundle;
+    /***********************************************************************************************
+     *************************************** CLASS VARIABLES ***************************************
+     **********************************************************************************************/
 
+    // UI Variables
+    private RecyclerView recyclerView;
+    private LinearLayout commentsContainer;
+    private TextView noCommentsText, mainPostCommentsCount, textViewCharCount;
+    private EditText newCommentText;
+
+    // AWS Variables
     private AmazonDynamoDBClient ddbClient;
     private CognitoCachingCredentialsProvider credentialsProvider;
     private DynamoDBMapper mapper;
 
-    private List<DBUserComment> comments;
-    private CommentCardAdapter commentCardAdapter;
-    private RecyclerView recyclerView;
-    private LinearLayout commentsContainer;
-    private TextView noCommentsText, mainPostCommentsCount;
-    private EditText newCommentText;
-
+    // General Variables
     private static final String TAG = NewCommentActivity.class.getSimpleName();
+    private Bundle postCommentBundle;
+    private CommentCardAdapter commentCardAdapter;
+    private int charCount = 200;
 
+    /***********************************************************************************************
+     *************************************** ACTIVITY METHODS **************************************
+     **********************************************************************************************/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -92,6 +98,7 @@ public class NewCommentActivity extends AppCompatActivity {
         mainPostCommentsCount = (TextView) findViewById(R.id.id_text_view_comment_main_post_comments);
         noCommentsText = (TextView) findViewById(R.id.id_text_view_post_empty_comments_text);
         newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
+        textViewCharCount = (TextView) findViewById(R.id.id_text_view_comment_char_count);
         final TextView postCommentButton = (TextView) findViewById(R.id.id_text_view_post_new_comment_button);
 
         assert (mainPostNickname != null && mainPostTextContent != null && mainPostTimeStamp != null &&
@@ -128,7 +135,7 @@ public class NewCommentActivity extends AppCompatActivity {
         new AsyncHelpers.LoadFBProfilePictureTask().execute(new AsyncHelpers.asyncTaskObjectProfileImage(postCommentBundle.getString("FACEBOOK_ID"), mainPostProfileImage));
 
         long tsLong = System.currentTimeMillis()/1000;
-        long timeInSeconds = tsLong - postCommentBundle.getLong("TIME_IN_SECONDS");
+        final long timeInSeconds = tsLong - postCommentBundle.getLong("TIME_IN_SECONDS");
         if (timeInSeconds < 60) {
             mainPostTimeStamp.setText(String.valueOf(timeInSeconds) + "s");
         }
@@ -169,7 +176,43 @@ public class NewCommentActivity extends AppCompatActivity {
         postCommentButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                addCommentToAdapter(newCommentText.getText().toString());
+                if (charCount < 0) {
+                    Toast.makeText(NewCommentActivity.this, "Comment too long!", Toast.LENGTH_SHORT).show();
+                }
+                else {
+                    addCommentToAdapter(newCommentText.getText().toString());
+                }
+            }
+        });
+
+        newCommentText.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                assert textViewCharCount != null;
+                if (Helpers.isKeyboardShown(newCommentText.getRootView())) {
+                    textViewCharCount.setVisibility(View.VISIBLE);
+                }
+                else {
+                    textViewCharCount.setVisibility(View.INVISIBLE);
+                }
+            }
+        });
+        newCommentText.addTextChangedListener(new TextWatcher() {
+            int prev_length = 0;
+            public void afterTextChanged(Editable s) {
+                if (prev_length >= 200) {
+                    textViewCharCount.setTextColor(Color.RED);
+                }
+            }
+
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                charCount -= (s.length() - prev_length);
+                textViewCharCount.setText(String.valueOf(charCount));
+                prev_length = s.length();
             }
         });
     }
@@ -204,8 +247,39 @@ public class NewCommentActivity extends AppCompatActivity {
         overridePendingTransition(R.anim.left_in, R.anim.right_out);
     }
 
+    /***********************************************************************************************
+     *********************************** GENERAL METHODS/INTERFACES ********************************
+     **********************************************************************************************/
+    public void addCommentToAdapter(String newCommentText) {
+        if (newCommentText == null || newCommentText.isEmpty()) {
+            Toast.makeText(this, "Comment cannot be empty!", Toast.LENGTH_SHORT).show();
+        }
+        else {
+            Bundle bundle = new Bundle();
+            bundle.putString("NICKNAME", postCommentBundle.getString("NICKNAME"));
+            bundle.putString("FACEBOOK_ID", postCommentBundle.getString("FACEBOOK_ID"));
+            bundle.putString("FIRST_NAME", postCommentBundle.getString("FIRST_NAME"));
+            if (commentCardAdapter == null) {
+                initializeAdapter(null);
+            }
+            // Checks is this post is the first user comment
+            if (postCommentBundle.getInt("COMMENTS_COUNT") == 0) {
+                commentsContainer.removeView(noCommentsText);
+            }
+            commentCardAdapter.addComment(newCommentText, bundle);
+        }
+    }
+
+    public String getPostCommentBundleString(String key) {
+        return postCommentBundle.getString(key);
+    }
+
+    public Long getPostCommentBundleLong(String key) {
+        return postCommentBundle.getLong(key);
+    }
+
     private void initializeAdapter(List<DBUserComment> result) {
-        comments = new ArrayList<>();
+        List<DBUserComment> comments = new ArrayList<>();
         if (result != null) {
             for (DBUserComment userComment : result) {
                 comments.add(userComment);
@@ -215,21 +289,9 @@ public class NewCommentActivity extends AppCompatActivity {
         recyclerView.setAdapter(commentCardAdapter);
     }
 
-    public void addCommentToAdapter(String newCommentText) {
-        Bundle bundle = new Bundle();
-        bundle.putString("NICKNAME", postCommentBundle.getString("NICKNAME"));
-        bundle.putString("FACEBOOK_ID", postCommentBundle.getString("FACEBOOK_ID"));
-        bundle.putString("FIRST_NAME", postCommentBundle.getString("FIRST_NAME"));
-        if (commentCardAdapter == null) {
-            initializeAdapter(null);
-        }
-        // Checks is this post is the first user comment
-        if (postCommentBundle.getInt("COMMENTS_COUNT") == 0) {
-            commentsContainer.removeView(noCommentsText);
-        }
-        commentCardAdapter.addComment(newCommentText, bundle);
-    }
-
+    /***********************************************************************************************
+     ****************************************** UI METHODS *****************************************
+     **********************************************************************************************/
     public void refreshAdapter() {
         new FetchPostCommentsCountTask().execute(postCommentBundle);
         new FetchPostCommentsTask().execute(postCommentBundle.getString("POST_ID"));
@@ -242,16 +304,9 @@ public class NewCommentActivity extends AppCompatActivity {
         Helpers.hideSoftKeyboard(this, newCommentText);
     }
 
-    public String getPostCommentBundleString(String key) {
-        return postCommentBundle.getString(key);
-    }
-
-    public Long getPostCommentBundleLong(String key) {
-        return postCommentBundle.getLong(key);
-    }
-
-    /********************************** AsyncTasks **********************************/
-
+    /***********************************************************************************************
+     ****************************************** ASYNC TASKS ****************************************
+     **********************************************************************************************/
     private class DisplayThumbsUpOrDownDBTask extends AsyncTask<AsyncHelpers.asyncTaskObjectThumbsUpDownButtons, Void, DBUserPost> {
         private DynamoDBMapper mapper;
         private String userNickName;
@@ -265,10 +320,9 @@ public class NewCommentActivity extends AppCompatActivity {
             mainPostLikesCount = params[0].likesCount;
             Bundle dataBundle = params[0].dataBundle;
             userNickName = dataBundle.getString("NICKNAME");
-            DBUserPost userPost = mapper.load(DBUserPost.class,
-                    userNickName,
-                    dataBundle.getLong("TIME_IN_SECONDS"));
-            return userPost;
+            return mapper.load(DBUserPost.class,
+                               userNickName,
+                               dataBundle.getLong("TIME_IN_SECONDS"));
         }
 
         @Override
@@ -423,7 +477,7 @@ public class NewCommentActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Integer result) {
-            mainPostCommentsCount.setText(result.toString());
+            mainPostCommentsCount.setText(String.valueOf(result));
         }
     }
 }
