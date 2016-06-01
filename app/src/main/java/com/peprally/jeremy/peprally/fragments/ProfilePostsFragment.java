@@ -33,15 +33,23 @@ import java.util.List;
 
 public class ProfilePostsFragment extends Fragment {
 
-    private List<DBUserPost> posts;
+    /***********************************************************************************************
+     *************************************** CLASS VARIABLES ***************************************
+     **********************************************************************************************/
+    // UI Variables
     private LinearLayout postsContainer;
     private PostCardAdapter postCardAdapter;
     private RecyclerView recyclerView;
     private TextView noPostsText;
 
-    private UserProfileParcel userProfileParcel;
+    // General Variables
     private static final String TAG = ProfilePostsFragment.class.getSimpleName();
+    private List<DBUserPost> posts;
+    private UserProfileParcel userProfileParcel;
 
+    /***********************************************************************************************
+     *************************************** FRAGMENT METHODS **************************************
+     **********************************************************************************************/
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,15 +79,9 @@ public class ProfilePostsFragment extends Fragment {
         refreshAdapter();
     }
 
-    private void initializeAdapter(List<DBUserPost> result) {
-        posts = new ArrayList<>();
-        for (DBUserPost userPost : result) {
-            posts.add(userPost);
-        }
-        postCardAdapter = new PostCardAdapter(getActivity(), posts);
-        recyclerView.setAdapter(postCardAdapter);
-    }
-
+    /***********************************************************************************************
+     ****************************************** UI METHODS *****************************************
+     **********************************************************************************************/
     public void addPostToAdapter(String newPostText) {
         Bundle bundle = new Bundle();
         bundle.putString("NICKNAME", userProfileParcel.getNickname());
@@ -87,7 +89,7 @@ public class ProfilePostsFragment extends Fragment {
         bundle.putString("FIRST_NAME", userProfileParcel.getFirstname());
         if (postCardAdapter == null) {
             posts = new ArrayList<>();
-            postCardAdapter = new PostCardAdapter(getActivity(), posts);
+            postCardAdapter = new PostCardAdapter(getActivity(), posts, userProfileParcel);
             recyclerView.setAdapter(postCardAdapter);
         }
         // Checks is this post is the first user post
@@ -112,8 +114,18 @@ public class ProfilePostsFragment extends Fragment {
         }
     }
 
-    /********************************** AsyncTasks **********************************/
+    private void initializeAdapter(List<DBUserPost> result) {
+        posts = new ArrayList<>();
+        for (DBUserPost userPost : result) {
+            posts.add(userPost);
+        }
+        postCardAdapter = new PostCardAdapter(getActivity(), posts, userProfileParcel);
+        recyclerView.setAdapter(postCardAdapter);
+    }
 
+    /***********************************************************************************************
+     ****************************************** ASYNC TASKS ****************************************
+     **********************************************************************************************/
     private class FetchUserPostsTask extends AsyncTask<String, Void, PaginatedQueryList<DBUserPost>> {
         @Override
         protected PaginatedQueryList<DBUserPost> doInBackground(String... params) {

@@ -35,6 +35,7 @@ import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.Helpers;
+import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,8 +60,9 @@ public class NewCommentActivity extends AppCompatActivity {
 
     // General Variables
     private static final String TAG = NewCommentActivity.class.getSimpleName();
-    private Bundle postCommentBundle;
     private CommentCardAdapter commentCardAdapter;
+    private Bundle postCommentBundle;
+    private UserProfileParcel userProfileParcel;
     private int charCount = 200;
 
     /***********************************************************************************************
@@ -106,6 +108,7 @@ public class NewCommentActivity extends AppCompatActivity {
                 mainPostThumbsUp != null && mainPostThumbsDown != null && postCommentButton != null &&
                 newCommentText != null);
 
+        userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
         postCommentBundle = getIntent().getBundleExtra("POST_COMMENT_BUNDLE");
 
         new DisplayThumbsUpOrDownDBTask().execute(
@@ -441,9 +444,15 @@ public class NewCommentActivity extends AppCompatActivity {
             // Hide soft keyboard if keyboard is up
             EditText et = (EditText) findViewById(R.id.id_edit_text_new_comment);
             Helpers.hideSoftKeyboard(NewCommentActivity.this, et);
-            Intent intent = new Intent();
-            intent.putExtra("ACTION", "DELETE_POST");
-            setResult(Activity.RESULT_OK, intent);
+//            Intent intent = new Intent();
+//            intent.putExtra("ACTION", "DELETE_POST");
+//            setResult(Activity.RESULT_OK, intent);
+            new AsyncHelpers.PushUserProfilePostsCountToDBTask().execute(
+                    new AsyncHelpers.asyncTaskObjectUserPostBundle(
+                            null,
+                            mapper,
+                            userProfileParcel,
+                            null));
             finish();
             overridePendingTransition(R.anim.left_in, R.anim.right_out);
         }

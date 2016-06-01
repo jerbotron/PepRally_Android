@@ -130,8 +130,7 @@ public class FavoriteTeamActivity extends AppCompatActivity {
 
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
-            DynamoDBScanExpression scanExpression = new DynamoDBScanExpression();
-            return mapper.scan(DBSport.class, scanExpression);
+            return mapper.scan(DBSport.class, new DynamoDBScanExpression());
         }
 
         @Override

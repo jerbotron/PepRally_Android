@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -24,6 +25,7 @@ import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
+import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -35,15 +37,35 @@ import java.util.Set;
 
 public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHolder> {
 
-    private Context callingContext;
-
+    /***********************************************************************************************
+     *************************************** CLASS VARIABLES ***************************************
+     **********************************************************************************************/
+    // AWS Variables
     private AmazonDynamoDBClient ddbClient;
     private CognitoCachingCredentialsProvider credentialsProvider;
     private DynamoDBMapper mapper;
 
-    private List<DBUserPost> posts;
-
+    // General Variables
     private static final String TAG = "PostCardAdapter: ";
+    private Context callingContext;
+    private List<DBUserPost> posts;
+    private UserProfileParcel userProfileParcel;
+
+    /***********************************************************************************************
+     ********************************** ADAPTER CONSTRUCTOR/METHODS ********************************
+     **********************************************************************************************/
+    public PostCardAdapter(Context callingContext, List<DBUserPost> posts, UserProfileParcel userProfileParcel) {
+        this.callingContext = callingContext;
+        this.posts = posts;
+        this.userProfileParcel = userProfileParcel;
+        credentialsProvider = new CognitoCachingCredentialsProvider(
+                callingContext,                             // Context
+                AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
+                AWSCredentialProvider.COGNITO_REGION        // Region
+        );
+        ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+        mapper = new DynamoDBMapper(ddbClient);
+    }
 
     public static class PostHolder extends RecyclerView.ViewHolder {
         LinearLayout postContainer;
@@ -72,18 +94,6 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         }
     }
 
-    public PostCardAdapter(Context callingContext, List<DBUserPost> posts) {
-        this.posts = posts;
-        this.callingContext = callingContext;
-        credentialsProvider = new CognitoCachingCredentialsProvider(
-                callingContext,                             // Context
-                AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
-                AWSCredentialProvider.COGNITO_REGION        // Region
-        );
-        ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-        mapper = new DynamoDBMapper(ddbClient);
-    }
-
     @Override
     public PostHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.recycler_view_new_post_container, parent, false);
@@ -95,7 +105,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         final DBUserPost curPost = posts.get(position);
         new AsyncHelpers.LoadFBProfilePictureTask().execute(new AsyncHelpers.asyncTaskObjectProfileImage(curPost.getFacebookID(), newPostHolder.profilePhoto));
 
-        final String userNickName = ((ProfileActivity) callingContext).getUserProfileParcel().getNickname();
+        final String userNickName = userProfileParcel.getNickname();
 
         Set<String> likedUsers = curPost.getLikedUsers();
         Set<String> dislikedUsers = curPost.getDislikedUsers();
@@ -254,9 +264,12 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                 postCommentBundle.putInt("LIKES_COUNT", curPost.getNumberOfLikes());
                 postCommentBundle.putInt("COMMENTS_COUNT", curPost.getNumberOfComments());
                 Intent intent = new Intent(callingContext, NewCommentActivity.class);
+                intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                 intent.putExtra("POST_COMMENT_BUNDLE", postCommentBundle);
-                ((ProfileActivity) callingContext).startActivityForResult(intent, ProfileActivity.POST_COMMENT_REQUEST_CODE);
-                ((ProfileActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
+                callingContext.startActivity(intent);
+                ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
+//                ((ProfileActivity) callingContext).startActivityForResult(intent, ProfileActivity.POST_COMMENT_REQUEST_CODE);
+//                ((ProfileActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
             }
         });
 
@@ -267,6 +280,9 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         return posts.size();
     }
 
+    /***********************************************************************************************
+     ****************************************** UI METHODS *****************************************
+     **********************************************************************************************/
     public void addPost(String newPostText, Bundle bundle) {
         DBUserPost newPost = new DBUserPost();
         Calendar c = Calendar.getInstance();
@@ -295,7 +311,9 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                         asyncData));
     }
 
-    /********************************** AsyncTasks **********************************/
+    /***********************************************************************************************
+     ****************************************** ASYNC TASKS ****************************************
+     **********************************************************************************************/
     private class PushNewUserPostToDBTask extends AsyncTask<DBUserPost, Void, DBUserPost> {
         @Override
         protected DBUserPost doInBackground(DBUserPost... params) {

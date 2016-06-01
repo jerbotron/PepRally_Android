@@ -42,6 +42,7 @@ import com.peprally.jeremy.peprally.fragments.ProfilePostsFragment;
 import com.peprally.jeremy.peprally.fragments.ProfileInfoFragment;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
+import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.ProfileViewPager;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 import com.squareup.picasso.Picasso;
@@ -64,17 +65,15 @@ public class ProfileActivity extends AppCompatActivity {
     private ActionBar supportActionBar;
     private AppBarLayout appBarLayout;
     private FloatingActionButton actionFAB;
-    private Fragment infoFragment, postsFragment, editFragment;
+    private ProfileInfoFragment infoFragment;
+    private ProfilePostsFragment postsFragment;
+    private ProfileEditFragment editFragment;
     private MenuItem editMenuItem;
     private TabLayout tabLayout;
     private ViewPager viewPagerProfile;
     private ProfileViewPagerAdapter adapter;
 
     // General Variables
-    public final static int FAV_TEAM_REQUEST_CODE = 0;
-    public final static int FAV_PLAYER_REQUEST_CODE = 1;
-    public final static int NEW_POST_REQUEST_CODE = 2;
-    public final static int POST_COMMENT_REQUEST_CODE = 3;
     public static UserProfileParcel userProfileParcel;
 
     private static final String TAG = ProfileActivity.class.getSimpleName();
@@ -163,7 +162,7 @@ public class ProfileActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(getApplicationContext(), NewPostActivity.class);
-                    startActivityForResult(intent, NEW_POST_REQUEST_CODE);
+                    startActivityForResult(intent, Helpers.NEW_POST_REQUEST_CODE);
                     overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
                 }
             });
@@ -248,30 +247,19 @@ public class ProfileActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
-                case FAV_TEAM_REQUEST_CODE:
+                case Helpers.FAV_TEAM_REQUEST_CODE:
                     String favoriteTeam = data.getStringExtra("FAVORITE_TEAM");
                     userProfileParcel.setFavoriteTeam(favoriteTeam);
-                    ((ProfileEditFragment) editFragment).setFavTeam(favoriteTeam);
+                    editFragment.setFavTeam(favoriteTeam);
                     break;
-                case FAV_PLAYER_REQUEST_CODE:
+                case Helpers.FAV_PLAYER_REQUEST_CODE:
                     String favoritePlayer = data.getStringExtra("FAVORITE_PLAYER");
                     userProfileParcel.setFavoritePlayer(favoritePlayer);
-                    ((ProfileEditFragment) editFragment).setFavPlayer(favoritePlayer);
+                    editFragment.setFavPlayer(favoritePlayer);
                     break;
-                case NEW_POST_REQUEST_CODE:
-                    ((ProfilePostsFragment) postsFragment).addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
+                case Helpers.NEW_POST_REQUEST_CODE:
+                    postsFragment.addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
                     viewPagerProfile.setCurrentItem(1);
-                    break;
-                case POST_COMMENT_REQUEST_CODE:
-                    if (data.getStringExtra("ACTION").equals("DELETE_POST")) {
-                        userProfileParcel.setCognitoID(credentialsProvider.getIdentityId());
-                        new AsyncHelpers.PushUserProfilePostsCountToDBTask().execute(
-                                new AsyncHelpers.asyncTaskObjectUserPostBundle(
-                                        null,
-                                        mapper,
-                                        userProfileParcel,
-                                        null));
-                    }
                     break;
             }
         }
@@ -321,7 +309,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     public void editFavoriteTeam() {
         Intent intent = new Intent(this, FavoriteTeamActivity.class);
-        startActivityForResult(intent, FAV_TEAM_REQUEST_CODE);
+        startActivityForResult(intent, Helpers.FAV_TEAM_REQUEST_CODE);
         overridePendingTransition(R.anim.right_in, R.anim.left_out);
     }
 
@@ -334,7 +322,7 @@ public class ProfileActivity extends AppCompatActivity {
             Intent intent = new Intent(this, FavoritePlayerActivity.class);
             intent.putExtra("CALLING_ACTIVITY", "ProfileActivity");
             intent.putExtra("TEAM", favTeam);
-            startActivityForResult(intent, FAV_PLAYER_REQUEST_CODE);
+            startActivityForResult(intent, Helpers.FAV_PLAYER_REQUEST_CODE);
             overridePendingTransition(R.anim.right_in, R.anim.left_out);
         }
     }

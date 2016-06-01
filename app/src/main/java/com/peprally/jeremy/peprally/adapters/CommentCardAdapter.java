@@ -32,15 +32,33 @@ import java.util.Set;
 
 public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.CommentHolder> {
 
-    private Context callingContext;
-
+    /***********************************************************************************************
+     *************************************** CLASS VARIABLES ***************************************
+     **********************************************************************************************/
+    // AWS Variables
     private AmazonDynamoDBClient ddbClient;
     private CognitoCachingCredentialsProvider credentialsProvider;
     private DynamoDBMapper mapper;
 
+    // General Variables
+    private static final String TAG = "CommentCardAdapter: ";
+    private Context callingContext;
     private List<DBUserComment> comments;
 
-    private static final String TAG = "CommentCardAdapter: ";
+    /***********************************************************************************************
+     ********************************** ADAPTER CONSTRUCTOR/METHODS ********************************
+     **********************************************************************************************/
+    public CommentCardAdapter(Context callingContext, List<DBUserComment> comments) {
+        this.comments = comments;
+        this.callingContext = callingContext;
+        credentialsProvider = new CognitoCachingCredentialsProvider(
+                callingContext,                             // Context
+                AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
+                AWSCredentialProvider.COGNITO_REGION        // Region
+        );
+        ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+        mapper = new DynamoDBMapper(ddbClient);
+    }
 
     public static class CommentHolder extends RecyclerView.ViewHolder {
         CardView cardView;
@@ -63,18 +81,6 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
             thumbsDown = (ImageButton) itemView.findViewById(R.id.id_image_button_comment_thumbs_down);
             postLikesCount = (TextView) itemView.findViewById(R.id.id_text_view_comment_likes);
         }
-    }
-
-    public CommentCardAdapter(Context callingContext, List<DBUserComment> comments) {
-        this.comments = comments;
-        this.callingContext = callingContext;
-        credentialsProvider = new CognitoCachingCredentialsProvider(
-                callingContext,                             // Context
-                AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
-                AWSCredentialProvider.COGNITO_REGION        // Region
-        );
-        ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-        mapper = new DynamoDBMapper(ddbClient);
     }
 
     @Override
@@ -137,6 +143,9 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         return comments.size();
     }
 
+    /***********************************************************************************************
+     ****************************************** UI METHODS *****************************************
+     **********************************************************************************************/
     public void addComment(String commentText, Bundle bundle) {
         DBUserComment newComment = new DBUserComment();
         Calendar c = Calendar.getInstance();
@@ -165,7 +174,9 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         ((NewCommentActivity) callingContext).postAddCommentCleanup();
     }
 
-    /********************************** AsyncTasks **********************************/
+    /***********************************************************************************************
+     ****************************************** ASYNC TASKS ****************************************
+     **********************************************************************************************/
     private class PushNewUserCommentToDBTask extends AsyncTask<DBUserComment, Void, DBUserComment> {
         @Override
         protected DBUserComment doInBackground(DBUserComment... params) {

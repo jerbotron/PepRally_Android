@@ -24,7 +24,10 @@ import com.facebook.login.widget.ProfilePictureView;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
 import com.peprally.jeremy.peprally.fragments.BrowseTeamsFragment;
+import com.peprally.jeremy.peprally.fragments.ProfileEditFragment;
+import com.peprally.jeremy.peprally.fragments.ProfilePostsFragment;
 import com.peprally.jeremy.peprally.fragments.TrendingFragment;
+import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
@@ -37,11 +40,13 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private DrawerLayout drawer;
     private ViewPager viewPagerHome;
 
-    // FB Variables
-    private Profile fbProfile;
+    // Fragment Variables
+    private TrendingFragment trendingFragment;
+    private BrowseTeamsFragment browseTeamsFragment;
 
     // General Variables
     private static final String TAG = HomeActivity.class.getSimpleName();
+    private UserProfileParcel userProfileParcel;
     private String nickname;
 
     /***********************************************************************************************
@@ -53,9 +58,17 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext());
         AccessToken currentToken = AccessToken.getCurrentAccessToken();
-        fbProfile = Profile.getCurrentProfile();
+        Profile fbProfile = Profile.getCurrentProfile();
 
-        // Set up UI elements first
+        // Initialize member variables first
+        nickname = getIntent().getStringExtra("NICKNAME");
+        userProfileParcel = new UserProfileParcel(fbProfile.getFirstName(),
+                fbProfile.getLastName(),
+                nickname,
+                fbProfile.getId(),
+                true);  // user is viewing self profile
+
+        // Set up UI elements
         setContentView(R.layout.activity_home);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_home);
         assert toolbar != null;
@@ -107,9 +120,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             public void onTabReselected(TabLayout.Tab tab) {
             }
         });
-
-        // Initialize other member variables
-        nickname = getIntent().getStringExtra("NICKNAME");
     }
 
     @Override
@@ -153,16 +163,22 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     private void onNavBarHeaderClick() {
         finish();
-        UserProfileParcel parcel = new UserProfileParcel(fbProfile.getFirstName(),
-                                                         fbProfile.getLastName(),
-                                                         nickname,
-                                                         fbProfile.getId(),
-                                                         true);  // user is viewing self profile
-
         Intent intent = new Intent(this, ProfileActivity.class);
-        intent.putExtra("USER_PROFILE_PARCEL", parcel);
+        intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
         startActivity(intent);
         overridePendingTransition(R.anim.right_in, R.anim.left_out);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+                case Helpers.NEW_POST_REQUEST_CODE:
+                    trendingFragment.addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
+                    break;
+            }
+        }
     }
 
     /***********************************************************************************************
@@ -170,11 +186,21 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
      **********************************************************************************************/
 
     public void launchBrowsePlayerActivity(String team) {
-        Intent intent = new Intent(this, FavoritePlayerActivity.class);
+        Intent intent = new Intent(HomeActivity.this, FavoritePlayerActivity.class);
         intent.putExtra("CALLING_ACTIVITY", "HomeActivity");
         intent.putExtra("TEAM", team);
         startActivity(intent);
         overridePendingTransition(R.anim.right_in, R.anim.left_out);
+    }
+
+    public void launchNewPostActivity() {
+        Intent intent = new Intent(HomeActivity.this, NewPostActivity.class);
+        startActivityForResult(intent, Helpers.NEW_POST_REQUEST_CODE);
+        overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+    }
+
+    public UserProfileParcel getUserProfileParcel() {
+        return userProfileParcel;
     }
 
     /***********************************************************************************************
@@ -182,10 +208,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
      **********************************************************************************************/
 
     private void setupViewPager(ViewPager viewPager) {
+        trendingFragment = new TrendingFragment();
+        browseTeamsFragment = new BrowseTeamsFragment();
         ProfileViewPagerAdapter adapter = new ProfileViewPagerAdapter(getSupportFragmentManager());
 //        adapter.addFrag(new EventsFragment(), "Events");
-        adapter.addFrag(new TrendingFragment(), "Trending");
-        adapter.addFrag(new BrowseTeamsFragment(), "Teams");
+        adapter.addFrag(trendingFragment, "Trending");
+        adapter.addFrag(browseTeamsFragment, "Teams");
         viewPager.setAdapter(adapter);
         viewPager.setCurrentItem(0);
     }

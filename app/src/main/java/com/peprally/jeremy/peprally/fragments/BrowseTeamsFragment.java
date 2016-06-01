@@ -106,9 +106,7 @@ public class BrowseTeamsFragment extends Fragment {
         protected PaginatedScanList<DBSport> doInBackground(CognitoCachingCredentialsProvider... params) {
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(params[0]);
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
-            DynamoDBScanExpression scanExpression = new DynamoDBScanExpression();
-            PaginatedScanList<DBSport> result = mapper.scan(DBSport.class, scanExpression);
-            return result;
+            return mapper.scan(DBSport.class, new DynamoDBScanExpression());
         }
 
         @Override

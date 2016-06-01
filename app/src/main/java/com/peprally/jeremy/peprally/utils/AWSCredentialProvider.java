@@ -56,6 +56,9 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingC
     @Override
     protected void onPostExecute(CognitoCachingCredentialsProvider credentialsProvider) {
         Log.d(TAG, "credentials verified");
+        Log.d(TAG, "credentials: " + credentialsProvider.getCredentials().toString());
+        Log.d(TAG, "identity pool id: " + credentialsProvider.getIdentityPoolId());
+        Log.d(TAG, "identity provider: " + credentialsProvider.getIdentityProvider());
         loginTaskCallback.onTaskDone(credentialsProvider);
     }
 

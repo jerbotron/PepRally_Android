@@ -10,7 +10,12 @@ import android.view.inputmethod.InputMethodManager;
 public class Helpers {
 
     // CONSTANTS
-    public static final Integer INTEGER_INVALID = -1;
+    public final static Integer INTEGER_INVALID = -1;
+
+    public final static int FAV_TEAM_REQUEST_CODE = 0;
+    public final static int FAV_PLAYER_REQUEST_CODE = 1;
+    public final static int NEW_POST_REQUEST_CODE = 2;
+    public final static int POST_COMMENT_REQUEST_CODE = 3;
 
     // Helper Functions
     public static boolean isKeyboardShown(View rootView) {

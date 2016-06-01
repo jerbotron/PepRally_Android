@@ -3,6 +3,7 @@ package com.peprally.jeremy.peprally.fragments;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -24,29 +25,39 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.peprally.jeremy.peprally.activities.HomeActivity;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.NewPostActivity;
-import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.PostCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.utils.Helpers;
+import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class TrendingFragment extends Fragment {
-    private List<DBUserPost> posts;
-    private ScrollView postsContainer;
+
+    /***********************************************************************************************
+     *************************************** CLASS VARIABLES ***************************************
+     **********************************************************************************************/
+    // UI Variables
+//    private ScrollView postsContainer;
     private PostCardAdapter postCardAdapter;
     private RecyclerView recyclerView;
 
-    private Bundle userProfileBundle;
-
+    // General Variables
     private static final String TAG = HomeActivity.class.getSimpleName();
+    private List<DBUserPost> posts;
+    private UserProfileParcel userProfileParcel;
 
+    /***********************************************************************************************
+     *************************************** FRAGMENT METHODS **************************************
+     **********************************************************************************************/
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_trending, container, false);
-        userProfileBundle = getArguments();
+        userProfileParcel = ((HomeActivity) getActivity()).getUserProfileParcel();
 
         recyclerView = (RecyclerView) view.findViewById(R.id.id_recycler_view_trending_posts);
         LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getActivity());
@@ -55,17 +66,15 @@ public class TrendingFragment extends Fragment {
         recyclerView.setAdapter(new EmptyAdapter());
         recyclerView.setLayoutManager(rvLayoutManager);
 
-        postsContainer = (ScrollView) view.findViewById(R.id.container_trending_posts);
+//        postsContainer = (ScrollView) view.findViewById(R.id.container_trending_posts);
 
-//        refreshAdapter();
+        refreshAdapter();
 
         FloatingActionButton actionFAB = (FloatingActionButton) view.findViewById(R.id.fab_trending_action);
         actionFAB.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getContext(), NewPostActivity.class);
-                startActivityForResult(intent, ProfileActivity.NEW_POST_REQUEST_CODE);
-                getActivity().overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+                ((HomeActivity) getActivity()).launchNewPostActivity();
             }
         });
 
@@ -75,25 +84,32 @@ public class TrendingFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        refreshAdapter();
     }
 
+    /***********************************************************************************************
+     ****************************************** UI METHODS *****************************************
+     **********************************************************************************************/
     private void initializeAdapter(List<DBUserPost> result) {
         posts = new ArrayList<>();
         for (DBUserPost userPost : result) {
             posts.add(userPost);
         }
-        postCardAdapter = new PostCardAdapter(getActivity(), posts);
+        // Reverse Posts so they are shown in ascending order w.r.t time stamp
+        Collections.sort(posts);
+        Collections.reverse(posts);
+        postCardAdapter = new PostCardAdapter(getActivity(), posts, userProfileParcel);
         recyclerView.setAdapter(postCardAdapter);
     }
 
     public void addPostToAdapter(String newPostText) {
         Bundle bundle = new Bundle();
-        bundle.putString("NICKNAME", userProfileBundle.getString("NICKNAME"));
-        bundle.putString("FACEBOOK_ID", userProfileBundle.getString("FACEBOOK_ID"));
-        bundle.putString("FIRST_NAME", userProfileBundle.getString("FIRST_NAME"));
+        bundle.putString("NICKNAME", userProfileParcel.getNickname());
+        bundle.putString("FACEBOOK_ID", userProfileParcel.getFacebookID());
+        bundle.putString("FIRST_NAME", userProfileParcel.getFirstname());
         if (postCardAdapter == null) {
             posts = new ArrayList<>();
-            postCardAdapter = new PostCardAdapter(getActivity(), posts);
+            postCardAdapter = new PostCardAdapter(getActivity(), posts, userProfileParcel);
             recyclerView.setAdapter(postCardAdapter);
         }
         postCardAdapter.addPost(newPostText, bundle);
@@ -103,8 +119,9 @@ public class TrendingFragment extends Fragment {
         new FetchTrendingPostsTask().execute();
     }
 
-    /********************************** AsyncTasks **********************************/
-
+    /***********************************************************************************************
+     ****************************************** ASYNC TASKS ****************************************
+     **********************************************************************************************/
     private class FetchTrendingPostsTask extends AsyncTask<Void, Void, PaginatedScanList<DBUserPost>> {
         @Override
         protected PaginatedScanList<DBUserPost> doInBackground(Void... params) {
@@ -114,9 +131,7 @@ public class TrendingFragment extends Fragment {
                     AWSCredentialProvider.COGNITO_REGION      // Region
             );
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
-            s3.setRegion(Region.getRegion(Regions.US_EAST_1));
-
+            ddbClient.setRegion(Region.getRegion(Regions.US_EAST_1));
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
             DynamoDBScanExpression scanExpression = new DynamoDBScanExpression();
             return mapper.scan(DBUserPost.class, scanExpression);

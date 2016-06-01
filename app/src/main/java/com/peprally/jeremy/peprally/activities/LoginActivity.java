@@ -159,7 +159,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void setupLoginScreen() {
         setContentView(R.layout.activity_login);
-        LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
+        final LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
         assert loginButton != null;
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
@@ -228,6 +228,7 @@ public class LoginActivity extends AppCompatActivity {
                     showNewNicknameDialog();
                 }
                 else {
+
                     new CreateNewUserProfileDBEntryTask().execute(nickname);
                     new PushNewNicknameToDBTask().execute(nickname);
                 }
@@ -343,7 +344,6 @@ public class LoginActivity extends AppCompatActivity {
             primaryKey.put("DateJoined", new AttributeValue().withS(df.format(c.getTime())));
             PutItemRequest request = new PutItemRequest().withTableName("UserProfiles")
                     .withItem(primaryKey);
-            ddbClient.setRegion(Region.getRegion(Regions.US_EAST_1));
             try {
                 ddbClient.putItem(request);
                 Log.d(TAG, "New cognito ID added");

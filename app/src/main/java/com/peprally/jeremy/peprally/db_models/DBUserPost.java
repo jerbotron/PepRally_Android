@@ -5,9 +5,9 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 import java.util.Set;
 
 @DynamoDBTable(tableName = "UserPosts")
-public class DBUserPost {
+public class DBUserPost implements Comparable<DBUserPost>{
     private String nickname;
-    private long timeInSeconds;
+    private Long timeInSeconds;
     private String postID;
     private String cognitoID;
     private String facebookID;
@@ -18,6 +18,11 @@ public class DBUserPost {
     private int numberOfComments;
     private Set<String> likedUsers;
     private Set<String> dislikedUsers;
+
+    @Override
+    public int compareTo(DBUserPost another) {
+        return timeInSeconds.compareTo(another.timeInSeconds);
+    }
 
     @DynamoDBHashKey(attributeName = "Nickname")
     public String getNickname() {
