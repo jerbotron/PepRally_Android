@@ -29,6 +29,7 @@ import android.widget.Toast;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMappingException;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
@@ -314,7 +315,7 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     public void editFavoritePlayer() {
-        String favTeam = ((ProfileEditFragment) editFragment).getFavTeam();
+        String favTeam = editFragment.getFavTeam();
         if (favTeam.isEmpty()) {
             Toast.makeText(ProfileActivity.this, "Pick a favorite team first!", Toast.LENGTH_SHORT).show();
         }
@@ -330,7 +331,7 @@ public class ProfileActivity extends AppCompatActivity {
     private void refreshPostsFragment() {
         // Set view pager to postsFragment
         viewPagerProfile.setCurrentItem(1);
-        ((ProfilePostsFragment) postsFragment).refreshAdapter();
+        postsFragment.refreshAdapter();
     }
 
     private Bitmap getFacebookProfilePicture(String userID) throws IOException {
@@ -427,6 +428,7 @@ public class ProfileActivity extends AppCompatActivity {
         else {
             if (selfProfile) {
                 Intent intent = new Intent(this, HomeActivity.class);
+                intent.putExtra("NICKNAME", userProfileParcel.getNickname());
                 startActivity(intent);
                 overridePendingTransition(R.anim.left_in, R.anim.right_out);
             }
@@ -470,7 +472,13 @@ public class ProfileActivity extends AppCompatActivity {
         protected Boolean doInBackground(Boolean... params) {
             // If loading ProfileActivity for user's own profile
             if (params[0]) {
-                userProfile = mapper.load(DBUserProfile.class, userProfileParcel.getNickname());
+                try {
+                    userProfile = mapper.load(DBUserProfile.class, userProfileParcel.getNickname());
+                }
+                catch (DynamoDBMappingException e) {
+                    Log.d(TAG, "LoadUserProfileFromDBTask: mapping exception occurred, returning from task.");
+                    this.cancel(true);
+                }
                 if (userProfile.getNewUser()) {
                     SetupNewUserProfile();
                     return true;

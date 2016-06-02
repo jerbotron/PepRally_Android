@@ -14,7 +14,6 @@ public class DBUserComment {
     private String timeStamp;
     private String textContent;
     private int numberOfLikes;
-    private int numberOfComments;
     private Set<String> likedUsers;
     private Set<String> dislikedUsers;
 

@@ -67,21 +67,21 @@ public class ProfileEditFragment extends Fragment {
 
 //        localNickname = userProfileParcel.getNickname();
 
-        final InputFilter nicknameFilter = new InputFilter() {
-            public CharSequence filter(CharSequence source, int start, int end,
-                                       Spanned dest, int dstart, int dend) {
-                for (int i = start; i < end; i++) {
-                    if (Character.isSpaceChar(source.charAt(i))) {
-                        return "_";
-                    }
-                    else if (!Character.isLetterOrDigit(source.charAt(i)) && !String.valueOf(source.charAt(i)).equals("_")) {
-                        Toast.makeText(getActivity(), R.string.invalid_characters_message, Toast.LENGTH_SHORT).show();
-                        return "";
-                    }
-                }
-                return null;
-            }
-        };
+//        final InputFilter nicknameFilter = new InputFilter() {
+//            public CharSequence filter(CharSequence source, int start, int end,
+//                                       Spanned dest, int dstart, int dend) {
+//                for (int i = start; i < end; i++) {
+//                    if (Character.isSpaceChar(source.charAt(i))) {
+//                        return "_";
+//                    }
+//                    else if (!Character.isLetterOrDigit(source.charAt(i)) && !String.valueOf(source.charAt(i)).equals("_")) {
+//                        Toast.makeText(getActivity(), R.string.invalid_characters_message, Toast.LENGTH_SHORT).show();
+//                        return "";
+//                    }
+//                }
+//                return null;
+//            }
+//        };
 
         textViewNickname = (TextView) view.findViewById(R.id.id_text_view_profile_edit_nickname);
         textViewFirstName = (TextView) view.findViewById(R.id.id_text_view_profile_edit_name_age);
@@ -144,7 +144,7 @@ public class ProfileEditFragment extends Fragment {
                 ((ProfileActivity) getActivity()).editFavoriteTeam();
             }
         });
-        textViewFavTeam.setOnClickListener(new View.OnClickListener() {
+        textViewFavPlayer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ((ProfileActivity) getActivity()).editFavoritePlayer();
@@ -199,7 +199,7 @@ public class ProfileEditFragment extends Fragment {
         // TODO: CALCULATE USER AGE FROM FB DATA
         textViewFirstName.setText(userProfileParcel.getFirstname()); // + ", " + Integer.toString(23));
         textViewNickname.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
-        textViewNickname.setText(userProfileParcel.getNickname());
+        textViewNickname.setText("@"+userProfileParcel.getNickname());
         textViewFavTeam.setText(userProfileParcel.getFavoriteTeam());
         textViewFavPlayer.setText(userProfileParcel.getFavoritePlayer());
         editTextPepTalk.setText(userProfileParcel.getPepTalk());

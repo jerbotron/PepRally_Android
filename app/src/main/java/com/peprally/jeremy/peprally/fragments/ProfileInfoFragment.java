@@ -70,10 +70,18 @@ public class ProfileInfoFragment extends Fragment {
         textViewFirstName.setText("");    // set to empty so I can check later if populated under varsity profile
 
         if (userProfileParcel.getIsVarsityPlayer() && !profileLoaded) {
-            String name = userProfileParcel.getFirstname() + " "
-                            + userProfileParcel.getLastname() + " #"
-                            + userProfileParcel.getNumber();
-            textViewFirstName.setText(name);
+            String nameText = userProfileParcel.getFirstname() + " "
+                            + userProfileParcel.getLastname();
+            switch (userProfileParcel.getTeam()) {
+                case "Volleyball":
+                case "Soccer":
+                case "Basketball":
+                case "Football":
+                case "Baseball":
+                case "Softball":
+                    nameText = nameText + " #" + userProfileParcel.getNumber();
+            }
+            textViewFirstName.setText(nameText);
 
             LinearLayout playerInfoLayout = new LinearLayout(getActivity());
             playerInfoLayout.setOrientation(LinearLayout.VERTICAL);
@@ -148,7 +156,7 @@ public class ProfileInfoFragment extends Fragment {
                 playerInfoLayout.addView(tv_year);
             }
 
-            if (userProfileParcel.getHometown() != null) {
+            if (userProfileParcel.getHometown() != null && userProfileParcel.getHometown().contains("/")) {
                 String[] sa = userProfileParcel.getHometown().split("/");
                 TextView tv_hometown = new TextView(getActivity());
                 tv_hometown.setText(Html.fromHtml("Hometown: <b>" + sa[0].substring(0, sa[0].length() - 1) + "</b>"));
@@ -185,7 +193,7 @@ public class ProfileInfoFragment extends Fragment {
             parent_container.removeView(textViewNickname);
         }
         else {
-            textViewNickname.setText(userProfileParcel.getNickname());
+            textViewNickname.setText("@"+userProfileParcel.getNickname());
         }
 
         if (userProfileParcel.getFavoriteTeam() == null) {

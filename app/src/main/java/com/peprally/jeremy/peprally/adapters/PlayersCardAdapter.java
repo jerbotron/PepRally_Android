@@ -82,7 +82,6 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
                 .error(R.drawable.default_placeholder)
                 .into(playerCardHolder.playerPhoto);
         String playerNameText = curPlayer.getFirstName() + " " + curPlayer.getLastName();
-        String playerInfoText;
         switch (curPlayer.getTeam()) {
             case "Golf":
             case "Rowing":
@@ -98,11 +97,14 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
                         + playerNameText + "</b>"));
                 break;
         }
-        if (curPlayer.getPosition() == null) {
-            playerInfoText = curPlayer.getHometown();
-        }
-        else {
-            playerInfoText = curPlayer.getPosition() + " | " + roster.get(position).getHometown();
+        String playerInfoText = "";
+        if (curPlayer.getPosition() != null)
+            playerInfoText = curPlayer.getPosition();
+        if (curPlayer.getHometown() != null){
+            if (playerInfoText.isEmpty())
+                playerInfoText = curPlayer.getHometown();
+            else
+                playerInfoText = playerInfoText + " | " + curPlayer.getHometown();
         }
         playerCardHolder.playerInfo.setText(playerInfoText);
     }

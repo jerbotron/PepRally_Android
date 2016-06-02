@@ -1,17 +1,15 @@
 package com.peprally.jeremy.peprally.fragments;
 
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ScrollView;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
@@ -20,16 +18,12 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanLis
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.peprally.jeremy.peprally.activities.HomeActivity;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.activities.NewPostActivity;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.PostCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
-import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.ArrayList;
@@ -67,8 +61,6 @@ public class TrendingFragment extends Fragment {
         recyclerView.setLayoutManager(rvLayoutManager);
 
 //        postsContainer = (ScrollView) view.findViewById(R.id.container_trending_posts);
-
-        refreshAdapter();
 
         FloatingActionButton actionFAB = (FloatingActionButton) view.findViewById(R.id.fab_trending_action);
         actionFAB.setOnClickListener(new View.OnClickListener() {
@@ -116,6 +108,7 @@ public class TrendingFragment extends Fragment {
     }
 
     public void refreshAdapter() {
+        Log.d(TAG, "refresh trending posts adapter");
         new FetchTrendingPostsTask().execute();
     }
 

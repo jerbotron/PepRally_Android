@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -68,7 +69,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         TextView postContent;
         ImageButton thumbsUp;
         ImageButton thumbsDown;
-        TextView postLikesCount;
+        TextView likesCount;
 
         public CommentHolder(View itemView) {
             super(itemView);
@@ -79,7 +80,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
             postContent = (TextView) itemView.findViewById(R.id.id_text_view_comment_content);
             thumbsUp = (ImageButton) itemView.findViewById(R.id.id_image_button_comment_thumbs_up);
             thumbsDown = (ImageButton) itemView.findViewById(R.id.id_image_button_comment_thumbs_down);
-            postLikesCount = (TextView) itemView.findViewById(R.id.id_text_view_comment_likes);
+            likesCount = (TextView) itemView.findViewById(R.id.id_text_view_comment_likes);
         }
     }
 
@@ -90,7 +91,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     }
 
     @Override
-    public void onBindViewHolder(CommentHolder commentHolder, int position) {
+    public void onBindViewHolder(final CommentHolder commentHolder, int position) {
         final DBUserComment curComment = comments.get(position);
         new AsyncHelpers.LoadFBProfilePictureTask().execute(new AsyncHelpers.asyncTaskObjectProfileImage(curComment.getFacebookID(), commentHolder.profilePhoto));
 
@@ -109,15 +110,15 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         commentHolder.postContent.setText(curComment.getTextContent());
         int numOfLikes = curComment.getNumberOfLikes();
         if (numOfLikes > 0) {
-            commentHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorGreen)));
+            commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorGreen)));
         }
         else if (numOfLikes == 0) {
-            commentHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorAccent)));
+            commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorAccent)));
         }
         else {
-            commentHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorRed)));
+            commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorRed)));
         }
-        commentHolder.postLikesCount.setText(String.valueOf(numOfLikes));
+        commentHolder.likesCount.setText(String.valueOf(numOfLikes));
 
         long tsLong = System.currentTimeMillis()/1000;
         long timeInSeconds = tsLong - curComment.getTimeInSeconds();
@@ -136,6 +137,109 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
             long timeInDays = timeInSeconds/60/60/24;
             commentHolder.timeStamp.setText(String.valueOf(timeInDays) + "d");
         }
+
+        // ImageButton OnClick handlers:
+        commentHolder.thumbsUp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int currentNumOfLikes = Integer.parseInt(commentHolder.likesCount.getText().toString());
+                Set<String> likedUsers = curComment.getLikedUsers();
+                Set<String> dislikedUsers = curComment.getDislikedUsers();
+                // If user already liked the comment
+                if (likedUsers.contains(userNickName)) {
+                    currentNumOfLikes--;
+                    commentHolder.likesCount.setText(String.valueOf(currentNumOfLikes));
+                    commentHolder.thumbsUp.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_up));
+                    curComment.setNumberOfLikes(currentNumOfLikes);
+                    // Special UI transition case
+                    if (currentNumOfLikes == 0) {
+                        commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorAccent)));
+                    } else if (currentNumOfLikes == -1) {
+                        commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorRed)));
+                    }
+                    // Remove user from likedUsers set
+                    curComment.removeLikedUsers(userNickName);
+                    new AsyncHelpers.PushUserCommentChangesToDBTask().execute(
+                            new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, mapper, null));
+                }
+                // If user has not liked the comment yet
+                else {
+                    // lose previous dislike and +1 like
+                    if (dislikedUsers.contains(userNickName)) {
+                        currentNumOfLikes += 2;
+                    }
+                    else {
+                        currentNumOfLikes++;
+                    }
+                    commentHolder.likesCount.setText(String.valueOf(currentNumOfLikes));
+                    commentHolder.thumbsUp.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_uped));
+                    commentHolder.thumbsDown.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_down));
+                    curComment.setNumberOfLikes(currentNumOfLikes);
+                    // Special UI transition case
+                    if (currentNumOfLikes == 0) {
+                        commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorAccent)));
+                    } else if (currentNumOfLikes == 1) {
+                        commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorGreen)));
+                    }
+                    // Remove user from dislikedUsers set and add to likedUsers set
+                    curComment.addLikedUsers(userNickName);
+                    curComment.removedislikedUsers(userNickName);
+                    new AsyncHelpers.PushUserCommentChangesToDBTask().execute(
+                            new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, mapper, null));
+                }
+            }
+        });
+        
+        commentHolder.thumbsDown.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int currentNumOfLikes = Integer.parseInt(commentHolder.likesCount.getText().toString());
+                Set<String> likedUsers = curComment.getLikedUsers();
+                Set<String> dislikedUsers = curComment.getDislikedUsers();
+                // If user already disliked the post
+                if (dislikedUsers.contains(userNickName)) {
+                    currentNumOfLikes++;
+                    commentHolder.likesCount.setText(String.valueOf(currentNumOfLikes));
+                    commentHolder.thumbsDown.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_down));
+                    curComment.setNumberOfLikes(currentNumOfLikes);
+                    // Special UI transition case
+                    if (currentNumOfLikes == 0) {
+                        commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorAccent)));
+                    } else if (currentNumOfLikes == 1) {
+                        commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorGreen)));
+                    }
+                    // Remove user from likedUsers set
+                    curComment.removedislikedUsers(userNickName);
+                    new AsyncHelpers.PushUserCommentChangesToDBTask().execute(
+                            new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, mapper, null));
+                }
+                // If user has not disliked the post yet
+                else {
+                    if (likedUsers.contains(userNickName)) {
+                        // lose previous like and +1 dislike
+                        currentNumOfLikes -= 2;
+                    }
+                    else {
+                        currentNumOfLikes--;
+                    }
+                    commentHolder.likesCount.setText(String.valueOf(currentNumOfLikes));
+                    commentHolder.thumbsUp.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_up));
+                    commentHolder.thumbsDown.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_downed));
+                    curComment.setNumberOfLikes(currentNumOfLikes);
+                    // Special UI transition case
+                    if (currentNumOfLikes == 0) {
+                        commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorAccent)));
+                    } else if (currentNumOfLikes == -1) {
+                        commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorRed)));
+                    }
+                    // Remove user from dislikedUsers set and add to likedUsers set
+                    curComment.adddislikedUsers(userNickName);
+                    curComment.removeLikedUsers(userNickName);
+                    new AsyncHelpers.PushUserCommentChangesToDBTask().execute(
+                            new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, mapper, null));
+                }
+            }
+        });
     }
 
     @Override

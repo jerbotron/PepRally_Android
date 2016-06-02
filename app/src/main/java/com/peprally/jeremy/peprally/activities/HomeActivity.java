@@ -1,6 +1,7 @@
 package com.peprally.jeremy.peprally.activities;
 
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.GravityCompat;
@@ -16,6 +17,12 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.Profile;
@@ -23,19 +30,22 @@ import com.facebook.login.LoginManager;
 import com.facebook.login.widget.ProfilePictureView;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
+import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.fragments.BrowseTeamsFragment;
 import com.peprally.jeremy.peprally.fragments.ProfileEditFragment;
 import com.peprally.jeremy.peprally.fragments.ProfilePostsFragment;
 import com.peprally.jeremy.peprally.fragments.TrendingFragment;
+import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+
+import java.util.List;
 
 public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
-
     // UI Variables
     private DrawerLayout drawer;
     private ViewPager viewPagerHome;
@@ -60,23 +70,29 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         AccessToken currentToken = AccessToken.getCurrentAccessToken();
         Profile fbProfile = Profile.getCurrentProfile();
 
-        // Initialize member variables first
-        nickname = getIntent().getStringExtra("NICKNAME");
-        userProfileParcel = new UserProfileParcel(fbProfile.getFirstName(),
-                fbProfile.getLastName(),
-                nickname,
-                fbProfile.getId(),
-                true);  // user is viewing self profile
-
-        // Set up UI elements
+        // Set main activity content view
         setContentView(R.layout.activity_home);
+
+        // Initialize member variables
+        nickname = getIntent().getStringExtra("NICKNAME");
+        if (nickname == null || nickname.isEmpty()) {
+            new FetchUserNicknameDBTask().execute(fbProfile);
+        }
+        else {
+            userProfileParcel = new UserProfileParcel(fbProfile.getFirstName(),
+                    fbProfile.getLastName(),
+                    nickname,
+                    fbProfile.getId(),
+                    true);  // user is viewing self profile
+            viewPagerHome = (ViewPager) findViewById(R.id.viewpager_home);
+            setupViewPager(viewPagerHome);
+        }
+
+        // Setup UI components
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_home);
         assert toolbar != null;
         toolbar.setTitle("Pep Rally");
         setSupportActionBar(toolbar);
-
-        viewPagerHome = (ViewPager) findViewById(R.id.viewpager_home);
-        setupViewPager(viewPagerHome);
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tablayout_home);
         assert tabLayout != null;
@@ -216,5 +232,58 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         adapter.addFrag(browseTeamsFragment, "Teams");
         viewPager.setAdapter(adapter);
         viewPager.setCurrentItem(0);
+    }
+
+    /***********************************************************************************************
+     ****************************************** ASYNC TASKS ****************************************
+     **********************************************************************************************/
+    private class FetchUserNicknameDBTask extends AsyncTask<Profile, Void, Boolean> {
+        @Override
+        protected Boolean doInBackground(Profile... params) {
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    HomeActivity.this,                        // Context
+                    AWSCredentialProvider.IDENTITY_POOL_ID,   // Identity Pool ID
+                    AWSCredentialProvider.COGNITO_REGION      // Region
+            );
+            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            ddbClient.setRegion(Region.getRegion(Regions.US_EAST_1));
+            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+
+            DBUserProfile userProfile = new DBUserProfile();
+            userProfile.setCognitoId(credentialsProvider.getIdentityId());
+            DynamoDBQueryExpression<DBUserProfile> queryExpression = new DynamoDBQueryExpression<DBUserProfile>()
+                    .withIndexName("CognitoID-index")
+                    .withHashKeyValues(userProfile)
+                    .withConsistentRead(false);
+
+            List<DBUserProfile> results = mapper.query(DBUserProfile.class, queryExpression);
+            if (results == null || results.size() == 0) {
+                Log.d(TAG, "CognitoID not found: current user does not exist in database.");
+            }
+            else{
+                if (results.size() == 1) {
+                    userProfile = results.get(0);
+                    nickname = userProfile.getNickname();
+                    Profile fbProfile = params[0];
+                    userProfileParcel = new UserProfileParcel(fbProfile.getFirstName(),
+                                                            fbProfile.getLastName(),
+                                                            nickname,
+                                                            fbProfile.getId(),
+                                                            true);  // user is viewing self profile
+                    return true;
+                }
+                Log.d(TAG, "Query result should have only returned single user!");
+            }
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean success) {
+            super.onPostExecute(success);
+            if (success) {
+                viewPagerHome = (ViewPager) findViewById(R.id.viewpager_home);
+                setupViewPager(viewPagerHome);
+            }
+        }
     }
 }

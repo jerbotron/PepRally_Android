@@ -39,28 +39,6 @@ public class AsyncHelpers {
         }
     }
 
-    public static class asyncTaskObjectThumbsUpDownButtons {
-        public ImageButton thumbsUp;
-        public ImageButton thumbsDown;
-        public TextView likesCount;
-        public Context callingContext;
-        public Bundle dataBundle;
-        public DynamoDBMapper mapper;
-        public asyncTaskObjectThumbsUpDownButtons(ImageButton thumbsUp,
-                                                  ImageButton thumbsDown,
-                                                  TextView likesCount,
-                                                  Context callingContext,
-                                                  Bundle dataBundle,
-                                                  DynamoDBMapper mapper) {
-            this.thumbsUp = thumbsUp;
-            this.thumbsDown = thumbsDown;
-            this.likesCount = likesCount;
-            this.callingContext = callingContext;
-            this.dataBundle = dataBundle;
-            this.mapper = mapper;
-        }
-    }
-
     public static class asyncTaskObjectUserPostBundle {
         public DBUserPost post;
         public DynamoDBMapper mapper;
@@ -123,79 +101,11 @@ public class AsyncHelpers {
         }
     }
 
-    public static class CheckIfUserLikedDislikedMainPost extends AsyncTask<asyncTaskObjectThumbsUpDownButtons, Void, Integer> {
-        ImageButton thumbsUp, thumbsDown;
-        Context callingContext;
+    public static class PushUserCommentChangesToDBTask extends AsyncTask<asyncTaskObjectUserCommentBundle, Void, Void> {
         @Override
-        protected Integer doInBackground(asyncTaskObjectThumbsUpDownButtons... params) {
-            thumbsUp = params[0].thumbsUp;
-            thumbsDown = params[0].thumbsDown;
-            callingContext = params[0].callingContext;
-            Bundle dataBundle = params[0].dataBundle;
-            DynamoDBMapper mapper = params[0].mapper;
-            String nickname = dataBundle.getString("NICKNAME");
-            DBUserPost userPost = mapper.load(DBUserPost.class, nickname, dataBundle.getLong("TIME_IN_SECONDS"));
-            // likedStatus:
-            // 0 (default) = neither liked or disliked
-            // 1 = liked
-            // 2 = disliked
-            Integer likedStatus = 0;
-            if (userPost.getLikedUsers().contains(nickname)) {
-                likedStatus = 1;
-            }
-            else if (userPost.getDislikedUsers().contains(nickname)) {
-                likedStatus = 2;
-            }
-            return likedStatus;
-        }
-
-        @Override
-        protected void onPostExecute(Integer likedStatus) {
-            switch (likedStatus) {
-                case 1:
-                    thumbsUp.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_uped));
-                    break;
-                case 2:
-                    thumbsDown.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_downed));
-                    break;
-            }
-        }
-    }
-
-    public static class PushUserProfilePostsCountToDBTask extends AsyncTask<asyncTaskObjectUserPostBundle, Void, Void> {
-        private com.peprally.jeremy.peprally.db_models.DBUserProfile userProfile;
-        private DynamoDBMapper mapper;
-        @Override
-        protected Void doInBackground(asyncTaskObjectUserPostBundle... params) {
-            mapper = params[0].mapper;
-            DBUserPost userPost = params[0].post;
-            UserProfileParcel parcel = params[0].parcel;
-            Bundle data = params[0].data;
-            if (userPost == null) {
-                userProfile = mapper.load(DBUserProfile.class, parcel.getNickname());
-            } else {
-                userProfile = mapper.load(DBUserProfile.class, userPost.getNickname());
-            }
-            if (data != null)
-                if (data.getBoolean("INCREMENT_POSTS_COUNT")) {
-                    incrementPostsCount();
-                }
-                else if (!data.getBoolean("INCREMENT_POSTS_COUNT")){
-                    decrementPostsCount();
-                }
+        protected Void doInBackground(asyncTaskObjectUserCommentBundle... params) {
+            params[0].mapper.save(params[0].comment);
             return null;
-        }
-
-        private void incrementPostsCount() {
-            int curPostCount = userProfile.getPostsCount();
-            userProfile.setPostsCount(curPostCount + 1);
-            mapper.save(userProfile);
-        }
-
-        private void decrementPostsCount() {
-            int curPostCount = userProfile.getPostsCount();
-            userProfile.setPostsCount(curPostCount - 1);
-            mapper.save(userProfile);
         }
     }
 
