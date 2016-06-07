@@ -378,11 +378,11 @@ public class ProfileActivity extends AppCompatActivity {
         if (!selfProfile) {
             String rootImageURL = "https://s3.amazonaws.com/rosterphotos/";
             String team = userProfileParcel.getTeam();
-            assert team != null;
             String extension = team.replace(" ", "+") + "/" + userProfileParcel.getRosterImageURL();
             String url = rootImageURL + extension;
             Picasso.with(ProfileActivity.this)
                     .load(url)
+                    .placeholder(R.drawable.default_placeholder)
                     .into(profilePicture);
         }
 

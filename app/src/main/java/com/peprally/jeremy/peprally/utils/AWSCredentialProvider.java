@@ -1,6 +1,7 @@
 package com.peprally.jeremy.peprally.utils;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -25,7 +26,8 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingC
 
     private static final String TAG = LoginActivity.class.getSimpleName();
 
-    public AWSCredentialProvider(Context context, LoginActivity.AWSLoginTaskCallback taskCallback) {
+    public AWSCredentialProvider(Context context,
+                                 LoginActivity.AWSLoginTaskCallback taskCallback) {
         callingContext = context;
         loginTaskCallback = taskCallback;
     }
@@ -55,10 +57,10 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingC
 
     @Override
     protected void onPostExecute(CognitoCachingCredentialsProvider credentialsProvider) {
-        Log.d(TAG, "credentials verified");
-        Log.d(TAG, "credentials: " + credentialsProvider.getCredentials().toString());
-        Log.d(TAG, "identity pool id: " + credentialsProvider.getIdentityPoolId());
-        Log.d(TAG, "identity provider: " + credentialsProvider.getIdentityProvider());
+//        Log.d(TAG, "credentials verified");
+//        Log.d(TAG, "credentials: " + credentialsProvider.getCredentials().toString());
+//        Log.d(TAG, "identity pool id: " + credentialsProvider.getIdentityPoolId());
+//        Log.d(TAG, "identity provider: " + credentialsProvider.getIdentityProvider());
         loginTaskCallback.onTaskDone(credentialsProvider);
     }
 

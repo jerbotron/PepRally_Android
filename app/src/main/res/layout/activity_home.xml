@@ -10,6 +10,7 @@
     tools:openDrawer="stop">
 
     <android.support.design.widget.CoordinatorLayout
+        android:id="@+id/id_coordinator_layout_home_activity"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true">

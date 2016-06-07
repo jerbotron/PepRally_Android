@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Rect;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.view.View;
@@ -50,5 +52,12 @@ public class Helpers {
             InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
         }
+    }
+
+    public static boolean checkIfNetworkConnectionAvailable(ConnectivityManager connManager) {
+        boolean isConnected = false;
+        NetworkInfo mWifi = connManager.getActiveNetworkInfo();
+        if (mWifi!=null) isConnected = mWifi.isConnected();
+        return isConnected;
     }
 }

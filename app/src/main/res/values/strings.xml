@@ -40,4 +40,8 @@
     <string name="example_text">This is a sample post message to see what the view would
         look like on a card. This sentence has no meaning, it\'s a waste of time to read it. Okay thanks bye.</string>
 
+    <!-- Error Message Strings -->
+    <string name="no_connection_text">Oops! Looks like you\'ve lost internet connection. Please check your
+        connection settings and try re-open PepRally!</string>
+
 </resources>

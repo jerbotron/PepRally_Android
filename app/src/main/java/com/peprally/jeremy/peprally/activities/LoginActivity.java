@@ -2,7 +2,9 @@ package com.peprally.jeremy.peprally.activities;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -14,6 +16,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.util.Log;
 
@@ -41,6 +45,7 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.db_models.DBUserNickname;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.utils.Helpers;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -93,35 +98,62 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        Log.d(TAG, "----- STARTING PepRally -----");
-
         FacebookSdk.sdkInitialize(getApplicationContext());
-        callbackManager = CallbackManager.Factory.create();
+        if (!Helpers.checkIfNetworkConnectionAvailable((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE))) {
+            setContentView(R.layout.activity_login);
+            LoginManager.getInstance().logOut();
+            final LinearLayout container = (LinearLayout) findViewById(R.id.id_activity_login_container);
+            final LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
+            assert container != null && loginButton != null;
+            final Snackbar snackbar = Snackbar.make(container, getResources().getString(R.string.no_connection_text), Snackbar.LENGTH_INDEFINITE);
+            snackbar.setAction("OKAY", new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    snackbar.dismiss();
+                }});
+            TextView tv_snackbar = (TextView) snackbar.getView().findViewById(android.support.design.R.id.snackbar_text);
+            tv_snackbar.setMaxLines(5);
+            snackbar.show();
+            loginButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    snackbar.show();
+                }
+            });
+        }
+        else {
+            Log.d(TAG, "----- STARTING Pep Rally -----");
 
-        credentialsProvider = new CognitoCachingCredentialsProvider(
-                LoginActivity.this,                         // Context
-                AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
-                AWSCredentialProvider.COGNITO_REGION        // Region
-        );
-        ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-        mapper = new DynamoDBMapper(ddbClient);
+            callbackManager = CallbackManager.Factory.create();
 
-        accessTokenTracker = new AccessTokenTracker() {
-            @Override
-            protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken newAccessToken) {
-                updateWithToken(newAccessToken);
-            }
-        };
+            credentialsProvider = new CognitoCachingCredentialsProvider(
+                    LoginActivity.this,                         // Context
+                    AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
+                    AWSCredentialProvider.COGNITO_REGION        // Region
+            );
+            ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            mapper = new DynamoDBMapper(ddbClient);
 
-        currentToken = AccessToken.getCurrentAccessToken();
-        updateWithToken(currentToken);
+            accessTokenTracker = new AccessTokenTracker() {
+                @Override
+                protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken newAccessToken) {
+                    updateWithToken(newAccessToken);
+                }
+            };
+
+            currentToken = AccessToken.getCurrentAccessToken();
+            updateWithToken(currentToken);
+        }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        callbackManager.onActivityResult(requestCode, resultCode, data);
+        try {
+            callbackManager.onActivityResult(requestCode, resultCode, data);
+        } catch (NullPointerException nullPointerException) {
+            Log.d(TAG, "No connection error, handled by login button OnClick");
+        }
     }
 
     @Override

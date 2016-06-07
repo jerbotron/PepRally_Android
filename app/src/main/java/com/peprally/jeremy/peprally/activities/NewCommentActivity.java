@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.AsyncTask;
+import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -65,6 +66,7 @@ public class NewCommentActivity extends AppCompatActivity {
     private CommentCardAdapter commentCardAdapter;
     private Bundle postCommentBundle;
     private UserProfileParcel userProfileParcel;
+    private boolean selfPost;       // if current post is user's own post
     private int charCount = 200;
 
     /***********************************************************************************************
@@ -109,8 +111,12 @@ public class NewCommentActivity extends AppCompatActivity {
 
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
         postCommentBundle = getIntent().getBundleExtra("POST_COMMENT_BUNDLE");
+        assert postCommentBundle != null && userProfileParcel != null;
 
         new FetchUserPostDBTask().execute(postCommentBundle);
+
+        // Determine if selfPost
+        selfPost = userProfileParcel.getNickname().equals(postCommentBundle.getString("NICKNAME"));
 
         // Display Post Info Correctly
         if (postCommentBundle.getInt("COMMENTS_COUNT") <= 0) {
@@ -208,6 +214,10 @@ public class NewCommentActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_delete_post, menu);
+        // Hide delete post menu option if not own post
+        if (!selfPost) {
+            menu.findItem(R.id.id_item_delete_post).setVisible(false);
+        }
         return true;
     }
 
