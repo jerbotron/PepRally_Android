@@ -6,14 +6,20 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
+import com.amazonaws.mobileconnectors.cognito.CognitoSyncManager;
+import com.amazonaws.mobileconnectors.cognito.Dataset;
+import com.amazonaws.mobileconnectors.cognito.DefaultSyncCallback;
+import com.amazonaws.mobileconnectors.cognito.Record;
 import com.amazonaws.regions.Regions;
 
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
+import com.facebook.Profile;
 import com.peprally.jeremy.peprally.activities.HomeActivity;
 import com.peprally.jeremy.peprally.activities.LoginActivity;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingCredentialsProvider> {
@@ -56,12 +62,24 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingC
     }
 
     @Override
-    protected void onPostExecute(CognitoCachingCredentialsProvider credentialsProvider) {
-//        Log.d(TAG, "credentials verified");
-//        Log.d(TAG, "credentials: " + credentialsProvider.getCredentials().toString());
-//        Log.d(TAG, "identity pool id: " + credentialsProvider.getIdentityPoolId());
-//        Log.d(TAG, "identity provider: " + credentialsProvider.getIdentityProvider());
-        loginTaskCallback.onTaskDone(credentialsProvider);
+    protected void onPostExecute(final CognitoCachingCredentialsProvider credentialsProvider) {
+        Log.d(TAG, "credentials verified");
+        Log.d(TAG, "credentials: " + credentialsProvider.getCredentials().toString());
+        Log.d(TAG, "identity pool id: " + credentialsProvider.getIdentityPoolId());
+        Log.d(TAG, "identity provider: " + credentialsProvider.getIdentityProvider());
+        CognitoSyncManager syncClient = new CognitoSyncManager(
+                callingContext,
+                Regions.US_EAST_1,
+                credentialsProvider);
+        Profile fbProfile = Profile.getCurrentProfile();
+        Dataset dataset = syncClient.openOrCreateDataset(credentialsProvider.getIdentityId());
+        dataset.put("UserFullName", fbProfile.getFirstName() + " " + fbProfile.getLastName());
+        dataset.synchronize(new DefaultSyncCallback() {
+            @Override
+            public void onSuccess(Dataset dataset, List<Record> updatedRecords) {
+                loginTaskCallback.onTaskDone(credentialsProvider);
+            }
+        });
     }
 
 }

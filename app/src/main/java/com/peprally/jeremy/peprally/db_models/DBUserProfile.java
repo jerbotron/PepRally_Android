@@ -6,23 +6,27 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 public class DBUserProfile {
     private String cognitoID;
     private String facebookID;
-    private boolean newUser;
+    private String facebookLink;
+    private String email;
     private String firstName;
     private String lastName;
-    private int age;
-    private int followers;
-    private int following;
-    private int fistbumps;
+    private String gender;
+    private String birthday;
     private String nickname;
     private String favoriteTeam;
     private String favoritePlayer;
     private String pepTalk;
     private String trashTalk;
     private String dateJoined;
-    private boolean isVarsityPlayer;
     private String team;
+    private int age;
+    private int followers;
+    private int following;
+    private int fistbumps;
     private int playerIndex;
     private int postsCount;
+    private boolean newUser;
+    private boolean isVarsityPlayer;
 
     @DynamoDBHashKey(attributeName = "Nickname")
     public String getNickname() {
@@ -49,6 +53,24 @@ public class DBUserProfile {
 
     public void setFacebookID(String facebookID) {
         this.facebookID = facebookID;
+    }
+
+    @DynamoDBAttribute(attributeName = "FacebookLink")
+    public String getFacebookLink() {
+        return facebookLink;
+    }
+
+    public void setFacebookLink(String facebookLink) {
+        this.facebookLink = facebookLink;
+    }
+
+    @DynamoDBAttribute(attributeName = "Email")
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     @DynamoDBAttribute(attributeName = "NewUser")
@@ -85,6 +107,24 @@ public class DBUserProfile {
 
     public void setAge(int age) {
         this.age = age;
+    }
+
+    @DynamoDBAttribute(attributeName = "Gender")
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    @DynamoDBAttribute(attributeName = "Birthday")
+    public String getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(String birthday) {
+        this.birthday = birthday;
     }
 
     @DynamoDBAttribute(attributeName = "Followers")

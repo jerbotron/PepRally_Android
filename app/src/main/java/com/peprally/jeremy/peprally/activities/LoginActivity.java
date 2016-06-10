@@ -24,11 +24,13 @@ import android.util.Log;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException;
+import com.amazonaws.services.dynamodbv2.model.ConditionalOperator;
 import com.amazonaws.services.dynamodbv2.model.ExpectedAttributeValue;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 import com.facebook.AccessTokenTracker;
@@ -36,16 +38,22 @@ import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.facebook.AccessToken;
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserNickname;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.Helpers;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -91,6 +99,7 @@ public class LoginActivity extends AppCompatActivity {
 
     // General Variables
     private static final String TAG = LoginActivity.class.getSimpleName();
+    private Bundle fbDataBundle;
 
     /***********************************************************************************************
      *************************************** ACTIVITY METHODS **************************************
@@ -132,11 +141,15 @@ public class LoginActivity extends AppCompatActivity {
                     AWSCredentialProvider.COGNITO_REGION        // Region
             );
             ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+            ddbClient.setRegion(Region.getRegion(Regions.US_EAST_1));
             mapper = new DynamoDBMapper(ddbClient);
+
+            fbDataBundle = new Bundle();
 
             accessTokenTracker = new AccessTokenTracker() {
                 @Override
                 protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken newAccessToken) {
+                    // When a new facebook account is used to login
                     updateWithToken(newAccessToken);
                 }
             };
@@ -151,8 +164,9 @@ public class LoginActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         try {
             callbackManager.onActivityResult(requestCode, resultCode, data);
-        } catch (NullPointerException nullPointerException) {
+        } catch (NullPointerException e) {
             Log.d(TAG, "No connection error, handled by login button OnClick");
+            e.printStackTrace();
         }
     }
 
@@ -189,6 +203,52 @@ public class LoginActivity extends AppCompatActivity {
         credentialProviderTask.execute();
     }
 
+    private void updateWithToken(AccessToken newAccessToken) {
+        if (newAccessToken == null) {
+            setupLoginScreen();
+        } else {
+            AWSLoginTask();
+        }
+    }
+
+    private String getFacebookDataSafely(GraphResponse response, String key) {
+        try {
+            return response.getJSONObject().getString(key);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private void bundleFacebookData(AccessToken accessToken) {
+        GraphRequest request = GraphRequest.newMeRequest(accessToken,
+                new GraphRequest.GraphJSONObjectCallback() {
+                    @Override
+                    public void onCompleted(JSONObject object, GraphResponse response) {
+                        Log.d(TAG, object.toString());
+                        String email = getFacebookDataSafely(response, "email");
+                        String firstName = getFacebookDataSafely(response, "first_name");
+                        String lastName = getFacebookDataSafely(response, "last_name");
+                        String gender = getFacebookDataSafely(response, "gender");
+                        String birthday = getFacebookDataSafely(response, "birthday");
+                        Profile profile = Profile.getCurrentProfile();
+                        String id = profile.getId();
+                        String link = profile.getLinkUri().toString();
+                        fbDataBundle.putString("ID", id);
+                        fbDataBundle.putString("LINK", link);
+                        fbDataBundle.putString("EMAIL", email);
+                        fbDataBundle.putString("FIRSTNAME", firstName);
+                        fbDataBundle.putString("LASTNAME", lastName);
+                        fbDataBundle.putString("GENDER", gender);
+                        fbDataBundle.putString("BIRTHDAY", birthday);
+                    }
+                });
+        Bundle fbData = new Bundle();
+        fbData.putString("fields", "id, email, first_name, last_name, gender, birthday");
+        request.setParameters(fbData);
+        request.executeAsync();
+    }
+
     private void setupLoginScreen() {
         setContentView(R.layout.activity_login);
         final LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
@@ -198,6 +258,7 @@ public class LoginActivity extends AppCompatActivity {
             public void onSuccess(LoginResult loginResult) {
                 Log.d(TAG, "fb login success");
                 currentToken = AccessToken.getCurrentAccessToken();
+                bundleFacebookData(loginResult.getAccessToken());
             }
 
             @Override
@@ -210,14 +271,6 @@ public class LoginActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "Login attempt failed.", Toast.LENGTH_LONG).show();
             }
         });
-    }
-
-    private void updateWithToken(AccessToken newAccessToken) {
-        if (newAccessToken == null) {
-            setupLoginScreen();
-        } else {
-            AWSLoginTask();
-        }
     }
 
     /***********************************************************************************************
@@ -260,7 +313,6 @@ public class LoginActivity extends AppCompatActivity {
                     showNewNicknameDialog();
                 }
                 else {
-
                     new CreateNewUserProfileDBEntryTask().execute(nickname);
                     new PushNewNicknameToDBTask().execute(nickname);
                 }
@@ -270,6 +322,45 @@ public class LoginActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int whichButton) {
                 LoginManager.getInstance().logOut();
                 setupLoginScreen();
+            }
+        });
+        AlertDialog b = dialogBuilder.create();
+        b.show();
+    }
+
+    private void showVerifyVarsityPlayerDialog(DBPlayerProfile playerProfile) {
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = this.getLayoutInflater();
+        final View dialogView = inflater.inflate(R.layout.dialog_verify_varsity_player, null);
+        dialogBuilder.setView(dialogView);
+
+        TextView textViewVerifyVarsityLine1 = (TextView) dialogView.findViewById(R.id.id_text_view_verify_varsity_line1);
+        TextView textViewVerifyVarsityLine2 = (TextView) dialogView.findViewById(R.id.id_text_view_verify_varsity_line2);
+
+        String line1Text = playerProfile.getFirstName() + " " + playerProfile.getLastName();
+        String line2Text = playerProfile.getTeam() + " | " + playerProfile.getPosition() + " | " + playerProfile.getHometown();
+        switch (playerProfile.getTeam()) {
+            case "Volleyball":
+            case "Soccer":
+            case "Basketball":
+            case "Football":
+            case "Baseball":
+            case "Softball":
+                line1Text = line1Text + " #" + playerProfile.getNumber();
+        }
+        textViewVerifyVarsityLine1.setText(line1Text);
+        textViewVerifyVarsityLine2.setText(line2Text);
+
+        dialogBuilder.setTitle("Are you a varsity player?");
+        dialogBuilder.setMessage("We detected that you might be a varsity player. Please confirm if you are: ");
+        dialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                Log.d(TAG, "yes i am");
+            }
+        });
+        dialogBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                Log.d(TAG, "no, i am not");
             }
         });
         AlertDialog b = dialogBuilder.create();
@@ -325,6 +416,7 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean isNewUser) {
             if (isNewUser) {
+                bundleFacebookData(currentToken);
                 showNewNicknameDialog();
             }
             else {
@@ -358,40 +450,86 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private class CreateNewUserProfileDBEntryTask extends AsyncTask<String, Void, Void> {
-        String userNickname;
+    private class CreateNewUserProfileDBEntryTask extends AsyncTask<String, Void, DBUserProfile> {
         @Override
-        protected Void doInBackground(String... params) {
-            userNickname = params[0];
+        protected DBUserProfile doInBackground(String... params) {
+            String userNickname = params[0];
             Calendar c = Calendar.getInstance();
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
-            Profile fbProfile = Profile.getCurrentProfile();
-            HashMap<String, AttributeValue> primaryKey = new HashMap<>();
-            primaryKey.put("Nickname", new AttributeValue().withS(userNickname));
-            primaryKey.put("CognitoID", new AttributeValue().withS(credentialsProvider.getIdentityId()));
-            primaryKey.put("FacebookID", new AttributeValue().withS(fbProfile.getId()));
-            primaryKey.put("FirstName", new AttributeValue().withS(fbProfile.getFirstName()));
-            primaryKey.put("LastName", new AttributeValue().withS(fbProfile.getLastName()));
-            primaryKey.put("NewUser", new AttributeValue().withBOOL(true));
-            primaryKey.put("DateJoined", new AttributeValue().withS(df.format(c.getTime())));
-            PutItemRequest request = new PutItemRequest().withTableName("UserProfiles")
-                    .withItem(primaryKey);
-            try {
-                ddbClient.putItem(request);
-                Log.d(TAG, "New cognito ID added");
-            } catch (ConditionalCheckFailedException e) {
-                Log.d(TAG, "ID already existed, not creating a new entry");
+            ddbClient.setRegion(Region.getRegion(Regions.US_EAST_1));
+            mapper = new DynamoDBMapper(ddbClient);
+            DBUserProfile userProfile = mapper.load(DBUserProfile.class, userNickname);
+            if (userProfile == null) {
+                userProfile = new DBUserProfile();
+                userProfile.setNickname(userNickname);
+                userProfile.setCognitoId(credentialsProvider.getIdentityId());
+                userProfile.setFacebookID(fbDataBundle.getString("ID"));
+                userProfile.setFacebookLink(fbDataBundle.getString("LINK"));
+                userProfile.setEmail(fbDataBundle.getString("EMAIL"));
+                userProfile.setFirstName(fbDataBundle.getString("FIRSTNAME"));
+                userProfile.setLastName(fbDataBundle.getString("LASTNAME"));
+                userProfile.setGender(fbDataBundle.getString("GENDER"));
+                userProfile.setBirthday(fbDataBundle.getString("BIRTHDAY"));
+                userProfile.setNewUser(true);
+                userProfile.setDateJoined(df.format(c.getTime()));
+                mapper.save(userProfile);
+                return userProfile;
             }
             return null;
         }
 
         @Override
-        protected void onPostExecute(Void v) {
-            finish();
-            Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
-            intent.putExtra("NICKNAME", userNickname);
-            startActivity(intent);
-            overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+        protected void onPostExecute(DBUserProfile userProfile) {
+            if (userProfile != null) {
+                new CheckIfNewUserIsVarsityPlayerDBTask().execute(userProfile);
+            }
+        }
+    }
+
+    private class CheckIfNewUserIsVarsityPlayerDBTask extends AsyncTask<DBUserProfile, Void, Boolean> {
+        String userNickname;
+        DBUserProfile userProfile;
+        DBPlayerProfile playerProfile;
+        @Override
+        protected Boolean doInBackground(DBUserProfile... params) {
+            userProfile = params[0];
+            userNickname = userProfile.getNickname();
+            String gender = "M";
+            if (userProfile.getGender().equals("female")) gender = "F";
+
+            playerProfile = new DBPlayerProfile();
+            playerProfile.setGender(gender);
+            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                    .withHashKeyValues(playerProfile)
+                    .withConsistentRead(false);
+
+            List<DBPlayerProfile> results = mapper.query(DBPlayerProfile.class, queryExpression);
+            for (DBPlayerProfile profile : results) {
+                if (profile.getFirstName().equals(userProfile.getFirstName()) &&
+                        profile.getLastName().equals(userProfile.getLastName())) {
+                    playerProfile = profile;
+                    userProfile.setIsVarsityPlayer(true);
+                    userProfile.setTeam(profile.getTeam());
+                    mapper.save(userProfile);
+                    Log.d(TAG, "VARSITY PLAYER HIT");
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean isVarsityPlayer) {
+            if (isVarsityPlayer) {
+                showVerifyVarsityPlayerDialog(playerProfile);
+            }
+            else {
+                finish();
+                Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
+                intent.putExtra("NICKNAME", userNickname);
+                startActivity(intent);
+                overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+            }
         }
     }
 

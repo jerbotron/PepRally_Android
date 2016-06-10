@@ -5,8 +5,6 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 @DynamoDBTable(tableName = "PlayerProfiles")
 public class DBPlayerProfile {
     private String team;
-    private int index;
-    private int number;
     private String firstName;
     private String lastName;
     private String imageURL;
@@ -15,6 +13,9 @@ public class DBPlayerProfile {
     private String weight;
     private String position;
     private String hometown;
+    private String gender;
+    private int index;
+    private int number;
     private boolean hasUserProfile;
 
     @DynamoDBHashKey(attributeName = "Team")
@@ -127,6 +128,15 @@ public class DBPlayerProfile {
 
     public void setHometown(String hometown) {
         this.hometown = hometown;
+    }
+
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "MF-index", attributeName = "MF")
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 
     @DynamoDBAttribute(attributeName = "HasUserProfile")

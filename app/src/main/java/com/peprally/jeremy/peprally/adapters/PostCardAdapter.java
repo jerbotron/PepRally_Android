@@ -109,7 +109,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
 
         final String userNickName = userProfileParcel.getNickname();
 
-        Log.d(TAG, "post adapter: cur user = " + userNickName);
+//        Log.d(TAG, "post adapter: cur user = " + userNickName);
         Set<String> likedUsers = curPost.getLikedUsers();
         Set<String> dislikedUsers = curPost.getDislikedUsers();
 
