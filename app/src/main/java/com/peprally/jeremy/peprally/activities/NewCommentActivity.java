@@ -255,15 +255,13 @@ public class NewCommentActivity extends AppCompatActivity {
         else {
             Bundle bundle = new Bundle();
             bundle.putString("NICKNAME", postCommentBundle.getString("NICKNAME"));
-            bundle.putString("FACEBOOK_ID", postCommentBundle.getString("FACEBOOK_ID"));
-            bundle.putString("FIRST_NAME", postCommentBundle.getString("FIRST_NAME"));
-            if (commentCardAdapter == null) {
+            bundle.putString("FACEBOOK_ID", userProfileParcel.getFacebookID());
+            bundle.putString("FIRST_NAME", userProfileParcel.getFirstname());
+            if (commentCardAdapter == null)
                 initializeAdapter(null);
-            }
             // Checks is this post is the first user comment
-            if (postCommentBundle.getInt("COMMENTS_COUNT") == 0) {
+            if (postCommentBundle.getInt("COMMENTS_COUNT") == 0)
                 commentsContainer.removeView(noCommentsText);
-            }
             commentCardAdapter.addComment(newCommentText, bundle);
         }
     }
@@ -279,9 +277,8 @@ public class NewCommentActivity extends AppCompatActivity {
     private void initializeAdapter(List<DBUserComment> result) {
         List<DBUserComment> comments = new ArrayList<>();
         if (result != null) {
-            for (DBUserComment userComment : result) {
+            for (DBUserComment userComment : result)
                 comments.add(userComment);
-            }
         }
         // Initialize adapter for the case that the first comment is being made
         commentCardAdapter = new CommentCardAdapter(this, comments);

@@ -100,6 +100,7 @@ public class LoginActivity extends AppCompatActivity {
     // General Variables
     private static final String TAG = LoginActivity.class.getSimpleName();
     private Bundle fbDataBundle;
+    private boolean connectionSecured;
 
     /***********************************************************************************************
      *************************************** ACTIVITY METHODS **************************************
@@ -110,6 +111,7 @@ public class LoginActivity extends AppCompatActivity {
         FacebookSdk.sdkInitialize(getApplicationContext());
         if (!Helpers.checkIfNetworkConnectionAvailable((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE))) {
             setContentView(R.layout.activity_login);
+            connectionSecured = false;
             LoginManager.getInstance().logOut();
             final LinearLayout container = (LinearLayout) findViewById(R.id.id_activity_login_container);
             final LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
@@ -131,6 +133,7 @@ public class LoginActivity extends AppCompatActivity {
             });
         }
         else {
+            connectionSecured = true;
             Log.d(TAG, "----- STARTING Pep Rally -----");
 
             callbackManager = CallbackManager.Factory.create();
@@ -172,17 +175,24 @@ public class LoginActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        finish();
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_HOME);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
+        if (connectionSecured)
+        {
+            finish();
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
+        else {
+            super.onBackPressed();
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        accessTokenTracker.stopTracking();
+        if (connectionSecured)
+            accessTokenTracker.stopTracking();
     }
 
     /***********************************************************************************************
@@ -328,7 +338,7 @@ public class LoginActivity extends AppCompatActivity {
         b.show();
     }
 
-    private void showVerifyVarsityPlayerDialog(DBPlayerProfile playerProfile) {
+    private void showVerifyVarsityPlayerDialog(final String userNickname, final DBPlayerProfile playerProfile) {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         LayoutInflater inflater = this.getLayoutInflater();
         final View dialogView = inflater.inflate(R.layout.dialog_verify_varsity_player, null);
@@ -352,15 +362,29 @@ public class LoginActivity extends AppCompatActivity {
         textViewVerifyVarsityLine2.setText(line2Text);
 
         dialogBuilder.setTitle("Are you a varsity player?");
-        dialogBuilder.setMessage("We detected that you might be a varsity player. Please confirm if you are: ");
+        dialogBuilder.setMessage("We detected that you might be a varsity player, please confirm if you are the person below. " +
+                "(False confirmations will be detected and your account may be banned.)");
         dialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
                 Log.d(TAG, "yes i am");
+                playerProfile.setHasUserProfile(true);
+                playerProfile.setNickname(userNickname);
+                new PushPlayerProfileChangesToDBTask().execute(playerProfile);
+                finish();
+                Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
+                intent.putExtra("NICKNAME", userNickname);
+                startActivity(intent);
+                overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
             }
         });
         dialogBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
-                Log.d(TAG, "no, i am not");
+                Log.d(TAG, "yes i am");
+                finish();
+                Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
+                intent.putExtra("NICKNAME", userNickname);
+                startActivity(intent);
+                overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
             }
         });
         AlertDialog b = dialogBuilder.create();
@@ -521,7 +545,7 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean isVarsityPlayer) {
             if (isVarsityPlayer) {
-                showVerifyVarsityPlayerDialog(playerProfile);
+                showVerifyVarsityPlayerDialog(userNickname, playerProfile);
             }
             else {
                 finish();
@@ -541,6 +565,14 @@ public class LoginActivity extends AppCompatActivity {
             primaryKey.put("CognitoID", new AttributeValue().withS(credentialsProvider.getIdentityId()));
             primaryKey.put("FacebookID", new AttributeValue().withS(currentToken.getUserId()));
             ddbClient.putItem(new PutItemRequest().withTableName("UserNicknames").withItem(primaryKey));
+            return null;
+        }
+    }
+
+    private class PushPlayerProfileChangesToDBTask extends AsyncTask<DBPlayerProfile, Void, Void> {
+        @Override
+        protected Void doInBackground(DBPlayerProfile... params) {
+            mapper.save(params[0]);
             return null;
         }
     }

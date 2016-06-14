@@ -26,6 +26,8 @@
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     android:layout_marginRight="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:clickable="true"
                     android:src="@drawable/profile" />
             </LinearLayout>
             <LinearLayout
@@ -41,7 +43,8 @@
                     android:textStyle="bold"
                     android:textSize="10sp"
                     android:textColor="@color/colorPrimaryDark"
-                    android:layout_marginRight="8dp"/>
+                    android:layout_marginRight="8dp"
+                    android:layout_marginEnd="8dp"/>
             </LinearLayout>
         </RelativeLayout>
         <LinearLayout

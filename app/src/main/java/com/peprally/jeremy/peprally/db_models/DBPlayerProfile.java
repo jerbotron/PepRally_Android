@@ -14,6 +14,7 @@ public class DBPlayerProfile {
     private String position;
     private String hometown;
     private String gender;
+    private String nickname;
     private int index;
     private int number;
     private boolean hasUserProfile;
@@ -137,6 +138,15 @@ public class DBPlayerProfile {
 
     public void setGender(String gender) {
         this.gender = gender;
+    }
+
+    @DynamoDBAttribute(attributeName = "Nickname")
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
     }
 
     @DynamoDBAttribute(attributeName = "HasUserProfile")

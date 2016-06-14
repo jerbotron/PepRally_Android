@@ -153,7 +153,18 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
             postHolder.timeStamp.setText(String.valueOf(timeInDays) + "d");
         }
 
-        // ImageButton OnClick handlers:
+        // Profile Picture OnClick Handlers:
+        postHolder.profilePhoto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(callingContext, ProfileActivity.class);
+                intent.putExtra("NICKNAME", curPost.getNickname());
+                callingContext.startActivity(intent);
+                ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
+            }
+        });
+
+        // ImageButton OnClick Handlers:
         postHolder.thumbsUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

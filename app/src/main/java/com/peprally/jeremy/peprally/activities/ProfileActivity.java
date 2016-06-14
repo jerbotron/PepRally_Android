@@ -427,6 +427,7 @@ public class ProfileActivity extends AppCompatActivity {
         }
         else {
             if (selfProfile) {
+                finish();
                 Intent intent = new Intent(this, HomeActivity.class);
                 intent.putExtra("NICKNAME", userProfileParcel.getNickname());
                 startActivity(intent);
