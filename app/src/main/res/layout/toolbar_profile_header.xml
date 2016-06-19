@@ -16,7 +16,7 @@
             <!--android:layout_height="128dp"-->
             <!--android:layout_gravity="left" />-->
         <ImageView
-            android:id="@+id/profile_roster_image"
+            android:id="@+id/id_image_view_profile_image"
             android:layout_width="128dp"
             android:layout_height="128dp"
             android:layout_gravity="left"

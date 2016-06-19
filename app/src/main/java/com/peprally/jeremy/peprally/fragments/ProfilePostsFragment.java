@@ -102,7 +102,7 @@ public class ProfilePostsFragment extends Fragment {
     public void refreshAdapter() {
         if (userProfileParcel.getPostsCount() == 0) {
             if (userProfileParcel.getIsSelfProfile()) {
-                noPostsText.setText("You have not created any posts yet!");
+                noPostsText.setText(getResources().getString(R.string.no_posts_message));
             }
             else {
                 noPostsText.setText(userProfileParcel.getFirstname() + " has not created any posts yet!");
@@ -135,6 +135,8 @@ public class ProfilePostsFragment extends Fragment {
                     AWSCredentialProvider.COGNITO_REGION      // Region
             );
             String nickname = params[0];
+            if (nickname == null) return null;
+
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
             AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
             s3.setRegion(Region.getRegion(Regions.US_EAST_1));
@@ -151,7 +153,8 @@ public class ProfilePostsFragment extends Fragment {
 
         @Override
         protected void onPostExecute(PaginatedQueryList<DBUserPost> result) {
-            initializeAdapter(result);
+            if (result!= null)
+                initializeAdapter(result);
         }
     }
 }

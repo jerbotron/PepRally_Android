@@ -3,7 +3,12 @@ package com.peprally.jeremy.peprally.utils;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.peprally.jeremy.peprally.db_models.DBUserPost;
+
 public class UserProfileParcel implements Parcelable {
+    // Activity Data
+    ActivityEnum currentActivity;
+
     // General User Data
     String firstname;
     String lastname;
@@ -34,12 +39,14 @@ public class UserProfileParcel implements Parcelable {
     Boolean hasUserProfile;
 
     // HomeActivity Constructor, only used to initialize a few required members
-    public UserProfileParcel(String firstname,
+    public UserProfileParcel(ActivityEnum currentActivity,
+                             String firstname,
                              String lastname,
                              String nickname,
                              String facebookID,
                              Boolean isSelfProfile)
     {
+        this.currentActivity = currentActivity;
         this.firstname = firstname;
         this.lastname = lastname;
         this.nickname = nickname;
@@ -47,10 +54,10 @@ public class UserProfileParcel implements Parcelable {
         this.isSelfProfile = isSelfProfile;
 
         // Initialize un-used integer members to temporary invalid value
-        this.followersCount = Helpers.INTEGER_INVALID;
-        this.followingCount = Helpers.INTEGER_INVALID;
-        this.fistbumpsCount = Helpers.INTEGER_INVALID;
-        this.postsCount = Helpers.INTEGER_INVALID;
+        this.followersCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.followingCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.fistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.postsCount = Helpers.INTEGER_DEFAULT_COUNT;
         this.index = Helpers.INTEGER_INVALID;
         this.number = Helpers.INTEGER_INVALID;
         // Initialize un-used boolean members to temporary false value
@@ -59,11 +66,13 @@ public class UserProfileParcel implements Parcelable {
     }
 
     // FavoritePlayerActivity Constructor, only used to initialize a few required members
-    public UserProfileParcel(String firstname,
+    public UserProfileParcel(ActivityEnum currentActivity,
+                             String firstname,
                              String team,
                              Integer index,
                              Boolean isSelfProfile)
     {
+        this.currentActivity = currentActivity;
         this.firstname = firstname;
         this.team = team;
         this.index = index;
@@ -71,17 +80,41 @@ public class UserProfileParcel implements Parcelable {
         this.isVarsityPlayer = true;
 
         // Initialize integer values to invalid value
-        this.followersCount = Helpers.INTEGER_INVALID;
-        this.followingCount = Helpers.INTEGER_INVALID;
-        this.fistbumpsCount = Helpers.INTEGER_INVALID;
-        this.postsCount = Helpers.INTEGER_INVALID;
+        this.followersCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.followingCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.fistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.postsCount = Helpers.INTEGER_DEFAULT_COUNT;
         this.number = Helpers.INTEGER_INVALID;
         // Initialize un-used boolean members to temporary false value
         this.hasUserProfile = false;
     }
 
+    // Post Adapter Constructor, only used to initialize a few required members
+    public UserProfileParcel(ActivityEnum currentActivity,
+                             DBUserPost userPost)
+    {
+        this.currentActivity = currentActivity;
+        this.firstname = userPost.getFirstname();
+        this.nickname = userPost.getNickname();
+        this.facebookID = userPost.getFacebookID();
+        this.cognitoID = userPost.getCognitoID();
+        this.isSelfProfile = false;
+
+        // Initialize integer values to invalid value
+        this.followersCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.followingCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.fistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.postsCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.index = Helpers.INTEGER_INVALID;
+        this.number = Helpers.INTEGER_INVALID;
+        // Initialize un-used boolean members to temporary false value
+        this.hasUserProfile = false;
+        this.isVarsityPlayer = false;
+    }
+
     // Parcel Constructor
     private UserProfileParcel(Parcel in) {
+        this.currentActivity = ActivityEnum.fromString(in.readString());
         this.firstname = in.readString();
         this.lastname = in.readString();
         this.nickname = in.readString();
@@ -98,22 +131,21 @@ public class UserProfileParcel implements Parcelable {
         this.isVarsityPlayer = in.readByte() != 0;
         this.isSelfProfile = in.readByte() != 0;
 
-        if (this.isVarsityPlayer) {
-            this.team = in.readString();
-            this.index = in.readInt();
-            this.number = in.readInt();
-            this.year = in.readString();
-            this.height = in.readString();
-            this.weight = in.readString();
-            this.position = in.readString();
-            this.hometown = in.readString();
-            this.rosterImageURL = in.readString();
-            this.hasUserProfile = in.readByte() != 0;
-        }
+        this.team = in.readString();
+        this.index = in.readInt();
+        this.number = in.readInt();
+        this.year = in.readString();
+        this.height = in.readString();
+        this.weight = in.readString();
+        this.position = in.readString();
+        this.hometown = in.readString();
+        this.rosterImageURL = in.readString();
+        this.hasUserProfile = in.readByte() != 0;
     }
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(currentActivity.getName());
         dest.writeString(firstname);
         dest.writeString(lastname);
         dest.writeString(nickname);
@@ -130,18 +162,16 @@ public class UserProfileParcel implements Parcelable {
         dest.writeByte((byte) (isVarsityPlayer ? 1 : 0));
         dest.writeByte((byte) (isSelfProfile ? 1 : 0));
 
-        if (isVarsityPlayer) {
-            dest.writeString(team);
-            dest.writeInt(index);
-            dest.writeInt(number);
-            dest.writeString(year);
-            dest.writeString(height);
-            dest.writeString(weight);
-            dest.writeString(position);
-            dest.writeString(hometown);
-            dest.writeString(rosterImageURL);
-            dest.writeByte((byte) (hasUserProfile ? 1 : 0));
-        }
+        dest.writeString(team);
+        dest.writeInt(index);
+        dest.writeInt(number);
+        dest.writeString(year);
+        dest.writeString(height);
+        dest.writeString(weight);
+        dest.writeString(position);
+        dest.writeString(hometown);
+        dest.writeString(rosterImageURL);
+        dest.writeByte((byte) (hasUserProfile ? 1 : 0));
     }
 
     @Override
@@ -162,6 +192,7 @@ public class UserProfileParcel implements Parcelable {
     };
 
     // Get Methods
+    public ActivityEnum getCurrentActivity() { return currentActivity; }
     public String getFirstname() {
         return firstname;
     }
@@ -240,6 +271,7 @@ public class UserProfileParcel implements Parcelable {
     }
 
     // Set Methods
+    public void setCurrentActivity(ActivityEnum currentActivity) { this.currentActivity = currentActivity; }
     public void setFirstname(String firstname) {
         this.firstname = firstname;
     }

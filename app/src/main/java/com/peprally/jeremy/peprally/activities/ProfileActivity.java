@@ -2,18 +2,16 @@ package com.peprally.jeremy.peprally.activities;
 
 import android.content.Intent;
 import android.content.res.ColorStateList;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -31,26 +29,18 @@ import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMappingException;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
-import com.peprally.jeremy.peprally.db_models.DBUserNickname;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.fragments.ProfileEditFragment;
 import com.peprally.jeremy.peprally.fragments.ProfilePostsFragment;
 import com.peprally.jeremy.peprally.fragments.ProfileInfoFragment;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
-import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.ProfileViewPager;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 import com.squareup.picasso.Picasso;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.HashMap;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -80,7 +70,6 @@ public class ProfileActivity extends AppCompatActivity {
     private static final String TAG = ProfileActivity.class.getSimpleName();
     private boolean following = false;  // TODO: TEMP FLAG, REMOVE ONCE FOLLOW FEATURE IS IMPLEMENTED
     private boolean editMode = false;
-    private boolean selfProfile;        // if user is editing his/her own profile
 
     /***********************************************************************************************
      *************************************** ACTIVITY METHODS **************************************
@@ -99,20 +88,14 @@ public class ProfileActivity extends AppCompatActivity {
 
         userProfileParcel = getIntent().getExtras().getParcelable("USER_PROFILE_PARCEL");
         assert userProfileParcel != null;
-        selfProfile = userProfileParcel.getIsSelfProfile();
-        final String userFacebookID = userProfileParcel.getFacebookID();
 
         // 3 Profile Activity cases currently:
-        // - view/edit your own profile as a fan
-        // - view/edit your own profile as a player
-        // - view a varsity player profile
-        if (selfProfile = userProfileParcel.getIsSelfProfile()) {
-            new LoadFBProfilePictureTask().execute(userFacebookID);
-        }
-
-        new LoadUserProfileFromDBTask().execute(selfProfile);
-
+        // - view/edit your own img_default_profile as a fan
+        // - view/edit your own img_default_profile as a player
+        // - view a varsity player img_default_profile
         setContentView(R.layout.activity_profile);
+        new LoadUserProfileFromDBTask().execute();
+
         final CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.profile_collapse_toolbar);
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_profile);
         assert collapsingToolbarLayout != null && toolbar != null;
@@ -144,8 +127,8 @@ public class ProfileActivity extends AppCompatActivity {
         final TextView followButtonContent = (TextView) findViewById(R.id.button_follow_content);
         actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
         assert followButton != null && followButtonContent != null && actionFAB != null;
-        // If user is viewing their own profile
-        if (selfProfile) {
+        // If user is viewing their own img_default_profile
+        if (userProfileParcel.getIsSelfProfile()) {
             followButton.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_view_fistbumps));
             followButtonContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorAccentDark));
             followButtonContent.setText(Html.fromHtml("<b>VIEW FISTBUMPS</b>"));
@@ -168,7 +151,7 @@ public class ProfileActivity extends AppCompatActivity {
                 }
             });
         }
-        // If user is viewing another user's profile
+        // If user is viewing another user's img_default_profile
         else {
             followButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -190,7 +173,7 @@ public class ProfileActivity extends AppCompatActivity {
                 }
             });
 
-            actionFAB.setImageDrawable(getResources().getDrawable(R.drawable.icon_fist_bump));
+            actionFAB.setImageDrawable(getResources().getDrawable(R.drawable.ic_fist_bump));
             actionFAB.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colorFABFistbump)));
             actionFAB.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -204,7 +187,7 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_edit_profile, menu);
-        if (!selfProfile) {
+        if (!userProfileParcel.getIsSelfProfile()) {
             menu.findItem(R.id.id_item_edit_profile).setVisible(false);
         }
         return true;
@@ -274,31 +257,31 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-//        Log.d(TAG, "profile activity resumed");
+//        Log.d(TAG, "img_default_profile activity resumed");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-//        Log.d(TAG, "profile activity paused");
+//        Log.d(TAG, "img_default_profile activity paused");
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-//        Log.d(TAG, "profile activity started");
+//        Log.d(TAG, "img_default_profile activity started");
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-//        Log.d(TAG, "profile activity stopped");
+//        Log.d(TAG, "img_default_profile activity stopped");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-//        Log.d(TAG, "profile activity destroyed");
+//        Log.d(TAG, "img_default_profile activity destroyed");
     }
 
     /***********************************************************************************************
@@ -332,11 +315,6 @@ public class ProfileActivity extends AppCompatActivity {
         // Set view pager to postsFragment
         viewPagerProfile.setCurrentItem(1);
         postsFragment.refreshAdapter();
-    }
-
-    private Bitmap getFacebookProfilePicture(String userID) throws IOException {
-        URL imageURL = new URL("https://graph.facebook.com/" + userID + "/picture?type=large");
-        return BitmapFactory.decodeStream(imageURL.openConnection().getInputStream());
     }
 
     /***********************************************************************************************
@@ -374,37 +352,52 @@ public class ProfileActivity extends AppCompatActivity {
             }
         });
 
-        ImageView profilePicture = (ImageView) findViewById(R.id.profile_roster_image);
-        if (!selfProfile) {
+        final ImageView imageView_profilePicture = (ImageView) findViewById(R.id.id_image_view_profile_image);
+        final TextView textView_fistbumps = (TextView) findViewById(R.id.profile_fist_bumps);
+        final TextView textView_followers = (TextView) findViewById(R.id.profile_followers);
+        final TextView textView_following = (TextView) findViewById(R.id.profile_following);
+        assert imageView_profilePicture != null && textView_fistbumps != null && textView_followers != null && textView_following != null;
+
+        final String imageURL;
+        // Profile Image Setup
+        if (userProfileParcel.getIsVarsityPlayer()) {
             String rootImageURL = "https://s3.amazonaws.com/rosterphotos/";
             String team = userProfileParcel.getTeam();
             String extension = team.replace(" ", "+") + "/" + userProfileParcel.getRosterImageURL();
-            String url = rootImageURL + extension;
+            imageURL = rootImageURL + extension;
             Picasso.with(ProfileActivity.this)
-                    .load(url)
-                    .placeholder(R.drawable.default_placeholder)
-                    .into(profilePicture);
+                    .load(imageURL)
+                    .placeholder(R.drawable.img_default_ut_placeholder)
+                    .into(imageView_profilePicture);
         }
+        else {
+            imageURL = "https://graph.facebook.com/" + userProfileParcel.getFacebookID() + "/picture?width=9999";
+            Helpers.setFacebookProfileImage(this,
+                    imageView_profilePicture,
+                    userProfileParcel.getFacebookID(),
+                    3);
+        }
+        imageView_profilePicture.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showProfileImageDialog(imageURL);
+            }
+        });
 
-        final TextView fistBumpsTextView = (TextView) findViewById(R.id.profile_fist_bumps);
-        final TextView followersTextView = (TextView) findViewById(R.id.profile_followers);
-        final TextView followingTextView = (TextView) findViewById(R.id.profile_following);
-        assert fistBumpsTextView != null && followersTextView != null && followingTextView != null;
-
-        fistBumpsTextView.setText(Html.fromHtml("<b>"
+        textView_fistbumps.setText(Html.fromHtml("<b>"
                 + Integer.toString(userProfileParcel.getFistbumpsCount())
                 + "</b> " + getString(R.string.profile_fist_bumps)));
-        followersTextView.setText(Html.fromHtml("<b>"
+        textView_followers.setText(Html.fromHtml("<b>"
                 + Integer.toString(userProfileParcel.getFollowersCount())
                 + "</b> " + getString(R.string.profile_followers)));
-        followingTextView.setText(Html.fromHtml("<b>"
+        textView_following.setText(Html.fromHtml("<b>"
                 + Integer.toString(userProfileParcel.getFollowingCount())
                 + "</b> " + getString(R.string.profile_following)));
     }
 
     private void handleBackPressed() {
         if (editMode) {
-            // Push profile changes to DB
+            // Push img_default_profile changes to DB
             new PushProfileChangesToDBTask().execute();
 
             // Switch Fragment back to infoFragment
@@ -426,7 +419,7 @@ public class ProfileActivity extends AppCompatActivity {
             supportActionBar.setTitle(null);
         }
         else {
-            if (selfProfile) {
+            if (userProfileParcel.getIsSelfProfile()) {
                 finish();
                 Intent intent = new Intent(this, HomeActivity.class);
                 intent.putExtra("NICKNAME", userProfileParcel.getNickname());
@@ -440,81 +433,76 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
+    private void showProfileImageDialog(String imageURL) {
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+        final View dialogView = View.inflate(this, R.layout.dialog_profile_image, null);
+        dialogBuilder.setView(dialogView);
+
+        ImageView profileImage = (ImageView) dialogView.findViewById(R.id.id_image_view_dialog_profile_image);
+
+        Picasso.with(this)
+                .load(imageURL)
+                .placeholder(R.drawable.img_default_profile)
+                .error(R.drawable.img_default_profile)
+                .into(profileImage);
+
+        AlertDialog b = dialogBuilder.create();
+        b.show();
+    }
+
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
-    private class LoadFBProfilePictureTask extends AsyncTask<String, Void, Bitmap> {
-        @Override
-        protected Bitmap doInBackground(String... params) {
-            Bitmap profileBitmap = null;
-            try {
-                profileBitmap = getFacebookProfilePicture(params[0]);
-            } catch (IOException e) {
-                e.printStackTrace();
-                Log.d(TAG, "COULD NOT GET USER PROFILE");
-            }
-            return profileBitmap;
-        }
-
-        @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            if (bitmap != null) {
-                final ImageView profilePicture = (ImageView) findViewById(R.id.profile_roster_image);
-                assert profilePicture != null;
-                profilePicture.setImageBitmap(bitmap);
-            }
-        }
-    }
-
-    private class LoadUserProfileFromDBTask extends AsyncTask<Boolean, Void, Boolean> {
+    private class LoadUserProfileFromDBTask extends AsyncTask<Void, Void, Void> {
         private DBUserProfile userProfile;
         private DBPlayerProfile playerProfile;
         @Override
-        protected Boolean doInBackground(Boolean... params) {
-            // If loading ProfileActivity for user's own profile
-            if (params[0]) {
-                try {
-                    userProfile = mapper.load(DBUserProfile.class, userProfileParcel.getNickname());
-                }
-                catch (DynamoDBMappingException e) {
-                    Log.d(TAG, "LoadUserProfileFromDBTask: mapping exception occurred, returning from task.");
-                    this.cancel(true);
-                }
-                if (userProfile.getNewUser()) {
-                    SetupNewUserProfile();
-                    return true;
-                }
-                else {
-                    Log.d(TAG, "default user already created, fetching user data");
-                }
+        protected Void doInBackground(Void... params) {
+            // 3 Cases:
+            // 1) Load general user's profile
+            // 2) Load varsity player's profile
+            // 3) Load varsity player's profile who also has a general profile
+            try {
+                userProfile = mapper.load(DBUserProfile.class, userProfileParcel.getNickname());
+            }
+            catch (DynamoDBMappingException e) {
+                userProfile = null;
+            }
+
+            String playerTeam;
+            int playerIndex;
+            if (userProfile != null && userProfileParcel.getTeam() == null && userProfileParcel.getIndex().equals(Helpers.INTEGER_INVALID))
+            {
+                playerTeam = userProfile.getTeam();
+                playerIndex = userProfile.getPlayerIndex();
             }
             else {
-                playerProfile = mapper.load(DBPlayerProfile.class, userProfileParcel.getTeam(), userProfileParcel.getIndex());
+                playerTeam = userProfileParcel.getTeam();
+                playerIndex = userProfileParcel.getIndex();
             }
-            return false;
+
+            try {
+                playerProfile = mapper.load(DBPlayerProfile.class, playerTeam, playerIndex);
+            }
+            catch (DynamoDBMappingException e) {
+                playerProfile = null;
+            }
+
+            if (userProfile != null && playerProfile == null) {
+                if (userProfile.getNewUser())
+                    SetupNewUserProfile();
+            }
+
+            return null;
         }
 
         @Override
-        protected void onPostExecute(Boolean newUserProfile) {
+        protected void onPostExecute(Void v) {
             UpdateUserProfileParcel();
             createView();
         }
 
         private void SetupNewUserProfile() {
-//            /*
-//            Handle cases of duplicate first/last name users,
-//            append a number in the back of default nicknames.
-//             */
-//            userNickname = mapper.load(DBUserNickname.class, nickname);
-//            if (userNickname != null) {
-//                Integer count = 0;
-//                do {
-//                    nickname = nickname + Integer.toString(count);
-//                    userNickname = mapper.load(DBUserNickname.class, nickname);
-//                    count++;
-//                }
-//                while (userNickname != null);
-//            }
             // Set default user profile values
             userProfile.setFollowersCount(0);
             userProfile.setFollowingCount(0);
@@ -525,11 +513,21 @@ public class ProfileActivity extends AppCompatActivity {
             userProfile.setPepTalk(null);
             userProfile.setTrashTalk(null);
             userProfile.setNewUser(false);
+            if (playerProfile != null) {
+                userProfile.setIsVarsityPlayer(true);
+                userProfile.setTeam(playerProfile.getTeam());
+                userProfile.setPlayerIndex(playerProfile.getIndex());
+            }
+            else {
+                userProfile.setIsVarsityPlayer(false);
+                userProfile.setPlayerIndex(Helpers.INTEGER_INVALID);
+            }
             mapper.save(userProfile);
+            mapper.save(playerProfile);
         }
 
         private void UpdateUserProfileParcel() {
-            if (selfProfile) {
+            if (userProfile != null) {
                 userProfileParcel.setFirstname(userProfile.getFirstName());
                 userProfileParcel.setLastname(userProfile.getLastName());
                 userProfileParcel.setNickname(userProfile.getNickname());
@@ -542,24 +540,11 @@ public class ProfileActivity extends AppCompatActivity {
                 userProfileParcel.setPepTalk(userProfile.getPepTalk());
                 userProfileParcel.setTrashTalk(userProfile.getTrashTalk());
                 userProfileParcel.setIsVarsityPlayer(userProfile.getIsVarsityPlayer());
-                userProfileParcel.setIsSelfProfile(true);
             }
-            else {
+            if (playerProfile != null) {
+                userProfileParcel.setIsVarsityPlayer(true);
                 userProfileParcel.setFirstname(playerProfile.getFirstName());
                 userProfileParcel.setLastname(playerProfile.getLastName());
-                userProfileParcel.setNickname(null);
-                userProfileParcel.setFollowersCount(0);
-                userProfileParcel.setFollowingCount(0);
-                userProfileParcel.setFistbumpsCount(0);
-                userProfileParcel.setPostsCount(0);
-                userProfileParcel.setFavoriteTeam(null);
-                userProfileParcel.setFavoritePlayer(null);
-                userProfileParcel.setPepTalk(null);
-                userProfileParcel.setTrashTalk(null);
-                userProfileParcel.setIsVarsityPlayer(true);
-                userProfileParcel.setIsSelfProfile(false);
-                // TODO: fix hardcoded true for IS_VARSITY_PLAYER
-                // TODO: allow users to view non-player profiles
                 userProfileParcel.setTeam(playerProfile.getTeam());
                 userProfileParcel.setNumber(playerProfile.getNumber());
                 userProfileParcel.setYear(playerProfile.getYear());

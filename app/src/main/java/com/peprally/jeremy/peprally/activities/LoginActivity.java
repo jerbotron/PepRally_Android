@@ -288,8 +288,7 @@ public class LoginActivity extends AppCompatActivity {
      **********************************************************************************************/
     private void showNewNicknameDialog() {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = this.getLayoutInflater();
-        final View dialogView = inflater.inflate(R.layout.dialog_create_nickname, null);
+        final View dialogView = View.inflate(this, R.layout.dialog_create_nickname, null);
         dialogBuilder.setView(dialogView);
 
         editTextNickname = (EditText) dialogView.findViewById(R.id.id_edit_text_new_nickname_dialog);
@@ -340,8 +339,7 @@ public class LoginActivity extends AppCompatActivity {
 
     private void showVerifyVarsityPlayerDialog(final String userNickname, final DBPlayerProfile playerProfile) {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-        LayoutInflater inflater = this.getLayoutInflater();
-        final View dialogView = inflater.inflate(R.layout.dialog_verify_varsity_player, null);
+        final View dialogView = View.inflate(this, R.layout.dialog_verify_varsity_player, null);
         dialogBuilder.setView(dialogView);
 
         TextView textViewVerifyVarsityLine1 = (TextView) dialogView.findViewById(R.id.id_text_view_verify_varsity_line1);
@@ -534,7 +532,10 @@ public class LoginActivity extends AppCompatActivity {
                     playerProfile = profile;
                     userProfile.setIsVarsityPlayer(true);
                     userProfile.setTeam(profile.getTeam());
+                    userProfile.setPlayerIndex(profile.getIndex());
+                    playerProfile.setHasUserProfile(true);
                     mapper.save(userProfile);
+                    mapper.save(playerProfile);
                     Log.d(TAG, "VARSITY PLAYER HIT");
                     return true;
                 }

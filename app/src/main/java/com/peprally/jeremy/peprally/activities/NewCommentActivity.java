@@ -120,13 +120,16 @@ public class NewCommentActivity extends AppCompatActivity {
 
         // Display Post Info Correctly
         if (postCommentBundle.getInt("COMMENTS_COUNT") <= 0) {
-            noCommentsText.setText("No comments.");
+            noCommentsText.setText(getResources().getString(R.string.no_comments_message));
         } else {
             commentsContainer.removeView(noCommentsText);
             new FetchPostCommentsDBTask().execute(postCommentBundle.getString("POST_ID"));
         }
 
-        new AsyncHelpers.LoadFBProfilePictureTask().execute(new AsyncHelpers.asyncTaskObjectProfileImage(postCommentBundle.getString("FACEBOOK_ID"), mainPostProfileImage));
+        Helpers.setFacebookProfileImage(this,
+                                        mainPostProfileImage,
+                                        postCommentBundle.getString("FACEBOOK_ID"),
+                                        3);
 
         long tsLong = System.currentTimeMillis()/1000;
         final long timeInSeconds = tsLong - postCommentBundle.getLong("TIME_IN_SECONDS");

@@ -2,16 +2,15 @@ package com.peprally.jeremy.peprally.activities;
 
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.support.design.widget.CoordinatorLayout;
+import android.os.Bundle;
 import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
+import android.support.v4.view.accessibility.AccessibilityRecordCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
@@ -34,10 +33,9 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.fragments.BrowseTeamsFragment;
-import com.peprally.jeremy.peprally.fragments.ProfileEditFragment;
-import com.peprally.jeremy.peprally.fragments.ProfilePostsFragment;
 import com.peprally.jeremy.peprally.fragments.TrendingFragment;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.utils.ActivityEnum;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
@@ -81,11 +79,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             new FetchUserNicknameDBTask().execute(fbProfile);
         }
         else {
-            userProfileParcel = new UserProfileParcel(fbProfile.getFirstName(),
-                    fbProfile.getLastName(),
-                    nickname,
-                    fbProfile.getId(),
-                    true);  // user is viewing self profile
+            userProfileParcel = new UserProfileParcel(ActivityEnum.HOME,
+                                                    fbProfile.getFirstName(),
+                                                    fbProfile.getLastName(),
+                                                    nickname,
+                                                    fbProfile.getId(),
+                                                    true);  // user is viewing self profile
             viewPagerHome = (ViewPager) findViewById(R.id.viewpager_home);
             setupViewPager(viewPagerHome);
         }
@@ -110,9 +109,9 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         assert navigationView != null;
         navigationView.setNavigationItemSelectedListener(this);
 
-        // Fetch FB profile photo and first name and display them in sidebar header
+        // Fetch FB img_default_profile photo and first name and display them in sidebar header
         View headerView = navigationView.getHeaderView(0);
-        LinearLayout header = (LinearLayout) headerView.findViewById(R.id.sidebar_header);
+        LinearLayout header = (LinearLayout) headerView.findViewById(R.id.id_sidebar_header);
         ProfilePictureView profilePicture = (ProfilePictureView) headerView.findViewById(R.id.profile_image_header);
         profilePicture.setProfileId(currentToken.getUserId());
         TextView sidebar_name = (TextView) headerView.findViewById(R.id.sidebar_header_name);
@@ -181,7 +180,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     private void onNavBarHeaderClick() {
         finish();
+        // Viewing self profile
         Intent intent = new Intent(this, ProfileActivity.class);
+        userProfileParcel.setCurrentActivity(ActivityEnum.PROFILE);
+        userProfileParcel.setIsSelfProfile(true);
         intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
         startActivity(intent);
         overridePendingTransition(R.anim.right_in, R.anim.left_out);
@@ -206,6 +208,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     public void launchBrowsePlayerActivity(String team) {
         Intent intent = new Intent(HomeActivity.this, FavoritePlayerActivity.class);
         intent.putExtra("CALLING_ACTIVITY", "HomeActivity");
+        intent.putExtra("CURRENT_USER_NICKNAME", nickname);
         intent.putExtra("TEAM", team);
         startActivity(intent);
         overridePendingTransition(R.anim.right_in, R.anim.left_out);
@@ -267,7 +270,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                     userProfile = results.get(0);
                     nickname = userProfile.getNickname();
                     Profile fbProfile = params[0];
-                    userProfileParcel = new UserProfileParcel(fbProfile.getFirstName(),
+                    userProfileParcel = new UserProfileParcel(ActivityEnum.HOME,
+                                                            fbProfile.getFirstName(),
                                                             fbProfile.getLastName(),
                                                             nickname,
                                                             fbProfile.getId(),

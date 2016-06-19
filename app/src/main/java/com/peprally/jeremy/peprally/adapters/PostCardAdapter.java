@@ -26,7 +26,9 @@ import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.utils.ActivityEnum;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
+import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.text.SimpleDateFormat;
@@ -105,7 +107,10 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
     @Override
     public void onBindViewHolder(final PostHolder postHolder, int position) {
         final DBUserPost curPost = posts.get(position);
-        new AsyncHelpers.LoadFBProfilePictureTask().execute(new AsyncHelpers.asyncTaskObjectProfileImage(curPost.getFacebookID(), postHolder.profilePhoto));
+        Helpers.setFacebookProfileImage(callingContext,
+                                        postHolder.profilePhoto,
+                                        curPost.getFacebookID(),
+                                        4);
 
         final String userNickName = userProfileParcel.getNickname();
 
@@ -157,10 +162,21 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         postHolder.profilePhoto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(callingContext, ProfileActivity.class);
-                intent.putExtra("NICKNAME", curPost.getNickname());
-                callingContext.startActivity(intent);
-                ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
+                if (userProfileParcel.getCurrentActivity() != ActivityEnum.PROFILE) {
+                    Intent intent = new Intent(callingContext, ProfileActivity.class);
+                    // Clicked on own profile
+                    if (curPost.getNickname().equals(userProfileParcel.getNickname())) {
+                        userProfileParcel.setCurrentActivity(ActivityEnum.PROFILE);
+                        intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
+                    }
+                    // Clicked on another user's profile
+                    else {
+                        UserProfileParcel parcel = new UserProfileParcel(ActivityEnum.PROFILE, curPost);
+                        intent.putExtra("USER_PROFILE_PARCEL", parcel);
+                    }
+                    callingContext.startActivity(intent);
+                    ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
+                }
             }
         });
 
@@ -300,12 +316,11 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         postCommentBundle.putInt("LIKES_COUNT", curPost.getNumberOfLikes());
         postCommentBundle.putInt("COMMENTS_COUNT", curPost.getNumberOfComments());
         Intent intent = new Intent(callingContext, NewCommentActivity.class);
+        userProfileParcel.setCurrentActivity(ActivityEnum.NEWCOMMENT);
         intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
         intent.putExtra("POST_COMMENT_BUNDLE", postCommentBundle);
         callingContext.startActivity(intent);
         ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
-//                ((ProfileActivity) callingContext).startActivityForResult(intent, ProfileActivity.POST_COMMENT_REQUEST_CODE);
-//                ((ProfileActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
     }
 
     /***********************************************************************************************
@@ -329,14 +344,6 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         newPost.setNumberOfLikes(0);
         newPost.setNumberOfComments(0);
         new PushNewUserPostToDBTask().execute(newPost);
-//        Bundle asyncData = new Bundle();
-//        asyncData.putBoolean("INCREMENT_POSTS_COUNT", true);
-//        new AsyncHelpers.PushUserProfilePostsCountToDBTask().execute(
-//                new AsyncHelpers.asyncTaskObjectUserPostBundle(
-//                        newPost,
-//                        mapper,
-//                        null,
-//                        asyncData));
     }
 
     /***********************************************************************************************

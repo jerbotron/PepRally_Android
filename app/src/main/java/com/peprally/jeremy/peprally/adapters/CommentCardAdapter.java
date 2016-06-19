@@ -22,6 +22,7 @@ import com.peprally.jeremy.peprally.activities.NewCommentActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
+import com.peprally.jeremy.peprally.utils.Helpers;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -93,7 +94,10 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     @Override
     public void onBindViewHolder(final CommentHolder commentHolder, int position) {
         final DBUserComment curComment = comments.get(position);
-        new AsyncHelpers.LoadFBProfilePictureTask().execute(new AsyncHelpers.asyncTaskObjectProfileImage(curComment.getFacebookID(), commentHolder.profilePhoto));
+        Helpers.setFacebookProfileImage(callingContext,
+                                        commentHolder.profilePhoto,
+                                        curComment.getFacebookID(),
+                                        4);
 
         final String userNickName = ((NewCommentActivity) callingContext).getPostCommentBundleString("NICKNAME");
         Set<String> likedUsers = curComment.getLikedUsers();

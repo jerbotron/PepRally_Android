@@ -22,6 +22,9 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="invalid_characters_message">Nicknames cannot contain special characters or spaces. Letters, numbers and underscores only.</string>
+    <string name="no_peprally_account_message"> has not made a PepRally profile yet. Tell your friends about PepRally!</string>
+    <string name="no_posts_message">You have not created any posts yet!</string>
+    <string name="no_comments_message">No comments.</string>
 
     <!-- Default Profile Content Strings -->
     <string name="default_firstname"><i>NAME, AGE</i></string>

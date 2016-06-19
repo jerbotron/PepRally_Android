@@ -22,28 +22,32 @@ import java.util.Map;
 
 public class ProfileInfoFragment extends Fragment {
 
+    /***********************************************************************************************
+     *************************************** CLASS VARIABLES ***************************************
+     **********************************************************************************************/
+    // General Variables
     private UserProfileParcel userProfileParcel;
-
-    private boolean profileLoaded = false;
-
     private static final String TAG = ProfileInfoFragment.class.getSimpleName();
 
     Map<String, String>  baseballPositions = new HashMap<String, String>();
     Map<String, String>  basketballPositions = new HashMap<String, String>();
     Map<String, String>  footballPositions = new HashMap<String, String>();
 
+    /***********************************************************************************************
+     *************************************** FRAGMENT METHODS **************************************
+     **********************************************************************************************/
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // Get copy of userProfileParcel from ProfileActivity
         userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
+        initializePositionMaps();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log.d(TAG, "profile view fragment created");
-        View view = inflater.inflate(R.layout.fragment_profile_info, container, false);
-        return view;
+        return inflater.inflate(R.layout.fragment_profile_info, container, false);
     }
 
     @Override
@@ -53,8 +57,10 @@ public class ProfileInfoFragment extends Fragment {
         refresh();
     }
 
+    /***********************************************************************************************
+     *********************************** GENERAL METHODS/INTERFACES ********************************
+     **********************************************************************************************/
     public void refresh() {
-        initializePositionMaps();
         setupUserProfile(getView());
     }
 
@@ -67,9 +73,9 @@ public class ProfileInfoFragment extends Fragment {
         final TextView textViewPepTalk = (TextView) view.findViewById(R.id.profile_view_pep_talk);
         final TextView textViewTrashTalk = (TextView) view.findViewById(R.id.profile_view_trash_talk);
 
-        textViewFirstName.setText("");    // set to empty so I can check later if populated under varsity profile
+        textViewFirstName.setText("");    // set to empty so I can check later if populated under varsity img_default_profile
 
-        if (userProfileParcel.getIsVarsityPlayer() && !profileLoaded) {
+        if (userProfileParcel.getIsVarsityPlayer()) {
             String nameText = userProfileParcel.getFirstname() + " "
                             + userProfileParcel.getLastname();
             switch (userProfileParcel.getTeam()) {
@@ -176,14 +182,13 @@ public class ProfileInfoFragment extends Fragment {
                         0,
                         0);
                 tv_no_profile.setText(userProfileParcel.getFirstname() +
-                        " has not made a Pep Rally profile yet. Tell your friends about Pep Rally!");
+                        getResources().getString(R.string.no_peprally_account_message));
                 tv_no_profile.setTypeface(null, Typeface.ITALIC);
                 tv_no_profile.setLayoutParams(msg_params);
                 tv_no_profile.setGravity(Gravity.CENTER_HORIZONTAL);
                 playerInfoLayout.addView(tv_no_profile);
             }
             parent_container.addView(playerInfoLayout, 2);
-            profileLoaded = true;
         }
 
         if (textViewFirstName.getText().toString().isEmpty()) {

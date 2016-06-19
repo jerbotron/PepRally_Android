@@ -11,15 +11,18 @@ import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
+import com.squareup.picasso.Picasso;
 
 import java.util.Set;
 
 public class Helpers {
 
     // CONSTANTS
+    public final static Integer INTEGER_DEFAULT_COUNT = 0;
     public final static Integer INTEGER_INVALID = -1;
 
     public final static int FAV_TEAM_REQUEST_CODE = 0;
@@ -59,5 +62,52 @@ public class Helpers {
         NetworkInfo mWifi = connManager.getActiveNetworkInfo();
         if (mWifi!=null) isConnected = mWifi.isConnected();
         return isConnected;
+    }
+
+    public static void setFacebookProfileImage(Context callingContext,
+                                        ImageView imageView,
+                                        String facebookID,
+                                        int size) {
+        Picasso.with(callingContext)
+                .load(getFacebookProfileImageURL(facebookID, size))
+                .placeholder(R.drawable.img_default_profile)
+                .error(R.drawable.img_default_profile)
+                .into(imageView);
+    }
+
+    private static String getFacebookProfileImageURL(String facebookID, int size) {
+        String type;
+        switch (size) {
+            case 0:
+                type = "small";
+                break;
+            case 1:
+                type = "normal";
+                break;
+            case 2:
+                type = "album";
+                break;
+            case 4:
+                type = "square";
+                break;
+            case 3:
+            default:
+                type = "large";
+                break;
+        }
+        return "https://graph.facebook.com/" + facebookID + "/picture?type=" + type;
+    }
+
+    public static String getFavPlayerText(String firstName, String lastName, int number, String team) {
+        switch (team) {
+            case "Golf":
+            case "Rowing":
+            case "Swimming and Diving":
+            case "Tennis":
+            case "Track and Field":
+                return firstName + " " + lastName;
+            default:
+                return "#" + number + " " + firstName + " " + lastName;
+        }
     }
 }

@@ -25,6 +25,8 @@ import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.PlayersCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.utils.ActivityEnum;
+import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 
@@ -108,15 +110,24 @@ public class FavoritePlayerActivity extends AppCompatActivity {
                 DBPlayerProfile playerProfile = roster.get(position);
                 if (callingActivity.equals("ProfileActivity")) {
                     Intent intent = new Intent();
-                    intent.putExtra("FAVORITE_PLAYER", playerProfile.getFavPlayerText());
+                    intent.putExtra("FAVORITE_PLAYER", Helpers.getFavPlayerText(playerProfile.getFirstName(),
+                                                                                playerProfile.getLastName(),
+                                                                                playerProfile.getNumber(),
+                                                                                playerProfile.getTeam()));
                     setResult(Activity.RESULT_OK, intent);
                     finish();
                     overridePendingTransition(R.anim.left_in, R.anim.right_out);
                 } else if (callingActivity.equals("HomeActivity")) {
-                    UserProfileParcel parcel = new UserProfileParcel(playerProfile.getFirstName(),
+                    UserProfileParcel parcel = new UserProfileParcel(ActivityEnum.PROFILE,
+                                                                     playerProfile.getFirstName(),
                                                                      playerProfile.getTeam(),
                                                                      playerProfile.getIndex(),
-                                                                     false); // user not viewing self profile
+                                                                     false); // assume user not viewing self profile
+                    // Check if current user is a varsity player viewing his/her own profile
+                    if (playerProfile.getHasUserProfile() &&
+                            playerProfile.getNickname().equals(getIntent().getStringExtra("CURRENT_USER_NICKNAME"))) {
+                        parcel.setIsSelfProfile(true);
+                    }
                     Intent intent = new Intent(FavoritePlayerActivity.this, ProfileActivity.class);
                     intent.putExtra("USER_PROFILE_PARCEL", parcel);
                     startActivity(intent);

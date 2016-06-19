@@ -18,17 +18,22 @@ import com.squareup.picasso.Picasso;
 
 public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.PlayerCardHolder>{
 
+    /***********************************************************************************************
+     *************************************** CLASS VARIABLES ***************************************
+     **********************************************************************************************/
+
+    // UI Variables
+    private static PlayersAdapterClickListener myClickListener;
+
+    // General Variables
+    private static final String TAG = ProfileActivity.class.getSimpleName();
     private Context callingContext;
     private PaginatedQueryList<DBPlayerProfile> roster;
-    private static PlayersAdapterClickListener myClickListener;
-    private static final String TAG = ProfileActivity.class.getSimpleName();
-
     private final String rootImageURL = "https://s3.amazonaws.com/rosterphotos/";
 
-    public interface PlayersAdapterClickListener {
-        void onItemClick(View v, int position);
-    }
-
+    /***********************************************************************************************
+     **************************************** ADAPTER METHODS **************************************
+     **********************************************************************************************/
     public static class PlayerCardHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         CardView cv;
         ImageView playerPhoto;
@@ -67,19 +72,18 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
     @Override
     public PlayerCardHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.recycler_view_player_card_container, parent, false);
-        PlayerCardHolder playerCardHolder = new PlayerCardHolder(view);
-        return playerCardHolder;
+        return new PlayerCardHolder(view);
     }
 
     @Override
     public void onBindViewHolder(PlayerCardHolder playerCardHolder, int position) {
         DBPlayerProfile curPlayer = roster.get(position);
         String extension = curPlayer.getTeam().replace(" ","+") + "/" + curPlayer.getImageURL();
-        String url = rootImageURL + extension;
+        final String url = rootImageURL + extension;
         Picasso.with(callingContext)
                 .load(url)
-                .placeholder(R.drawable.default_placeholder)
-                .error(R.drawable.default_placeholder)
+                .placeholder(R.drawable.img_default_ut_placeholder)
+                .error(R.drawable.img_default_ut_placeholder)
                 .into(playerCardHolder.playerPhoto);
         String playerNameText = curPlayer.getFirstName() + " " + curPlayer.getLastName();
         switch (curPlayer.getTeam()) {
@@ -107,10 +111,25 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
                 playerInfoText = playerInfoText + " | " + curPlayer.getHometown();
         }
         playerCardHolder.playerInfo.setText(playerInfoText);
+
+//        playerCardHolder.playerPhoto.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                showProfileImageDialog(url);
+//            }
+//        });
     }
 
     @Override
     public int getItemCount() {
         return roster.size();
+    }
+
+    /***********************************************************************************************
+     *********************************** GENERAL METHODS/INTERFACES ********************************
+     **********************************************************************************************/
+
+    public interface PlayersAdapterClickListener {
+        void onItemClick(View v, int position);
     }
 }

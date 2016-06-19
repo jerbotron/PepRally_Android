@@ -1,43 +1,15 @@
 package com.peprally.jeremy.peprally.utils;
 
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.TextView;
-
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
-import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
-import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 
-import org.w3c.dom.Text;
-
-import java.io.IOException;
-import java.net.URL;
 
 public class AsyncHelpers {
 
     private static final String TAG = AsyncHelpers.class.getSimpleName();
-
-    private static Bitmap getFacebookProfilePicture(String userID) throws IOException {
-        URL imageURL = new URL("https://graph.facebook.com/" + userID + "/picture?type=small");
-        return BitmapFactory.decodeStream(imageURL.openConnection().getInputStream());
-    }
-
-    public static class asyncTaskObjectProfileImage {
-        public String facebookID;
-        public ImageView imageView;
-        public asyncTaskObjectProfileImage(String facebookID, ImageView imageView) {
-            this.facebookID = facebookID;
-            this.imageView = imageView;
-        }
-    }
 
     public static class asyncTaskObjectUserPostBundle {
         public DBUserPost post;
@@ -69,29 +41,6 @@ public class AsyncHelpers {
     }
 
     /********************************** AsyncTasks **********************************/
-
-    public static class LoadFBProfilePictureTask extends AsyncTask<asyncTaskObjectProfileImage, Void, Bitmap> {
-        private ImageView imageView;
-        @Override
-        protected Bitmap doInBackground(asyncTaskObjectProfileImage... params) {
-            Bitmap profileBitmap = null;
-            try {
-                profileBitmap = getFacebookProfilePicture(params[0].facebookID);
-            } catch (IOException e) {
-                e.printStackTrace();
-                Log.d(TAG, "COULD NOT GET USER PROFILE");
-            }
-            imageView = params[0].imageView;
-            return profileBitmap;
-        }
-
-        @Override
-        protected void onPostExecute(Bitmap bitmap) {
-            if (bitmap != null) {
-                imageView.setImageBitmap(bitmap);
-            }
-        }
-    }
 
     public static class PushUserPostChangesToDBTask extends AsyncTask<asyncTaskObjectUserPostBundle, Void, Void> {
         @Override
