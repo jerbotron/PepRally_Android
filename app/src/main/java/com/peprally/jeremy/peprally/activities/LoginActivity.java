@@ -208,6 +208,9 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onTaskDone(CognitoCachingCredentialsProvider credentialsProvider) {
                 new CheckIfNewUserDBTask().execute(credentialsProvider);
+                ddbClient = new AmazonDynamoDBClient(credentialsProvider);
+                ddbClient.setRegion(Region.getRegion(Regions.US_EAST_1));
+                mapper = new DynamoDBMapper(ddbClient);
             }
         });
         credentialProviderTask.execute();
@@ -230,19 +233,19 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private void bundleFacebookData(AccessToken accessToken) {
+    private void bundleFacebookData(final AccessToken accessToken) {
         GraphRequest request = GraphRequest.newMeRequest(accessToken,
                 new GraphRequest.GraphJSONObjectCallback() {
                     @Override
                     public void onCompleted(JSONObject object, GraphResponse response) {
                         Log.d(TAG, object.toString());
+                        String id = getFacebookDataSafely(response, "id");
                         String email = getFacebookDataSafely(response, "email");
                         String firstName = getFacebookDataSafely(response, "first_name");
                         String lastName = getFacebookDataSafely(response, "last_name");
                         String gender = getFacebookDataSafely(response, "gender");
                         String birthday = getFacebookDataSafely(response, "birthday");
                         Profile profile = Profile.getCurrentProfile();
-                        String id = profile.getId();
                         String link = profile.getLinkUri().toString();
                         fbDataBundle.putString("ID", id);
                         fbDataBundle.putString("LINK", link);
@@ -455,10 +458,7 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected Boolean doInBackground(String... params) {
             DBUserNickname userNickname = mapper.load(DBUserNickname.class, params[0].toLowerCase());
-            if (userNickname == null) {
-                return false;
-            }
-            return true;
+            return userNickname != null;
         }
 
         @Override
@@ -478,8 +478,7 @@ public class LoginActivity extends AppCompatActivity {
             String userNickname = params[0];
             Calendar c = Calendar.getInstance();
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
-            ddbClient.setRegion(Region.getRegion(Regions.US_EAST_1));
-            mapper = new DynamoDBMapper(ddbClient);
+//            credentialsProvider.refresh();
             DBUserProfile userProfile = mapper.load(DBUserProfile.class, userNickname);
             if (userProfile == null) {
                 userProfile = new DBUserProfile();
@@ -514,6 +513,7 @@ public class LoginActivity extends AppCompatActivity {
         DBPlayerProfile playerProfile;
         @Override
         protected Boolean doInBackground(DBUserProfile... params) {
+//            credentialsProvider.refresh();
             userProfile = params[0];
             userNickname = userProfile.getNickname();
             String gender = "M";
@@ -561,6 +561,7 @@ public class LoginActivity extends AppCompatActivity {
     private class PushNewNicknameToDBTask extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... params) {
+//            credentialsProvider.refresh();
             HashMap<String, AttributeValue> primaryKey = new HashMap<>();
             primaryKey.put("Nickname", new AttributeValue().withS(params[0]));
             primaryKey.put("CognitoID", new AttributeValue().withS(credentialsProvider.getIdentityId()));

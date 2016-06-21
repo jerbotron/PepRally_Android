@@ -65,15 +65,14 @@ public class AsyncHelpers {
         protected Void doInBackground(asyncTaskObjectUserCommentBundle... params) {
             mapper = params[0].mapper;
             DBUserComment userComment = params[0].comment;
+            String postNickname = userComment.getPostID().split("_")[0];
             Bundle data = params[0].data;
-            userPost = mapper.load(DBUserPost.class, userComment.getNickname(), data.getLong("POST_TIME_IN_SECONDS"));
-            if (data != null) {
-                if (data.getBoolean("INCREMENT_COMMENTS_COUNT")) {
-                    incrementCommentsCount();
-                }
-                else if (!data.getBoolean("INCREMENT_COMMENTS_COUNT")){
-                    decrementCommentsCount();
-                }
+            userPost = mapper.load(DBUserPost.class, postNickname, data.getLong("POST_TIME_IN_SECONDS"));
+            if (data.getBoolean("INCREMENT_COMMENTS_COUNT")) {
+                incrementCommentsCount();
+            }
+            else if (!data.getBoolean("INCREMENT_COMMENTS_COUNT")){
+                decrementCommentsCount();
             }
             return null;
         }

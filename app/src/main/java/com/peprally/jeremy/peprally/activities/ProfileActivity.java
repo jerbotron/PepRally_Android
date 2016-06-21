@@ -422,7 +422,7 @@ public class ProfileActivity extends AppCompatActivity {
             if (userProfileParcel.getIsSelfProfile()) {
                 finish();
                 Intent intent = new Intent(this, HomeActivity.class);
-                intent.putExtra("NICKNAME", userProfileParcel.getNickname());
+                intent.putExtra("NICKNAME", userProfileParcel.getProfileNickname());
                 startActivity(intent);
                 overridePendingTransition(R.anim.left_in, R.anim.right_out);
             }
@@ -463,7 +463,7 @@ public class ProfileActivity extends AppCompatActivity {
             // 2) Load varsity player's profile
             // 3) Load varsity player's profile who also has a general profile
             try {
-                userProfile = mapper.load(DBUserProfile.class, userProfileParcel.getNickname());
+                userProfile = mapper.load(DBUserProfile.class, userProfileParcel.getProfileNickname());
             }
             catch (DynamoDBMappingException e) {
                 userProfile = null;
@@ -521,16 +521,16 @@ public class ProfileActivity extends AppCompatActivity {
             else {
                 userProfile.setIsVarsityPlayer(false);
                 userProfile.setPlayerIndex(Helpers.INTEGER_INVALID);
+                mapper.save(playerProfile);
             }
             mapper.save(userProfile);
-            mapper.save(playerProfile);
         }
 
         private void UpdateUserProfileParcel() {
             if (userProfile != null) {
                 userProfileParcel.setFirstname(userProfile.getFirstName());
                 userProfileParcel.setLastname(userProfile.getLastName());
-                userProfileParcel.setNickname(userProfile.getNickname());
+                userProfileParcel.setProfileNickname(userProfile.getNickname());
                 userProfileParcel.setFollowersCount(userProfile.getFollowersCount());
                 userProfileParcel.setFollowingCount(userProfile.getFollowingCount());
                 userProfileParcel.setFistbumpsCount(userProfile.getFistbumpsCount());
@@ -562,7 +562,7 @@ public class ProfileActivity extends AppCompatActivity {
         private DBUserProfile DBUserProfile;
         @Override
         protected Void doInBackground(Void... params) {
-            DBUserProfile = mapper.load(DBUserProfile.class, userProfileParcel.getNickname());
+            DBUserProfile = mapper.load(DBUserProfile.class, userProfileParcel.getProfileNickname());
             pushUserProfileChanges();
             return null;
         }
@@ -575,7 +575,7 @@ public class ProfileActivity extends AppCompatActivity {
         private void pushUserProfileChanges() {
             DBUserProfile.setFollowingCount(userProfileParcel.getFollowingCount());
             DBUserProfile.setFistbumpsCount(userProfileParcel.getFistbumpsCount());
-            DBUserProfile.setNickname(userProfileParcel.getNickname());
+            DBUserProfile.setNickname(userProfileParcel.getProfileNickname());
             DBUserProfile.setFavoriteTeam(userProfileParcel.getFavoriteTeam());
             DBUserProfile.setFavoritePlayer(userProfileParcel.getFavoritePlayer());
             DBUserProfile.setPepTalk(userProfileParcel.getPepTalk());

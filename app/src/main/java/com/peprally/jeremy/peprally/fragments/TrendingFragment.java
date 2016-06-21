@@ -96,7 +96,7 @@ public class TrendingFragment extends Fragment {
 
     public void addPostToAdapter(String newPostText) {
         Bundle bundle = new Bundle();
-        bundle.putString("NICKNAME", userProfileParcel.getNickname());
+        bundle.putString("NICKNAME", userProfileParcel.getProfileNickname());
         bundle.putString("FACEBOOK_ID", userProfileParcel.getFacebookID());
         bundle.putString("FIRST_NAME", userProfileParcel.getFirstname());
         if (postCardAdapter == null) {

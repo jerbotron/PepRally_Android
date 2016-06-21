@@ -194,11 +194,11 @@ public class ProfileInfoFragment extends Fragment {
         if (textViewFirstName.getText().toString().isEmpty()) {
             textViewFirstName.setText(userProfileParcel.getFirstname());// + ", " + Integer.toString(23));
         }
-        if (userProfileParcel.getNickname() == null) {
+        if (userProfileParcel.getProfileNickname() == null) {
             parent_container.removeView(textViewNickname);
         }
         else {
-            textViewNickname.setText("@"+userProfileParcel.getNickname());
+            textViewNickname.setText("@"+userProfileParcel.getProfileNickname());
         }
 
         if (userProfileParcel.getFavoriteTeam() == null) {

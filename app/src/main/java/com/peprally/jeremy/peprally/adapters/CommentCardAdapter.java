@@ -43,16 +43,20 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     private DynamoDBMapper mapper;
 
     // General Variables
-    private static final String TAG = "CommentCardAdapter: ";
+    final private static String TAG = "CommentCardAdapter: ";
     private Context callingContext;
     private List<DBUserComment> comments;
+    final private String curUserNickname;
 
     /***********************************************************************************************
      ********************************** ADAPTER CONSTRUCTOR/METHODS ********************************
      **********************************************************************************************/
-    public CommentCardAdapter(Context callingContext, List<DBUserComment> comments) {
+    public CommentCardAdapter(Context callingContext,
+                              List<DBUserComment> comments,
+                              String curUserNickname) {
         this.comments = comments;
         this.callingContext = callingContext;
+        this.curUserNickname = curUserNickname;
         credentialsProvider = new CognitoCachingCredentialsProvider(
                 callingContext,                             // Context
                 AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
@@ -63,16 +67,16 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     }
 
     public static class CommentHolder extends RecyclerView.ViewHolder {
-        CardView cardView;
-        ImageView profilePhoto;
-        TextView nickname;
-        TextView timeStamp;
-        TextView postContent;
-        ImageButton thumbsUp;
-        ImageButton thumbsDown;
-        TextView likesCount;
+        private CardView cardView;
+        private ImageView profilePhoto;
+        private TextView nickname;
+        private TextView timeStamp;
+        private TextView postContent;
+        private ImageButton thumbsUp;
+        private ImageButton thumbsDown;
+        private TextView likesCount;
 
-        public CommentHolder(View itemView) {
+        private CommentHolder(View itemView) {
             super(itemView);
             cardView = (CardView) itemView.findViewById(R.id.id_card_view_new_comment);
             profilePhoto = (ImageView) itemView.findViewById(R.id.id_image_view_comment_profile);
@@ -99,14 +103,13 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                                         curComment.getFacebookID(),
                                         4);
 
-        final String userNickName = ((NewCommentActivity) callingContext).getPostCommentBundleString("NICKNAME");
         Set<String> likedUsers = curComment.getLikedUsers();
         Set<String> dislikedUsers = curComment.getDislikedUsers();
 
-        if (likedUsers.contains(userNickName)) {
+        if (likedUsers.contains(curUserNickname)) {
             commentHolder.thumbsUp.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_uped));
         }
-        else if (dislikedUsers.contains(userNickName)) {
+        else if (dislikedUsers.contains(curUserNickname)) {
             commentHolder.thumbsDown.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_downed));
         }
 
@@ -150,7 +153,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                 Set<String> likedUsers = curComment.getLikedUsers();
                 Set<String> dislikedUsers = curComment.getDislikedUsers();
                 // If user already liked the comment
-                if (likedUsers.contains(userNickName)) {
+                if (likedUsers.contains(curUserNickname)) {
                     currentNumOfLikes--;
                     commentHolder.likesCount.setText(String.valueOf(currentNumOfLikes));
                     commentHolder.thumbsUp.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_up));
@@ -162,14 +165,14 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                         commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorRed)));
                     }
                     // Remove user from likedUsers set
-                    curComment.removeLikedUsers(userNickName);
+                    curComment.removeLikedUsers(curUserNickname);
                     new AsyncHelpers.PushUserCommentChangesToDBTask().execute(
                             new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, mapper, null));
                 }
                 // If user has not liked the comment yet
                 else {
                     // lose previous dislike and +1 like
-                    if (dislikedUsers.contains(userNickName)) {
+                    if (dislikedUsers.contains(curUserNickname)) {
                         currentNumOfLikes += 2;
                     }
                     else {
@@ -186,8 +189,8 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                         commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorGreen)));
                     }
                     // Remove user from dislikedUsers set and add to likedUsers set
-                    curComment.addLikedUsers(userNickName);
-                    curComment.removedislikedUsers(userNickName);
+                    curComment.addLikedUsers(curUserNickname);
+                    curComment.removedislikedUsers(curUserNickname);
                     new AsyncHelpers.PushUserCommentChangesToDBTask().execute(
                             new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, mapper, null));
                 }
@@ -201,7 +204,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                 Set<String> likedUsers = curComment.getLikedUsers();
                 Set<String> dislikedUsers = curComment.getDislikedUsers();
                 // If user already disliked the post
-                if (dislikedUsers.contains(userNickName)) {
+                if (dislikedUsers.contains(curUserNickname)) {
                     currentNumOfLikes++;
                     commentHolder.likesCount.setText(String.valueOf(currentNumOfLikes));
                     commentHolder.thumbsDown.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_down));
@@ -213,13 +216,13 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                         commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorGreen)));
                     }
                     // Remove user from likedUsers set
-                    curComment.removedislikedUsers(userNickName);
+                    curComment.removedislikedUsers(curUserNickname);
                     new AsyncHelpers.PushUserCommentChangesToDBTask().execute(
                             new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, mapper, null));
                 }
                 // If user has not disliked the post yet
                 else {
-                    if (likedUsers.contains(userNickName)) {
+                    if (likedUsers.contains(curUserNickname)) {
                         // lose previous like and +1 dislike
                         currentNumOfLikes -= 2;
                     }
@@ -237,8 +240,8 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                         commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorRed)));
                     }
                     // Remove user from dislikedUsers set and add to likedUsers set
-                    curComment.adddislikedUsers(userNickName);
-                    curComment.removeLikedUsers(userNickName);
+                    curComment.adddislikedUsers(curUserNickname);
+                    curComment.removeLikedUsers(curUserNickname);
                     new AsyncHelpers.PushUserCommentChangesToDBTask().execute(
                             new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, mapper, null));
                 }
@@ -260,8 +263,8 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
         Long timeInSeconds = System.currentTimeMillis() / 1000;
         Long postTimeInSeconds = ((NewCommentActivity) callingContext).getPostCommentBundleLong("TIME_IN_SECONDS");
-        newComment.setPostID(bundle.getString("NICKNAME") + "_" + postTimeInSeconds.toString());
-        newComment.setNickname(bundle.getString("NICKNAME"));
+        newComment.setPostID(bundle.getString("POST_NICKNAME") + "_" + postTimeInSeconds.toString());
+        newComment.setNickname(bundle.getString("CUR_USER_NICKNAME"));
         newComment.setTimeInSeconds(timeInSeconds);
         newComment.setCognitoID(credentialsProvider.getIdentityId());
         newComment.setFacebookID(bundle.getString("FACEBOOK_ID"));

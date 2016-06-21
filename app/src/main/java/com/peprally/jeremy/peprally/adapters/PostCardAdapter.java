@@ -112,16 +112,17 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                                         curPost.getFacebookID(),
                                         4);
 
-        final String userNickName = userProfileParcel.getNickname();
+        final String profileNickname = userProfileParcel.getProfileNickname();
+        final String curUserNickname = userProfileParcel.getCurUserNickname();
 
 //        Log.d(TAG, "post adapter: cur user = " + userNickName);
         Set<String> likedUsers = curPost.getLikedUsers();
         Set<String> dislikedUsers = curPost.getDislikedUsers();
 
-        if (likedUsers.contains(userNickName)) {
+        if (likedUsers.contains(curUserNickname)) {
             postHolder.thumbsUp.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_uped));
         }
-        else if (dislikedUsers.contains(userNickName)) {
+        else if (dislikedUsers.contains(curUserNickname)) {
             postHolder.thumbsDown.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_downed));
         }
 
@@ -165,13 +166,15 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                 if (userProfileParcel.getCurrentActivity() != ActivityEnum.PROFILE) {
                     Intent intent = new Intent(callingContext, ProfileActivity.class);
                     // Clicked on own profile
-                    if (curPost.getNickname().equals(userProfileParcel.getNickname())) {
+                    if (curPost.getNickname().equals(curUserNickname)) {
                         userProfileParcel.setCurrentActivity(ActivityEnum.PROFILE);
                         intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                     }
                     // Clicked on another user's profile
                     else {
-                        UserProfileParcel parcel = new UserProfileParcel(ActivityEnum.PROFILE, curPost);
+                        UserProfileParcel parcel = new UserProfileParcel(ActivityEnum.PROFILE,
+                                                                        curUserNickname,
+                                                                        curPost);
                         intent.putExtra("USER_PROFILE_PARCEL", parcel);
                     }
                     callingContext.startActivity(intent);
@@ -188,7 +191,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                 Set<String> likedUsers = curPost.getLikedUsers();
                 Set<String> dislikedUsers = curPost.getDislikedUsers();
                 // If user already liked the post
-                if (likedUsers.contains(userNickName)) {
+                if (likedUsers.contains(curUserNickname)) {
                     currentNumOfLikes -= 1;
                     postHolder.postLikesCount.setText(String.valueOf(currentNumOfLikes));
                     postHolder.thumbsUp.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_up));
@@ -200,14 +203,14 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                         postHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorRed)));
                     }
                     // Remove user from likedUsers set
-                    curPost.removeLikedUsers(userNickName);
+                    curPost.removeLikedUsers(curUserNickname);
                     new AsyncHelpers.PushUserPostChangesToDBTask().execute(
                             new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper, null, null));
                 }
                 // If user has not liked the post yet
                 else {
                     // lose previous dislike and +1 like
-                    if (dislikedUsers.contains(userNickName)) {
+                    if (dislikedUsers.contains(curUserNickname)) {
                         currentNumOfLikes += 2;
                     }
                     else {
@@ -223,8 +226,8 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                         postHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorGreen)));
                     }
                     // Remove user from dislikedUsers set and add to likedUsers set
-                    curPost.addLikedUsers(userNickName);
-                    curPost.removedislikedUsers(userNickName);
+                    curPost.addLikedUsers(curUserNickname);
+                    curPost.removedislikedUsers(curUserNickname);
                     new AsyncHelpers.PushUserPostChangesToDBTask().execute(
                             new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper, null, null));
                 }
@@ -238,7 +241,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                 Set<String> likedUsers = curPost.getLikedUsers();
                 Set<String> dislikedUsers = curPost.getDislikedUsers();
                 // If user already disliked the post
-                if (dislikedUsers.contains(userNickName)) {
+                if (dislikedUsers.contains(curUserNickname)) {
                     currentNumOfLikes += 1;
                     postHolder.postLikesCount.setText(String.valueOf(currentNumOfLikes));
                     postHolder.thumbsDown.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_down));
@@ -250,13 +253,13 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                         postHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorGreen)));
                     }
                     // Remove user from likedUsers set
-                    curPost.removedislikedUsers(userNickName);
+                    curPost.removedislikedUsers(curUserNickname);
                     new AsyncHelpers.PushUserPostChangesToDBTask().execute(
                             new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper, null, null));
                 }
                 // If user has not disliked the post yet
                 else {
-                    if (likedUsers.contains(userNickName)) {
+                    if (likedUsers.contains(curUserNickname)) {
                         // lose previous like and +1 dislike
                         currentNumOfLikes -= 2;
                     }
@@ -273,8 +276,8 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                         postHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorRed)));
                     }
                     // Remove user from dislikedUsers set and add to likedUsers set
-                    curPost.adddislikedUsers(userNickName);
-                    curPost.removeLikedUsers(userNickName);
+                    curPost.adddislikedUsers(curUserNickname);
+                    curPost.removeLikedUsers(curUserNickname);
                     new AsyncHelpers.PushUserPostChangesToDBTask().execute(
                             new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper, null, null));
                 }
@@ -310,7 +313,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         Bundle postCommentBundle = new Bundle();
         postCommentBundle.putString("POST_ID", curPost.getPostID());
         postCommentBundle.putString("TEXT_CONTENT", curPost.getTextContent());
-        postCommentBundle.putString("NICKNAME", curPost.getNickname());
+        postCommentBundle.putString("POST_NICKNAME", curPost.getNickname());
         postCommentBundle.putLong("TIME_IN_SECONDS", curPost.getTimeInSeconds());
         postCommentBundle.putString("FACEBOOK_ID", curPost.getFacebookID());
         postCommentBundle.putInt("LIKES_COUNT", curPost.getNumberOfLikes());

@@ -80,6 +80,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         }
         else {
             userProfileParcel = new UserProfileParcel(ActivityEnum.HOME,
+                                                    nickname,
                                                     fbProfile.getFirstName(),
                                                     fbProfile.getLastName(),
                                                     nickname,
@@ -271,6 +272,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                     nickname = userProfile.getNickname();
                     Profile fbProfile = params[0];
                     userProfileParcel = new UserProfileParcel(ActivityEnum.HOME,
+                                                            nickname,
                                                             fbProfile.getFirstName(),
                                                             fbProfile.getLastName(),
                                                             nickname,

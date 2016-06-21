@@ -132,7 +132,7 @@ public class ProfileEditFragment extends Fragment {
         // TODO: CALCULATE USER AGE FROM FB DATA
         textViewFirstName.setText(userProfileParcel.getFirstname()); // + ", " + Integer.toString(23));
         textViewNickname.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
-        textViewNickname.setText("@"+userProfileParcel.getNickname());
+        textViewNickname.setText("@"+userProfileParcel.getProfileNickname());
         textViewFavTeam.setText(userProfileParcel.getFavoriteTeam());
         textViewFavPlayer.setText(userProfileParcel.getFavoritePlayer());
         editTextPepTalk.setText(userProfileParcel.getPepTalk());

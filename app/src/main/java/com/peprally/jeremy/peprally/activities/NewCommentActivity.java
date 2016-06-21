@@ -88,7 +88,6 @@ public class NewCommentActivity extends AppCompatActivity {
 
         // Set up toolbar buttons
         final ActionBar supportActionBar = getSupportActionBar();
-        assert (supportActionBar != null);
         supportActionBar.setTitle("Comments");
         supportActionBar.setDisplayHomeAsUpEnabled(true);
 
@@ -105,10 +104,6 @@ public class NewCommentActivity extends AppCompatActivity {
         textViewCharCount = (TextView) findViewById(R.id.id_text_view_comment_char_count);
         final TextView postCommentButton = (TextView) findViewById(R.id.id_text_view_post_new_comment_button);
 
-        assert (mainPostNickname != null && mainPostTextContent != null && mainPostTimeStamp != null &&
-                mainPostLikesCount != null && mainPostCommentsCount != null && noCommentsText != null &&
-                postCommentButton != null && newCommentText != null);
-
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
         postCommentBundle = getIntent().getBundleExtra("POST_COMMENT_BUNDLE");
         assert postCommentBundle != null && userProfileParcel != null;
@@ -116,7 +111,7 @@ public class NewCommentActivity extends AppCompatActivity {
         new FetchUserPostDBTask().execute(postCommentBundle);
 
         // Determine if selfPost
-        selfPost = userProfileParcel.getNickname().equals(postCommentBundle.getString("NICKNAME"));
+        selfPost = userProfileParcel.getProfileNickname().equals(postCommentBundle.getString("POST_NICKNAME"));
 
         // Display Post Info Correctly
         if (postCommentBundle.getInt("COMMENTS_COUNT") <= 0) {
@@ -150,7 +145,7 @@ public class NewCommentActivity extends AppCompatActivity {
         }
 
         int likesCount = postCommentBundle.getInt("LIKES_COUNT");
-        mainPostNickname.setText(postCommentBundle.getString("NICKNAME"));
+        mainPostNickname.setText(postCommentBundle.getString("POST_NICKNAME"));
         mainPostTextContent.setText(postCommentBundle.getString("TEXT_CONTENT"));
         mainPostCommentsCount.setText(String.valueOf(postCommentBundle.getInt("COMMENTS_COUNT")));
         mainPostLikesCount.setText(String.valueOf(likesCount));
@@ -251,13 +246,14 @@ public class NewCommentActivity extends AppCompatActivity {
     /***********************************************************************************************
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
-    public void addCommentToAdapter(String newCommentText) {
+    private void addCommentToAdapter(String newCommentText) {
         if (newCommentText == null || newCommentText.isEmpty()) {
             Toast.makeText(this, "Comment cannot be empty!", Toast.LENGTH_SHORT).show();
         }
         else {
             Bundle bundle = new Bundle();
-            bundle.putString("NICKNAME", postCommentBundle.getString("NICKNAME"));
+            bundle.putString("POST_NICKNAME", postCommentBundle.getString("POST_NICKNAME"));
+            bundle.putString("CUR_USER_NICKNAME", userProfileParcel.getCurUserNickname());
             bundle.putString("FACEBOOK_ID", userProfileParcel.getFacebookID());
             bundle.putString("FIRST_NAME", userProfileParcel.getFirstname());
             if (commentCardAdapter == null)
@@ -284,14 +280,14 @@ public class NewCommentActivity extends AppCompatActivity {
                 comments.add(userComment);
         }
         // Initialize adapter for the case that the first comment is being made
-        commentCardAdapter = new CommentCardAdapter(this, comments);
+        commentCardAdapter = new CommentCardAdapter(this, comments, userProfileParcel.getCurUserNickname());
         recyclerView.setAdapter(commentCardAdapter);
     }
 
     /***********************************************************************************************
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
-    public void refreshAdapter() {
+    private void refreshAdapter() {
         new FetchUserPostDBTask().execute(postCommentBundle);
         new FetchPostCommentsDBTask().execute(postCommentBundle.getString("POST_ID"));
     }
@@ -308,10 +304,7 @@ public class NewCommentActivity extends AppCompatActivity {
         final ImageButton mainPostThumbsDown = (ImageButton) findViewById(R.id.id_image_button_comment_main_post_thumbs_down);
         final TextView mainPostLikesCount = (TextView) findViewById(R.id.id_text_view_comment_main_post_likes);
 
-        assert mainPostThumbsUp != null && mainPostThumbsDown != null && mainPostLikesCount != null;
-
-        final String postNickName = postCommentBundle.getString("NICKNAME");
-        final String userNickname = userProfileParcel.getNickname();
+        final String userNickname = userProfileParcel.getCurUserNickname();
 
         // Update comments count
         mainPostCommentsCount.setText(String.valueOf(userPost.getNumberOfComments()));
@@ -430,7 +423,7 @@ public class NewCommentActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(Bundle... params) {
             Bundle data = params[0];
-            userPost = mapper.load(DBUserPost.class, data.getString("NICKNAME"), data.getLong("TIME_IN_SECONDS"));
+            userPost = mapper.load(DBUserPost.class, data.getString("POST_NICKNAME"), data.getLong("TIME_IN_SECONDS"));
             return null;
         }
 
@@ -445,11 +438,11 @@ public class NewCommentActivity extends AppCompatActivity {
         protected Void doInBackground(Bundle... params) {
             Bundle data = params[0];
             // Delete UserPost
-            DBUserPost post = mapper.load(DBUserPost.class, data.getString("NICKNAME"), data.getLong("TIME_IN_SECONDS"));
+            DBUserPost post = mapper.load(DBUserPost.class, data.getString("POST_NICKNAME"), data.getLong("TIME_IN_SECONDS"));
             mapper.delete(post);
 
             // Update UserProfile post count
-            DBUserProfile userProfile = mapper.load(DBUserProfile.class, data.getString("NICKNAME"));
+            DBUserProfile userProfile = mapper.load(DBUserProfile.class, data.getString("POST_NICKNAME"));
             int curPostCount = userProfile.getPostsCount();
             userProfile.setPostsCount(curPostCount - 1);
             mapper.save(userProfile);

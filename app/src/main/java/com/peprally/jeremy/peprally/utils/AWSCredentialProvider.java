@@ -39,6 +39,9 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingC
     }
 
     protected CognitoCachingCredentialsProvider doInBackground(Void... params) {
+
+        Log.d(TAG, "verifying credentials");
+
         FacebookSdk.sdkInitialize(callingContext);
         AccessToken currentToken = AccessToken.getCurrentAccessToken();
 

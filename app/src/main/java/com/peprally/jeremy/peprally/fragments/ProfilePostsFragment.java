@@ -84,7 +84,7 @@ public class ProfilePostsFragment extends Fragment {
      **********************************************************************************************/
     public void addPostToAdapter(String newPostText) {
         Bundle bundle = new Bundle();
-        bundle.putString("NICKNAME", userProfileParcel.getNickname());
+        bundle.putString("NICKNAME", userProfileParcel.getProfileNickname());
         bundle.putString("FACEBOOK_ID", userProfileParcel.getFacebookID());
         bundle.putString("FIRST_NAME", userProfileParcel.getFirstname());
         if (postCardAdapter == null) {
@@ -110,7 +110,7 @@ public class ProfilePostsFragment extends Fragment {
         }
         else {
             postsContainer.removeView(noPostsText);
-            new FetchUserPostsTask().execute(userProfileParcel.getNickname());
+            new FetchUserPostsTask().execute(userProfileParcel.getProfileNickname());
         }
     }
 

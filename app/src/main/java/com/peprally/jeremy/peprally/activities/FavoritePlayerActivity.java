@@ -43,6 +43,7 @@ public class FavoritePlayerActivity extends AppCompatActivity {
     private static final String TAG = FavoriteTeamActivity.class.getSimpleName();
     private PaginatedQueryList<DBPlayerProfile> roster;
     private String callingActivity;
+    private String curUserNickname;
     private boolean dataFetched = false;
 
     /***********************************************************************************************
@@ -54,6 +55,7 @@ public class FavoritePlayerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_favorite_player);
 
         callingActivity = getIntent().getStringExtra("CALLING_ACTIVITY");
+        curUserNickname = getIntent().getStringExtra("CURRENT_USER_NICKNAME");
         String team = getIntent().getStringExtra("TEAM");
         ActionBar supportActionBar = getSupportActionBar();
         assert supportActionBar != null;
@@ -119,13 +121,14 @@ public class FavoritePlayerActivity extends AppCompatActivity {
                     overridePendingTransition(R.anim.left_in, R.anim.right_out);
                 } else if (callingActivity.equals("HomeActivity")) {
                     UserProfileParcel parcel = new UserProfileParcel(ActivityEnum.PROFILE,
+                                                                     curUserNickname,
                                                                      playerProfile.getFirstName(),
                                                                      playerProfile.getTeam(),
                                                                      playerProfile.getIndex(),
                                                                      false); // assume user not viewing self profile
                     // Check if current user is a varsity player viewing his/her own profile
                     if (playerProfile.getHasUserProfile() &&
-                            playerProfile.getNickname().equals(getIntent().getStringExtra("CURRENT_USER_NICKNAME"))) {
+                            playerProfile.getNickname().equals(curUserNickname)) {
                         parcel.setIsSelfProfile(true);
                     }
                     Intent intent = new Intent(FavoritePlayerActivity.this, ProfileActivity.class);

@@ -29,6 +29,7 @@
                         android:layout_height="50dp"
                         android:id="@+id/id_image_view_comment_main_post_profile"
                         android:layout_marginRight="8dp"
+                        android:layout_marginEnd="8dp"
                         android:src="@drawable/img_default_profile" />
                 </LinearLayout>
             </RelativeLayout>
