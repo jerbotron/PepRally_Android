@@ -2,13 +2,12 @@ package com.peprally.jeremy.peprally.adapters;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,17 +16,14 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.NewCommentActivity;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
-import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.ActivityEnum;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
+import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
@@ -45,12 +41,10 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // AWS Variables
-    private AmazonDynamoDBClient ddbClient;
-    private CognitoCachingCredentialsProvider credentialsProvider;
-    private DynamoDBMapper mapper;
+    private DynamoDBHelper dbHelper;
 
     // General Variables
-    private static final String TAG = "PostCardAdapter: ";
+//    private static final String TAG = "PostCardAdapter: ";
     private Context callingContext;
     private List<DBUserPost> posts;
     private UserProfileParcel userProfileParcel;
@@ -62,16 +56,10 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         this.callingContext = callingContext;
         this.posts = posts;
         this.userProfileParcel = userProfileParcel;
-        credentialsProvider = new CognitoCachingCredentialsProvider(
-                callingContext,                             // Context
-                AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
-                AWSCredentialProvider.COGNITO_REGION        // Region
-        );
-        ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-        mapper = new DynamoDBMapper(ddbClient);
+        dbHelper = new DynamoDBHelper(callingContext);
     }
 
-    public static class PostHolder extends RecyclerView.ViewHolder {
+    static class PostHolder extends RecyclerView.ViewHolder {
         LinearLayout postContainer;
         CardView cardView;
         ImageView profilePhoto;
@@ -83,7 +71,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         TextView postLikesCount;
         TextView postComments;
 
-        public PostHolder(View itemView) {
+        private PostHolder(View itemView) {
             super(itemView);
             postContainer = (LinearLayout) itemView.findViewById(R.id.id_container_post_clickable);
             cardView = (CardView) itemView.findViewById(R.id.id_card_view_new_post);
@@ -112,31 +100,30 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                                         curPost.getFacebookID(),
                                         4);
 
-        final String profileNickname = userProfileParcel.getProfileNickname();
+//        final String profileNickname = userProfileParcel.getProfileNickname();
         final String curUserNickname = userProfileParcel.getCurUserNickname();
 
-//        Log.d(TAG, "post adapter: cur user = " + userNickName);
         Set<String> likedUsers = curPost.getLikedUsers();
         Set<String> dislikedUsers = curPost.getDislikedUsers();
 
         if (likedUsers.contains(curUserNickname)) {
-            postHolder.thumbsUp.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_uped));
+            postHolder.thumbsUp.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_uped));
         }
         else if (dislikedUsers.contains(curUserNickname)) {
-            postHolder.thumbsDown.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_downed));
+            postHolder.thumbsDown.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_downed));
         }
 
         postHolder.nickname.setText(curPost.getNickname());
         postHolder.postContent.setText(curPost.getTextContent());
         final int numOfLikes = curPost.getNumberOfLikes();
         if (numOfLikes > 0) {
-            postHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorGreen)));
+            postHolder.postLikesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorGreen));
         }
         else if (numOfLikes == 0) {
-            postHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorAccent)));
+            postHolder.postLikesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorAccent));
         }
         else {
-            postHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorRed)));
+            postHolder.postLikesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorRed));
         }
         postHolder.postLikesCount.setText(String.valueOf(numOfLikes));
         postHolder.postComments.setText(String.valueOf(curPost.getNumberOfComments()));
@@ -144,19 +131,23 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         long tsLong = System.currentTimeMillis()/1000;
         long timeInSeconds = tsLong - curPost.getTimeInSeconds();
         if (timeInSeconds < 60) {
-            postHolder.timeStamp.setText(String.valueOf(timeInSeconds) + "s");
+            String s = String.valueOf(timeInSeconds) + "s";
+            postHolder.timeStamp.setText(s);
         }
         else if (timeInSeconds < 60 * 60) {
             long timeInMins = timeInSeconds / 60;
-            postHolder.timeStamp.setText(String.valueOf(timeInMins) + "m");
+            String s = String.valueOf(timeInMins) + "m";
+            postHolder.timeStamp.setText(s);
         }
         else if (timeInSeconds < 60 * 60 * 24) {
             long timeInHrs = timeInSeconds/60/60;
-            postHolder.timeStamp.setText(String.valueOf(timeInHrs) + "h");
+            String s = String.valueOf(timeInHrs) + "h";
+            postHolder.timeStamp.setText(s);
         }
         else {
             long timeInDays = timeInSeconds/60/60/24;
-            postHolder.timeStamp.setText(String.valueOf(timeInDays) + "d");
+            String s = String.valueOf(timeInDays) + "d";
+            postHolder.timeStamp.setText(s);
         }
 
         // Profile Picture OnClick Handlers:
@@ -194,18 +185,18 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                 if (likedUsers.contains(curUserNickname)) {
                     currentNumOfLikes -= 1;
                     postHolder.postLikesCount.setText(String.valueOf(currentNumOfLikes));
-                    postHolder.thumbsUp.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_up));
+                    postHolder.thumbsUp.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_up));
                     curPost.setNumberOfLikes(currentNumOfLikes);
                     // Special transition cases
                     if (currentNumOfLikes == 0) {
-                        postHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorAccent)));
+                        postHolder.postLikesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorAccent));
                     } else if (currentNumOfLikes == -1) {
-                        postHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorRed)));
+                        postHolder.postLikesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorRed));
                     }
                     // Remove user from likedUsers set
                     curPost.removeLikedUsers(curUserNickname);
                     new AsyncHelpers.PushUserPostChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper, null, null));
+                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, dbHelper.getMapper(), null, null));
                 }
                 // If user has not liked the post yet
                 else {
@@ -217,19 +208,19 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                         currentNumOfLikes += 1;
                     }
                     postHolder.postLikesCount.setText(String.valueOf(currentNumOfLikes));
-                    postHolder.thumbsUp.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_uped));
-                    postHolder.thumbsDown.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_down));
+                    postHolder.thumbsUp.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_uped));
+                    postHolder.thumbsDown.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_down));
                     curPost.setNumberOfLikes(currentNumOfLikes);
                     if (currentNumOfLikes == 0) {
-                        postHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorAccent)));
+                        postHolder.postLikesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorAccent));
                     } else if (currentNumOfLikes == 1) {
-                        postHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorGreen)));
+                        postHolder.postLikesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorGreen));
                     }
                     // Remove user from dislikedUsers set and add to likedUsers set
                     curPost.addLikedUsers(curUserNickname);
                     curPost.removedislikedUsers(curUserNickname);
                     new AsyncHelpers.PushUserPostChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper, null, null));
+                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, dbHelper.getMapper(), null, null));
                 }
             }
         });
@@ -244,18 +235,18 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                 if (dislikedUsers.contains(curUserNickname)) {
                     currentNumOfLikes += 1;
                     postHolder.postLikesCount.setText(String.valueOf(currentNumOfLikes));
-                    postHolder.thumbsDown.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_down));
+                    postHolder.thumbsDown.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_down));
                     curPost.setNumberOfLikes(currentNumOfLikes);
                     // Special transition cases
                     if (currentNumOfLikes == 0) {
-                        postHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorAccent)));
+                        postHolder.postLikesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorAccent));
                     } else if (currentNumOfLikes == 1) {
-                        postHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorGreen)));
+                        postHolder.postLikesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorGreen));
                     }
                     // Remove user from likedUsers set
                     curPost.removedislikedUsers(curUserNickname);
                     new AsyncHelpers.PushUserPostChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper, null, null));
+                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, dbHelper.getMapper(), null, null));
                 }
                 // If user has not disliked the post yet
                 else {
@@ -267,19 +258,19 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                         currentNumOfLikes -= 1;
                     }
                     postHolder.postLikesCount.setText(String.valueOf(currentNumOfLikes));
-                    postHolder.thumbsUp.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_up));
-                    postHolder.thumbsDown.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_downed));
+                    postHolder.thumbsUp.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_up));
+                    postHolder.thumbsDown.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_downed));
                     curPost.setNumberOfLikes(currentNumOfLikes);
                     if (currentNumOfLikes == 0) {
-                        postHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorAccent)));
+                        postHolder.postLikesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorAccent));
                     } else if (currentNumOfLikes == -1) {
-                        postHolder.postLikesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorRed)));
+                        postHolder.postLikesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorRed));
                     }
                     // Remove user from dislikedUsers set and add to likedUsers set
                     curPost.adddislikedUsers(curUserNickname);
                     curPost.removeLikedUsers(curUserNickname);
                     new AsyncHelpers.PushUserPostChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, mapper, null, null));
+                            new AsyncHelpers.asyncTaskObjectUserPostBundle(curPost, dbHelper.getMapper(), null, null));
                 }
             }
         });
@@ -337,7 +328,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         Long timeInSeconds = System.currentTimeMillis() / 1000;
         newPost.setTimeInSeconds(timeInSeconds);
         newPost.setPostID(bundle.getString("NICKNAME") + "_" + timeInSeconds.toString());
-        newPost.setCognitoID(credentialsProvider.getIdentityId());
+        newPost.setCognitoID(dbHelper.getIdentityID());
         newPost.setFacebookID(bundle.getString("FACEBOOK_ID"));
         newPost.setFirstname(bundle.getString("FIRST_NAME"));
         newPost.setTimeStamp(df.format(c.getTime()));
@@ -357,13 +348,13 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         protected DBUserPost doInBackground(DBUserPost... params) {
             // Save new post to DBUserPosts
             DBUserPost newPost= params[0];
-            mapper.save(newPost);
+            dbHelper.saveDBObject(newPost);
 
             // Update UserProfile post count
-            DBUserProfile userProfile = mapper.load(DBUserProfile.class, newPost.getNickname());
+            DBUserProfile userProfile = dbHelper.loadDBUserProfile(newPost.getNickname());
             int curPostCount = userProfile.getPostsCount();
             userProfile.setPostsCount(curPostCount + 1);
-            mapper.save(userProfile);
+            dbHelper.saveDBObject(userProfile);
 
             return newPost;
         }

@@ -40,7 +40,7 @@ public class FavoritePlayerActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
 
     // General Variables
-    private static final String TAG = FavoriteTeamActivity.class.getSimpleName();
+//    private static final String TAG = FavoriteTeamActivity.class.getSimpleName();
     private PaginatedQueryList<DBPlayerProfile> roster;
     private String callingActivity;
     private String curUserNickname;
@@ -63,11 +63,12 @@ public class FavoritePlayerActivity extends AppCompatActivity {
         supportActionBar.setDisplayHomeAsUpEnabled(true);
 
         recyclerView = (RecyclerView) findViewById(R.id.rv_browse_players);
-        assert (recyclerView != null);
-        recyclerView.setHasFixedSize(true);
-        // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
-        recyclerView.setAdapter(new EmptyAdapter());
-        recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+        if (recyclerView != null) {
+            recyclerView.setHasFixedSize(true);
+            // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
+            recyclerView.setAdapter(new EmptyAdapter());
+            recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+        }
 
         new FetchTeamRosterTask().execute(team);
     }
@@ -135,7 +136,6 @@ public class FavoritePlayerActivity extends AppCompatActivity {
                     intent.putExtra("USER_PROFILE_PARCEL", parcel);
                     startActivity(intent);
                     overridePendingTransition(R.anim.right_in, R.anim.left_out);
-//                    finish();
                 }
             }
         });

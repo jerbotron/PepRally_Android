@@ -2,22 +2,16 @@ package com.peprally.jeremy.peprally.utils;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.res.ColorStateList;
 import android.graphics.Rect;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.support.v7.widget.RecyclerView;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
 import com.squareup.picasso.Picasso;
-
-import java.util.Set;
 
 public class Helpers {
 

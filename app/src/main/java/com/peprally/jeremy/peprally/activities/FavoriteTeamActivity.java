@@ -53,11 +53,12 @@ public class FavoriteTeamActivity extends AppCompatActivity {
         supportActionBar.setDisplayHomeAsUpEnabled(true);
 
         recyclerView = (RecyclerView) findViewById(R.id.rv_browse_teams);
-        assert (recyclerView != null);
-        recyclerView.setHasFixedSize(true);
-        // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
-        recyclerView.setAdapter(new EmptyAdapter());
-        recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+        if (recyclerView != null) {
+            recyclerView.setHasFixedSize(true);
+            // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
+            recyclerView.setAdapter(new EmptyAdapter());
+            recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+        }
 
         new FetchSportsTableTask().execute();
     }

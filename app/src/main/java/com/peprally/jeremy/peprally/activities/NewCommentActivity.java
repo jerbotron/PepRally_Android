@@ -1,19 +1,17 @@
 package com.peprally.jeremy.peprally.activities;
 
-import android.app.Activity;
-import android.content.Intent;
-import android.content.res.ColorStateList;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.AsyncTask;
-import android.support.annotation.Nullable;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,19 +22,16 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.CommentCardAdapter;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
-import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
+import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
@@ -57,12 +52,10 @@ public class NewCommentActivity extends AppCompatActivity {
     private EditText newCommentText;
 
     // AWS Variables
-    private AmazonDynamoDBClient ddbClient;
-    private CognitoCachingCredentialsProvider credentialsProvider;
-    private DynamoDBMapper mapper;
+    private DynamoDBHelper dbHelper;
 
     // General Variables
-    private static final String TAG = NewCommentActivity.class.getSimpleName();
+//    private static final String TAG = NewCommentActivity.class.getSimpleName();
     private CommentCardAdapter commentCardAdapter;
     private Bundle postCommentBundle;
     private UserProfileParcel userProfileParcel;
@@ -77,19 +70,14 @@ public class NewCommentActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_post_comment);
 
-        // Set up AWS members
-        credentialsProvider = new CognitoCachingCredentialsProvider(
-                this,                                       // Context
-                AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
-                AWSCredentialProvider.COGNITO_REGION        // Region
-        );
-        ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-        mapper = new DynamoDBMapper(ddbClient);
+        dbHelper = new DynamoDBHelper(this);
 
         // Set up toolbar buttons
         final ActionBar supportActionBar = getSupportActionBar();
-        supportActionBar.setTitle("Comments");
-        supportActionBar.setDisplayHomeAsUpEnabled(true);
+        if (supportActionBar != null) {
+            supportActionBar.setTitle("Comments");
+            supportActionBar.setDisplayHomeAsUpEnabled(true);
+        }
 
         // Set up main post container
         commentsContainer = (LinearLayout) findViewById(R.id.id_container_post_comments);
@@ -106,7 +94,6 @@ public class NewCommentActivity extends AppCompatActivity {
 
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
         postCommentBundle = getIntent().getBundleExtra("POST_COMMENT_BUNDLE");
-        assert postCommentBundle != null && userProfileParcel != null;
 
         new FetchUserPostDBTask().execute(postCommentBundle);
 
@@ -128,32 +115,75 @@ public class NewCommentActivity extends AppCompatActivity {
 
         long tsLong = System.currentTimeMillis()/1000;
         final long timeInSeconds = tsLong - postCommentBundle.getLong("TIME_IN_SECONDS");
-        if (timeInSeconds < 60) {
-            mainPostTimeStamp.setText(String.valueOf(timeInSeconds) + "s");
-        }
-        else if (timeInSeconds < 60 * 60) {
-            long timeInMins = timeInSeconds / 60;
-            mainPostTimeStamp.setText(String.valueOf(timeInMins) + "m");
-        }
-        else if (timeInSeconds < 60 * 60 * 24) {
-            long timeInHrs = timeInSeconds/60/60;
-            mainPostTimeStamp.setText(String.valueOf(timeInHrs) + "h");
-        }
-        else {
-            long timeInDays = timeInSeconds/60/60/24;
-            mainPostTimeStamp.setText(String.valueOf(timeInDays) + "d");
+        if (mainPostTimeStamp != null) {
+            if (timeInSeconds < 60) {
+                String s = String.valueOf(timeInSeconds) + "s";
+                mainPostTimeStamp.setText(s);
+            } else if (timeInSeconds < 60 * 60) {
+                long timeInMins = timeInSeconds / 60;
+                String s = String.valueOf(timeInMins) + "m";
+                mainPostTimeStamp.setText(s);
+            } else if (timeInSeconds < 60 * 60 * 24) {
+                long timeInHrs = timeInSeconds / 60 / 60;
+                String s = String.valueOf(timeInHrs) + "h";
+                mainPostTimeStamp.setText(s);
+            } else {
+                long timeInDays = timeInSeconds / 60 / 60 / 24;
+                String s = String.valueOf(timeInDays) + "d";
+                mainPostTimeStamp.setText(s);
+            }
         }
 
-        int likesCount = postCommentBundle.getInt("LIKES_COUNT");
-        mainPostNickname.setText(postCommentBundle.getString("POST_NICKNAME"));
-        mainPostTextContent.setText(postCommentBundle.getString("TEXT_CONTENT"));
-        mainPostCommentsCount.setText(String.valueOf(postCommentBundle.getInt("COMMENTS_COUNT")));
-        mainPostLikesCount.setText(String.valueOf(likesCount));
-        if (likesCount > 0) {
-            mainPostLikesCount.setTextColor(ColorStateList.valueOf(getResources().getColor(R.color.colorGreen)));
-        }
-        else if (likesCount < 0) {
-            mainPostLikesCount.setTextColor(ColorStateList.valueOf(getResources().getColor(R.color.colorRed)));
+        if (mainPostNickname != null && mainPostTextContent != null && mainPostLikesCount != null
+                && postCommentButton != null) {
+            int likesCount = postCommentBundle.getInt("LIKES_COUNT");
+            mainPostNickname.setText(postCommentBundle.getString("POST_NICKNAME"));
+            mainPostTextContent.setText(postCommentBundle.getString("TEXT_CONTENT"));
+            mainPostCommentsCount.setText(String.valueOf(postCommentBundle.getInt("COMMENTS_COUNT")));
+            mainPostLikesCount.setText(String.valueOf(likesCount));
+            if (likesCount > 0)
+                mainPostLikesCount.setTextColor(ContextCompat.getColor(this, R.color.colorGreen));
+            else if (likesCount < 0)
+                mainPostLikesCount.setTextColor(ContextCompat.getColor(this, R.color.colorRed));
+
+            // Post Button onClick handler
+            postCommentButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (charCount < 0)
+                        Toast.makeText(NewCommentActivity.this, "Comment too long!", Toast.LENGTH_SHORT).show();
+                    else
+                        addCommentToAdapter(newCommentText.getText().toString());
+                }
+            });
+
+            newCommentText.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+                @Override
+                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                    if (Helpers.isKeyboardShown(newCommentText.getRootView()))
+                        textViewCharCount.setVisibility(View.VISIBLE);
+                    else
+                        textViewCharCount.setVisibility(View.INVISIBLE);
+                }
+            });
+            newCommentText.addTextChangedListener(new TextWatcher() {
+                int prev_length = 0;
+                public void afterTextChanged(Editable s) {
+                    if (prev_length >= 200) {
+                        textViewCharCount.setTextColor(Color.RED);
+                    }
+                }
+
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+                }
+
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    charCount -= (s.length() - prev_length);
+                    textViewCharCount.setText(String.valueOf(charCount));
+                    prev_length = s.length();
+                }
+            });
         }
 
         // Recycler View Setup
@@ -163,50 +193,6 @@ public class NewCommentActivity extends AppCompatActivity {
         // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
         recyclerView.setAdapter(new EmptyAdapter());
         recyclerView.setLayoutManager(rvLayoutManager);
-
-        // Post Button onClick handler
-        postCommentButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (charCount < 0) {
-                    Toast.makeText(NewCommentActivity.this, "Comment too long!", Toast.LENGTH_SHORT).show();
-                }
-                else {
-                    addCommentToAdapter(newCommentText.getText().toString());
-                }
-            }
-        });
-
-        newCommentText.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
-            @Override
-            public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                assert textViewCharCount != null;
-                if (Helpers.isKeyboardShown(newCommentText.getRootView())) {
-                    textViewCharCount.setVisibility(View.VISIBLE);
-                }
-                else {
-                    textViewCharCount.setVisibility(View.INVISIBLE);
-                }
-            }
-        });
-        newCommentText.addTextChangedListener(new TextWatcher() {
-            int prev_length = 0;
-            public void afterTextChanged(Editable s) {
-                if (prev_length >= 200) {
-                    textViewCharCount.setTextColor(Color.RED);
-                }
-            }
-
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                charCount -= (s.length() - prev_length);
-                textViewCharCount.setText(String.valueOf(charCount));
-                prev_length = s.length();
-            }
-        });
     }
 
     @Override
@@ -229,7 +215,19 @@ public class NewCommentActivity extends AppCompatActivity {
                 onBackPressed();
                 return true;
             case R.id.id_item_delete_post:
-                new DeletePostFromDBTask().execute(postCommentBundle);
+                AlertDialog.Builder dialogBuilderConfirmDelete = new AlertDialog.Builder(this);
+                View dialogViewConfirmDelete = View.inflate(this, R.layout.dialog_confirm_delete, null);
+                dialogBuilderConfirmDelete.setView(dialogViewConfirmDelete);
+                dialogBuilderConfirmDelete.setTitle("Confirm Delete");
+                dialogBuilderConfirmDelete.setMessage("Are you sure you want to delete this post?");
+                dialogBuilderConfirmDelete.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        new DeletePostFromDBTask().execute(postCommentBundle);
+                    }
+                });
+                dialogBuilderConfirmDelete.setNegativeButton("No", null);
+                dialogBuilderConfirmDelete.create().show();
+
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -265,10 +263,6 @@ public class NewCommentActivity extends AppCompatActivity {
         }
     }
 
-    public String getPostCommentBundleString(String key) {
-        return postCommentBundle.getString(key);
-    }
-
     public Long getPostCommentBundleLong(String key) {
         return postCommentBundle.getLong(key);
     }
@@ -287,7 +281,7 @@ public class NewCommentActivity extends AppCompatActivity {
     /***********************************************************************************************
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
-    private void refreshAdapter() {
+    public void refreshAdapter() {
         new FetchUserPostDBTask().execute(postCommentBundle);
         new FetchPostCommentsDBTask().execute(postCommentBundle.getString("POST_ID"));
     }
@@ -310,109 +304,112 @@ public class NewCommentActivity extends AppCompatActivity {
         mainPostCommentsCount.setText(String.valueOf(userPost.getNumberOfComments()));
 
         // Display thumbs up/down icons:
-        if (userPost.getLikedUsers().contains(userNickname))
-            mainPostThumbsUp.setImageDrawable(getResources().getDrawable(R.drawable.ic_thumb_uped));
-        else if (userPost.getDislikedUsers().contains(userNickname))
-            mainPostThumbsDown.setImageDrawable(getResources().getDrawable(R.drawable.ic_thumb_downed));
+        if (userPost.getLikedUsers().contains(userNickname) && mainPostThumbsUp != null)
+            mainPostThumbsUp.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_thumb_uped));
+        else if (userPost.getDislikedUsers().contains(userNickname) && mainPostThumbsDown != null)
+            mainPostThumbsDown.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_thumb_downed));
 
         // Button Click Events:
-        mainPostThumbsUp.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int currentNumOfLikes = Integer.parseInt(mainPostLikesCount.getText().toString());
-                Set<String> likedUsers = userPost.getLikedUsers();
-                Set<String> dislikedUsers = userPost.getDislikedUsers();
-                // If user already liked the post
-                if (likedUsers.contains(userNickname)) {
-                    currentNumOfLikes -= 1;
-                    mainPostLikesCount.setText(String.valueOf(currentNumOfLikes));
-                    mainPostThumbsUp.setImageDrawable(getResources().getDrawable(R.drawable.ic_thumb_up));
-                    userPost.setNumberOfLikes(currentNumOfLikes);
-                    // Special transition cases
-                    if (currentNumOfLikes == 0) {
-                        mainPostLikesCount.setTextColor(ColorStateList.valueOf(getResources().getColor(R.color.colorAccent)));
-                    } else if (currentNumOfLikes == -1) {
-                        mainPostLikesCount.setTextColor(ColorStateList.valueOf(getResources().getColor(R.color.colorRed)));
-                    }
-                    // Remove user from likedUsers set
-                    userPost.removeLikedUsers(userNickname);
-                    new AsyncHelpers.PushUserPostChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserPostBundle(userPost, mapper, null, null));
-                }
-                // If user has not liked the post yet
-                else {
-                    // lose previous dislike and +1 like
-                    if (dislikedUsers.contains(userNickname)) {
-                        currentNumOfLikes += 2;
-                    } else {
-                        currentNumOfLikes += 1;
-                    }
-                    mainPostLikesCount.setText(String.valueOf(currentNumOfLikes));
-                    mainPostThumbsUp.setImageDrawable(getResources().getDrawable(R.drawable.ic_thumb_uped));
-                    mainPostThumbsDown.setImageDrawable(getResources().getDrawable(R.drawable.ic_thumb_down));
-                    userPost.setNumberOfLikes(currentNumOfLikes);
-                    if (currentNumOfLikes == 0) {
-                        mainPostLikesCount.setTextColor(ColorStateList.valueOf(getResources().getColor(R.color.colorAccent)));
-                    } else if (currentNumOfLikes == 1) {
-                        mainPostLikesCount.setTextColor(ColorStateList.valueOf(getResources().getColor(R.color.colorGreen)));
-                    }
-                    // Remove user from dislikedUsers set and add to likedUsers set
-                    userPost.addLikedUsers(userNickname);
-                    userPost.removedislikedUsers(userNickname);
-                    new AsyncHelpers.PushUserPostChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserPostBundle(userPost, mapper, null, null));
-                }
-            }
-        });
-
-        mainPostThumbsDown.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int currentNumOfLikes = Integer.parseInt(mainPostLikesCount.getText().toString());
-                Set<String> likedUsers = userPost.getLikedUsers();
-                Set<String> dislikedUsers = userPost.getDislikedUsers();
-                // If user already disliked the post
-                if (dislikedUsers.contains(userNickname)) {
-                    currentNumOfLikes += 1;
-                    mainPostLikesCount.setText(String.valueOf(currentNumOfLikes));
-                    mainPostThumbsDown.setImageDrawable(getResources().getDrawable(R.drawable.ic_thumb_down));
-                    userPost.setNumberOfLikes(currentNumOfLikes);
-                    // Special transition cases
-                    if (currentNumOfLikes == 0) {
-                        mainPostLikesCount.setTextColor(ColorStateList.valueOf(getResources().getColor(R.color.colorAccent)));
-                    } else if (currentNumOfLikes == 1) {
-                        mainPostLikesCount.setTextColor(ColorStateList.valueOf(getResources().getColor(R.color.colorGreen)));
-                    }
-                    // Remove user from likedUsers set
-                    userPost.removedislikedUsers(userNickname);
-                    new AsyncHelpers.PushUserPostChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserPostBundle(userPost, mapper, null, null));
-                }
-                // If user has not disliked the post yet
-                else {
+        if (mainPostLikesCount != null && mainPostThumbsUp != null &&
+                mainPostThumbsDown != null) {
+            mainPostThumbsUp.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int currentNumOfLikes = Integer.parseInt(mainPostLikesCount.getText().toString());
+                    Set<String> likedUsers = userPost.getLikedUsers();
+                    Set<String> dislikedUsers = userPost.getDislikedUsers();
+                    // If user already liked the post
                     if (likedUsers.contains(userNickname)) {
-                        // lose previous like and +1 dislike
-                        currentNumOfLikes -= 2;
-                    } else {
                         currentNumOfLikes -= 1;
+                        mainPostLikesCount.setText(String.valueOf(currentNumOfLikes));
+                        mainPostThumbsUp.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_thumb_up));
+                        userPost.setNumberOfLikes(currentNumOfLikes);
+                        // Special transition cases
+                        if (currentNumOfLikes == 0) {
+                            mainPostLikesCount.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent));
+                        } else if (currentNumOfLikes == -1) {
+                            mainPostLikesCount.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorRed));
+                        }
+                        // Remove user from likedUsers set
+                        userPost.removeLikedUsers(userNickname);
+                        new AsyncHelpers.PushUserPostChangesToDBTask().execute(
+                                new AsyncHelpers.asyncTaskObjectUserPostBundle(userPost, dbHelper.getMapper(), null, null));
                     }
-                    mainPostLikesCount.setText(String.valueOf(currentNumOfLikes));
-                    mainPostThumbsUp.setImageDrawable(getResources().getDrawable(R.drawable.ic_thumb_up));
-                    mainPostThumbsDown.setImageDrawable(getResources().getDrawable(R.drawable.ic_thumb_downed));
-                    userPost.setNumberOfLikes(currentNumOfLikes);
-                    if (currentNumOfLikes == 0) {
-                        mainPostLikesCount.setTextColor(ColorStateList.valueOf(getResources().getColor(R.color.colorAccent)));
-                    } else if (currentNumOfLikes == -1) {
-                        mainPostLikesCount.setTextColor(ColorStateList.valueOf(getResources().getColor(R.color.colorRed)));
+                    // If user has not liked the post yet
+                    else {
+                        // lose previous dislike and +1 like
+                        if (dislikedUsers.contains(userNickname)) {
+                            currentNumOfLikes += 2;
+                        } else {
+                            currentNumOfLikes += 1;
+                        }
+                        mainPostLikesCount.setText(String.valueOf(currentNumOfLikes));
+                        mainPostThumbsUp.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_thumb_uped));
+                        mainPostThumbsDown.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_thumb_down));
+                        userPost.setNumberOfLikes(currentNumOfLikes);
+                        if (currentNumOfLikes == 0) {
+                            mainPostLikesCount.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent));
+                        } else if (currentNumOfLikes == 1) {
+                            mainPostLikesCount.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorGreen));
+                        }
+                        // Remove user from dislikedUsers set and add to likedUsers set
+                        userPost.addLikedUsers(userNickname);
+                        userPost.removedislikedUsers(userNickname);
+                        new AsyncHelpers.PushUserPostChangesToDBTask().execute(
+                                new AsyncHelpers.asyncTaskObjectUserPostBundle(userPost, dbHelper.getMapper(), null, null));
                     }
-                    // Remove user from dislikedUsers set and add to likedUsers set
-                    userPost.adddislikedUsers(userNickname);
-                    userPost.removeLikedUsers(userNickname);
-                    new AsyncHelpers.PushUserPostChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserPostBundle(userPost, mapper, null, null));
                 }
-            }
-        });
+            });
+
+            mainPostThumbsDown.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int currentNumOfLikes = Integer.parseInt(mainPostLikesCount.getText().toString());
+                    Set<String> likedUsers = userPost.getLikedUsers();
+                    Set<String> dislikedUsers = userPost.getDislikedUsers();
+                    // If user already disliked the post
+                    if (dislikedUsers.contains(userNickname)) {
+                        currentNumOfLikes += 1;
+                        mainPostLikesCount.setText(String.valueOf(currentNumOfLikes));
+                        mainPostThumbsDown.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_thumb_down));
+                        userPost.setNumberOfLikes(currentNumOfLikes);
+                        // Special transition cases
+                        if (currentNumOfLikes == 0) {
+                            mainPostLikesCount.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent));
+                        } else if (currentNumOfLikes == 1) {
+                            mainPostLikesCount.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorGreen));
+                        }
+                        // Remove user from likedUsers set
+                        userPost.removedislikedUsers(userNickname);
+                        new AsyncHelpers.PushUserPostChangesToDBTask().execute(
+                                new AsyncHelpers.asyncTaskObjectUserPostBundle(userPost, dbHelper.getMapper(), null, null));
+                    }
+                    // If user has not disliked the post yet
+                    else {
+                        if (likedUsers.contains(userNickname)) {
+                            // lose previous like and +1 dislike
+                            currentNumOfLikes -= 2;
+                        } else {
+                            currentNumOfLikes -= 1;
+                        }
+                        mainPostLikesCount.setText(String.valueOf(currentNumOfLikes));
+                        mainPostThumbsUp.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_thumb_up));
+                        mainPostThumbsDown.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_thumb_downed));
+                        userPost.setNumberOfLikes(currentNumOfLikes);
+                        if (currentNumOfLikes == 0) {
+                            mainPostLikesCount.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent));
+                        } else if (currentNumOfLikes == -1) {
+                            mainPostLikesCount.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorRed));
+                        }
+                        // Remove user from dislikedUsers set and add to likedUsers set
+                        userPost.adddislikedUsers(userNickname);
+                        userPost.removeLikedUsers(userNickname);
+                        new AsyncHelpers.PushUserPostChangesToDBTask().execute(
+                                new AsyncHelpers.asyncTaskObjectUserPostBundle(userPost, dbHelper.getMapper(), null, null));
+                    }
+                }
+            });
+        }
     }
 
     /***********************************************************************************************
@@ -423,7 +420,7 @@ public class NewCommentActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(Bundle... params) {
             Bundle data = params[0];
-            userPost = mapper.load(DBUserPost.class, data.getString("POST_NICKNAME"), data.getLong("TIME_IN_SECONDS"));
+            userPost = dbHelper.loadDBPost(data.getString("POST_NICKNAME"), data.getLong("TIME_IN_SECONDS"));
             return null;
         }
 
@@ -438,14 +435,14 @@ public class NewCommentActivity extends AppCompatActivity {
         protected Void doInBackground(Bundle... params) {
             Bundle data = params[0];
             // Delete UserPost
-            DBUserPost post = mapper.load(DBUserPost.class, data.getString("POST_NICKNAME"), data.getLong("TIME_IN_SECONDS"));
-            mapper.delete(post);
+            DBUserPost post = dbHelper.loadDBPost(data.getString("POST_NICKNAME"), data.getLong("TIME_IN_SECONDS"));
+            dbHelper.deleteDBObject(post);
 
             // Update UserProfile post count
-            DBUserProfile userProfile = mapper.load(DBUserProfile.class, data.getString("POST_NICKNAME"));
+            DBUserProfile userProfile = dbHelper.loadDBUserProfile(data.getString("POST_NICKNAME"));
             int curPostCount = userProfile.getPostsCount();
             userProfile.setPostsCount(curPostCount - 1);
-            mapper.save(userProfile);
+            dbHelper.saveDBObject(userProfile);
             return null;
         }
 
@@ -468,7 +465,7 @@ public class NewCommentActivity extends AppCompatActivity {
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withHashKeyValues(userComment)
                     .withConsistentRead(false);
-            return mapper.query(DBUserComment.class, queryExpression);
+            return dbHelper.getMapper().query(DBUserComment.class, queryExpression);
         }
 
         @Override

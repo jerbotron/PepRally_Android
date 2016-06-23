@@ -2,22 +2,15 @@ package com.peprally.jeremy.peprally.fragments;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.text.InputFilter;
-import android.text.Spanned;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 
@@ -26,11 +19,6 @@ public class ProfileEditFragment extends Fragment {
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
-    // AWS Variables
-    private CognitoCachingCredentialsProvider credentialsProvider;
-    private AmazonDynamoDBClient ddbClient;
-    private DynamoDBMapper mapper;
-
     // UI Variables
     private EditText editTextPepTalk, editTextTrashTalk;
     private TextView textViewNickname, textViewFirstName, textViewFavTeam, textViewFavPlayer;
@@ -53,14 +41,6 @@ public class ProfileEditFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log.d(TAG, "edit fragment view created");
         View view = inflater.inflate(R.layout.fragment_profile_edit, container, false);
-
-        credentialsProvider = new CognitoCachingCredentialsProvider(
-                getActivity(),                              // Context
-                AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
-                AWSCredentialProvider.COGNITO_REGION        // Region
-        );
-        ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-        mapper = new DynamoDBMapper(ddbClient);
 
         textViewNickname = (TextView) view.findViewById(R.id.id_text_view_profile_edit_nickname);
         textViewFirstName = (TextView) view.findViewById(R.id.id_text_view_profile_edit_name_age);
@@ -107,7 +87,7 @@ public class ProfileEditFragment extends Fragment {
     /***********************************************************************************************
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
-    public void updateUserProfileBundleData() {
+    private void updateUserProfileBundleData() {
         String pepTalk = editTextPepTalk.getText().toString().trim();
         String trashTalk = editTextTrashTalk.getText().toString().trim();
 
@@ -128,7 +108,7 @@ public class ProfileEditFragment extends Fragment {
     /***********************************************************************************************
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
-    public void setupUserProfile() {
+    private void setupUserProfile() {
         // TODO: CALCULATE USER AGE FROM FB DATA
         textViewFirstName.setText(userProfileParcel.getFirstname()); // + ", " + Integer.toString(23));
         textViewNickname.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);

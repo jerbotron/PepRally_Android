@@ -6,7 +6,7 @@ import android.view.ViewGroup;
 
 public class EmptyAdapter extends RecyclerView.Adapter<EmptyAdapter.EmptyHolder> {
 
-    public class EmptyHolder extends RecyclerView.ViewHolder {
+    class EmptyHolder extends RecyclerView.ViewHolder {
         public EmptyHolder(View itemView) {
             super(itemView);
         }

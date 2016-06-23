@@ -15,11 +15,7 @@ import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
@@ -43,7 +39,7 @@ public class ProfilePostsFragment extends Fragment {
     private TextView noPostsText;
 
     // General Variables
-    private static final String TAG = ProfilePostsFragment.class.getSimpleName();
+//    private static final String TAG = ProfilePostsFragment.class.getSimpleName();
     private List<DBUserPost> posts;
     private UserProfileParcel userProfileParcel;
 
@@ -105,7 +101,8 @@ public class ProfilePostsFragment extends Fragment {
                 noPostsText.setText(getResources().getString(R.string.no_posts_message));
             }
             else {
-                noPostsText.setText(userProfileParcel.getFirstname() + " has not created any posts yet!");
+                String s = userProfileParcel.getFirstname() + " has not created any posts yet!";
+                noPostsText.setText(s);
             }
         }
         else {
@@ -129,17 +126,15 @@ public class ProfilePostsFragment extends Fragment {
     private class FetchUserPostsTask extends AsyncTask<String, Void, PaginatedQueryList<DBUserPost>> {
         @Override
         protected PaginatedQueryList<DBUserPost> doInBackground(String... params) {
+            String nickname = params[0];
+            if (nickname == null) return null;
+
             CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                     getActivity(),                            // Context
                     AWSCredentialProvider.IDENTITY_POOL_ID,   // Identity Pool ID
                     AWSCredentialProvider.COGNITO_REGION      // Region
             );
-            String nickname = params[0];
-            if (nickname == null) return null;
-
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
-            s3.setRegion(Region.getRegion(Regions.US_EAST_1));
 
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
             DBUserPost userPost = new DBUserPost();

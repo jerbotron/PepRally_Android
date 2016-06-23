@@ -48,6 +48,7 @@
             </LinearLayout>
         </RelativeLayout>
         <LinearLayout
+            android:id="@+id/id_container_comment_clickable"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"

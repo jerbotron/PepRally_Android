@@ -11,7 +11,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
-import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.squareup.picasso.Picasso;
@@ -26,21 +25,20 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
     private static PlayersAdapterClickListener myClickListener;
 
     // General Variables
-    private static final String TAG = ProfileActivity.class.getSimpleName();
+//    private static final String TAG = ProfileActivity.class.getSimpleName();
     private Context callingContext;
     private PaginatedQueryList<DBPlayerProfile> roster;
-    private final String rootImageURL = "https://s3.amazonaws.com/rosterphotos/";
 
     /***********************************************************************************************
      **************************************** ADAPTER METHODS **************************************
      **********************************************************************************************/
-    public static class PlayerCardHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    static class PlayerCardHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         CardView cv;
         ImageView playerPhoto;
         TextView playerName;
         TextView playerInfo;
 
-        public PlayerCardHolder(View itemView) {
+        private PlayerCardHolder(View itemView) {
             super(itemView);
             cv = (CardView) itemView.findViewById(R.id.rv_browse_players);
             playerPhoto = (ImageView) itemView.findViewById(R.id.player_card_photo);
@@ -50,13 +48,13 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
         }
 
         @Override
-        public void onClick(View v) {
-            myClickListener.onItemClick(v, getAdapterPosition());
+        public void onClick(View view) {
+            myClickListener.onItemClick(view, getAdapterPosition());
         }
     }
 
     public void setOnItemClickListener(PlayersAdapterClickListener myClickListener) {
-        this.myClickListener = myClickListener;
+        PlayersCardAdapter.myClickListener = myClickListener;
     }
 
     public PlayersCardAdapter(Context callingContext, PaginatedQueryList<DBPlayerProfile> roster) {
@@ -79,6 +77,7 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
     public void onBindViewHolder(PlayerCardHolder playerCardHolder, int position) {
         DBPlayerProfile curPlayer = roster.get(position);
         String extension = curPlayer.getTeam().replace(" ","+") + "/" + curPlayer.getImageURL();
+        String rootImageURL = "https://s3.amazonaws.com/rosterphotos/";
         final String url = rootImageURL + extension;
         Picasso.with(callingContext)
                 .load(url)

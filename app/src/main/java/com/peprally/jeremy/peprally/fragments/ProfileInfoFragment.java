@@ -20,6 +20,7 @@ import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("")
 public class ProfileInfoFragment extends Fragment {
 
     /***********************************************************************************************
@@ -29,9 +30,9 @@ public class ProfileInfoFragment extends Fragment {
     private UserProfileParcel userProfileParcel;
     private static final String TAG = ProfileInfoFragment.class.getSimpleName();
 
-    Map<String, String>  baseballPositions = new HashMap<String, String>();
-    Map<String, String>  basketballPositions = new HashMap<String, String>();
-    Map<String, String>  footballPositions = new HashMap<String, String>();
+    private Map<String, String>  baseballPositions = new HashMap<>();
+    private Map<String, String>  basketballPositions = new HashMap<>();
+    private Map<String, String>  footballPositions = new HashMap<>();
 
     /***********************************************************************************************
      *************************************** FRAGMENT METHODS **************************************
@@ -60,11 +61,11 @@ public class ProfileInfoFragment extends Fragment {
     /***********************************************************************************************
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
-    public void refresh() {
+    private void refresh() {
         setupUserProfile(getView());
     }
 
-    public void setupUserProfile(View view) {
+    private void setupUserProfile(View view) {
         final LinearLayout parent_container = (LinearLayout) view.findViewById(R.id.profile_view_container);
         final TextView textViewFirstName = (TextView) view.findViewById(R.id.profile_view_name_age);
         final TextView textViewNickname = (TextView) view.findViewById(R.id.profile_view_nickname);
@@ -224,7 +225,7 @@ public class ProfileInfoFragment extends Fragment {
 
     }
 
-    void initializePositionMaps() {
+    private void initializePositionMaps() {
         // Baseball
         baseballPositions.put("C", "Catcher");
         baseballPositions.put("INF", "Infield");

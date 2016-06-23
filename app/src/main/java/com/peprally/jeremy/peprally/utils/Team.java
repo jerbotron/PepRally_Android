@@ -1,5 +1,7 @@
 package com.peprally.jeremy.peprally.utils;
 
+import android.support.annotation.NonNull;
+
 public class Team implements Comparable<Team> {
     public String name;
     public int photoId;
@@ -10,7 +12,7 @@ public class Team implements Comparable<Team> {
     }
 
     @Override
-    public int compareTo(Team another) {
+    public int compareTo(@NonNull Team another) {
         return name.compareTo(another.name);
     }
 }

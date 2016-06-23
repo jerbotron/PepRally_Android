@@ -1,5 +1,6 @@
 package com.peprally.jeremy.peprally.adapters;
 
+import android.annotation.SuppressLint;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -8,6 +9,7 @@ import android.support.v4.app.FragmentTransaction;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressLint("CommitTransaction")
 public class ProfileViewPagerAdapter extends FragmentPagerAdapter {
     private final List<Fragment> mFragmentList = new ArrayList<>();
     private final List<String> mFragmentTitleList = new ArrayList<>();
@@ -52,9 +54,5 @@ public class ProfileViewPagerAdapter extends FragmentPagerAdapter {
         fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.attach(mFragmentList.get(position));
         fragmentTransaction.commit();
-    }
-
-    public void disableLeftSwipe() {
-
     }
 }

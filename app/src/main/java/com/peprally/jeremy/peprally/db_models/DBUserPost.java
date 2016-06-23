@@ -1,5 +1,7 @@
 package com.peprally.jeremy.peprally.db_models;
 
+import android.support.annotation.NonNull;
+
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 
 import java.util.Set;
@@ -20,7 +22,7 @@ public class DBUserPost implements Comparable<DBUserPost>{
     private Set<String> dislikedUsers;
 
     @Override
-    public int compareTo(DBUserPost another) {
+    public int compareTo(@NonNull DBUserPost another) {
         return timeInSeconds.compareTo(another.timeInSeconds);
     }
 

@@ -7,7 +7,6 @@ import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
-import android.support.v4.view.accessibility.AccessibilityRecordCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
@@ -52,7 +51,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     // Fragment Variables
     private TrendingFragment trendingFragment;
-    private BrowseTeamsFragment browseTeamsFragment;
 
     // General Variables
     private static final String TAG = HomeActivity.class.getSimpleName();
@@ -103,7 +101,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout_home);
         ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.setDrawerListener(drawerToggle);
+        drawer.addDrawerListener(drawerToggle);
         drawerToggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view_home);
@@ -231,7 +229,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     private void setupViewPager(ViewPager viewPager) {
         trendingFragment = new TrendingFragment();
-        browseTeamsFragment = new BrowseTeamsFragment();
+        BrowseTeamsFragment browseTeamsFragment = new BrowseTeamsFragment();
         ProfileViewPagerAdapter adapter = new ProfileViewPagerAdapter(getSupportFragmentManager());
 //        adapter.addFrag(new EventsFragment(), "Events");
         adapter.addFrag(trendingFragment, "Trending");

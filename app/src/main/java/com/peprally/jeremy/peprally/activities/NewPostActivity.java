@@ -1,7 +1,6 @@
 package com.peprally.jeremy.peprally.activities;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.support.v7.app.ActionBar;
@@ -11,7 +10,6 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -31,7 +29,7 @@ public class NewPostActivity extends AppCompatActivity {
     private TextView textViewCharCount;
 
     // General Variables
-    private static final String TAG = NewPostActivity.class.getSimpleName();
+//    private static final String TAG = NewPostActivity.class.getSimpleName();
     private int charCount = 200;
 
     /***********************************************************************************************
@@ -45,9 +43,10 @@ public class NewPostActivity extends AppCompatActivity {
         final NewPostHints newPostHints = new NewPostHints();
 
         ActionBar supportActionBar = getSupportActionBar();
-        assert (supportActionBar != null);
-        supportActionBar.setTitle("New Post");
-        supportActionBar.setDisplayHomeAsUpEnabled(true);
+        if (supportActionBar != null) {
+            supportActionBar.setTitle("New Post");
+            supportActionBar.setDisplayHomeAsUpEnabled(true);
+        }
 
         editTextNewPost = (EditText) findViewById(R.id.id_edit_text_new_post);
         textViewCharCount = (TextView) findViewById(R.id.new_post_char_count);

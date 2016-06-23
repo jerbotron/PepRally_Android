@@ -11,6 +11,8 @@
     <string name="profile_followers"> Followers</string>
     <string name="profile_following"> Following</string>
     <string name="profile_btn_follow">+ Follow</string>
+    <string name="profile_follow_text">Follow</string>
+    <string name="profile_following_text">+ Follow</string>
 
     <string name="title_activity_profile">ProfileActivity</string>
     <string name="title_activity_events">EventsActivity</string>
@@ -25,6 +27,7 @@
     <string name="no_peprally_account_message"> has not made a PepRally profile yet. Tell your friends about PepRally!</string>
     <string name="no_posts_message">You have not created any posts yet!</string>
     <string name="no_comments_message">No comments.</string>
+    <string name="dialog_delete_message">Delete comment</string>
 
     <!-- Default Profile Content Strings -->
     <string name="default_firstname"><i>NAME, AGE</i></string>

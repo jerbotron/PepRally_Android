@@ -22,12 +22,12 @@ public class TeamsCardAdapter extends RecyclerView.Adapter<TeamsCardAdapter.Team
         void onItemClick(View v, int position);
     }
 
-    public static class TeamCardHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    static class TeamCardHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         CardView cv;
         ImageView teamPhoto;
         TextView teamName;
 
-        public TeamCardHolder(View itemView) {
+        private TeamCardHolder(View itemView) {
             super(itemView);
             cv = (CardView)itemView.findViewById(R.id.rv_browse_teams);
             teamPhoto = (ImageView)itemView.findViewById(R.id.team_card_photo);
@@ -42,7 +42,7 @@ public class TeamsCardAdapter extends RecyclerView.Adapter<TeamsCardAdapter.Team
     }
 
     public void setOnItemClickListener(TeamsAdapterClickListener myClickListener) {
-        this.myClickListener = myClickListener;
+        TeamsCardAdapter.myClickListener = myClickListener;
     }
 
     public TeamsCardAdapter(List<Team> teams) {
@@ -57,8 +57,7 @@ public class TeamsCardAdapter extends RecyclerView.Adapter<TeamsCardAdapter.Team
     @Override
     public TeamCardHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.recycler_view_team_card_container, parent, false);
-        TeamCardHolder teamCardHolder = new TeamCardHolder(view);
-        return teamCardHolder;
+        return new TeamCardHolder(view);
     }
 
     @Override

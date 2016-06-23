@@ -16,7 +16,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,10 +24,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMappingException;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
@@ -36,7 +32,7 @@ import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.fragments.ProfileEditFragment;
 import com.peprally.jeremy.peprally.fragments.ProfilePostsFragment;
 import com.peprally.jeremy.peprally.fragments.ProfileInfoFragment;
-import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.ProfileViewPager;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
@@ -48,15 +44,12 @@ public class ProfileActivity extends AppCompatActivity {
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // AWS Variables
-    private AmazonDynamoDBClient ddbClient;
-    private CognitoCachingCredentialsProvider credentialsProvider;
-    private DynamoDBMapper mapper;
+    private DynamoDBHelper dbHelper;
 
     // UI Variables
     private ActionBar supportActionBar;
     private AppBarLayout appBarLayout;
     private FloatingActionButton actionFAB;
-    private ProfileInfoFragment infoFragment;
     private ProfilePostsFragment postsFragment;
     private ProfileEditFragment editFragment;
     private MenuItem editMenuItem;
@@ -65,9 +58,9 @@ public class ProfileActivity extends AppCompatActivity {
     private ProfileViewPagerAdapter adapter;
 
     // General Variables
-    public static UserProfileParcel userProfileParcel;
+    private static UserProfileParcel userProfileParcel;
 
-    private static final String TAG = ProfileActivity.class.getSimpleName();
+//    private static final String TAG = ProfileActivity.class.getSimpleName();
     private boolean following = false;  // TODO: TEMP FLAG, REMOVE ONCE FOLLOW FEATURE IS IMPLEMENTED
     private boolean editMode = false;
 
@@ -78,13 +71,7 @@ public class ProfileActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        credentialsProvider = new CognitoCachingCredentialsProvider(
-                getApplicationContext(),                    // Context
-                AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
-                AWSCredentialProvider.COGNITO_REGION        // Region
-        );
-        ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-        mapper = new DynamoDBMapper(ddbClient);
+        dbHelper = new DynamoDBHelper(this);
 
         userProfileParcel = getIntent().getExtras().getParcelable("USER_PROFILE_PARCEL");
         assert userProfileParcel != null;
@@ -126,61 +113,62 @@ public class ProfileActivity extends AppCompatActivity {
         final LinearLayout followButton = (LinearLayout) findViewById(R.id.button_follow_wrapper);
         final TextView followButtonContent = (TextView) findViewById(R.id.button_follow_content);
         actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
-        assert followButton != null && followButtonContent != null && actionFAB != null;
-        // If user is viewing their own img_default_profile
-        if (userProfileParcel.getIsSelfProfile()) {
-            followButton.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_view_fistbumps));
-            followButtonContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorAccentDark));
-            followButtonContent.setText(Html.fromHtml("<b>VIEW FISTBUMPS</b>"));
-            followButtonContent.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
-            followButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Toast.makeText(ProfileActivity.this, "VIEW FISTBUMPS", Toast.LENGTH_SHORT).show();
-                }
-            });
-
-            actionFAB.setImageDrawable(getResources().getDrawable(R.drawable.ic_post_msg));
-            actionFAB.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colorFABPost)));
-            actionFAB.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(getApplicationContext(), NewPostActivity.class);
-                    startActivityForResult(intent, Helpers.NEW_POST_REQUEST_CODE);
-                    overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
-                }
-            });
-        }
-        // If user is viewing another user's img_default_profile
-        else {
-            followButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (following) {
-                        followButton.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_follow));
-                        followButtonContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorPrimary));
-                        followButtonContent.setText("Follow");
-                        followButtonContent.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_follow, 0, 0, 0);
-                        following = false;
+        if (followButton != null && followButtonContent != null) {
+            // If user is viewing their own img_default_profile
+            if (userProfileParcel.getIsSelfProfile()) {
+                followButton.setBackground(ContextCompat.getDrawable(this, R.drawable.button_view_fistbumps));
+                followButtonContent.setTextColor(ContextCompat.getColor(this, R.color.colorAccentDark));
+                followButtonContent.setText(Html.fromHtml("<b>VIEW FISTBUMPS</b>"));
+                followButtonContent.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+                followButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(ProfileActivity.this, "VIEW FISTBUMPS", Toast.LENGTH_SHORT).show();
                     }
-                    else {
-                        followButton.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_following));
-                        followButtonContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorWhite));
-                        followButtonContent.setText("Following");
-                        followButtonContent.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_followed, 0, 0, 0);
-                        following = true;
-                    }
-                }
-            });
+                });
 
-            actionFAB.setImageDrawable(getResources().getDrawable(R.drawable.ic_fist_bump));
-            actionFAB.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.colorFABFistbump)));
-            actionFAB.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    Toast.makeText(ProfileActivity.this, "FIST BUMP", Toast.LENGTH_SHORT).show();
-                }
-            });
+                actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_post_msg));
+                actionFAB.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.colorFABPost)));
+                actionFAB.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(getApplicationContext(), NewPostActivity.class);
+                        startActivityForResult(intent, Helpers.NEW_POST_REQUEST_CODE);
+                        overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+                    }
+                });
+            }
+            // If user is viewing another user's img_default_profile
+            else {
+                followButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (following) {
+                            followButton.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_follow));
+                            followButtonContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorPrimary));
+                            followButtonContent.setText(R.string.profile_follow_text);
+                            followButtonContent.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_follow, 0, 0, 0);
+                            following = false;
+                        }
+                        else {
+                            followButton.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_following));
+                            followButtonContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorWhite));
+                            followButtonContent.setText(R.string.profile_following_text);
+                            followButtonContent.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_followed, 0, 0, 0);
+                            following = true;
+                        }
+                    }
+                });
+
+                actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_fist_bump));
+                actionFAB.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.colorFABFistbump)));
+                actionFAB.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(ProfileActivity.this, "FIST BUMP", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
         }
     }
 
@@ -311,18 +299,12 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
-    private void refreshPostsFragment() {
-        // Set view pager to postsFragment
-        viewPagerProfile.setCurrentItem(1);
-        postsFragment.refreshAdapter();
-    }
-
     /***********************************************************************************************
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
     private void createView() {
         FragmentManager fragmentManager = getSupportFragmentManager();
-        infoFragment = new ProfileInfoFragment();
+        ProfileInfoFragment infoFragment = new ProfileInfoFragment();
         postsFragment = new ProfilePostsFragment();
         editFragment = new ProfileEditFragment();
 
@@ -356,43 +338,46 @@ public class ProfileActivity extends AppCompatActivity {
         final TextView textView_fistbumps = (TextView) findViewById(R.id.profile_fist_bumps);
         final TextView textView_followers = (TextView) findViewById(R.id.profile_followers);
         final TextView textView_following = (TextView) findViewById(R.id.profile_following);
-        assert imageView_profilePicture != null && textView_fistbumps != null && textView_followers != null && textView_following != null;
 
-        final String imageURL;
-        // Profile Image Setup
-        if (userProfileParcel.getIsVarsityPlayer()) {
-            String rootImageURL = "https://s3.amazonaws.com/rosterphotos/";
-            String team = userProfileParcel.getTeam();
-            String extension = team.replace(" ", "+") + "/" + userProfileParcel.getRosterImageURL();
-            imageURL = rootImageURL + extension;
-            Picasso.with(ProfileActivity.this)
-                    .load(imageURL)
-                    .placeholder(R.drawable.img_default_ut_placeholder)
-                    .into(imageView_profilePicture);
-        }
-        else {
-            imageURL = "https://graph.facebook.com/" + userProfileParcel.getFacebookID() + "/picture?width=9999";
-            Helpers.setFacebookProfileImage(this,
-                    imageView_profilePicture,
-                    userProfileParcel.getFacebookID(),
-                    3);
-        }
-        imageView_profilePicture.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showProfileImageDialog(imageURL);
+        if (imageView_profilePicture != null && textView_fistbumps != null
+                && textView_followers != null && textView_following != null) {
+            final String imageURL;
+            // Profile Image Setup
+            if (userProfileParcel.getIsVarsityPlayer()) {
+                String rootImageURL = "https://s3.amazonaws.com/rosterphotos/";
+                String team = userProfileParcel.getTeam();
+                String extension = team.replace(" ", "+") + "/" + userProfileParcel.getRosterImageURL();
+                imageURL = rootImageURL + extension;
+                Picasso.with(ProfileActivity.this)
+                        .load(imageURL)
+                        .placeholder(R.drawable.img_default_ut_placeholder)
+                        .into(imageView_profilePicture);
             }
-        });
+            else {
+                imageURL = "https://graph.facebook.com/" + userProfileParcel.getFacebookID() + "/picture?width=9999";
+                Helpers.setFacebookProfileImage(this,
+                        imageView_profilePicture,
+                        userProfileParcel.getFacebookID(),
+                        3);
+            }
 
-        textView_fistbumps.setText(Html.fromHtml("<b>"
-                + Integer.toString(userProfileParcel.getFistbumpsCount())
-                + "</b> " + getString(R.string.profile_fist_bumps)));
-        textView_followers.setText(Html.fromHtml("<b>"
-                + Integer.toString(userProfileParcel.getFollowersCount())
-                + "</b> " + getString(R.string.profile_followers)));
-        textView_following.setText(Html.fromHtml("<b>"
-                + Integer.toString(userProfileParcel.getFollowingCount())
-                + "</b> " + getString(R.string.profile_following)));
+            imageView_profilePicture.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showProfileImageDialog(imageURL);
+                }
+            });
+
+            textView_fistbumps.setText(Html.fromHtml("<b>"
+                    + Integer.toString(userProfileParcel.getFistbumpsCount())
+                    + "</b> " + getString(R.string.profile_fist_bumps)));
+            textView_followers.setText(Html.fromHtml("<b>"
+                    + Integer.toString(userProfileParcel.getFollowersCount())
+                    + "</b> " + getString(R.string.profile_followers)));
+            textView_following.setText(Html.fromHtml("<b>"
+                    + Integer.toString(userProfileParcel.getFollowingCount())
+                    + "</b> " + getString(R.string.profile_following)));
+        }
     }
 
     private void handleBackPressed() {
@@ -463,7 +448,7 @@ public class ProfileActivity extends AppCompatActivity {
             // 2) Load varsity player's profile
             // 3) Load varsity player's profile who also has a general profile
             try {
-                userProfile = mapper.load(DBUserProfile.class, userProfileParcel.getProfileNickname());
+                userProfile = dbHelper.loadDBUserProfile(userProfileParcel.getProfileNickname());
             }
             catch (DynamoDBMappingException e) {
                 userProfile = null;
@@ -482,7 +467,7 @@ public class ProfileActivity extends AppCompatActivity {
             }
 
             try {
-                playerProfile = mapper.load(DBPlayerProfile.class, playerTeam, playerIndex);
+                playerProfile = dbHelper.loadDBPlayerProfile(playerTeam, playerIndex);
             }
             catch (DynamoDBMappingException e) {
                 playerProfile = null;
@@ -521,9 +506,9 @@ public class ProfileActivity extends AppCompatActivity {
             else {
                 userProfile.setIsVarsityPlayer(false);
                 userProfile.setPlayerIndex(Helpers.INTEGER_INVALID);
-                mapper.save(playerProfile);
+                dbHelper.saveDBObject(playerProfile);
             }
-            mapper.save(userProfile);
+            dbHelper.saveDBObject(userProfile);
         }
 
         private void UpdateUserProfileParcel() {
@@ -562,7 +547,7 @@ public class ProfileActivity extends AppCompatActivity {
         private DBUserProfile DBUserProfile;
         @Override
         protected Void doInBackground(Void... params) {
-            DBUserProfile = mapper.load(DBUserProfile.class, userProfileParcel.getProfileNickname());
+            DBUserProfile = dbHelper.loadDBUserProfile(userProfileParcel.getProfileNickname());
             pushUserProfileChanges();
             return null;
         }
@@ -580,7 +565,7 @@ public class ProfileActivity extends AppCompatActivity {
             DBUserProfile.setFavoritePlayer(userProfileParcel.getFavoritePlayer());
             DBUserProfile.setPepTalk(userProfileParcel.getPepTalk());
             DBUserProfile.setTrashTalk(userProfileParcel.getTrashTalk());
-            mapper.save(DBUserProfile);
+            dbHelper.saveDBObject(DBUserProfile);
         }
     }
 }

@@ -1,7 +1,6 @@
 package com.peprally.jeremy.peprally.utils;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -15,7 +14,6 @@ import com.amazonaws.regions.Regions;
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.Profile;
-import com.peprally.jeremy.peprally.activities.HomeActivity;
 import com.peprally.jeremy.peprally.activities.LoginActivity;
 
 import java.util.HashMap;

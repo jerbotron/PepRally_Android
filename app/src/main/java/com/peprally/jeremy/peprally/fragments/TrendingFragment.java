@@ -6,7 +6,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,7 +40,6 @@ public class TrendingFragment extends Fragment {
     private RecyclerView recyclerView;
 
     // General Variables
-    private static final String TAG = HomeActivity.class.getSimpleName();
     private List<DBUserPost> posts;
     private UserProfileParcel userProfileParcel;
 
@@ -107,8 +105,7 @@ public class TrendingFragment extends Fragment {
         postCardAdapter.addPost(newPostText, bundle);
     }
 
-    public void refreshAdapter() {
-        Log.d(TAG, "refresh trending posts adapter");
+    private void refreshAdapter() {
         new FetchTrendingPostsTask().execute();
     }
 

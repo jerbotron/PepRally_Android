@@ -9,7 +9,7 @@ import com.peprally.jeremy.peprally.db_models.DBUserPost;
 
 public class AsyncHelpers {
 
-    private static final String TAG = AsyncHelpers.class.getSimpleName();
+//    private static final String TAG = AsyncHelpers.class.getSimpleName();
 
     public static class asyncTaskObjectUserPostBundle {
         public DBUserPost post;
@@ -68,12 +68,13 @@ public class AsyncHelpers {
             String postNickname = userComment.getPostID().split("_")[0];
             Bundle data = params[0].data;
             userPost = mapper.load(DBUserPost.class, postNickname, data.getLong("POST_TIME_IN_SECONDS"));
-            if (data.getBoolean("INCREMENT_COMMENTS_COUNT")) {
+
+            boolean incrementCount = data.getBoolean("INCREMENT_COMMENTS_COUNT");
+            if (incrementCount)
                 incrementCommentsCount();
-            }
-            else if (!data.getBoolean("INCREMENT_COMMENTS_COUNT")){
+            else
                 decrementCommentsCount();
-            }
+
             return null;
         }
 

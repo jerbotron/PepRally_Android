@@ -1,27 +1,26 @@
 package com.peprally.jeremy.peprally.adapters;
 
 import android.content.Context;
-import android.content.res.ColorStateList;
+import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.NewCommentActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserComment;
-import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
+import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 
 import java.text.SimpleDateFormat;
@@ -38,12 +37,9 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // AWS Variables
-    private AmazonDynamoDBClient ddbClient;
-    private CognitoCachingCredentialsProvider credentialsProvider;
-    private DynamoDBMapper mapper;
+    private DynamoDBHelper dbHelper;
 
     // General Variables
-    final private static String TAG = "CommentCardAdapter: ";
     private Context callingContext;
     private List<DBUserComment> comments;
     final private String curUserNickname;
@@ -57,27 +53,23 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         this.comments = comments;
         this.callingContext = callingContext;
         this.curUserNickname = curUserNickname;
-        credentialsProvider = new CognitoCachingCredentialsProvider(
-                callingContext,                             // Context
-                AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
-                AWSCredentialProvider.COGNITO_REGION        // Region
-        );
-        ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-        mapper = new DynamoDBMapper(ddbClient);
+        dbHelper = new DynamoDBHelper(callingContext);
     }
 
-    public static class CommentHolder extends RecyclerView.ViewHolder {
-        private CardView cardView;
-        private ImageView profilePhoto;
-        private TextView nickname;
-        private TextView timeStamp;
-        private TextView postContent;
-        private ImageButton thumbsUp;
-        private ImageButton thumbsDown;
-        private TextView likesCount;
+    static class CommentHolder extends RecyclerView.ViewHolder {
+        LinearLayout commentContainer;
+        CardView cardView;
+        ImageView profilePhoto;
+        TextView nickname;
+        TextView timeStamp;
+        TextView postContent;
+        ImageButton thumbsUp;
+        ImageButton thumbsDown;
+        TextView likesCount;
 
         private CommentHolder(View itemView) {
             super(itemView);
+            commentContainer = (LinearLayout) itemView.findViewById(R.id.id_container_comment_clickable);
             cardView = (CardView) itemView.findViewById(R.id.id_card_view_new_comment);
             profilePhoto = (ImageView) itemView.findViewById(R.id.id_image_view_comment_profile);
             nickname = (TextView) itemView.findViewById(R.id.id_text_view_comment_nickname);
@@ -107,42 +99,46 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         Set<String> dislikedUsers = curComment.getDislikedUsers();
 
         if (likedUsers.contains(curUserNickname)) {
-            commentHolder.thumbsUp.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_uped));
+            commentHolder.thumbsUp.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_uped));
         }
         else if (dislikedUsers.contains(curUserNickname)) {
-            commentHolder.thumbsDown.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_downed));
+            commentHolder.thumbsDown.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_downed));
         }
 
         commentHolder.nickname.setText(curComment.getNickname());
         commentHolder.postContent.setText(curComment.getTextContent());
         int numOfLikes = curComment.getNumberOfLikes();
         if (numOfLikes > 0) {
-            commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorGreen)));
+            commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorGreen));
         }
         else if (numOfLikes == 0) {
-            commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorAccent)));
+            commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorAccent));
         }
         else {
-            commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorRed)));
+            commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorRed));
         }
         commentHolder.likesCount.setText(String.valueOf(numOfLikes));
 
         long tsLong = System.currentTimeMillis()/1000;
         long timeInSeconds = tsLong - curComment.getTimeInSeconds();
         if (timeInSeconds < 60) {
-            commentHolder.timeStamp.setText(String.valueOf(timeInSeconds) + "s");
+            String s = String.valueOf(timeInSeconds) + "s";
+            commentHolder.timeStamp.setText(s);
         }
         else if (timeInSeconds < 60 * 60) {
             long timeInMins = timeInSeconds / 60;
-            commentHolder.timeStamp.setText(String.valueOf(timeInMins) + "m");
+            String s = String.valueOf(timeInMins) + "m";
+            commentHolder.timeStamp.setText(s);
         }
         else if (timeInSeconds < 60 * 60 * 24) {
             long timeInHrs = timeInSeconds/60/60;
-            commentHolder.timeStamp.setText(String.valueOf(timeInHrs) + "h");
+            String s = String.valueOf(timeInHrs) + "h";
+            commentHolder.timeStamp.setText(s);
         }
         else {
             long timeInDays = timeInSeconds/60/60/24;
-            commentHolder.timeStamp.setText(String.valueOf(timeInDays) + "d");
+            String s = String.valueOf(timeInDays) + "d";
+            commentHolder.timeStamp.setText(s);
         }
 
         // ImageButton OnClick handlers:
@@ -156,18 +152,18 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                 if (likedUsers.contains(curUserNickname)) {
                     currentNumOfLikes--;
                     commentHolder.likesCount.setText(String.valueOf(currentNumOfLikes));
-                    commentHolder.thumbsUp.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_up));
+                    commentHolder.thumbsUp.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_up));
                     curComment.setNumberOfLikes(currentNumOfLikes);
                     // Special UI transition case
                     if (currentNumOfLikes == 0) {
-                        commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorAccent)));
+                        commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorAccent));
                     } else if (currentNumOfLikes == -1) {
-                        commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorRed)));
+                        commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorRed));
                     }
                     // Remove user from likedUsers set
                     curComment.removeLikedUsers(curUserNickname);
                     new AsyncHelpers.PushUserCommentChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, mapper, null));
+                            new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, dbHelper.getMapper(), null));
                 }
                 // If user has not liked the comment yet
                 else {
@@ -179,20 +175,20 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                         currentNumOfLikes++;
                     }
                     commentHolder.likesCount.setText(String.valueOf(currentNumOfLikes));
-                    commentHolder.thumbsUp.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_uped));
-                    commentHolder.thumbsDown.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_down));
+                    commentHolder.thumbsUp.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_uped));
+                    commentHolder.thumbsDown.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_down));
                     curComment.setNumberOfLikes(currentNumOfLikes);
                     // Special UI transition case
                     if (currentNumOfLikes == 0) {
-                        commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorAccent)));
+                        commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorAccent));
                     } else if (currentNumOfLikes == 1) {
-                        commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorGreen)));
+                        commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorGreen));
                     }
                     // Remove user from dislikedUsers set and add to likedUsers set
                     curComment.addLikedUsers(curUserNickname);
                     curComment.removedislikedUsers(curUserNickname);
                     new AsyncHelpers.PushUserCommentChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, mapper, null));
+                            new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, dbHelper.getMapper(), null));
                 }
             }
         });
@@ -207,18 +203,18 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                 if (dislikedUsers.contains(curUserNickname)) {
                     currentNumOfLikes++;
                     commentHolder.likesCount.setText(String.valueOf(currentNumOfLikes));
-                    commentHolder.thumbsDown.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_down));
+                    commentHolder.thumbsDown.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_down));
                     curComment.setNumberOfLikes(currentNumOfLikes);
                     // Special UI transition case
                     if (currentNumOfLikes == 0) {
-                        commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorAccent)));
+                        commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorAccent));
                     } else if (currentNumOfLikes == 1) {
-                        commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorGreen)));
+                        commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorGreen));
                     }
                     // Remove user from likedUsers set
                     curComment.removedislikedUsers(curUserNickname);
                     new AsyncHelpers.PushUserCommentChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, mapper, null));
+                            new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, dbHelper.getMapper(), null));
                 }
                 // If user has not disliked the post yet
                 else {
@@ -230,21 +226,30 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                         currentNumOfLikes--;
                     }
                     commentHolder.likesCount.setText(String.valueOf(currentNumOfLikes));
-                    commentHolder.thumbsUp.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_up));
-                    commentHolder.thumbsDown.setImageDrawable(callingContext.getResources().getDrawable(R.drawable.ic_thumb_downed));
+                    commentHolder.thumbsUp.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_up));
+                    commentHolder.thumbsDown.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_downed));
                     curComment.setNumberOfLikes(currentNumOfLikes);
                     // Special UI transition case
                     if (currentNumOfLikes == 0) {
-                        commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorAccent)));
+                        commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorAccent));
                     } else if (currentNumOfLikes == -1) {
-                        commentHolder.likesCount.setTextColor(ColorStateList.valueOf(callingContext.getResources().getColor(R.color.colorRed)));
+                        commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorRed));
                     }
                     // Remove user from dislikedUsers set and add to likedUsers set
                     curComment.adddislikedUsers(curUserNickname);
                     curComment.removeLikedUsers(curUserNickname);
                     new AsyncHelpers.PushUserCommentChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, mapper, null));
+                            new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, dbHelper.getMapper(), null));
                 }
+            }
+        });
+
+        // Delete comment event
+        commentHolder.commentContainer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (curComment.getNickname().equals(curUserNickname))
+                    launchDeleteCommentDialog(curComment, commentHolder.getAdapterPosition());
             }
         });
     }
@@ -266,7 +271,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         newComment.setPostID(bundle.getString("POST_NICKNAME") + "_" + postTimeInSeconds.toString());
         newComment.setNickname(bundle.getString("CUR_USER_NICKNAME"));
         newComment.setTimeInSeconds(timeInSeconds);
-        newComment.setCognitoID(credentialsProvider.getIdentityId());
+        newComment.setCognitoID(dbHelper.getIdentityID());
         newComment.setFacebookID(bundle.getString("FACEBOOK_ID"));
         newComment.setTimeStamp(df.format(c.getTime()));
         newComment.setTextContent(commentText);
@@ -280,26 +285,88 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         new AsyncHelpers.PushPostCommentsCountToDBTask().execute(
                 new AsyncHelpers.asyncTaskObjectUserCommentBundle(
                         newComment,
-                        mapper,
+                        dbHelper.getMapper(),
                         asyncData));
         ((NewCommentActivity) callingContext).postAddCommentCleanup();
+    }
+
+    private void launchDeleteCommentDialog(final DBUserComment curComment, final int position) {
+        // First "Delete comment" dialog
+        AlertDialog.Builder dialogBuilderDelete = new AlertDialog.Builder(callingContext);
+        final View dialogViewDelete = View.inflate(callingContext, R.layout.dialog_delete, null);
+        dialogBuilderDelete.setView(dialogViewDelete);
+        TextView textViewDelete = (TextView) dialogViewDelete.findViewById(R.id.id_text_view_comment_delete_button);
+
+        // Second "Confirm delete" dialog
+        final AlertDialog.Builder dialogBuilderConfirmDelete = new AlertDialog.Builder(callingContext);
+        final View dialogViewConfirmDelete = View.inflate(callingContext, R.layout.dialog_confirm_delete, null);
+        dialogBuilderConfirmDelete.setView(dialogViewConfirmDelete);
+        dialogBuilderConfirmDelete.setTitle("Confirm Delete");
+        dialogBuilderConfirmDelete.setMessage("Are you sure you want to delete this comment?");
+        dialogBuilderConfirmDelete.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                new DeleteUserCommentDBTask().execute(position);
+                Bundle asyncData = new Bundle();
+                asyncData.putLong("POST_TIME_IN_SECONDS", ((NewCommentActivity) callingContext).getPostCommentBundleLong("TIME_IN_SECONDS"));
+                asyncData.putBoolean("INCREMENT_COMMENTS_COUNT", false);
+                new AsyncHelpers.PushPostCommentsCountToDBTask().execute(
+                        new AsyncHelpers.asyncTaskObjectUserCommentBundle(
+                                curComment,
+                                dbHelper.getMapper(),
+                                asyncData));
+                ((NewCommentActivity) callingContext).refreshAdapter();
+            }
+        });
+        dialogBuilderConfirmDelete.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {}
+        });
+
+
+        final AlertDialog deleteDialog = dialogBuilderDelete.create();
+        final AlertDialog confirmDeleteDialog = dialogBuilderConfirmDelete.create();
+
+        textViewDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deleteDialog.dismiss();
+                confirmDeleteDialog.show();
+            }
+        });
+
+        deleteDialog.show();
     }
 
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
-    private class PushNewUserCommentToDBTask extends AsyncTask<DBUserComment, Void, DBUserComment> {
+    private class PushNewUserCommentToDBTask extends AsyncTask<DBUserComment, Void, Void> {
         @Override
-        protected DBUserComment doInBackground(DBUserComment... params) {
+        protected Void doInBackground(DBUserComment... params) {
             DBUserComment newComment = params[0];
-            mapper.save(newComment);
-            return newComment;
+            dbHelper.saveDBObject(newComment);
+            comments.add(newComment);
+            return null;
         }
 
         @Override
-        protected void onPostExecute(DBUserComment newComment) {
-            comments.add(newComment);
+        protected void onPostExecute(Void v) {
             notifyItemInserted(0);
+        }
+    }
+
+    private class DeleteUserCommentDBTask extends AsyncTask<Integer, Void, Integer> {
+        @Override
+        protected Integer doInBackground(Integer... params) {
+            Integer position = params[0];
+            DBUserComment comment = comments.get(position);
+            dbHelper.deleteDBObject(comment);
+            comments.remove(position);
+            return position;
+        }
+
+        @Override
+        protected void onPostExecute(Integer position) {
+            notifyItemRemoved(position);
         }
     }
 }

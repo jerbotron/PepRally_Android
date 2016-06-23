@@ -12,7 +12,6 @@ import android.text.Editable;
 import android.text.InputFilter;
 import android.text.Spanned;
 import android.text.TextWatcher;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
@@ -24,14 +23,10 @@ import android.util.Log;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException;
-import com.amazonaws.services.dynamodbv2.model.ConditionalOperator;
-import com.amazonaws.services.dynamodbv2.model.ExpectedAttributeValue;
 import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
@@ -40,6 +35,7 @@ import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
+import com.facebook.HttpMethod;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
@@ -53,16 +49,12 @@ import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.Helpers;
 
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -77,7 +69,6 @@ public class LoginActivity extends AppCompatActivity {
     // FB Variables
     private AccessTokenTracker accessTokenTracker;
     private CallbackManager callbackManager;
-    private AccessToken currentToken;
 
     // UI Variables
     private EditText editTextNickname;
@@ -153,12 +144,11 @@ public class LoginActivity extends AppCompatActivity {
                 @Override
                 protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken newAccessToken) {
                     // When a new facebook account is used to login
-                    updateWithToken(newAccessToken);
+                    updateWithToken();
                 }
             };
 
-            currentToken = AccessToken.getCurrentAccessToken();
-            updateWithToken(currentToken);
+            updateWithToken();
         }
     }
 
@@ -216,8 +206,8 @@ public class LoginActivity extends AppCompatActivity {
         credentialProviderTask.execute();
     }
 
-    private void updateWithToken(AccessToken newAccessToken) {
-        if (newAccessToken == null) {
+    private void updateWithToken() {
+        if (AccessToken.getCurrentAccessToken() == null) {
             setupLoginScreen();
         } else {
             AWSLoginTask();
@@ -233,12 +223,15 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private void bundleFacebookData(final AccessToken accessToken) {
-        GraphRequest request = GraphRequest.newMeRequest(accessToken,
-                new GraphRequest.GraphJSONObjectCallback() {
-                    @Override
-                    public void onCompleted(JSONObject object, GraphResponse response) {
-                        Log.d(TAG, object.toString());
+    private void bundleFacebookData() {
+        GraphRequest request = new GraphRequest(
+                AccessToken.getCurrentAccessToken(),
+                "/{user-id}",
+                null,
+                HttpMethod.GET,
+                new GraphRequest.Callback() {
+                    public void onCompleted(GraphResponse response) {
+                        Log.d(TAG, response.toString());
                         String id = getFacebookDataSafely(response, "id");
                         String email = getFacebookDataSafely(response, "email");
                         String firstName = getFacebookDataSafely(response, "first_name");
@@ -270,8 +263,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onSuccess(LoginResult loginResult) {
                 Log.d(TAG, "fb login success");
-                currentToken = AccessToken.getCurrentAccessToken();
-                bundleFacebookData(loginResult.getAccessToken());
+                bundleFacebookData();
             }
 
             @Override
@@ -441,7 +433,7 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean isNewUser) {
             if (isNewUser) {
-                bundleFacebookData(currentToken);
+                bundleFacebookData();
                 showNewNicknameDialog();
             }
             else {
@@ -478,7 +470,6 @@ public class LoginActivity extends AppCompatActivity {
             String userNickname = params[0];
             Calendar c = Calendar.getInstance();
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
-//            credentialsProvider.refresh();
             DBUserProfile userProfile = mapper.load(DBUserProfile.class, userNickname);
             if (userProfile == null) {
                 userProfile = new DBUserProfile();
@@ -513,7 +504,6 @@ public class LoginActivity extends AppCompatActivity {
         DBPlayerProfile playerProfile;
         @Override
         protected Boolean doInBackground(DBUserProfile... params) {
-//            credentialsProvider.refresh();
             userProfile = params[0];
             userNickname = userProfile.getNickname();
             String gender = "M";
@@ -561,11 +551,10 @@ public class LoginActivity extends AppCompatActivity {
     private class PushNewNicknameToDBTask extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... params) {
-//            credentialsProvider.refresh();
             HashMap<String, AttributeValue> primaryKey = new HashMap<>();
             primaryKey.put("Nickname", new AttributeValue().withS(params[0]));
             primaryKey.put("CognitoID", new AttributeValue().withS(credentialsProvider.getIdentityId()));
-            primaryKey.put("FacebookID", new AttributeValue().withS(currentToken.getUserId()));
+            primaryKey.put("FacebookID", new AttributeValue().withS(AccessToken.getCurrentAccessToken().getUserId()));
             ddbClient.putItem(new PutItemRequest().withTableName("UserNicknames").withItem(primaryKey));
             return null;
         }
