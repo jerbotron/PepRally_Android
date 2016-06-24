@@ -16,7 +16,7 @@
             android:id="@+id/id_text_view_profile_edit_name_age"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="NAME, AGE"
+            android:text="@string/placeholder_profile_text_age"
             android:textSize="24sp"
             android:paddingTop="@dimen/activity_horizontal_margin"
             android:paddingLeft="@dimen/activity_horizontal_margin"
@@ -25,12 +25,11 @@
             android:id="@+id/id_text_view_profile_edit_nickname"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Nickname"
+            android:text="@string/placeholder_nickname"
             android:textSize="14sp"
             android:textColor="@android:color/tertiary_text_dark"
             android:background="@drawable/edit_text_box"
             android:backgroundTint="@color/colorBackground"
-            android:inputType="textNoSuggestions"
             android:layout_marginRight="@dimen/activity_horizontal_margin"
             android:layout_marginLeft="@dimen/activity_horizontal_margin"/>
     </LinearLayout>
@@ -44,7 +43,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Favourite Team"
+            android:text="@string/placeholder_favorite_team"
             android:textStyle="bold"
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"/>
@@ -52,7 +51,7 @@
             android:id="@+id/id_text_view_profile_edit_fav_team"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="content"
+            android:text="@string/placeholder_content"
             android:clickable="true"
             android:background="@drawable/edit_text_box"
             android:backgroundTint="@color/colorBackground"
@@ -69,7 +68,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Favourite Player"
+            android:text="@string/placeholder_favorite_player"
             android:textStyle="bold"
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"/>
@@ -77,7 +76,7 @@
             android:id="@+id/id_text_view_profile_edit_fav_player"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="content"
+            android:text="@string/placeholder_content"
             android:clickable="true"
             android:background="@drawable/edit_text_box"
             android:backgroundTint="@color/colorBackground"
@@ -94,7 +93,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Best Pep Talk"
+            android:text="@string/placeholder_pep_talk"
             android:textStyle="bold"
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"/>
@@ -102,7 +101,7 @@
             android:id="@+id/id_edit_text_profile_edit_pep_talk"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="content"
+            android:text="@string/placeholder_content"
             android:textSize="14sp"
             android:textColor="@android:color/tertiary_text_dark"
             android:background="@drawable/edit_text_box"
@@ -121,7 +120,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Best Trash Talk"
+            android:text="@string/placeholder_trash_talk"
             android:textStyle="bold"
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"/>
@@ -129,7 +128,7 @@
             android:id="@+id/id_edit_text_profile_edit_trash_talk"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="content"
+            android:text="@string/placeholder_content"
             android:textSize="14sp"
             android:textColor="@android:color/tertiary_text_dark"
             android:background="@drawable/edit_text_box"

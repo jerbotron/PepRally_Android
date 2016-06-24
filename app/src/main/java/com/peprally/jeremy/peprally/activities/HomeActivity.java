@@ -94,7 +94,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         toolbar.setTitle("Pep Rally");
         setSupportActionBar(toolbar);
 
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tablayout_home);
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.id_tablayout_home);
         assert tabLayout != null;
         tabLayout.setupWithViewPager(viewPagerHome);
 

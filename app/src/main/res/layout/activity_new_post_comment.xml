@@ -19,19 +19,14 @@
                 android:id="@+id/id_container_post_profile_time_stamp"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent">
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_alignParentTop="true">
                     <ImageView
                         android:layout_width="50dp"
                         android:layout_height="50dp"
                         android:id="@+id/id_image_view_comment_main_post_profile"
                         android:layout_marginRight="8dp"
                         android:layout_marginEnd="8dp"
-                        android:src="@drawable/img_default_profile" />
-                </LinearLayout>
+                        android:src="@drawable/img_default_profile"
+                        android:contentDescription="@string/content_description_image_view"/>
             </RelativeLayout>
             <LinearLayout
                 android:layout_width="match_parent"
@@ -49,7 +44,7 @@
                         android:layout_height="wrap_content"
                         android:textSize="12sp"
                         android:textStyle="italic"
-                        android:text="nickname" />
+                        android:text="@string/placeholder_nickname" />
                 </LinearLayout>
                 <TextView
                     android:id="@+id/id_text_view_comment_main_post_content"
@@ -76,9 +71,9 @@
                 android:layout_width="50dp"
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
-                android:text="time"
+                android:text="@string/placeholder_post_time"
                 android:textStyle="bold"
-                android:textSize="10sp"
+                android:textSize="12sp"
                 android:textColor="@color/colorPrimaryDark">
             </TextView>
             <ImageButton
@@ -87,12 +82,13 @@
                 android:layout_height="wrap_content"
                 android:src="@drawable/ic_thumb_up"
                 android:backgroundTint="@color/colorBackground"
-                android:clickable="true"/>
+                android:clickable="true"
+                android:contentDescription="@string/content_description_image_button"/>
             <TextView
                 android:id="@+id/id_text_view_comment_main_post_likes"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="0"
+                android:text="@string/placeholder_post_like_count"
                 android:textStyle="bold"
                 android:textColor="@color/colorAccent"/>
             <ImageButton
@@ -101,7 +97,8 @@
                 android:layout_height="wrap_content"
                 android:src="@drawable/ic_thumb_down"
                 android:backgroundTint="@color/colorBackground"
-                android:clickable="true"/>
+                android:clickable="true"
+                android:contentDescription="@string/content_description_image_button"/>
             <View
                 android:layout_width="0dp"
                 android:layout_height="0dp"
@@ -111,10 +108,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="0"
+                android:text="@string/placeholder_post_like_count"
                 android:textStyle="bold"
                 android:drawablePadding="4dp"
-                android:drawableRight="@drawable/ic_replies" />
+                android:drawableRight="@drawable/ic_replies"
+                android:drawableEnd="@drawable/ic_replies"/>
         </LinearLayout>
     </LinearLayout>
 
@@ -148,60 +146,56 @@
             android:layout_height="wrap_content"/>
     </LinearLayout>
 
-    <LinearLayout
+    <RelativeLayout
         android:id="@id/id_comments_text_box_container"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:orientation="horizontal"
         android:layout_alignParentBottom="true">
-        <RelativeLayout
+        <View
+            android:layout_height="0.5dp"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-            <View
-                android:layout_height="0.5dp"
-                android:layout_width="match_parent"
-                android:background="@color/colorAccentDark">
-            </View>
+            android:background="@color/colorAccentDark">
+        </View>
 
-            <LinearLayout
-                android:id="@+id/id_container_bottom_comment_row"
-                android:layout_width="match_parent"
+        <LinearLayout
+            android:id="@+id/id_container_bottom_comment_row"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+            <EditText
+                android:id="@+id/id_edit_text_new_comment"
+                android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:orientation="horizontal">
-                <EditText
-                    android:id="@+id/id_edit_text_new_comment"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginLeft="4dp"
-                    android:maxLength="200"
-                    android:inputType="text" />
-                <TextView
-                    android:id="@+id/id_text_view_comment_char_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_marginRight="4dp"
-                    android:layout_marginEnd="4dp"
-                    android:text="200"
-                    android:textSize="12sp"
-                    android:gravity="center"/>
-                <TextView
-                    android:id="@+id/id_text_view_post_new_comment_button"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:layout_weight="0"
-                    android:gravity="center"
-                    android:layout_margin="2dp"
-                    android:paddingLeft="24dp"
-                    android:paddingRight="24dp"
-                    android:text="Post"
-                    android:textStyle="bold"
-                    android:textColor="@color/colorWhite"
-                    android:background="@color/colorFABPost"
-                    android:clickable="true">
-                </TextView>
-            </LinearLayout>
-        </RelativeLayout>
-    </LinearLayout>
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:layout_marginLeft="4dp"
+                android:maxLength="200"
+                android:inputType="text" />
+            <TextView
+                android:id="@+id/id_text_view_comment_char_count"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_marginRight="4dp"
+                android:layout_marginEnd="4dp"
+                android:text="@string/new_post_char_text"
+                android:textSize="12sp"
+                android:gravity="center"/>
+            <TextView
+                android:id="@+id/id_text_view_post_new_comment_button"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="0"
+                android:gravity="center"
+                android:layout_margin="2dp"
+                android:paddingLeft="24dp"
+                android:paddingRight="24dp"
+                android:text="@string/new_post_button_text"
+                android:textStyle="bold"
+                android:textColor="@color/colorWhite"
+                android:background="@color/colorFABPost"
+                android:clickable="true">
+            </TextView>
+        </LinearLayout>
+    </RelativeLayout>
 </RelativeLayout>

@@ -12,71 +12,72 @@
         <ImageView
             android:id="@+id/new_image_post_container"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/content_description_image_view"/>
         <EditText
             android:id="@+id/id_edit_text_new_post"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="8dp"
             android:layout_marginRight="8dp"
-            android:maxLength="200">
+            android:maxLength="200"
+            android:inputType="text">
         </EditText>
     </LinearLayout>
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:orientation="horizontal"
         android:layout_alignParentBottom="true">
-        <RelativeLayout
+        <View
+            android:layout_height="0.5dp"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
-            <View
-                android:layout_height="0.5dp"
-                android:layout_width="match_parent"
-                android:background="@color/colorAccentDark">
-            </View>
+            android:background="@color/colorAccentDark">
+        </View>
 
-            <LinearLayout
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true">
+            <ImageButton
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:orientation="horizontal">
-                <ImageButton
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:src="@drawable/ic_photo"
-                    android:layout_margin="8dp"
-                    android:paddingLeft="8dp"
-                    android:paddingRight="8dp"
-                    android:background="@color/colorBackground"
-                    android:clickable="true">
-                </ImageButton>
-            </LinearLayout>
+                android:src="@drawable/ic_photo"
+                android:layout_margin="8dp"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:background="@color/colorBackground"
+                android:clickable="true"
+                android:contentDescription="@string/content_description_image_button">
+            </ImageButton>
+        </LinearLayout>
 
-            <LinearLayout
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true">
+            <TextView
+                android:id="@+id/new_post_char_count"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_alignParentRight="true">
-                <TextView
-                    android:id="@+id/new_post_char_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:text="200"
-                    android:gravity="center"
-                    android:layout_margin="8dp">
-                </TextView>
-                <Button
-                    android:id="@+id/button_new_post"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:text="Post"
-                    android:background="@color/colorPrimaryLight"
-                    android:layout_margin="8dp"
-                    android:clickable="true">
-                </Button>
-            </LinearLayout>
-
-        </RelativeLayout>
-    </LinearLayout>
+                android:text="@string/new_post_char_text"
+                android:gravity="center"
+                android:layout_margin="8dp">
+            </TextView>
+            <Button
+                android:id="@+id/button_new_post"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="@string/new_post_button_text"
+                android:background="@color/colorPrimaryLight"
+                android:layout_margin="8dp"
+                android:clickable="true">
+            </Button>
+        </LinearLayout>
+    </RelativeLayout>
 
 </RelativeLayout>

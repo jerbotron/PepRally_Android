@@ -16,12 +16,16 @@
             android:layout_height="wrap_content"
             android:id="@+id/team_card_photo"
             android:layout_alignParentLeft="true"
-            android:layout_marginRight="16dp" />
+            android:layout_alignParentStart="true"
+            android:layout_marginRight="16dp"
+            android:layout_marginEnd="16dp"
+            android:contentDescription="@string/content_description_image_view"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/team_card_name"
             android:layout_toRightOf="@+id/team_card_photo"
+            android:layout_toEndOf="@+id/team_card_photo"
             android:gravity="center"
             android:textSize="20sp"
             android:textStyle="bold"/>

@@ -65,7 +65,7 @@ public class ProfilePostsFragment extends Fragment {
         recyclerView.setLayoutManager(rvLayoutManager);
 
         noPostsText = (TextView) view.findViewById(R.id.profile_posts_empty_text);
-        postsContainer = (LinearLayout) view.findViewById(R.id.container_profile_posts);
+        postsContainer = (LinearLayout) view.findViewById(R.id.id_container_profile_posts);
         return view;
     }
 

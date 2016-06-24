@@ -24,7 +24,7 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="invalid_characters_message">Nicknames cannot contain special characters or spaces. Letters, numbers and underscores only.</string>
-    <string name="no_peprally_account_message"> has not made a PepRally profile yet. Tell your friends about PepRally!</string>
+    <string name="no_peprally_account_message">has not made a PepRally profile yet. Tell your friends about PepRally!</string>
     <string name="no_posts_message">You have not created any posts yet!</string>
     <string name="no_comments_message">No comments.</string>
     <string name="dialog_delete_message">Delete comment</string>
@@ -49,5 +49,27 @@
     <!-- Error Message Strings -->
     <string name="no_connection_text">Oops! Looks like you\'ve lost internet connection. Please check your
         connection settings and try re-open PepRally!</string>
+
+    <!-- Content Description Strings -->
+    <string name="content_description_image_view">Image View</string>
+    <string name="content_description_image_button">Image Button</string>
+
+    <!-- Place holders -->
+    <string name="new_post_char_text">200</string>
+    <string name="new_post_button_text">Post</string>
+    <string name="placeholder_nickname">nickname</string>
+    <string name="placeholder_post_time">time</string>
+    <string name="placeholder_post_like_count">0</string>
+    <string name="placeholder_profile_text_age">NAME, AGE</string>
+    <string name="placeholder_favorite_team">Favorite Team</string>
+    <string name="placeholder_favorite_player">Favorite Player</string>
+    <string name="placeholder_content">Content</string>
+    <string name="placeholder_pep_talk">Best Pep Talk</string>
+    <string name="placeholder_trash_talk">Best Trash Talk</string>
+    <string name="placeholder_sample_text">some sample text</string>
+    <string name="placeholder_first_name">First Name</string>
+    <string name="placeholder_view_profile">View Profile</string>
+    <string name="placeholder_follow">Follow</string>
+
 
 </resources>

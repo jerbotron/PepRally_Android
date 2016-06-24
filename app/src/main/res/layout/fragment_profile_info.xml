@@ -22,7 +22,7 @@
             android:id="@+id/profile_view_nickname"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Nickname"
+            android:text="@string/placeholder_nickname"
             android:textStyle="italic"
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"
@@ -38,7 +38,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Favourite Team"
+                android:text="@string/placeholder_favorite_team"
                 android:textStyle="bold"
                 android:paddingLeft="@dimen/activity_horizontal_margin"
                 android:paddingRight="@dimen/activity_horizontal_margin"/>
@@ -46,7 +46,7 @@
                 android:id="@+id/profile_view_fav_team"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="content"
+                android:text="@string/placeholder_content"
                 android:paddingLeft="@dimen/activity_horizontal_margin"
                 android:paddingRight="@dimen/activity_horizontal_margin"/>
         </LinearLayout>
@@ -61,7 +61,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Favourite Player"
+                android:text="@string/placeholder_favorite_player"
                 android:textStyle="bold"
                 android:paddingLeft="@dimen/activity_horizontal_margin"
                 android:paddingRight="@dimen/activity_horizontal_margin"/>
@@ -69,7 +69,7 @@
                 android:id="@+id/profile_view_fav_player"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="content"
+                android:text="@string/placeholder_content"
                 android:paddingLeft="@dimen/activity_horizontal_margin"
                 android:paddingRight="@dimen/activity_horizontal_margin"/>
         </LinearLayout>
@@ -85,7 +85,7 @@
                 android:id="@+id/profile_view_pep_talk_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Best Pep Talk"
+                android:text="@string/placeholder_pep_talk"
                 android:textStyle="bold"
                 android:paddingLeft="@dimen/activity_horizontal_margin"
                 android:paddingRight="@dimen/activity_horizontal_margin"/>
@@ -93,7 +93,7 @@
                 android:id="@+id/profile_view_pep_talk"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="content"
+                android:text="@string/placeholder_content"
                 android:paddingLeft="@dimen/activity_horizontal_margin"
                 android:paddingRight="@dimen/activity_horizontal_margin"/>
         </LinearLayout>
@@ -108,7 +108,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Best Trash Talk"
+                android:text="@string/placeholder_trash_talk"
                 android:textStyle="bold"
                 android:paddingLeft="@dimen/activity_horizontal_margin"
                 android:paddingRight="@dimen/activity_horizontal_margin"/>
@@ -116,7 +116,7 @@
                 android:id="@+id/profile_view_trash_talk"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="content"
+                android:text="@string/placeholder_content"
                 android:paddingLeft="@dimen/activity_horizontal_margin"
                 android:paddingRight="@dimen/activity_horizontal_margin"/>
         </LinearLayout>

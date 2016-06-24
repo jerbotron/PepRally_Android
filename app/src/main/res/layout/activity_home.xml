@@ -7,7 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="false"
-    tools:openDrawer="stop">
+    tools:openDrawer="start">
 
     <android.support.design.widget.CoordinatorLayout
         android:id="@+id/id_coordinator_layout_home_activity"
@@ -26,7 +26,7 @@
                 app:layout_scrollFlags="scroll|exitUntilCollapsed"
                 app:popupTheme="@style/AppTheme.PopupOverlay" />
             <android.support.design.widget.TabLayout
-                android:id="@+id/tablayout_home"
+                android:id="@+id/id_tablayout_home"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
         </android.support.design.widget.AppBarLayout>

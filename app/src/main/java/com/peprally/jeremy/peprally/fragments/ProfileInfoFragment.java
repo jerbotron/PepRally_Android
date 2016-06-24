@@ -2,7 +2,6 @@ package com.peprally.jeremy.peprally.fragments;
 
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.text.Html;
 import android.util.Log;
@@ -182,7 +181,7 @@ public class ProfileInfoFragment extends Fragment {
                         (int) getResources().getDimension(R.dimen.activity_vertical_margin),
                         0,
                         0);
-                tv_no_profile.setText(userProfileParcel.getFirstname() +
+                tv_no_profile.setText(userProfileParcel.getFirstname() + " " +
                         getResources().getString(R.string.no_peprally_account_message));
                 tv_no_profile.setTypeface(null, Typeface.ITALIC);
                 tv_no_profile.setLayoutParams(msg_params);
@@ -199,7 +198,7 @@ public class ProfileInfoFragment extends Fragment {
             parent_container.removeView(textViewNickname);
         }
         else {
-            textViewNickname.setText("@"+userProfileParcel.getProfileNickname());
+            textViewNickname.setText("@" + userProfileParcel.getProfileNickname());
         }
 
         if (userProfileParcel.getFavoriteTeam() == null) {

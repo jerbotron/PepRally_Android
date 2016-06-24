@@ -28,7 +28,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingTop="@dimen/nav_header_vertical_spacing"
-            android:text="First Name"
+            android:text="@string/placeholder_first_name"
             android:textSize="25sp"
             android:textStyle="bold"
             android:textColor="@color/colorWhite"
@@ -36,7 +36,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="View Profile"/>
+            android:text="@string/placeholder_view_profile"/>
     </LinearLayout>
 
 </LinearLayout>
