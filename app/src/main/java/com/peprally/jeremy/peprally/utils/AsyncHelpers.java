@@ -9,8 +9,6 @@ import com.peprally.jeremy.peprally.db_models.DBUserPost;
 
 public class AsyncHelpers {
 
-//    private static final String TAG = AsyncHelpers.class.getSimpleName();
-
     public static class asyncTaskObjectUserPostBundle {
         public DBUserPost post;
         public DynamoDBMapper mapper;

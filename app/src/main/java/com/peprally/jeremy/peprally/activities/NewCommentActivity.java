@@ -12,6 +12,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,6 +25,12 @@ import android.widget.Toast;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.CommentCardAdapter;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
@@ -32,6 +39,7 @@ import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
+import com.peprally.jeremy.peprally.utils.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
@@ -260,6 +268,11 @@ public class NewCommentActivity extends AppCompatActivity {
             if (postCommentBundle.getInt("COMMENTS_COUNT") == 0)
                 commentsContainer.removeView(noCommentsText);
             commentCardAdapter.addComment(newCommentText, bundle);
+            new HTTPRequestsHelper.requestPOSTTask().execute(
+                    new HTTPRequestsHelper.HTTPPostRequestObject(getApplicationContext(),
+                                                                 postCommentBundle.getString("POST_NICKNAME"),
+                                                                 userProfileParcel.getCurUserNickname(),
+                                                                 newCommentText));
         }
     }
 

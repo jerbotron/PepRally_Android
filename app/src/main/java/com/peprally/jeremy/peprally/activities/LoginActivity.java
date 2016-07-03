@@ -26,8 +26,6 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExp
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.PutItemRequest;
 import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
@@ -46,13 +44,15 @@ import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserNickname;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.utils.ActivityEnum;
+import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
+import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import org.json.JSONException;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -62,9 +62,7 @@ public class LoginActivity extends AppCompatActivity {
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // AWS Variables
-    private CognitoCachingCredentialsProvider credentialsProvider;
-    private AmazonDynamoDBClient ddbClient;
-    private DynamoDBMapper mapper;
+    private DynamoDBHelper dbHelper;
 
     // FB Variables
     private AccessTokenTracker accessTokenTracker;
@@ -92,6 +90,7 @@ public class LoginActivity extends AppCompatActivity {
     private static final String TAG = LoginActivity.class.getSimpleName();
     private Bundle fbDataBundle;
     private boolean connectionSecured;
+    private String FMSInstanceID;
 
     /***********************************************************************************************
      *************************************** ACTIVITY METHODS **************************************
@@ -125,30 +124,29 @@ public class LoginActivity extends AppCompatActivity {
         }
         else {
             connectionSecured = true;
-            Log.d(TAG, "----- STARTING Pep Rally -----");
+            Log.d(TAG, "----- CHECKING Google Play Services -----");
+            if (Helpers.checkGooglePlayServicesAvailable(this)) {
 
-            callbackManager = CallbackManager.Factory.create();
+                Log.d(TAG, "----- STARTING Pep Rally -----");
 
-            credentialsProvider = new CognitoCachingCredentialsProvider(
-                    LoginActivity.this,                         // Context
-                    AWSCredentialProvider.IDENTITY_POOL_ID,     // Identity Pool ID
-                    AWSCredentialProvider.COGNITO_REGION        // Region
-            );
-            ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            ddbClient.setRegion(Region.getRegion(Regions.US_EAST_1));
-            mapper = new DynamoDBMapper(ddbClient);
+                callbackManager = CallbackManager.Factory.create();
 
-            fbDataBundle = new Bundle();
+                dbHelper = new DynamoDBHelper(this);
 
-            accessTokenTracker = new AccessTokenTracker() {
-                @Override
-                protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken newAccessToken) {
-                    // When a new facebook account is used to login
-                    updateWithToken();
-                }
-            };
+                fbDataBundle = new Bundle();
 
-            updateWithToken();
+                FMSInstanceID = Helpers.getFMSInstanceID(this);
+
+                accessTokenTracker = new AccessTokenTracker() {
+                    @Override
+                    protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken newAccessToken) {
+                        // When a new facebook account is used to login
+                        updateWithToken();
+                    }
+                };
+
+                updateWithToken();
+            }
         }
     }
 
@@ -161,6 +159,12 @@ public class LoginActivity extends AppCompatActivity {
             Log.d(TAG, "No connection error, handled by login button OnClick");
             e.printStackTrace();
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Helpers.checkGooglePlayServicesAvailable(this);
     }
 
     @Override
@@ -198,9 +202,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onTaskDone(CognitoCachingCredentialsProvider credentialsProvider) {
                 new CheckIfNewUserDBTask().execute(credentialsProvider);
-                ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-                ddbClient.setRegion(Region.getRegion(Regions.US_EAST_1));
-                mapper = new DynamoDBMapper(ddbClient);
+                dbHelper.refresh(getApplicationContext());
             }
         });
         credentialProviderTask.execute();
@@ -332,7 +334,8 @@ public class LoginActivity extends AppCompatActivity {
         b.show();
     }
 
-    private void showVerifyVarsityPlayerDialog(final String userNickname, final DBPlayerProfile playerProfile) {
+    private void showVerifyVarsityPlayerDialog(final DBUserProfile userProfile,
+                                               final DBPlayerProfile playerProfile) {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         final View dialogView = View.inflate(this, R.layout.dialog_verify_varsity_player, null);
         dialogBuilder.setView(dialogView);
@@ -359,23 +362,23 @@ public class LoginActivity extends AppCompatActivity {
                 "(False confirmations will be detected and your account may be banned.)");
         dialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
-                Log.d(TAG, "yes i am");
                 playerProfile.setHasUserProfile(true);
-                playerProfile.setNickname(userNickname);
+                playerProfile.setNickname(userProfile.getNickname());
                 new PushPlayerProfileChangesToDBTask().execute(playerProfile);
+                UserProfileParcel userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
                 finish();
                 Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
-                intent.putExtra("NICKNAME", userNickname);
+                intent.putExtra("PLAYER_PROFILE_PARCEL", userProfileParcel);
                 startActivity(intent);
                 overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
             }
         });
         dialogBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
-                Log.d(TAG, "yes i am");
+                UserProfileParcel userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
                 finish();
                 Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
-                intent.putExtra("NICKNAME", userNickname);
+                intent.putExtra("PLAYER_PROFILE_PARCEL", userProfileParcel);
                 startActivity(intent);
                 overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
             }
@@ -402,6 +405,7 @@ public class LoginActivity extends AppCompatActivity {
     private class CheckIfNewUserDBTask extends AsyncTask<CognitoCachingCredentialsProvider, Void, Boolean> {
         CognitoCachingCredentialsProvider credentialsProvider;
         DBUserProfile userProfile;
+        DBPlayerProfile playerProfile;
         @Override
         protected Boolean doInBackground(CognitoCachingCredentialsProvider... params) {
             credentialsProvider = params[0];
@@ -421,8 +425,14 @@ public class LoginActivity extends AppCompatActivity {
                 return true;
             }
             else{
-                if (results.size() == 1)
+                if (results.size() == 1) {
                     userProfile = results.get(0);
+                    if (userProfile.getIsVarsityPlayer()) {
+                        playerProfile = mapper.load(DBPlayerProfile.class, userProfile.getTeam(), userProfile.getPlayerIndex());
+                    }
+//                    userProfile.setFMSInstanceID(FMSInstanceID);
+//                    dbHelper.saveDBObject(userProfile);
+                }
                 else{
                     Log.d(TAG, "Query result should have only returned single user!");
                 }
@@ -437,9 +447,10 @@ public class LoginActivity extends AppCompatActivity {
                 showNewNicknameDialog();
             }
             else {
+                UserProfileParcel userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
                 finish();
                 Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
-                intent.putExtra("NICKNAME", userProfile.getNickname());
+                intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                 startActivity(intent);
                 overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
             }
@@ -449,7 +460,8 @@ public class LoginActivity extends AppCompatActivity {
     private class CheckUniqueNicknameDBTask extends AsyncTask<String, Void, Boolean> {
         @Override
         protected Boolean doInBackground(String... params) {
-            DBUserNickname userNickname = mapper.load(DBUserNickname.class, params[0].toLowerCase());
+            // params[0] = nickname
+            DBUserNickname userNickname = dbHelper.loadDBNickname(params[0]);
             return userNickname != null;
         }
 
@@ -470,11 +482,12 @@ public class LoginActivity extends AppCompatActivity {
             String userNickname = params[0];
             Calendar c = Calendar.getInstance();
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
-            DBUserProfile userProfile = mapper.load(DBUserProfile.class, userNickname);
+            DBUserProfile userProfile = dbHelper.loadDBUserProfile(userNickname);
             if (userProfile == null) {
                 userProfile = new DBUserProfile();
                 userProfile.setNickname(userNickname);
-                userProfile.setCognitoId(credentialsProvider.getIdentityId());
+                userProfile.setCognitoId(dbHelper.getIdentityID());
+                userProfile.setFMSInstanceID(FMSInstanceID);
                 userProfile.setFacebookID(fbDataBundle.getString("ID"));
                 userProfile.setFacebookLink(fbDataBundle.getString("LINK"));
                 userProfile.setEmail(fbDataBundle.getString("EMAIL"));
@@ -484,7 +497,7 @@ public class LoginActivity extends AppCompatActivity {
                 userProfile.setBirthday(fbDataBundle.getString("BIRTHDAY"));
                 userProfile.setNewUser(true);
                 userProfile.setDateJoined(df.format(c.getTime()));
-                mapper.save(userProfile);
+                dbHelper.saveDBObject(userProfile);
                 return userProfile;
             }
             return null;
@@ -515,7 +528,7 @@ public class LoginActivity extends AppCompatActivity {
                     .withHashKeyValues(playerProfile)
                     .withConsistentRead(false);
 
-            List<DBPlayerProfile> results = mapper.query(DBPlayerProfile.class, queryExpression);
+            List<DBPlayerProfile> results = dbHelper.getMapper().query(DBPlayerProfile.class, queryExpression);
             for (DBPlayerProfile profile : results) {
                 if (profile.getFirstName().equals(userProfile.getFirstName()) &&
                         profile.getLastName().equals(userProfile.getLastName())) {
@@ -524,8 +537,8 @@ public class LoginActivity extends AppCompatActivity {
                     userProfile.setTeam(profile.getTeam());
                     userProfile.setPlayerIndex(profile.getIndex());
                     playerProfile.setHasUserProfile(true);
-                    mapper.save(userProfile);
-                    mapper.save(playerProfile);
+                    dbHelper.saveDBObject(userProfile);
+                    dbHelper.saveDBObject(playerProfile);
                     Log.d(TAG, "VARSITY PLAYER HIT");
                     return true;
                 }
@@ -536,12 +549,13 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean isVarsityPlayer) {
             if (isVarsityPlayer) {
-                showVerifyVarsityPlayerDialog(userNickname, playerProfile);
+                showVerifyVarsityPlayerDialog(userProfile, playerProfile);
             }
             else {
+                UserProfileParcel userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, null);
                 finish();
                 Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
-                intent.putExtra("NICKNAME", userNickname);
+                intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                 startActivity(intent);
                 overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
             }
@@ -551,11 +565,11 @@ public class LoginActivity extends AppCompatActivity {
     private class PushNewNicknameToDBTask extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... params) {
-            HashMap<String, AttributeValue> primaryKey = new HashMap<>();
-            primaryKey.put("Nickname", new AttributeValue().withS(params[0]));
-            primaryKey.put("CognitoID", new AttributeValue().withS(credentialsProvider.getIdentityId()));
-            primaryKey.put("FacebookID", new AttributeValue().withS(AccessToken.getCurrentAccessToken().getUserId()));
-            ddbClient.putItem(new PutItemRequest().withTableName("UserNicknames").withItem(primaryKey));
+            DBUserNickname newUserNickname = new DBUserNickname();
+            newUserNickname.setNickname(params[0]);
+            newUserNickname.setCognitoID(dbHelper.getIdentityID());
+            newUserNickname.setFacebookID(AccessToken.getCurrentAccessToken().getUserId());
+            dbHelper.saveDBObject(newUserNickname);
             return null;
         }
     }
@@ -563,7 +577,7 @@ public class LoginActivity extends AppCompatActivity {
     private class PushPlayerProfileChangesToDBTask extends AsyncTask<DBPlayerProfile, Void, Void> {
         @Override
         protected Void doInBackground(DBPlayerProfile... params) {
-            mapper.save(params[0]);
+            dbHelper.saveDBObject(params[0]);
             return null;
         }
     }

@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "508839522244",
+    "firebase_url": "https://peprally-61a77.firebaseio.com",
+    "project_id": "peprally-61a77",
+    "storage_bucket": "peprally-61a77.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:508839522244:android:a8804bebc019fa7d",
+        "android_client_info": {
+          "package_name": "com.peprally.jeremy.peprally"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "508839522244-p4pdvnv07ritud9inv62q93h8am7mhld.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.peprally.jeremy.peprally",
+            "certificate_hash": "9B2468B2F3FA8D8F654734DBFA6EC03D273292B4"
+          }
+        },
+        {
+          "client_id": "508839522244-25nplljott6vdk3ivdk0287r9vruhhuk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSqWu6OiwQ61XBhgW8cySAB4TH2WdcUYU"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "508839522244-25nplljott6vdk3ivdk0287r9vruhhuk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -3,7 +3,9 @@ package com.peprally.jeremy.peprally.utils;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
+import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 
 public class UserProfileParcel implements Parcelable {
     // Activity Data
@@ -16,6 +18,7 @@ public class UserProfileParcel implements Parcelable {
     private String profileNickname;
     private String cognitoID;
     private String facebookID;
+    private String FMSInstanceID;
     private Integer followersCount;
     private Integer followingCount;
     private Integer fistbumpsCount;
@@ -38,6 +41,47 @@ public class UserProfileParcel implements Parcelable {
     private String hometown;
     private String rosterImageURL;
     private Boolean hasUserProfile;
+
+    // LoginActivity Constructor, constructs UserProfileParcel from a UserProfile DB object
+    public UserProfileParcel(ActivityEnum currentActivity,
+                             DBUserProfile userProfile,
+                             DBPlayerProfile playerProfile) {
+        this.currentActivity = currentActivity;
+        this.curUserNickname = userProfile.getNickname();
+        this.firstname = userProfile.getFirstName();
+        this.lastname = userProfile.getLastName();
+        this.profileNickname = userProfile.getNickname();
+        this.cognitoID = userProfile.getCognitoId();
+        this.facebookID = userProfile.getFacebookID();
+        this.FMSInstanceID = userProfile.getFMSInstanceID();
+        this.followersCount = userProfile.getFollowersCount();
+        this.followingCount = userProfile.getFollowingCount();
+        this.fistbumpsCount = userProfile.getFistbumpsCount();
+        this.postsCount = userProfile.getPostsCount();
+        this.favoriteTeam = userProfile.getFavoriteTeam();
+        this.favoritePlayer = userProfile.getFavoritePlayer();
+        this.pepTalk = userProfile.getPepTalk();
+        this.trashTalk = userProfile.getTrashTalk();
+        this.isVarsityPlayer = userProfile.getIsVarsityPlayer();
+        this.isSelfProfile = true;
+
+        if (this.isVarsityPlayer && playerProfile != null) {
+            this.team = playerProfile.getTeam();
+            this.index = playerProfile.getIndex();
+            this.number = playerProfile.getNumber();
+            this.height = playerProfile.getHeight();
+            this.weight = playerProfile.getWeight();
+            this.position = playerProfile.getPosition();
+            this.hometown = playerProfile.getHometown();
+            this.rosterImageURL = playerProfile.getHometown();
+            this.hasUserProfile = true;
+        }
+        else {
+            this.index = Helpers.INTEGER_INVALID;
+            this.number = Helpers.INTEGER_INVALID;
+            this.hasUserProfile = false;
+        }
+    }
 
     // HomeActivity Constructor, only used to initialize a few required members
     public UserProfileParcel(ActivityEnum currentActivity,
@@ -128,6 +172,7 @@ public class UserProfileParcel implements Parcelable {
         this.profileNickname = in.readString();
         this.cognitoID = in.readString();
         this.facebookID = in.readString();
+        this.FMSInstanceID = in.readString();
         this.followersCount = in.readInt();
         this.followingCount = in.readInt();
         this.fistbumpsCount = in.readInt();
@@ -160,6 +205,7 @@ public class UserProfileParcel implements Parcelable {
         dest.writeString(profileNickname);
         dest.writeString(cognitoID);
         dest.writeString(facebookID);
+        dest.writeString(FMSInstanceID);
         dest.writeInt(followersCount);
         dest.writeInt(followingCount);
         dest.writeInt(fistbumpsCount);
@@ -218,6 +264,9 @@ public class UserProfileParcel implements Parcelable {
     }
     public String getCognitoID() {
         return cognitoID;
+    }
+    public String getFMSInstanceID() {
+        return FMSInstanceID;
     }
     public String getFacebookID() {
         return facebookID;
@@ -302,6 +351,9 @@ public class UserProfileParcel implements Parcelable {
     }
     public void setCognitoID(String cognitoID) {
         this.cognitoID = cognitoID;
+    }
+    public void setFMSInstanceID(String FMSInstanceID) {
+        this.FMSInstanceID = FMSInstanceID;
     }
     public void setFacebookID(String facebookID) {
         this.facebookID = facebookID;

@@ -30,11 +30,13 @@ import com.facebook.login.LoginManager;
 import com.facebook.login.widget.ProfilePictureView;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
+import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.fragments.BrowseTeamsFragment;
 import com.peprally.jeremy.peprally.fragments.TrendingFragment;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.ActivityEnum;
+import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
@@ -45,6 +47,9 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
+    // AWS Variables
+    private DynamoDBHelper dbHelper;
+
     // UI Variables
     private DrawerLayout drawer;
     private ViewPager viewPagerHome;
@@ -55,7 +60,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     // General Variables
     private static final String TAG = HomeActivity.class.getSimpleName();
     private UserProfileParcel userProfileParcel;
-    private String nickname;
 
     /***********************************************************************************************
      *************************************** ACTIVITY METHODS **************************************
@@ -72,31 +76,22 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         setContentView(R.layout.activity_home);
 
         // Initialize member variables
-        nickname = getIntent().getStringExtra("NICKNAME");
-        if (nickname == null || nickname.isEmpty()) {
-            new FetchUserNicknameDBTask().execute(fbProfile);
+        dbHelper = new DynamoDBHelper(this);
+
+        userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
+
+        if (userProfileParcel == null) {
+            new FetchUserProfileParcelTask().execute(fbProfile);
         }
         else {
-            userProfileParcel = new UserProfileParcel(ActivityEnum.HOME,
-                                                    nickname,
-                                                    fbProfile.getFirstName(),
-                                                    fbProfile.getLastName(),
-                                                    nickname,
-                                                    fbProfile.getId(),
-                                                    true);  // user is viewing self profile
             viewPagerHome = (ViewPager) findViewById(R.id.viewpager_home);
             setupViewPager(viewPagerHome);
         }
 
         // Setup UI components
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_home);
-        assert toolbar != null;
         toolbar.setTitle("Pep Rally");
         setSupportActionBar(toolbar);
-
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.id_tablayout_home);
-        assert tabLayout != null;
-        tabLayout.setupWithViewPager(viewPagerHome);
 
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout_home);
         ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(
@@ -105,7 +100,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         drawerToggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view_home);
-        assert navigationView != null;
         navigationView.setNavigationItemSelectedListener(this);
 
         // Fetch FB img_default_profile photo and first name and display them in sidebar header
@@ -121,21 +115,13 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 onNavBarHeaderClick();
             }
         });
+    }
 
-        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                viewPagerHome.setCurrentItem(tab.getPosition());
-            }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Helpers.checkGooglePlayServicesAvailable(this);
 
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-            }
-        });
     }
 
     @Override
@@ -207,7 +193,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     public void launchBrowsePlayerActivity(String team) {
         Intent intent = new Intent(HomeActivity.this, FavoritePlayerActivity.class);
         intent.putExtra("CALLING_ACTIVITY", "HomeActivity");
-        intent.putExtra("CURRENT_USER_NICKNAME", nickname);
+        intent.putExtra("CURRENT_USER_NICKNAME", userProfileParcel.getCurUserNickname());
         intent.putExtra("TEAM", team);
         startActivity(intent);
         overridePendingTransition(R.anim.right_in, R.anim.left_out);
@@ -236,46 +222,59 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         adapter.addFrag(browseTeamsFragment, "Teams");
         viewPager.setAdapter(adapter);
         viewPager.setCurrentItem(0);
+
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.id_tablayout_home);
+        tabLayout.setupWithViewPager(viewPagerHome);
+        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                viewPagerHome.setCurrentItem(tab.getPosition());
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+            }
+        });
     }
 
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
-    private class FetchUserNicknameDBTask extends AsyncTask<Profile, Void, Boolean> {
+    private class FetchUserProfileParcelTask extends AsyncTask<Profile, Void, Boolean> {
         @Override
         protected Boolean doInBackground(Profile... params) {
-            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    HomeActivity.this,                        // Context
-                    AWSCredentialProvider.IDENTITY_POOL_ID,   // Identity Pool ID
-                    AWSCredentialProvider.COGNITO_REGION      // Region
-            );
-            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            ddbClient.setRegion(Region.getRegion(Regions.US_EAST_1));
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
-
             DBUserProfile userProfile = new DBUserProfile();
-            userProfile.setCognitoId(credentialsProvider.getIdentityId());
+            DBPlayerProfile playerProfile = new DBPlayerProfile();
+            userProfile.setCognitoId(dbHelper.getIdentityID());
             DynamoDBQueryExpression<DBUserProfile> queryExpression = new DynamoDBQueryExpression<DBUserProfile>()
                     .withIndexName("CognitoID-index")
                     .withHashKeyValues(userProfile)
                     .withConsistentRead(false);
 
-            List<DBUserProfile> results = mapper.query(DBUserProfile.class, queryExpression);
+            List<DBUserProfile> results = dbHelper.getMapper().query(DBUserProfile.class, queryExpression);
             if (results == null || results.size() == 0) {
                 Log.d(TAG, "CognitoID not found: current user does not exist in database.");
             }
             else{
                 if (results.size() == 1) {
                     userProfile = results.get(0);
-                    nickname = userProfile.getNickname();
-                    Profile fbProfile = params[0];
-                    userProfileParcel = new UserProfileParcel(ActivityEnum.HOME,
-                                                            nickname,
-                                                            fbProfile.getFirstName(),
-                                                            fbProfile.getLastName(),
-                                                            nickname,
-                                                            fbProfile.getId(),
-                                                            true);  // user is viewing self profile
+                    if (userProfile.getIsVarsityPlayer()) {
+                        playerProfile = dbHelper.loadDBPlayerProfile(userProfile.getTeam(), userProfile.getPlayerIndex());
+                    }
+                    userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
+//                    nickname = userProfile.getNickname();
+//                    Profile fbProfile = params[0];
+//                    userProfileParcel = new UserProfileParcel(ActivityEnum.HOME,
+//                                                              nickname,
+//                                                              fbProfile.getFirstName(),
+//                                                              fbProfile.getLastName(),
+//                                                              nickname,
+//                                                              fbProfile.getId(),
+//                                                              true);  // user is viewing self profile
                     return true;
                 }
                 Log.d(TAG, "Query result should have only returned single user!");
@@ -285,7 +284,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
         @Override
         protected void onPostExecute(Boolean success) {
-            super.onPostExecute(success);
             if (success) {
                 viewPagerHome = (ViewPager) findViewById(R.id.viewpager_home);
                 setupViewPager(viewPagerHome);

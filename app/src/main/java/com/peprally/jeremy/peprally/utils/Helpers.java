@@ -1,15 +1,20 @@
 package com.peprally.jeremy.peprally.utils;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Rect;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.peprally.jeremy.peprally.R;
 import com.squareup.picasso.Picasso;
 
@@ -103,5 +108,45 @@ public class Helpers {
             default:
                 return "#" + number + " " + firstName + " " + lastName;
         }
+    }
+
+    public static boolean checkGooglePlayServicesAvailable(Activity callingActivity)
+    {
+        GoogleApiAvailability googleAPI = GoogleApiAvailability.getInstance();
+        final int status = googleAPI.isGooglePlayServicesAvailable(callingActivity.getApplicationContext());
+        if (status == ConnectionResult.SUCCESS)
+        {
+            FirebaseInstanceId instanceId = FirebaseInstanceId.getInstance();
+            String token = instanceId.getToken();
+            Log.d("HELPERS: ", "FMS reg token = " + token);
+            return true;
+        }
+
+        Log.e("GOOGLE_PLAY_SERVICES:", "Google Play Services not available: " + googleAPI.getErrorString(status));
+
+        if (googleAPI.isUserResolvableError(status))
+        {
+            final Dialog errorDialog = googleAPI.getErrorDialog(callingActivity, status, 1);
+            if (errorDialog != null)
+            {
+                errorDialog.show();
+            }
+        }
+
+        return false;
+    }
+
+    public static String getFMSInstanceID(Activity callingActivity)
+    {
+        GoogleApiAvailability googleAPI = GoogleApiAvailability.getInstance();
+        final int status = googleAPI.isGooglePlayServicesAvailable(callingActivity.getApplicationContext());
+        String token = null;
+        if (status == ConnectionResult.SUCCESS)
+        {
+            FirebaseInstanceId instanceId = FirebaseInstanceId.getInstance();
+            token = instanceId.getToken();
+            Log.d("HELPERS: ", "FMS reg token = " + token);
+        }
+        return token;
     }
 }

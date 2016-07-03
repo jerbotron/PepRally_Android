@@ -19,6 +19,7 @@ public class DBUserProfile {
     private String trashTalk;
     private String dateJoined;
     private String team;
+    private String FMSInstanceID;
     private int age;
     private int followers;
     private int following;
@@ -233,5 +234,14 @@ public class DBUserProfile {
 
     public void setPlayerIndex(int index) {
         this.playerIndex = index;
+    }
+
+    @DynamoDBAttribute(attributeName = "FMSInstanceID")
+    public String getFMSInstanceID() {
+        return FMSInstanceID;
+    }
+
+    public void setFMSInstanceID(String FMSInstanceID) {
+        this.FMSInstanceID = FMSInstanceID;
     }
 }

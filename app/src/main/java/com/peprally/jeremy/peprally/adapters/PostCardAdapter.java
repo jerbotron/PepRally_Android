@@ -164,8 +164,8 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                     // Clicked on another user's profile
                     else {
                         UserProfileParcel parcel = new UserProfileParcel(ActivityEnum.PROFILE,
-                                                                        curUserNickname,
-                                                                        curPost);
+                                                                         curUserNickname,
+                                                                         curPost);
                         intent.putExtra("USER_PROFILE_PARCEL", parcel);
                     }
                     callingContext.startActivity(intent);

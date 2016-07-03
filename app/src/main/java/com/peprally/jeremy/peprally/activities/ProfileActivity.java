@@ -16,6 +16,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,7 +33,9 @@ import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.fragments.ProfileEditFragment;
 import com.peprally.jeremy.peprally.fragments.ProfilePostsFragment;
 import com.peprally.jeremy.peprally.fragments.ProfileInfoFragment;
+import com.peprally.jeremy.peprally.utils.ActivityEnum;
 import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
+import com.peprally.jeremy.peprally.utils.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.ProfileViewPager;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
@@ -74,27 +77,27 @@ public class ProfileActivity extends AppCompatActivity {
         dbHelper = new DynamoDBHelper(this);
 
         userProfileParcel = getIntent().getExtras().getParcelable("USER_PROFILE_PARCEL");
-        assert userProfileParcel != null;
 
         // 3 Profile Activity cases currently:
         // - view/edit your own img_default_profile as a fan
         // - view/edit your own img_default_profile as a player
         // - view a varsity player img_default_profile
         setContentView(R.layout.activity_profile);
-        new LoadUserProfileFromDBTask().execute();
+        new FetchUserProfileFromDBTask().execute();
 
         final CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.profile_collapse_toolbar);
         final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_profile);
-        assert collapsingToolbarLayout != null && toolbar != null;
-        collapsingToolbarLayout.setTitleEnabled(false);
+        if (collapsingToolbarLayout != null) {
+            collapsingToolbarLayout.setTitleEnabled(false);
+        }
         setSupportActionBar(toolbar);
         supportActionBar = getSupportActionBar();
-        assert supportActionBar != null;
-        supportActionBar.setTitle(null);
-        supportActionBar.setDisplayHomeAsUpEnabled(true);
+        if (supportActionBar != null) {
+            supportActionBar.setTitle(null);
+            supportActionBar.setDisplayHomeAsUpEnabled(true);
+        }
 
         appBarLayout = (AppBarLayout) findViewById(R.id.profile_app_bar_layout);
-        assert appBarLayout != null;
         appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
             @Override
             public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
@@ -114,7 +117,7 @@ public class ProfileActivity extends AppCompatActivity {
         final TextView followButtonContent = (TextView) findViewById(R.id.button_follow_content);
         actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
         if (followButton != null && followButtonContent != null) {
-            // If user is viewing their own img_default_profile
+            // If user is viewing their own profile
             if (userProfileParcel.getIsSelfProfile()) {
                 followButton.setBackground(ContextCompat.getDrawable(this, R.drawable.button_view_fistbumps));
                 followButtonContent.setTextColor(ContextCompat.getColor(this, R.color.colorAccentDark));
@@ -138,7 +141,7 @@ public class ProfileActivity extends AppCompatActivity {
                     }
                 });
             }
-            // If user is viewing another user's img_default_profile
+            // If user is viewing another user's profile
             else {
                 followButton.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -239,6 +242,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
+        super.onBackPressed();
         handleBackPressed();
     }
 
@@ -407,7 +411,8 @@ public class ProfileActivity extends AppCompatActivity {
             if (userProfileParcel.getIsSelfProfile()) {
                 finish();
                 Intent intent = new Intent(this, HomeActivity.class);
-                intent.putExtra("NICKNAME", userProfileParcel.getProfileNickname());
+                userProfileParcel.setCurrentActivity(ActivityEnum.HOME);
+                intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                 startActivity(intent);
                 overridePendingTransition(R.anim.left_in, R.anim.right_out);
             }
@@ -438,7 +443,7 @@ public class ProfileActivity extends AppCompatActivity {
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
-    private class LoadUserProfileFromDBTask extends AsyncTask<Void, Void, Void> {
+    private class FetchUserProfileFromDBTask extends AsyncTask<Void, Void, Void> {
         private DBUserProfile userProfile;
         private DBPlayerProfile playerProfile;
         @Override
