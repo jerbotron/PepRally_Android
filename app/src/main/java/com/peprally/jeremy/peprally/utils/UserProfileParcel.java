@@ -21,7 +21,8 @@ public class UserProfileParcel implements Parcelable {
     private String FMSInstanceID;
     private Integer followersCount;
     private Integer followingCount;
-    private Integer fistbumpsCount;
+    private Integer sentFistbumpsCount;
+    private Integer receivedFistbumpsCount;
     private Integer postsCount;
     private String favoriteTeam;
     private String favoritePlayer;
@@ -56,7 +57,8 @@ public class UserProfileParcel implements Parcelable {
         this.FMSInstanceID = userProfile.getFMSInstanceID();
         this.followersCount = userProfile.getFollowersCount();
         this.followingCount = userProfile.getFollowingCount();
-        this.fistbumpsCount = userProfile.getFistbumpsCount();
+        this.sentFistbumpsCount = userProfile.getSentFistbumpsCount();
+        this.receivedFistbumpsCount = userProfile.getReceivedFistbumpsCount();
         this.postsCount = userProfile.getPostsCount();
         this.favoriteTeam = userProfile.getFavoriteTeam();
         this.favoritePlayer = userProfile.getFavoritePlayer();
@@ -103,7 +105,8 @@ public class UserProfileParcel implements Parcelable {
         // Initialize un-used integer members to temporary invalid value
         this.followersCount = Helpers.INTEGER_DEFAULT_COUNT;
         this.followingCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.fistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.sentFistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.receivedFistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
         this.postsCount = Helpers.INTEGER_DEFAULT_COUNT;
         this.index = Helpers.INTEGER_INVALID;
         this.number = Helpers.INTEGER_INVALID;
@@ -131,7 +134,8 @@ public class UserProfileParcel implements Parcelable {
         // Initialize integer values to invalid value
         this.followersCount = Helpers.INTEGER_DEFAULT_COUNT;
         this.followingCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.fistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.sentFistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.receivedFistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
         this.postsCount = Helpers.INTEGER_DEFAULT_COUNT;
         this.number = Helpers.INTEGER_INVALID;
         // Initialize un-used boolean members to temporary false value
@@ -154,7 +158,8 @@ public class UserProfileParcel implements Parcelable {
         // Initialize integer values to invalid value
         this.followersCount = Helpers.INTEGER_DEFAULT_COUNT;
         this.followingCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.fistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.sentFistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.receivedFistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
         this.postsCount = Helpers.INTEGER_DEFAULT_COUNT;
         this.index = Helpers.INTEGER_INVALID;
         this.number = Helpers.INTEGER_INVALID;
@@ -175,7 +180,8 @@ public class UserProfileParcel implements Parcelable {
         this.FMSInstanceID = in.readString();
         this.followersCount = in.readInt();
         this.followingCount = in.readInt();
-        this.fistbumpsCount = in.readInt();
+        this.sentFistbumpsCount = in.readInt();
+        this.receivedFistbumpsCount = in.readInt();
         this.postsCount = in.readInt();
         this.favoriteTeam = in.readString();
         this.favoritePlayer = in.readString();
@@ -208,7 +214,8 @@ public class UserProfileParcel implements Parcelable {
         dest.writeString(FMSInstanceID);
         dest.writeInt(followersCount);
         dest.writeInt(followingCount);
-        dest.writeInt(fistbumpsCount);
+        dest.writeInt(sentFistbumpsCount);
+        dest.writeInt(receivedFistbumpsCount);
         dest.writeInt(postsCount);
         dest.writeString(favoriteTeam);
         dest.writeString(favoritePlayer);
@@ -277,8 +284,11 @@ public class UserProfileParcel implements Parcelable {
     public Integer getFollowingCount() {
         return followingCount;
     }
-    public Integer getFistbumpsCount() {
-        return fistbumpsCount;
+    public Integer getSentFistbumpsCount() {
+        return sentFistbumpsCount;
+    }
+    public Integer getReceivedFistbumpsCount() {
+        return receivedFistbumpsCount;
     }
     public Integer getPostsCount() {
         return postsCount;
@@ -364,8 +374,11 @@ public class UserProfileParcel implements Parcelable {
     public void setFollowingCount(Integer followingCount) {
         this.followingCount = followingCount;
     }
-    public void setFistbumpsCount(Integer fistbumpsCount) {
-        this.fistbumpsCount = fistbumpsCount;
+    public void setSentFistbumpsCount(Integer sentFistbumpsCount) {
+        this.sentFistbumpsCount = sentFistbumpsCount;
+    }
+    public void setReceivedFistbumpsCount(Integer receivedFistbumpsCount) {
+        this.receivedFistbumpsCount = receivedFistbumpsCount;
     }
     public void setPostsCount(Integer postsCount) {
         this.postsCount = postsCount;

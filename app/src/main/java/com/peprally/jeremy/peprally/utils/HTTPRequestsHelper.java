@@ -9,9 +9,7 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.json.JSONException;
@@ -20,12 +18,10 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
-import static android.provider.ContactsContract.CommonDataKinds.Website.URL;
-
 public class HTTPRequestsHelper {
 
 //    private static final String pushServerURL = "http://peprally-push.dcif4cvzmx.us-west-2.elasticbeanstalk.com/send";
-    private static final String pushServerURL = "http://ec2-52-90-168-6.compute-1.amazonaws.com/send";
+    private static final String pushServerURL = "http://ec2-107-21-196-112.compute-1.amazonaws.com/send";
 
     public static class HTTPPostRequestObject {
         Context callingContext;
@@ -49,22 +45,6 @@ public class HTTPRequestsHelper {
             try {
                 // Instantiate the RequestQueue.
                 RequestQueue queue = Volley.newRequestQueue(params[0].callingContext);
-
-//                // Request a string response from the provided URL.
-//                StringRequest stringRequest = new StringRequest(Request.Method.POST, pushServerURL,
-//                        new Response.Listener<String>() {
-//                            @Override
-//                            public void onResponse(String response) {
-//                                Log.d("HTTPRequestHelper: ", "Response is: "+ response);
-//                            }
-//                        },
-//                        new Response.ErrorListener() {
-//                            @Override
-//                            public void onErrorResponse(VolleyError error) {
-//                                Log.d("HTTPRequestHelper: ", "That HTTP request didn't work!");
-//                                error.printStackTrace();
-//                            }
-//                        });
                 DynamoDBHelper dbHelper = new DynamoDBHelper(params[0].callingContext);
                 String receiverFMSID = dbHelper.loadDBUserProfile(params[0].receiverNickname).getFMSInstanceID();
 

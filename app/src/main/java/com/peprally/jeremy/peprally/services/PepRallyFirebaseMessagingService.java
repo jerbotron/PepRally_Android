@@ -64,7 +64,7 @@ public class PepRallyFirebaseMessagingService extends FirebaseMessagingService {
 
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.ic_fist_bump)
+                .setSmallIcon(R.drawable.logo_push)
                 .setContentTitle("PepRally")
                 .setContentText(messageBody)
                 .setAutoCancel(true)

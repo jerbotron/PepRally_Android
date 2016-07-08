@@ -8,12 +8,14 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
@@ -57,27 +59,25 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     }
 
     static class CommentHolder extends RecyclerView.ViewHolder {
-        LinearLayout commentContainer;
+        RelativeLayout commentContainer;
         CardView cardView;
         ImageView profilePhoto;
-        TextView nickname;
         TextView timeStamp;
+        TextView nickname;
         TextView postContent;
-        ImageButton thumbsUp;
-        ImageButton thumbsDown;
-        TextView likesCount;
+        TextView fistbumpButton;
+        TextView fistbumpsCount;
 
         private CommentHolder(View itemView) {
             super(itemView);
-            commentContainer = (LinearLayout) itemView.findViewById(R.id.id_container_comment_clickable);
+            commentContainer = (RelativeLayout) itemView.findViewById(R.id.id_container_comment_clickable);
             cardView = (CardView) itemView.findViewById(R.id.id_card_view_new_comment);
             profilePhoto = (ImageView) itemView.findViewById(R.id.id_image_view_comment_profile);
             nickname = (TextView) itemView.findViewById(R.id.id_text_view_comment_nickname);
             timeStamp = (TextView) itemView.findViewById(R.id.id_text_view_comment_time_stamp);
             postContent = (TextView) itemView.findViewById(R.id.id_text_view_comment_content);
-            thumbsUp = (ImageButton) itemView.findViewById(R.id.id_image_button_comment_thumbs_up);
-            thumbsDown = (ImageButton) itemView.findViewById(R.id.id_image_button_comment_thumbs_down);
-            likesCount = (TextView) itemView.findViewById(R.id.id_text_view_comment_likes);
+            fistbumpButton = (TextView) itemView.findViewById(R.id.id_button_comment_fistbump);
+            fistbumpsCount = (TextView) itemView.findViewById(R.id.id_text_view_comment_fistbumps_count);
         }
     }
 
@@ -93,31 +93,18 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         Helpers.setFacebookProfileImage(callingContext,
                                         commentHolder.profilePhoto,
                                         curComment.getFacebookID(),
-                                        4);
+                                        3);
 
-        Set<String> likedUsers = curComment.getLikedUsers();
-        Set<String> dislikedUsers = curComment.getDislikedUsers();
+        Set<String> fistbumpedUsers = curComment.getFistbumpedUsers();
 
-        if (likedUsers.contains(curUserNickname)) {
-            commentHolder.thumbsUp.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_uped));
-        }
-        else if (dislikedUsers.contains(curUserNickname)) {
-            commentHolder.thumbsDown.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_downed));
+        if (fistbumpedUsers.contains(curUserNickname)) {
+            commentHolder.fistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
         }
 
         commentHolder.nickname.setText(curComment.getNickname());
         commentHolder.postContent.setText(curComment.getTextContent());
-        int numOfLikes = curComment.getNumberOfLikes();
-        if (numOfLikes > 0) {
-            commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorGreen));
-        }
-        else if (numOfLikes == 0) {
-            commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorAccent));
-        }
-        else {
-            commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorRed));
-        }
-        commentHolder.likesCount.setText(String.valueOf(numOfLikes));
+        int fistbumpsCount = curComment.getFistbumpsCount();
+        commentHolder.fistbumpsCount.setText(String.valueOf(fistbumpsCount));
 
         long tsLong = System.currentTimeMillis()/1000;
         long timeInSeconds = tsLong - curComment.getTimeInSeconds();
@@ -141,106 +128,48 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
             commentHolder.timeStamp.setText(s);
         }
 
-        // ImageButton OnClick handlers:
-        commentHolder.thumbsUp.setOnClickListener(new View.OnClickListener() {
+        // fistbump button onClick handler:
+        commentHolder.fistbumpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int currentNumOfLikes = Integer.parseInt(commentHolder.likesCount.getText().toString());
-                Set<String> likedUsers = curComment.getLikedUsers();
-                Set<String> dislikedUsers = curComment.getDislikedUsers();
+                int fistbumpsCount = Integer.parseInt(commentHolder.fistbumpsCount.getText().toString());
+                Set<String> fistbumpedUsers = curComment.getFistbumpedUsers();
                 // If user already liked the comment
-                if (likedUsers.contains(curUserNickname)) {
-                    currentNumOfLikes--;
-                    commentHolder.likesCount.setText(String.valueOf(currentNumOfLikes));
-                    commentHolder.thumbsUp.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_up));
-                    curComment.setNumberOfLikes(currentNumOfLikes);
-                    // Special UI transition case
-                    if (currentNumOfLikes == 0) {
-                        commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorAccent));
-                    } else if (currentNumOfLikes == -1) {
-                        commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorRed));
+                if (fistbumpedUsers.contains(curUserNickname)) {
+                    fistbumpsCount--;
+                    commentHolder.fistbumpsCount.setText(String.valueOf(fistbumpsCount));
+                    commentHolder.fistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_50, 0);
+                    // remove user from fistbumpedUsers set
+                    curComment.removeFistbumpedUser(curUserNickname);
+                    dbHelper.saveDBObjectAsync(curComment);
+                    // update fistbumps counts
+                    // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
+                    if (!curComment.getNickname().equals(curUserNickname)) {
+                        // update the received fistbumps count of the main post user
+                        dbHelper.decrementUserReceivedFistbumpsCount(curComment.getNickname());
+                        // update the sent fistbumps count of the current user
+                        dbHelper.decrementUserSentFistbumpsCount(curUserNickname);
                     }
-                    // Remove user from likedUsers set
-                    curComment.removeLikedUsers(curUserNickname);
-                    new AsyncHelpers.PushUserCommentChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, dbHelper.getMapper(), null));
                 }
                 // If user has not liked the comment yet
                 else {
-                    // lose previous dislike and +1 like
-                    if (dislikedUsers.contains(curUserNickname)) {
-                        currentNumOfLikes += 2;
+                    fistbumpsCount++;
+                    commentHolder.fistbumpsCount.setText(String.valueOf(fistbumpsCount));
+                    commentHolder.fistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
+                    // add user to fistbumpedUsers set
+                    curComment.addFistbumpedUser(curUserNickname);
+                    // update fistbumps counts:
+                    // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
+                    if (!curComment.getNickname().equals(curUserNickname)) {
+                        // update the received fistbumps count of the main post user
+                        dbHelper.incrementUserReceivedFistbumpsCount(curComment.getNickname());
+                        // update the sent fistbumps count of the current user
+                        dbHelper.incrementUserSentFistbumpsCount(curUserNickname);
                     }
-                    else {
-                        currentNumOfLikes++;
-                    }
-                    commentHolder.likesCount.setText(String.valueOf(currentNumOfLikes));
-                    commentHolder.thumbsUp.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_uped));
-                    commentHolder.thumbsDown.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_down));
-                    curComment.setNumberOfLikes(currentNumOfLikes);
-                    // Special UI transition case
-                    if (currentNumOfLikes == 0) {
-                        commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorAccent));
-                    } else if (currentNumOfLikes == 1) {
-                        commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorGreen));
-                    }
-                    // Remove user from dislikedUsers set and add to likedUsers set
-                    curComment.addLikedUsers(curUserNickname);
-                    curComment.removedislikedUsers(curUserNickname);
-                    new AsyncHelpers.PushUserCommentChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, dbHelper.getMapper(), null));
                 }
-            }
-        });
-        
-        commentHolder.thumbsDown.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int currentNumOfLikes = Integer.parseInt(commentHolder.likesCount.getText().toString());
-                Set<String> likedUsers = curComment.getLikedUsers();
-                Set<String> dislikedUsers = curComment.getDislikedUsers();
-                // If user already disliked the post
-                if (dislikedUsers.contains(curUserNickname)) {
-                    currentNumOfLikes++;
-                    commentHolder.likesCount.setText(String.valueOf(currentNumOfLikes));
-                    commentHolder.thumbsDown.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_down));
-                    curComment.setNumberOfLikes(currentNumOfLikes);
-                    // Special UI transition case
-                    if (currentNumOfLikes == 0) {
-                        commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorAccent));
-                    } else if (currentNumOfLikes == 1) {
-                        commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorGreen));
-                    }
-                    // Remove user from likedUsers set
-                    curComment.removedislikedUsers(curUserNickname);
-                    new AsyncHelpers.PushUserCommentChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, dbHelper.getMapper(), null));
-                }
-                // If user has not disliked the post yet
-                else {
-                    if (likedUsers.contains(curUserNickname)) {
-                        // lose previous like and +1 dislike
-                        currentNumOfLikes -= 2;
-                    }
-                    else {
-                        currentNumOfLikes--;
-                    }
-                    commentHolder.likesCount.setText(String.valueOf(currentNumOfLikes));
-                    commentHolder.thumbsUp.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_up));
-                    commentHolder.thumbsDown.setImageDrawable(ContextCompat.getDrawable(callingContext, R.drawable.ic_thumb_downed));
-                    curComment.setNumberOfLikes(currentNumOfLikes);
-                    // Special UI transition case
-                    if (currentNumOfLikes == 0) {
-                        commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorAccent));
-                    } else if (currentNumOfLikes == -1) {
-                        commentHolder.likesCount.setTextColor(ContextCompat.getColor(callingContext, R.color.colorRed));
-                    }
-                    // Remove user from dislikedUsers set and add to likedUsers set
-                    curComment.adddislikedUsers(curUserNickname);
-                    curComment.removeLikedUsers(curUserNickname);
-                    new AsyncHelpers.PushUserCommentChangesToDBTask().execute(
-                            new AsyncHelpers.asyncTaskObjectUserCommentBundle(curComment, dbHelper.getMapper(), null));
-                }
+                // update comment fistbumps count
+                curComment.setFistbumpsCount(fistbumpsCount);
+                dbHelper.saveDBObjectAsync(curComment);
             }
         });
 
@@ -270,14 +199,14 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         Long postTimeInSeconds = ((NewCommentActivity) callingContext).getPostCommentBundleLong("TIME_IN_SECONDS");
         newComment.setPostID(bundle.getString("POST_NICKNAME") + "_" + postTimeInSeconds.toString());
         newComment.setNickname(bundle.getString("CUR_USER_NICKNAME"));
+        newComment.setPostNickname(bundle.getString("POST_NICKNAME"));
         newComment.setTimeInSeconds(timeInSeconds);
         newComment.setCognitoID(dbHelper.getIdentityID());
         newComment.setFacebookID(bundle.getString("FACEBOOK_ID"));
         newComment.setTimeStamp(df.format(c.getTime()));
         newComment.setTextContent(commentText);
-        newComment.setLikedUsers(new HashSet<>(Collections.singletonList("_")));
-        newComment.setDislikedUsers(new HashSet<>(Collections.singletonList("_")));
-        newComment.setNumberOfLikes(0);
+        newComment.setFistbumpedUsers(new HashSet<>(Collections.singletonList("_")));
+        newComment.setFistbumpsCount(0);
         new PushNewUserCommentToDBTask().execute(newComment);
         Bundle asyncData = new Bundle();
         asyncData.putLong("POST_TIME_IN_SECONDS", postTimeInSeconds);
@@ -366,6 +295,10 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
 
         @Override
         protected void onPostExecute(Integer position) {
+            if (comments.size() == 0) {
+                Log.d("comments adapter", "ASOFIHALFHLASHFI");
+                ((NewCommentActivity) callingContext).showNoCommentsText();
+            }
             notifyItemRemoved(position);
         }
     }

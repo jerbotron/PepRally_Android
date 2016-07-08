@@ -225,9 +225,9 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private void bundleFacebookData() {
+    private void bundleFacebookData(AccessToken accessToken) {
         GraphRequest request = new GraphRequest(
-                AccessToken.getCurrentAccessToken(),
+                accessToken,
                 "/{user-id}",
                 null,
                 HttpMethod.GET,
@@ -265,7 +265,8 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onSuccess(LoginResult loginResult) {
                 Log.d(TAG, "fb login success");
-                bundleFacebookData();
+//                AWSLoginTask();
+//                bundleFacebookData(loginResult.getAccessToken());
             }
 
             @Override
@@ -443,7 +444,7 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean isNewUser) {
             if (isNewUser) {
-                bundleFacebookData();
+                bundleFacebookData(AccessToken.getCurrentAccessToken());
                 showNewNicknameDialog();
             }
             else {

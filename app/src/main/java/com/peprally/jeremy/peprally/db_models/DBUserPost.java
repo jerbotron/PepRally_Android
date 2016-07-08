@@ -16,10 +16,9 @@ public class DBUserPost implements Comparable<DBUserPost>{
     private String firstname;
     private String timeStamp;
     private String textContent;
-    private int numberOfLikes;
+    private int fistbumpsCount;
     private int numberOfComments;
-    private Set<String> likedUsers;
-    private Set<String> dislikedUsers;
+    private Set<String> fistbumpedUsers;
 
     @Override
     public int compareTo(@NonNull DBUserPost another) {
@@ -98,16 +97,16 @@ public class DBUserPost implements Comparable<DBUserPost>{
         this.textContent = textContent;
     }
 
-    @DynamoDBAttribute(attributeName = "NumberOfLikes")
-    public int getNumberOfLikes() {
-        return numberOfLikes;
+    @DynamoDBAttribute(attributeName = "FistbumpsCount")
+    public int getFistbumpsCount() {
+        return fistbumpsCount;
     }
 
-    public void setNumberOfLikes(int numberOfLikes) {
-        this.numberOfLikes = numberOfLikes;
+    public void setFistbumpsCount(int fistbumpsCount) {
+        this.fistbumpsCount = fistbumpsCount;
     }
 
-    @DynamoDBAttribute(attributeName = "NumberOfComments")
+    @DynamoDBAttribute(attributeName = "CommentsCount")
     public int getNumberOfComments() {
         return numberOfComments;
     }
@@ -116,37 +115,20 @@ public class DBUserPost implements Comparable<DBUserPost>{
         this.numberOfComments = numberOfComments;
     }
 
-    @DynamoDBAttribute(attributeName = "LikedUsers")
-    public Set<String> getLikedUsers() {
-        return likedUsers;
+    @DynamoDBAttribute(attributeName = "FistbumpedUsers")
+    public Set<String> getFistbumpedUsers() {
+        return fistbumpedUsers;
     }
 
-    public void setLikedUsers(Set<String> likedUsers) {
-        this.likedUsers = likedUsers;
+    public void setFistbumpedUsers(Set<String> fistbumpedUsers) {
+        this.fistbumpedUsers = fistbumpedUsers;
     }
 
-    public void addLikedUsers(String user) {
-        likedUsers.add(user);
+    public void addFistbumpedUser(String user) {
+        fistbumpedUsers.add(user);
     }
 
-    public void removeLikedUsers(String user) {
-        likedUsers.remove(user);
-    }
-
-    @DynamoDBAttribute(attributeName = "DislikedUsers")
-    public Set<String> getDislikedUsers() {
-        return dislikedUsers;
-    }
-
-    public void setDislikedUsers(Set<String> dislikedUsers) {
-        this.dislikedUsers = dislikedUsers;
-    }
-
-    public void adddislikedUsers(String user) {
-        dislikedUsers.add(user);
-    }
-
-    public void removedislikedUsers(String user) {
-        dislikedUsers.remove(user);
+    public void removeFistbumpedUser(String user) {
+        fistbumpedUsers.remove(user);
     }
 }

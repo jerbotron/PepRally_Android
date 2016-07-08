@@ -21,11 +21,12 @@ public class DBUserProfile {
     private String team;
     private String FMSInstanceID;
     private int age;
-    private int followers;
-    private int following;
-    private int fistbumps;
-    private int playerIndex;
+    private int followersCount;
+    private int followingCount;
+    private int sentFistbumpsCount;
+    private int receivedFistbumpsCount;
     private int postsCount;
+    private int playerIndex;
     private boolean newUser;
     private boolean isVarsityPlayer;
 
@@ -128,31 +129,40 @@ public class DBUserProfile {
         this.birthday = birthday;
     }
 
-    @DynamoDBAttribute(attributeName = "Followers")
+    @DynamoDBAttribute(attributeName = "FollowersCount")
     public int getFollowersCount() {
-        return followers;
+        return followersCount;
     }
 
-    public void setFollowersCount(int followers) {
-        this.followers = followers;
+    public void setFollowersCount(int followersCount) {
+        this.followersCount = followersCount;
     }
 
-    @DynamoDBAttribute(attributeName = "Following")
+    @DynamoDBAttribute(attributeName = "FollowingCount")
     public int getFollowingCount() {
-        return following;
+        return followingCount;
     }
 
-    public void setFollowingCount(int following) {
-        this.following = following;
+    public void setFollowingCount(int followingCount) {
+        this.followingCount = followingCount;
     }
 
-    @DynamoDBAttribute(attributeName = "FistBumps")
-    public int getFistbumpsCount() {
-        return fistbumps;
+    @DynamoDBAttribute(attributeName = "SentFistbumpsCount")
+    public int getSentFistbumpsCount() {
+        return sentFistbumpsCount;
     }
 
-    public void setFistbumpsCount(int fistbumps) {
-        this.fistbumps = fistbumps;
+    public void setSentFistbumpsCount(int sentFistbumpsCount) {
+        this.sentFistbumpsCount = sentFistbumpsCount;
+    }
+
+    @DynamoDBAttribute(attributeName = "ReceivedFistbumpsCount")
+    public int getReceivedFistbumpsCount() {
+        return receivedFistbumpsCount;
+    }
+
+    public void setReceivedFistbumpsCount(int receivedFistbumpsCount) {
+        this.receivedFistbumpsCount = receivedFistbumpsCount;
     }
 
     @DynamoDBAttribute(attributeName = "PostsCount")
@@ -218,7 +228,7 @@ public class DBUserProfile {
         this.isVarsityPlayer = isVarsityPlayer;
     }
 
-    @DynamoDBIndexHashKey(globalSecondaryIndexName = "Team-index", attributeName = "Team")
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "Team-index", attributeName = "PlayerTeam")
     public String getTeam() {
         return team;
     }
@@ -227,7 +237,7 @@ public class DBUserProfile {
         this.team = team;
     }
 
-    @DynamoDBAttribute(attributeName = "Index")
+    @DynamoDBAttribute(attributeName = "PlayerIndex")
     public int getPlayerIndex() {
         return playerIndex;
     }

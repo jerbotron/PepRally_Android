@@ -17,7 +17,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -25,23 +24,18 @@ import android.widget.Toast;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.CommentCardAdapter;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
-import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +50,7 @@ public class NewCommentActivity extends AppCompatActivity {
     // UI Variables
     private RecyclerView recyclerView;
     private LinearLayout commentsContainer;
-    private TextView noCommentsText, mainPostCommentsCount, textViewCharCount;
+    private TextView textViewNoComments, mainPostCommentsCount, textViewCharCount;
     private EditText newCommentText;
 
     // AWS Variables
@@ -83,19 +77,17 @@ public class NewCommentActivity extends AppCompatActivity {
         // Set up toolbar buttons
         final ActionBar supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
-            supportActionBar.setTitle("Comments");
             supportActionBar.setDisplayHomeAsUpEnabled(true);
         }
 
         // Set up main post container
         commentsContainer = (LinearLayout) findViewById(R.id.id_container_post_comments);
-        final ImageView mainPostProfileImage = (ImageView) findViewById(R.id.id_image_view_comment_main_post_profile);
-        final TextView mainPostTimeStamp = (TextView) findViewById(R.id.id_text_view_comment_main_post_time_stamp);
+        final ImageView mainPostProfileImage = (ImageView) findViewById(R.id.id_image_view_comment_main_post);
+        final TextView mainPostTimeStamp = (TextView) findViewById(R.id.id_text_view_post_card_time_stamp);
         final TextView mainPostNickname = (TextView) findViewById(R.id.id_text_view_comment_main_post_nickname);
         final TextView mainPostTextContent = (TextView) findViewById(R.id.id_text_view_comment_main_post_content);
-        final TextView mainPostLikesCount = (TextView) findViewById(R.id.id_text_view_comment_main_post_likes);
-        mainPostCommentsCount = (TextView) findViewById(R.id.id_text_view_comment_main_post_comments);
-        noCommentsText = (TextView) findViewById(R.id.id_text_view_post_empty_comments_text);
+        mainPostCommentsCount = (TextView) findViewById(R.id.id_text_view_post_card_comments_count);
+        textViewNoComments = (TextView) findViewById(R.id.id_text_view_post_empty_comments_text);
         newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
         textViewCharCount = (TextView) findViewById(R.id.id_text_view_comment_char_count);
         final TextView postCommentButton = (TextView) findViewById(R.id.id_text_view_post_new_comment_button);
@@ -110,9 +102,9 @@ public class NewCommentActivity extends AppCompatActivity {
 
         // Display Post Info Correctly
         if (postCommentBundle.getInt("COMMENTS_COUNT") <= 0) {
-            noCommentsText.setText(getResources().getString(R.string.no_comments_message));
+            textViewNoComments.setText(getResources().getString(R.string.no_comments_message));
         } else {
-            commentsContainer.removeView(noCommentsText);
+            commentsContainer.removeView(textViewNoComments);
             new FetchPostCommentsDBTask().execute(postCommentBundle.getString("POST_ID"));
         }
 
@@ -142,17 +134,9 @@ public class NewCommentActivity extends AppCompatActivity {
             }
         }
 
-        if (mainPostNickname != null && mainPostTextContent != null && mainPostLikesCount != null
-                && postCommentButton != null) {
-            int likesCount = postCommentBundle.getInt("LIKES_COUNT");
+        if (mainPostNickname != null && mainPostTextContent != null && postCommentButton != null) {
             mainPostNickname.setText(postCommentBundle.getString("POST_NICKNAME"));
             mainPostTextContent.setText(postCommentBundle.getString("TEXT_CONTENT"));
-            mainPostCommentsCount.setText(String.valueOf(postCommentBundle.getInt("COMMENTS_COUNT")));
-            mainPostLikesCount.setText(String.valueOf(likesCount));
-            if (likesCount > 0)
-                mainPostLikesCount.setTextColor(ContextCompat.getColor(this, R.color.colorGreen));
-            else if (likesCount < 0)
-                mainPostLikesCount.setTextColor(ContextCompat.getColor(this, R.color.colorRed));
 
             // Post Button onClick handler
             postCommentButton.setOnClickListener(new View.OnClickListener() {
@@ -266,13 +250,13 @@ public class NewCommentActivity extends AppCompatActivity {
                 initializeAdapter(null);
             // Checks is this post is the first user comment
             if (postCommentBundle.getInt("COMMENTS_COUNT") == 0)
-                commentsContainer.removeView(noCommentsText);
+                commentsContainer.removeView(textViewNoComments);
             commentCardAdapter.addComment(newCommentText, bundle);
-            new HTTPRequestsHelper.requestPOSTTask().execute(
-                    new HTTPRequestsHelper.HTTPPostRequestObject(getApplicationContext(),
-                                                                 postCommentBundle.getString("POST_NICKNAME"),
-                                                                 userProfileParcel.getCurUserNickname(),
-                                                                 newCommentText));
+//            new HTTPRequestsHelper.requestPOSTTask().execute(
+//                    new HTTPRequestsHelper.HTTPPostRequestObject(getApplicationContext(),
+//                                                                 postCommentBundle.getString("POST_NICKNAME"),
+//                                                                 userProfileParcel.getCurUserNickname(),
+//                                                                 newCommentText));
         }
     }
 
@@ -295,6 +279,7 @@ public class NewCommentActivity extends AppCompatActivity {
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
     public void refreshAdapter() {
+        Log.d("NEW COMMENT ACTIVITY", "refreshing adapter");
         new FetchUserPostDBTask().execute(postCommentBundle);
         new FetchPostCommentsDBTask().execute(postCommentBundle.getString("POST_ID"));
     }
@@ -306,120 +291,75 @@ public class NewCommentActivity extends AppCompatActivity {
         Helpers.hideSoftKeyboard(this, newCommentText);
     }
 
+    public void showNoCommentsText() {
+        commentsContainer.addView(textViewNoComments);
+    }
+
     private void refreshMainPostData(final DBUserPost userPost) {
-        final ImageButton mainPostThumbsUp = (ImageButton) findViewById(R.id.id_image_button_comment_main_post_thumbs_up);
-        final ImageButton mainPostThumbsDown = (ImageButton) findViewById(R.id.id_image_button_comment_main_post_thumbs_down);
-        final TextView mainPostLikesCount = (TextView) findViewById(R.id.id_text_view_comment_main_post_likes);
+        final TextView mainPostFistbump = (TextView) findViewById(R.id.id_button_comment_main_post_fistbump);
+        final TextView mainPostFistbumpsCount = (TextView) findViewById(R.id.id_text_view_post_card_fistbumps_count);
 
         final String userNickname = userProfileParcel.getCurUserNickname();
 
-        // Update comments count
-        mainPostCommentsCount.setText(String.valueOf(userPost.getNumberOfComments()));
+        // Setup button views and onClick handling callbacks:
+        if (mainPostFistbump != null && mainPostFistbumpsCount != null) {
 
-        // Display thumbs up/down icons:
-        if (userPost.getLikedUsers().contains(userNickname) && mainPostThumbsUp != null)
-            mainPostThumbsUp.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_thumb_uped));
-        else if (userPost.getDislikedUsers().contains(userNickname) && mainPostThumbsDown != null)
-            mainPostThumbsDown.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_thumb_downed));
+            // Update fistbumps/comments count
+            mainPostFistbumpsCount.setText(String.valueOf(userPost.getFistbumpsCount()));
+            mainPostCommentsCount.setText(String.valueOf(userPost.getNumberOfComments()));
 
-        // Button Click Events:
-        if (mainPostLikesCount != null && mainPostThumbsUp != null &&
-                mainPostThumbsDown != null) {
-            mainPostThumbsUp.setOnClickListener(new View.OnClickListener() {
+            // if user already liked the post
+            if (userPost.getFistbumpedUsers().contains(userNickname)) {
+                mainPostFistbump.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
+                mainPostFistbumpsCount.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_fistbump_filled_20, 0, 0, 0);
+            }
+
+            mainPostFistbump.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    int currentNumOfLikes = Integer.parseInt(mainPostLikesCount.getText().toString());
-                    Set<String> likedUsers = userPost.getLikedUsers();
-                    Set<String> dislikedUsers = userPost.getDislikedUsers();
-                    // If user already liked the post
-                    if (likedUsers.contains(userNickname)) {
-                        currentNumOfLikes -= 1;
-                        mainPostLikesCount.setText(String.valueOf(currentNumOfLikes));
-                        mainPostThumbsUp.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_thumb_up));
-                        userPost.setNumberOfLikes(currentNumOfLikes);
-                        // Special transition cases
-                        if (currentNumOfLikes == 0) {
-                            mainPostLikesCount.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent));
-                        } else if (currentNumOfLikes == -1) {
-                            mainPostLikesCount.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorRed));
+                    int fistbumpsCount = Integer.parseInt(mainPostFistbumpsCount.getText().toString());
+                    Set<String> fistbumpedUsers = userPost.getFistbumpedUsers();
+                    // if user already liked the post
+                    if (fistbumpedUsers.contains(userNickname)) {
+                        fistbumpsCount -= 1;
+                        mainPostFistbumpsCount.setText(String.valueOf(fistbumpsCount));
+                        mainPostFistbump.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_50, 0);
+                        mainPostFistbumpsCount.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_fistbump_20, 0, 0, 0);
+
+                        // remove user from fistbumpedUsers set
+                        userPost.removeFistbumpedUser(userNickname);
+
+                        // update user fistbumps counts:
+                        // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
+                        if (!userPost.getNickname().equals(userProfileParcel.getCurUserNickname())) {
+                            // update the received fistbumps count of the main post user
+                            dbHelper.decrementUserReceivedFistbumpsCount(userPost.getNickname());
+                            // update the sent fistbumps count of the current user
+                            dbHelper.decrementUserSentFistbumpsCount(userProfileParcel.getCurUserNickname());
                         }
-                        // Remove user from likedUsers set
-                        userPost.removeLikedUsers(userNickname);
-                        new AsyncHelpers.PushUserPostChangesToDBTask().execute(
-                                new AsyncHelpers.asyncTaskObjectUserPostBundle(userPost, dbHelper.getMapper(), null, null));
                     }
                     // If user has not liked the post yet
                     else {
-                        // lose previous dislike and +1 like
-                        if (dislikedUsers.contains(userNickname)) {
-                            currentNumOfLikes += 2;
-                        } else {
-                            currentNumOfLikes += 1;
-                        }
-                        mainPostLikesCount.setText(String.valueOf(currentNumOfLikes));
-                        mainPostThumbsUp.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_thumb_uped));
-                        mainPostThumbsDown.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_thumb_down));
-                        userPost.setNumberOfLikes(currentNumOfLikes);
-                        if (currentNumOfLikes == 0) {
-                            mainPostLikesCount.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent));
-                        } else if (currentNumOfLikes == 1) {
-                            mainPostLikesCount.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorGreen));
-                        }
-                        // Remove user from dislikedUsers set and add to likedUsers set
-                        userPost.addLikedUsers(userNickname);
-                        userPost.removedislikedUsers(userNickname);
-                        new AsyncHelpers.PushUserPostChangesToDBTask().execute(
-                                new AsyncHelpers.asyncTaskObjectUserPostBundle(userPost, dbHelper.getMapper(), null, null));
-                    }
-                }
-            });
+                        fistbumpsCount += 1;
+                        mainPostFistbumpsCount.setText(String.valueOf(fistbumpsCount));
+                        mainPostFistbump.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
+                        mainPostFistbumpsCount.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_fistbump_filled_20, 0, 0, 0);
 
-            mainPostThumbsDown.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    int currentNumOfLikes = Integer.parseInt(mainPostLikesCount.getText().toString());
-                    Set<String> likedUsers = userPost.getLikedUsers();
-                    Set<String> dislikedUsers = userPost.getDislikedUsers();
-                    // If user already disliked the post
-                    if (dislikedUsers.contains(userNickname)) {
-                        currentNumOfLikes += 1;
-                        mainPostLikesCount.setText(String.valueOf(currentNumOfLikes));
-                        mainPostThumbsDown.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_thumb_down));
-                        userPost.setNumberOfLikes(currentNumOfLikes);
-                        // Special transition cases
-                        if (currentNumOfLikes == 0) {
-                            mainPostLikesCount.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent));
-                        } else if (currentNumOfLikes == 1) {
-                            mainPostLikesCount.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorGreen));
+                        // add user to fistbumpedUsers set
+                        userPost.addFistbumpedUser(userNickname);
+
+                        // update user fistbumps counts:
+                        // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
+                        if (!userPost.getNickname().equals(userProfileParcel.getCurUserNickname())) {
+                            // update the received fistbumps count of the main post user
+                            dbHelper.incrementUserReceivedFistbumpsCount(userPost.getNickname());
+                            // update the sent fistbumps count of the current user
+                            dbHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUserNickname());
                         }
-                        // Remove user from likedUsers set
-                        userPost.removedislikedUsers(userNickname);
-                        new AsyncHelpers.PushUserPostChangesToDBTask().execute(
-                                new AsyncHelpers.asyncTaskObjectUserPostBundle(userPost, dbHelper.getMapper(), null, null));
                     }
-                    // If user has not disliked the post yet
-                    else {
-                        if (likedUsers.contains(userNickname)) {
-                            // lose previous like and +1 dislike
-                            currentNumOfLikes -= 2;
-                        } else {
-                            currentNumOfLikes -= 1;
-                        }
-                        mainPostLikesCount.setText(String.valueOf(currentNumOfLikes));
-                        mainPostThumbsUp.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_thumb_up));
-                        mainPostThumbsDown.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_thumb_downed));
-                        userPost.setNumberOfLikes(currentNumOfLikes);
-                        if (currentNumOfLikes == 0) {
-                            mainPostLikesCount.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorAccent));
-                        } else if (currentNumOfLikes == -1) {
-                            mainPostLikesCount.setTextColor(ContextCompat.getColor(getApplicationContext(), R.color.colorRed));
-                        }
-                        // Remove user from dislikedUsers set and add to likedUsers set
-                        userPost.adddislikedUsers(userNickname);
-                        userPost.removeLikedUsers(userNickname);
-                        new AsyncHelpers.PushUserPostChangesToDBTask().execute(
-                                new AsyncHelpers.asyncTaskObjectUserPostBundle(userPost, dbHelper.getMapper(), null, null));
-                    }
+                    // update post fistbumps count
+                    userPost.setFistbumpsCount(fistbumpsCount);
+                    dbHelper.saveDBObjectAsync(userPost);
                 }
             });
         }

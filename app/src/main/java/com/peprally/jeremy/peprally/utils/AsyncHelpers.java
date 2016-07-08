@@ -9,22 +9,6 @@ import com.peprally.jeremy.peprally.db_models.DBUserPost;
 
 public class AsyncHelpers {
 
-    public static class asyncTaskObjectUserPostBundle {
-        public DBUserPost post;
-        public DynamoDBMapper mapper;
-        public UserProfileParcel parcel;
-        public Bundle data;
-        public asyncTaskObjectUserPostBundle(DBUserPost post,
-                                             DynamoDBMapper mapper,
-                                             UserProfileParcel parcel,
-                                             Bundle data) {
-            this.post = post;
-            this.mapper = mapper;
-            this.parcel = parcel;
-            this.data = data;
-        }
-    }
-
     public static class asyncTaskObjectUserCommentBundle {
         public DBUserComment comment;
         public DynamoDBMapper mapper;
@@ -39,23 +23,6 @@ public class AsyncHelpers {
     }
 
     /********************************** AsyncTasks **********************************/
-
-    public static class PushUserPostChangesToDBTask extends AsyncTask<asyncTaskObjectUserPostBundle, Void, Void> {
-        @Override
-        protected Void doInBackground(asyncTaskObjectUserPostBundle... params) {
-            params[0].mapper.save(params[0].post);
-            return null;
-        }
-    }
-
-    public static class PushUserCommentChangesToDBTask extends AsyncTask<asyncTaskObjectUserCommentBundle, Void, Void> {
-        @Override
-        protected Void doInBackground(asyncTaskObjectUserCommentBundle... params) {
-            params[0].mapper.save(params[0].comment);
-            return null;
-        }
-    }
-
     public static class PushPostCommentsCountToDBTask extends AsyncTask<asyncTaskObjectUserCommentBundle, Void, Void> {
         private DBUserPost userPost;
         private DynamoDBMapper mapper;

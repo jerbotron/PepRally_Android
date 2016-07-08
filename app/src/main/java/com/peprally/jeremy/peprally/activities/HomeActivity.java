@@ -12,17 +12,13 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.Profile;
@@ -34,7 +30,6 @@ import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.fragments.BrowseTeamsFragment;
 import com.peprally.jeremy.peprally.fragments.TrendingFragment;
-import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.ActivityEnum;
 import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
@@ -84,13 +79,13 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             new FetchUserProfileParcelTask().execute(fbProfile);
         }
         else {
-            viewPagerHome = (ViewPager) findViewById(R.id.viewpager_home);
+            viewPagerHome = (ViewPager) findViewById(R.id.id_viewpager_home);
             setupViewPager(viewPagerHome);
         }
 
         // Setup UI components
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_home);
-        toolbar.setTitle("Pep Rally");
+        Toolbar toolbar = (Toolbar) findViewById(R.id.id_toolbar_home);
+        toolbar.setTitle("PepRally");
         setSupportActionBar(toolbar);
 
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout_home);
@@ -99,7 +94,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         drawer.addDrawerListener(drawerToggle);
         drawerToggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view_home);
+        NavigationView navigationView = (NavigationView) findViewById(R.id.id_nav_view_home);
         navigationView.setNavigationItemSelectedListener(this);
 
         // Fetch FB img_default_profile photo and first name and display them in sidebar header
@@ -115,6 +110,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 onNavBarHeaderClick();
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main_toolbar, menu);
+        return true;
     }
 
     @Override
@@ -224,21 +225,23 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         viewPager.setCurrentItem(0);
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.id_tablayout_home);
-        tabLayout.setupWithViewPager(viewPagerHome);
-        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                viewPagerHome.setCurrentItem(tab.getPosition());
-            }
+        if (tabLayout != null) {
+            tabLayout.setupWithViewPager(viewPagerHome);
+            tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+                @Override
+                public void onTabSelected(TabLayout.Tab tab) {
+                    viewPagerHome.setCurrentItem(tab.getPosition());
+                }
 
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-            }
+                @Override
+                public void onTabUnselected(TabLayout.Tab tab) {
+                }
 
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-            }
-        });
+                @Override
+                public void onTabReselected(TabLayout.Tab tab) {
+                }
+            });
+        }
     }
 
     /***********************************************************************************************
@@ -285,7 +288,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         @Override
         protected void onPostExecute(Boolean success) {
             if (success) {
-                viewPagerHome = (ViewPager) findViewById(R.id.viewpager_home);
+                viewPagerHome = (ViewPager) findViewById(R.id.id_viewpager_home);
                 setupViewPager(viewPagerHome);
             }
         }

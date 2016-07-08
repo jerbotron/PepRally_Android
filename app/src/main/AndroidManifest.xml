@@ -52,11 +52,13 @@
         <activity
             android:name=".activities.NewPostActivity"
             android:screenOrientation="portrait"
+            android:label="@string/new_post_activity_label"
             android:theme="@style/NewPostTheme"
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".activities.NewCommentActivity"
             android:screenOrientation="portrait"
+            android:label="@string/new_comment_activity_label"
             android:windowSoftInputMode="adjustResize" />
 
         <provider

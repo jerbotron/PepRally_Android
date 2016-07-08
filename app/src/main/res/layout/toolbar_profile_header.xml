@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/layout_profile"
+    android:id="@+id/id_container_profile_header"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="@dimen/activity_vertical_margin"
     android:orientation="horizontal"
-    android:background="@color/colorPrimary">
+    android:background="@color/colorPrimaryDark"
+    android:layout_marginTop="?attr/actionBarSize">
     <ImageView
         android:id="@+id/id_image_view_profile_image"
         android:layout_width="128dp"
         android:layout_height="128dp"
         android:layout_gravity="start"
-        android:background="@color/colorPrimaryDark"
+        android:background="@color/colorBackground"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
         android:contentDescription="@string/content_description_image_view"/>
     <LinearLayout
         android:id="@+id/profile_header_info"
@@ -19,6 +22,16 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="top|center">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/id_fistbumps"
+            android:drawableEnd="@drawable/ic_fistbumps"
+            android:drawableRight="@drawable/ic_fistbumps"
+            android:drawablePadding="4dp"
+            android:text="@string/profile_fist_bumps"
+            android:gravity="center_vertical"
+            android:textColor="@color/colorWhite"/>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -29,9 +42,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/profile_followers"
-                android:gravity="center"
-                android:text="@string/profile_followers"
+                android:id="@+id/id_fistbumps_sent"
+                android:text="@string/fistbumps_sent"
                 android:textColor="@color/colorWhite"/>
             <View
                 android:layout_width="1dp"
@@ -42,23 +54,23 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/profile_following"
-                android:gravity="center"
-                android:text="@string/profile_following"
+                android:id="@+id/id_fistbumps_received"
+                android:text="@string/fistbumps_received"
                 android:textColor="@color/colorWhite"/>
+
         </LinearLayout>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/profile_fist_bumps"
+            android:id="@+id/id_profile_posts_count"
             android:paddingTop="4dp"
             android:paddingBottom="8dp"
             android:drawablePadding="4dp"
             android:gravity="center"
-            android:text="@string/profile_fist_bumps"
-            android:textColor="@color/colorWhite"/>
+            android:text="@string/profile_posts"
+            android:textColor="@color/colorWhite" />
         <LinearLayout
-            android:id="@+id/button_follow_wrapper"
+            android:id="@+id/id_button_edit_profile_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -71,16 +83,16 @@
             android:layout_marginRight="8dp"
             android:layout_marginEnd="8dp">
             <TextView
-                android:id="@+id/button_follow_content"
+                android:id="@+id/id_button_edit_profile_content"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:drawableLeft="@drawable/ic_follow"
-                android:drawableStart="@drawable/ic_follow"
-                android:text="@string/placeholder_follow"
+                android:drawableRight="@drawable/ic_edit"
+                android:drawableEnd="@drawable/ic_edit"
+                android:text="@string/placeholder_edit_profile"
                 android:textSize="12sp"
                 android:drawablePadding="8dp"
                 android:textColor="@color/colorPrimary"
-                android:gravity="center"/>
+                android:gravity="center" />
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

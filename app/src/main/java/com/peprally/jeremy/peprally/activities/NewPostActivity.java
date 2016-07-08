@@ -44,7 +44,6 @@ public class NewPostActivity extends AppCompatActivity {
 
         ActionBar supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
-            supportActionBar.setTitle("New Post");
             supportActionBar.setDisplayHomeAsUpEnabled(true);
         }
 

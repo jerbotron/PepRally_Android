@@ -2,6 +2,7 @@ package com.peprally.jeremy.peprally.activities;
 
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.content.res.TypedArray;
 import android.os.AsyncTask;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
@@ -17,6 +18,7 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -35,7 +37,6 @@ import com.peprally.jeremy.peprally.fragments.ProfilePostsFragment;
 import com.peprally.jeremy.peprally.fragments.ProfileInfoFragment;
 import com.peprally.jeremy.peprally.utils.ActivityEnum;
 import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
-import com.peprally.jeremy.peprally.utils.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.ProfileViewPager;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
@@ -55,7 +56,8 @@ public class ProfileActivity extends AppCompatActivity {
     private FloatingActionButton actionFAB;
     private ProfilePostsFragment postsFragment;
     private ProfileEditFragment editFragment;
-    private MenuItem editMenuItem;
+    private MenuItem menuItemChat;
+    private MenuItem menuItemNotification;
     private TabLayout tabLayout;
     private ViewPager viewPagerProfile;
     private ProfileViewPagerAdapter adapter;
@@ -63,8 +65,7 @@ public class ProfileActivity extends AppCompatActivity {
     // General Variables
     private static UserProfileParcel userProfileParcel;
 
-//    private static final String TAG = ProfileActivity.class.getSimpleName();
-    private boolean following = false;  // TODO: TEMP FLAG, REMOVE ONCE FOLLOW FEATURE IS IMPLEMENTED
+    private static final String TAG = ProfileActivity.class.getSimpleName();
     private boolean editMode = false;
 
     /***********************************************************************************************
@@ -79,25 +80,22 @@ public class ProfileActivity extends AppCompatActivity {
         userProfileParcel = getIntent().getExtras().getParcelable("USER_PROFILE_PARCEL");
 
         // 3 Profile Activity cases currently:
-        // - view/edit your own img_default_profile as a fan
-        // - view/edit your own img_default_profile as a player
-        // - view a varsity player img_default_profile
+        // - view/edit your own profile as a fan
+        // - view/edit your own profile as a player
+        // - view a varsity player profile
         setContentView(R.layout.activity_profile);
         new FetchUserProfileFromDBTask().execute();
 
-        final CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.profile_collapse_toolbar);
-        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_profile);
-        if (collapsingToolbarLayout != null) {
-            collapsingToolbarLayout.setTitleEnabled(false);
-        }
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.id_toolbar_profile);
         setSupportActionBar(toolbar);
         supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
             supportActionBar.setTitle(null);
             supportActionBar.setDisplayHomeAsUpEnabled(true);
         }
+        fixProfileHeaderMarginTop();
 
-        appBarLayout = (AppBarLayout) findViewById(R.id.profile_app_bar_layout);
+        appBarLayout = (AppBarLayout) findViewById(R.id.id_profile_appbar_layout);
         appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
             @Override
             public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
@@ -113,25 +111,44 @@ public class ProfileActivity extends AppCompatActivity {
         });
 
         // Follow Button and FAB
-        final LinearLayout followButton = (LinearLayout) findViewById(R.id.button_follow_wrapper);
-        final TextView followButtonContent = (TextView) findViewById(R.id.button_follow_content);
+        final LinearLayout buttonEditProfile = (LinearLayout) findViewById(R.id.id_button_edit_profile_container);
+        final TextView buttonEditProfileContent = (TextView) findViewById(R.id.id_button_edit_profile_content);
         actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
-        if (followButton != null && followButtonContent != null) {
+        if (buttonEditProfile != null && buttonEditProfileContent != null) {
             // If user is viewing their own profile
             if (userProfileParcel.getIsSelfProfile()) {
-                followButton.setBackground(ContextCompat.getDrawable(this, R.drawable.button_view_fistbumps));
-                followButtonContent.setTextColor(ContextCompat.getColor(this, R.color.colorAccentDark));
-                followButtonContent.setText(Html.fromHtml("<b>VIEW FISTBUMPS</b>"));
-                followButtonContent.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
-                followButton.setOnClickListener(new View.OnClickListener() {
+//                buttonEditProfile.setBackground(ContextCompat.getDrawable(this, R.drawable.button_view_fistbumps));
+//                buttonEditProfileContent.setTextColor(ContextCompat.getColor(this, R.color.colorAccentDark));
+//                buttonEditProfileContent.setText(getResources().getString(R.string.placeholder_edit_profile));
+//                buttonEditProfileContent.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+                buttonEditProfile.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Toast.makeText(ProfileActivity.this, "VIEW FISTBUMPS", Toast.LENGTH_SHORT).show();
+                        if (!editMode) {
+                            // Switch Fragment to editFragment
+                            appBarLayout.setExpanded(false, false);
+                            tabLayout.setVisibility(View.GONE);
+                            actionFAB.setVisibility(View.INVISIBLE);
+                            adapter.addFrag(editFragment, "Edit Profile");
+                            adapter.attachFrag(2);
+                            adapter.notifyDataSetChanged();
+                            viewPagerProfile.setCurrentItem(2);
+                            ((ProfileViewPager) viewPagerProfile).setAllowedSwipeDirection(ProfileViewPager.SwipeDirection.none);
+
+                            // Change Actionbar title
+                            supportActionBar.setTitle("Edit Profile");
+
+                            // Hide Toolbar Icons
+                            menuItemChat.setVisible(false);
+                            menuItemChat.setEnabled(false);
+                            menuItemNotification.setVisible(false);
+                            menuItemNotification.setEnabled(false);
+                            editMode = true;
+                        }
                     }
                 });
 
-                actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_post_msg));
-                actionFAB.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.colorFABPost)));
+                actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_new_post));
                 actionFAB.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -143,28 +160,27 @@ public class ProfileActivity extends AppCompatActivity {
             }
             // If user is viewing another user's profile
             else {
-                followButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (following) {
-                            followButton.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_follow));
-                            followButtonContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorPrimary));
-                            followButtonContent.setText(R.string.profile_follow_text);
-                            followButtonContent.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_follow, 0, 0, 0);
-                            following = false;
-                        }
-                        else {
-                            followButton.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_following));
-                            followButtonContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorWhite));
-                            followButtonContent.setText(R.string.profile_following_text);
-                            followButtonContent.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_followed, 0, 0, 0);
-                            following = true;
-                        }
-                    }
-                });
+//                buttonEditProfile.setOnClickListener(new View.OnClickListener() {
+//                    @Override
+//                    public void onClick(View v) {
+//                        if (following) {
+//                            buttonEditProfile.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_follow));
+//                            buttonEditProfileContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorPrimary));
+//                            buttonEditProfileContent.setText(R.string.profile_follow_text);
+//                            buttonEditProfileContent.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_follow, 0, 0, 0);
+//                            following = false;
+//                        }
+//                        else {
+//                            buttonEditProfile.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_following));
+//                            buttonEditProfileContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorWhite));
+//                            buttonEditProfileContent.setText(R.string.profile_following_text);
+//                            buttonEditProfileContent.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_followed, 0, 0, 0);
+//                            following = true;
+//                        }
+//                    }
+//                });
 
-                actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_fist_bump));
-                actionFAB.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.colorFABFistbump)));
+                actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_fistbump_50_white));
                 actionFAB.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -177,9 +193,12 @@ public class ProfileActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_edit_profile, menu);
+        getMenuInflater().inflate(R.menu.menu_main_toolbar, menu);
+        menuItemChat = menu.findItem(R.id.id_item_chat);
+        menuItemNotification = menu.findItem(R.id.id_item_notifications);
         if (!userProfileParcel.getIsSelfProfile()) {
-            menu.findItem(R.id.id_item_edit_profile).setVisible(false);
+            menuItemChat.setVisible(false);
+            menuItemNotification.setVisible(false);
         }
         return true;
     }
@@ -190,27 +209,9 @@ public class ProfileActivity extends AppCompatActivity {
             case android.R.id.home:
                 handleBackPressed();
                 return true;
-            case R.id.id_item_edit_profile:
-                if (!editMode) {
-                    // Switch Fragment to editFragment
-                    appBarLayout.setExpanded(false, false);
-                    tabLayout.setVisibility(View.GONE);
-                    actionFAB.setVisibility(View.INVISIBLE);
-                    adapter.addFrag(editFragment, "Edit Profile");
-                    adapter.attachFrag(2);
-                    adapter.notifyDataSetChanged();
-                    viewPagerProfile.setCurrentItem(2);
-                    ((ProfileViewPager) viewPagerProfile).setAllowedSwipeDirection(ProfileViewPager.SwipeDirection.none);
-                    editMode = true;
-                    editMenuItem = item;
-
-                    // Hide Edit Icon
-                    item.setEnabled(false);
-                    item.setVisible(false);
-
-                    // Change Actionbar title
-                    supportActionBar.setTitle("Edit Profile");
-                }
+            case R.id.id_item_chat:
+                return true;
+            case R.id.id_item_notifications:
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -242,7 +243,6 @@ public class ProfileActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        super.onBackPressed();
         handleBackPressed();
     }
 
@@ -312,7 +312,7 @@ public class ProfileActivity extends AppCompatActivity {
         postsFragment = new ProfilePostsFragment();
         editFragment = new ProfileEditFragment();
 
-        viewPagerProfile = (ProfileViewPager) findViewById(R.id.viewpager_profile);
+        viewPagerProfile = (ProfileViewPager) findViewById(R.id.id_viewpager_profile);
         adapter = new ProfileViewPagerAdapter(fragmentManager);
         adapter.addFrag(infoFragment, "Info");
         adapter.addFrag(postsFragment, "Posts");
@@ -323,7 +323,7 @@ public class ProfileActivity extends AppCompatActivity {
         assert tabLayout != null;
         tabLayout.setupWithViewPager(viewPagerProfile);
 
-        tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 viewPagerProfile.setCurrentItem(tab.getPosition());
@@ -339,12 +339,12 @@ public class ProfileActivity extends AppCompatActivity {
         });
 
         final ImageView imageView_profilePicture = (ImageView) findViewById(R.id.id_image_view_profile_image);
-        final TextView textView_fistbumps = (TextView) findViewById(R.id.profile_fist_bumps);
-        final TextView textView_followers = (TextView) findViewById(R.id.profile_followers);
-        final TextView textView_following = (TextView) findViewById(R.id.profile_following);
+        final TextView textView_postsCount = (TextView) findViewById(R.id.id_profile_posts_count);
+        final TextView textView_sentFistbumpsCount = (TextView) findViewById(R.id.id_fistbumps_sent);
+        final TextView textView_receivedFistbumpsCount = (TextView) findViewById(R.id.id_fistbumps_received);
 
-        if (imageView_profilePicture != null && textView_fistbumps != null
-                && textView_followers != null && textView_following != null) {
+        if (imageView_profilePicture != null && textView_postsCount != null
+                && textView_sentFistbumpsCount != null && textView_receivedFistbumpsCount != null) {
             final String imageURL;
             // Profile Image Setup
             if (userProfileParcel.getIsVarsityPlayer()) {
@@ -372,21 +372,42 @@ public class ProfileActivity extends AppCompatActivity {
                 }
             });
 
-            textView_fistbumps.setText(Html.fromHtml("<b>"
-                    + Integer.toString(userProfileParcel.getFistbumpsCount())
-                    + "</b> " + getString(R.string.profile_fist_bumps)));
-            textView_followers.setText(Html.fromHtml("<b>"
-                    + Integer.toString(userProfileParcel.getFollowersCount())
-                    + "</b> " + getString(R.string.profile_followers)));
-            textView_following.setText(Html.fromHtml("<b>"
-                    + Integer.toString(userProfileParcel.getFollowingCount())
-                    + "</b> " + getString(R.string.profile_following)));
+            textView_sentFistbumpsCount.setText(Html.fromHtml("<b>"
+                    + Integer.toString(userProfileParcel.getSentFistbumpsCount())
+                    + "</b> " + getString(R.string.fistbumps_sent)));
+            textView_receivedFistbumpsCount.setText(Html.fromHtml("<b>"
+                    + Integer.toString(userProfileParcel.getReceivedFistbumpsCount())
+                    + "</b> " + getString(R.string.fistbumps_received)));
+            textView_postsCount.setText(Html.fromHtml("<b>"
+                    + Integer.toString(userProfileParcel.getPostsCount())
+                    + "</b> " + getString(R.string.profile_posts)));
         }
+    }
+
+    private void fixProfileHeaderMarginTop() {
+        final LinearLayout profileHeaderContainer = (LinearLayout) findViewById(R.id.id_container_profile_header);
+        CollapsingToolbarLayout.LayoutParams headerParams = (CollapsingToolbarLayout.LayoutParams) profileHeaderContainer.getLayoutParams();
+        TypedValue typedValue = new TypedValue();
+        int[] actionbarAttr = new int[] {android.R.attr.actionBarSize};
+        TypedArray a = this.obtainStyledAttributes(typedValue.resourceId, actionbarAttr);
+        int actionbarSize = a.getDimensionPixelSize(0, -1);
+        a.recycle();
+        headerParams.setMargins(0, actionbarSize + getStatusBarHeight(), 0, 0);
+        profileHeaderContainer.setLayoutParams(headerParams);
+    }
+
+    private Integer getStatusBarHeight() {
+        Integer result = 0;
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
     }
 
     private void handleBackPressed() {
         if (editMode) {
-            // Push img_default_profile changes to DB
+            // Push profile changes to DB
             new PushProfileChangesToDBTask().execute();
 
             // Switch Fragment back to infoFragment
@@ -400,8 +421,10 @@ public class ProfileActivity extends AppCompatActivity {
             ((ProfileViewPager) viewPagerProfile).setAllowedSwipeDirection(ProfileViewPager.SwipeDirection.all);
 
             // Re-enable Edit Icon
-            editMenuItem.setEnabled(true);
-            editMenuItem.setVisible(true);
+            menuItemChat.setVisible(true);
+            menuItemChat.setEnabled(true);
+            menuItemNotification.setVisible(true);
+            menuItemNotification.setEnabled(true);
             editMode = false;
 
             // Change back Actionbar title
@@ -496,7 +519,8 @@ public class ProfileActivity extends AppCompatActivity {
             // Set default user profile values
             userProfile.setFollowersCount(0);
             userProfile.setFollowingCount(0);
-            userProfile.setFistbumpsCount(0);
+            userProfile.setSentFistbumpsCount(0);
+            userProfile.setReceivedFistbumpsCount(0);
             userProfile.setPostsCount(0);
             userProfile.setFavoriteTeam(null);
             userProfile.setFavoritePlayer(null);
@@ -523,7 +547,8 @@ public class ProfileActivity extends AppCompatActivity {
                 userProfileParcel.setProfileNickname(userProfile.getNickname());
                 userProfileParcel.setFollowersCount(userProfile.getFollowersCount());
                 userProfileParcel.setFollowingCount(userProfile.getFollowingCount());
-                userProfileParcel.setFistbumpsCount(userProfile.getFistbumpsCount());
+                userProfileParcel.setSentFistbumpsCount(userProfile.getSentFistbumpsCount());
+                userProfileParcel.setReceivedFistbumpsCount(userProfile.getReceivedFistbumpsCount());
                 userProfileParcel.setPostsCount(userProfile.getPostsCount());
                 userProfileParcel.setFavoriteTeam(userProfile.getFavoriteTeam());
                 userProfileParcel.setFavoritePlayer(userProfile.getFavoritePlayer());
@@ -563,9 +588,9 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
         private void pushUserProfileChanges() {
-            DBUserProfile.setFollowingCount(userProfileParcel.getFollowingCount());
-            DBUserProfile.setFistbumpsCount(userProfileParcel.getFistbumpsCount());
-            DBUserProfile.setNickname(userProfileParcel.getProfileNickname());
+//            DBUserProfile.setFollowingCount(userProfileParcel.getFollowingCount());
+//            DBUserProfile.setSentFistbumpsCount(userProfileParcel.getSentFistbumpsCount());
+//            DBUserProfile.setReceivedFistbumpsCount(userProfileParcel.getReceivedFistbumpsCount());
             DBUserProfile.setFavoriteTeam(userProfileParcel.getFavoriteTeam());
             DBUserProfile.setFavoritePlayer(userProfileParcel.getFavoritePlayer());
             DBUserProfile.setPepTalk(userProfileParcel.getPepTalk());

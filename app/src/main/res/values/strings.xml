@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">PepRally</string>
+    <string name="new_post_activity_label">New Post</string>
+    <string name="new_comment_activity_label">Comments</string>
     <string name="team_slogan">Hook\'em Horns</string>
 
     <!-- Strings related to Login Activity -->
@@ -8,8 +10,9 @@
 
     <!-- Strings related to Profile Activity -->
     <string name="profile_fist_bumps"> Fistbumps</string>
-    <string name="profile_followers"> Followers</string>
-    <string name="profile_following"> Following</string>
+    <string name="profile_posts"> posts</string>
+    <string name="fistbumps_received"> received</string>
+    <string name="fistbumps_sent"> sent</string>
     <string name="profile_btn_follow">+ Follow</string>
     <string name="profile_follow_text">Follow</string>
     <string name="profile_following_text">+ Follow</string>
@@ -59,7 +62,7 @@
     <string name="new_post_button_text">Post</string>
     <string name="placeholder_nickname">nickname</string>
     <string name="placeholder_post_time">time</string>
-    <string name="placeholder_post_like_count">0</string>
+    <string name="placeholder_post_fistbumps_count">0</string>
     <string name="placeholder_profile_text_age">NAME, AGE</string>
     <string name="placeholder_favorite_team">Favorite Team</string>
     <string name="placeholder_favorite_player">Favorite Player</string>
@@ -69,7 +72,9 @@
     <string name="placeholder_sample_text">some sample text</string>
     <string name="placeholder_first_name">First Name</string>
     <string name="placeholder_view_profile">View Profile</string>
-    <string name="placeholder_follow">Follow</string>
+    <string name="placeholder_edit_profile">EDIT PROFILE</string>
+    <string name="placeholder_notifications">Notifications</string>
+    <string name="placeholder_messages">Messages</string>
 
 
 </resources>
