@@ -48,9 +48,9 @@ public class FavoriteTeamActivity extends AppCompatActivity {
         setContentView(R.layout.activity_favorite_team);
 
         ActionBar supportActionBar = getSupportActionBar();
-        assert supportActionBar != null;
-        supportActionBar.setTitle("Pick a favorite team");
-        supportActionBar.setDisplayHomeAsUpEnabled(true);
+        if (supportActionBar != null) {
+            supportActionBar.setDisplayHomeAsUpEnabled(true);
+        }
 
         recyclerView = (RecyclerView) findViewById(R.id.rv_browse_teams);
         if (recyclerView != null) {

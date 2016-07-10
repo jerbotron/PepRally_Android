@@ -12,13 +12,13 @@
         android:paddingLeft="25dp"
         android:paddingRight="25dp">
 
-        <ImageView android:src="@drawable/logo_login_white"
+        <ImageView android:src="@drawable/logo_peprally_white"
             android:layout_width="wrap_content"
             android:layout_height="175dp"
             android:layout_marginTop="100dp"
             android:layout_marginBottom="25dp"
             android:layout_gravity="center_horizontal"
-            android:contentDescription="@string/app_name"/>
+            android:contentDescription="@string/label_app_name"/>
 
         <com.facebook.login.widget.LoginButton
             android:id="@+id/login_button"
@@ -31,8 +31,8 @@
         <TextView android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
-            android:text="Version 1.0 - UT BETA"
+            android:text="@string/placeholder_app_version"
             android:gravity="center"
-            android:textSize="16dp"/>
+            android:textSize="16sp"/>
     </LinearLayout>
 </LinearLayout>

@@ -1,7 +1,6 @@
 package com.peprally.jeremy.peprally.activities;
 
 import android.content.Intent;
-import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
 import android.os.AsyncTask;
 import android.support.design.widget.AppBarLayout;
@@ -17,7 +16,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -160,25 +158,14 @@ public class ProfileActivity extends AppCompatActivity {
             }
             // If user is viewing another user's profile
             else {
-//                buttonEditProfile.setOnClickListener(new View.OnClickListener() {
-//                    @Override
-//                    public void onClick(View v) {
-//                        if (following) {
-//                            buttonEditProfile.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_follow));
-//                            buttonEditProfileContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorPrimary));
-//                            buttonEditProfileContent.setText(R.string.profile_follow_text);
-//                            buttonEditProfileContent.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_follow, 0, 0, 0);
-//                            following = false;
-//                        }
-//                        else {
-//                            buttonEditProfile.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_following));
-//                            buttonEditProfileContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorWhite));
-//                            buttonEditProfileContent.setText(R.string.profile_following_text);
-//                            buttonEditProfileContent.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_followed, 0, 0, 0);
-//                            following = true;
-//                        }
-//                    }
-//                });
+                buttonEditProfileContent.setText(getResources().getString(R.string.profile_send_fistbump_text));
+                buttonEditProfileContent.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_fistbump_20_ut, 0);
+                buttonEditProfile.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Toast.makeText(ProfileActivity.this, "FIST BUMP", Toast.LENGTH_SHORT).show();
+                    }
+                });
 
                 actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_fistbump_50_white));
                 actionFAB.setOnClickListener(new View.OnClickListener() {

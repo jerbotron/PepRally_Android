@@ -26,7 +26,9 @@ public class DBUserProfile {
     private int sentFistbumpsCount;
     private int receivedFistbumpsCount;
     private int postsCount;
+    private int notificationsCount;         //TODO: implement when I need to buffer notifications
     private int playerIndex;
+    private boolean newNotification;
     private boolean newUser;
     private boolean isVarsityPlayer;
 
@@ -73,15 +75,6 @@ public class DBUserProfile {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    @DynamoDBAttribute(attributeName = "NewUser")
-    public boolean getNewUser() {
-        return newUser;
-    }
-
-    public void setNewUser(boolean newUser) {
-        this.newUser = newUser;
     }
 
     @DynamoDBAttribute(attributeName = "FirstName")
@@ -219,15 +212,6 @@ public class DBUserProfile {
         this.dateJoined = dateJoined;
     }
 
-    @DynamoDBAttribute(attributeName = "IsVarsityPlayer")
-    public boolean getIsVarsityPlayer() {
-        return isVarsityPlayer;
-    }
-
-    public void setIsVarsityPlayer(boolean isVarsityPlayer) {
-        this.isVarsityPlayer = isVarsityPlayer;
-    }
-
     @DynamoDBIndexHashKey(globalSecondaryIndexName = "Team-index", attributeName = "PlayerTeam")
     public String getTeam() {
         return team;
@@ -253,5 +237,32 @@ public class DBUserProfile {
 
     public void setFMSInstanceID(String FMSInstanceID) {
         this.FMSInstanceID = FMSInstanceID;
+    }
+
+    @DynamoDBAttribute(attributeName = "NewNotification")
+    public boolean getNewNotification() {
+        return newNotification;
+    }
+
+    public void setNewNotification(boolean newNotification) {
+        this.newNotification = newNotification;
+    }
+
+    @DynamoDBAttribute(attributeName = "NewUser")
+    public boolean getNewUser() {
+        return newUser;
+    }
+
+    public void setNewUser(boolean newUser) {
+        this.newUser = newUser;
+    }
+
+    @DynamoDBAttribute(attributeName = "IsVarsityPlayer")
+    public boolean getIsVarsityPlayer() {
+        return isVarsityPlayer;
+    }
+
+    public void setIsVarsityPlayer(boolean isVarsityPlayer) {
+        this.isVarsityPlayer = isVarsityPlayer;
     }
 }

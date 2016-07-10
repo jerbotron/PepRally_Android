@@ -41,9 +41,9 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
         private PlayerCardHolder(View itemView) {
             super(itemView);
             cv = (CardView) itemView.findViewById(R.id.rv_browse_players);
-            playerPhoto = (ImageView) itemView.findViewById(R.id.player_card_photo);
-            playerName = (TextView) itemView.findViewById(R.id.player_card_name);
-            playerInfo = (TextView) itemView.findViewById(R.id.player_card_info);
+            playerPhoto = (ImageView) itemView.findViewById(R.id.id_player_card_profile_photo);
+            playerName = (TextView) itemView.findViewById(R.id.id_notification_card_content);
+            playerInfo = (TextView) itemView.findViewById(R.id.id_player_card_info);
             itemView.setOnClickListener(this);
         }
 

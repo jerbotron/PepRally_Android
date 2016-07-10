@@ -17,6 +17,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.facebook.AccessToken;
@@ -119,22 +120,21 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        Helpers.checkGooglePlayServicesAvailable(this);
-
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            finish();
-            Intent intent = new Intent(Intent.ACTION_MAIN);
-            intent.addCategory(Intent.CATEGORY_HOME);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(intent);
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                return true;
+            case R.id.id_item_chat:
+                Toast.makeText(HomeActivity.this, "See chats", Toast.LENGTH_SHORT).show();
+                return true;
+            case R.id.id_item_notifications:
+                Intent intent = new Intent(this, NotificationsActivity.class);
+                intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
+                startActivity(intent);
+                overridePendingTransition(R.anim.right_in, R.anim.left_out);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
 
@@ -184,6 +184,26 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                     trendingFragment.addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
                     break;
             }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Helpers.checkGooglePlayServicesAvailable(this);
+
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            finish();
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
         }
     }
 

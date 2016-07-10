@@ -7,13 +7,14 @@ import java.util.Set;
 @DynamoDBTable(tableName = "UserComments")
 public class DBUserComment {
     private String postID;
-    private long timeInSeconds;
+    private String commentID;
     private String nickname;
     private String postNickname;
     private String cognitoID;
     private String facebookID;
     private String timeStamp;
     private String textContent;
+    private long timeInSeconds;
     private int fistbumpsCount;
     private Set<String> fistbumpedUsers;
 
@@ -33,6 +34,15 @@ public class DBUserComment {
 
     public void setTimeInSeconds(long timeInSeconds) {
         this.timeInSeconds = timeInSeconds;
+    }
+
+    @DynamoDBAttribute(attributeName = "CommentID")
+    public String getCommentID() {
+        return commentID;
+    }
+
+    public void setCommentID(String commentID) {
+        this.commentID = commentID;
     }
 
     @DynamoDBAttribute(attributeName = "Nickname")

@@ -197,7 +197,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void AWSLoginTask() {
-        setContentView(R.layout.splash_screen);
+        setContentView(R.layout.splash);
         AWSCredentialProvider credentialProviderTask = new AWSCredentialProvider(getApplicationContext(), new AWSLoginTaskCallback() {
             @Override
             public void onTaskDone(CognitoCachingCredentialsProvider credentialsProvider) {

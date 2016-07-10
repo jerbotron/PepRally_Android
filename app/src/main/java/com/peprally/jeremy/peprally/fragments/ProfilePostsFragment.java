@@ -95,7 +95,7 @@ public class ProfilePostsFragment extends Fragment {
         postCardAdapter.addPost(newPostText, bundle);
     }
 
-    public void refreshAdapter() {
+    private void refreshAdapter() {
         if (userProfileParcel.getPostsCount() == 0) {
             if (userProfileParcel.getIsSelfProfile()) {
                 noPostsText.setText(getResources().getString(R.string.no_posts_message));

@@ -1,7 +1,9 @@
 <resources>
-    <string name="app_name">PepRally</string>
-    <string name="new_post_activity_label">New Post</string>
-    <string name="new_comment_activity_label">Comments</string>
+    <string name="label_app_name">PepRally</string>
+    <string name="activity_label_new_post">New Post</string>
+    <string name="activity_label_new_comment">Comments</string>
+    <string name="activity_label_notifications">Notifications</string>
+    <string name="activity_label_fav_team">Browse Teams</string>
     <string name="team_slogan">Hook\'em Horns</string>
 
     <!-- Strings related to Login Activity -->
@@ -16,6 +18,7 @@
     <string name="profile_btn_follow">+ Follow</string>
     <string name="profile_follow_text">Follow</string>
     <string name="profile_following_text">+ Follow</string>
+    <string name="profile_send_fistbump_text">SEND FISTBUMP</string>
 
     <string name="title_activity_profile">ProfileActivity</string>
     <string name="title_activity_events">EventsActivity</string>
@@ -49,6 +52,12 @@
     <string name="example_text">This is a sample post message to see what the view would
         look like on a card. This sentence has no meaning, it\'s a waste of time to read it. Okay thanks bye.</string>
 
+    <!-- Notification content placeholders -->
+    <string name="notification_0_placeholder">" sent you a direct fistbump.</string>
+    <string name="notification_1_placeholder">" commented: \""</string>
+    <string name="notification_2_placeholder">" fistbumped your post.</string>
+    <string name="notification_3_placeholder">" fistbumped your comment.</string>
+
     <!-- Error Message Strings -->
     <string name="no_connection_text">Oops! Looks like you\'ve lost internet connection. Please check your
         connection settings and try re-open PepRally!</string>
@@ -75,6 +84,8 @@
     <string name="placeholder_edit_profile">EDIT PROFILE</string>
     <string name="placeholder_notifications">Notifications</string>
     <string name="placeholder_messages">Messages</string>
+    <string name="placeholder_app_version">Version 1.0 - UT BETA</string>
+    <string name="placeholder_no_notifications">No new notifications.</string>
 
 
 </resources>

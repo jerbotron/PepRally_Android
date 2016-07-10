@@ -29,7 +29,7 @@ public class Helpers {
     public final static int NEW_POST_REQUEST_CODE = 2;
     public final static int POST_COMMENT_REQUEST_CODE = 3;
 
-    // Helper Functions
+    // UI Helpers
     public static boolean isKeyboardShown(View rootView) {
         // 128dp = 32dp * 4, minimum button height 32dp and generic 4 rows soft keyboard
         final int SOFT_KEYBOARD_HEIGHT_DP_THRESHOLD = 128;
@@ -56,24 +56,7 @@ public class Helpers {
         }
     }
 
-    public static boolean checkIfNetworkConnectionAvailable(ConnectivityManager connManager) {
-        boolean isConnected = false;
-        NetworkInfo mWifi = connManager.getActiveNetworkInfo();
-        if (mWifi!=null) isConnected = mWifi.isConnected();
-        return isConnected;
-    }
-
-    public static void setFacebookProfileImage(Context callingContext,
-                                        ImageView imageView,
-                                        String facebookID,
-                                        int size) {
-        Picasso.with(callingContext)
-                .load(getFacebookProfileImageURL(facebookID, size))
-                .placeholder(R.drawable.img_default_profile)
-                .error(R.drawable.img_default_profile)
-                .into(imageView);
-    }
-
+    // Adapter Helpers
     private static String getFacebookProfileImageURL(String facebookID, int size) {
         String type;
         switch (size) {
@@ -108,6 +91,48 @@ public class Helpers {
             default:
                 return "#" + number + " " + firstName + " " + lastName;
         }
+    }
+
+    public static String getTimeStampString(Long timestampInSeconds) {
+        long tsLongNow = System.currentTimeMillis()/1000;
+        long timeInSeconds = tsLongNow - timestampInSeconds;
+        String timestampString;
+        if (timeInSeconds < 60) {
+            timestampString = String.valueOf(timeInSeconds) + "s";
+        }
+        else if (timeInSeconds < 60 * 60) {
+            long timeInMins = timeInSeconds / 60;
+            timestampString = String.valueOf(timeInMins) + "m";
+        }
+        else if (timeInSeconds < 60 * 60 * 24) {
+            long timeInHrs = timeInSeconds/60/60;
+            timestampString = String.valueOf(timeInHrs) + "h";
+        }
+        else {
+            long timeInDays = timeInSeconds/60/60/24;
+            timestampString = String.valueOf(timeInDays) + "d";
+        }
+        return timestampString;
+    }
+
+    // Network Helpers
+
+    public static boolean checkIfNetworkConnectionAvailable(ConnectivityManager connManager) {
+        boolean isConnected = false;
+        NetworkInfo mWifi = connManager.getActiveNetworkInfo();
+        if (mWifi!=null) isConnected = mWifi.isConnected();
+        return isConnected;
+    }
+
+    public static void setFacebookProfileImage(Context callingContext,
+                                        ImageView imageView,
+                                        String facebookID,
+                                        int size) {
+        Picasso.with(callingContext)
+                .load(getFacebookProfileImageURL(facebookID, size))
+                .placeholder(R.drawable.img_default_profile)
+                .error(R.drawable.img_default_profile)
+                .into(imageView);
     }
 
     public static boolean checkGooglePlayServicesAvailable(Activity callingActivity)

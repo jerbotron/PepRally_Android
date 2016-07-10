@@ -4,7 +4,6 @@ import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -18,7 +17,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,8 +33,6 @@ import com.peprally.jeremy.peprally.utils.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -49,8 +45,7 @@ public class NewCommentActivity extends AppCompatActivity {
 
     // UI Variables
     private RecyclerView recyclerView;
-    private LinearLayout commentsContainer;
-    private TextView textViewNoComments, mainPostCommentsCount, textViewCharCount;
+    private TextView mainPostCommentsCount, textViewCharCount;
     private EditText newCommentText;
 
     // AWS Variables
@@ -81,13 +76,11 @@ public class NewCommentActivity extends AppCompatActivity {
         }
 
         // Set up main post container
-        commentsContainer = (LinearLayout) findViewById(R.id.id_container_post_comments);
         final ImageView mainPostProfileImage = (ImageView) findViewById(R.id.id_image_view_comment_main_post);
         final TextView mainPostTimeStamp = (TextView) findViewById(R.id.id_text_view_post_card_time_stamp);
         final TextView mainPostNickname = (TextView) findViewById(R.id.id_text_view_comment_main_post_nickname);
         final TextView mainPostTextContent = (TextView) findViewById(R.id.id_text_view_comment_main_post_content);
         mainPostCommentsCount = (TextView) findViewById(R.id.id_text_view_post_card_comments_count);
-        textViewNoComments = (TextView) findViewById(R.id.id_text_view_post_empty_comments_text);
         newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
         textViewCharCount = (TextView) findViewById(R.id.id_text_view_comment_char_count);
         final TextView postCommentButton = (TextView) findViewById(R.id.id_text_view_post_new_comment_button);
@@ -101,38 +94,15 @@ public class NewCommentActivity extends AppCompatActivity {
         selfPost = userProfileParcel.getProfileNickname().equals(postCommentBundle.getString("POST_NICKNAME"));
 
         // Display Post Info Correctly
-        if (postCommentBundle.getInt("COMMENTS_COUNT") <= 0) {
-            textViewNoComments.setText(getResources().getString(R.string.no_comments_message));
-        } else {
-            commentsContainer.removeView(textViewNoComments);
+        if (postCommentBundle.getInt("COMMENTS_COUNT") > 0)
             new FetchPostCommentsDBTask().execute(postCommentBundle.getString("POST_ID"));
-        }
 
         Helpers.setFacebookProfileImage(this,
                                         mainPostProfileImage,
                                         postCommentBundle.getString("FACEBOOK_ID"),
                                         3);
 
-        long tsLong = System.currentTimeMillis()/1000;
-        final long timeInSeconds = tsLong - postCommentBundle.getLong("TIME_IN_SECONDS");
-        if (mainPostTimeStamp != null) {
-            if (timeInSeconds < 60) {
-                String s = String.valueOf(timeInSeconds) + "s";
-                mainPostTimeStamp.setText(s);
-            } else if (timeInSeconds < 60 * 60) {
-                long timeInMins = timeInSeconds / 60;
-                String s = String.valueOf(timeInMins) + "m";
-                mainPostTimeStamp.setText(s);
-            } else if (timeInSeconds < 60 * 60 * 24) {
-                long timeInHrs = timeInSeconds / 60 / 60;
-                String s = String.valueOf(timeInHrs) + "h";
-                mainPostTimeStamp.setText(s);
-            } else {
-                long timeInDays = timeInSeconds / 60 / 60 / 24;
-                String s = String.valueOf(timeInDays) + "d";
-                mainPostTimeStamp.setText(s);
-            }
-        }
+        mainPostTimeStamp.setText(Helpers.getTimeStampString(postCommentBundle.getLong("TIME_IN_SECONDS")));
 
         if (mainPostNickname != null && mainPostTextContent != null && postCommentButton != null) {
             mainPostNickname.setText(postCommentBundle.getString("POST_NICKNAME"));
@@ -145,7 +115,7 @@ public class NewCommentActivity extends AppCompatActivity {
                     if (charCount < 0)
                         Toast.makeText(NewCommentActivity.this, "Comment too long!", Toast.LENGTH_SHORT).show();
                     else
-                        addCommentToAdapter(newCommentText.getText().toString());
+                        addCommentToAdapter(newCommentText.getText().toString().trim());
                 }
             });
 
@@ -236,7 +206,12 @@ public class NewCommentActivity extends AppCompatActivity {
     /***********************************************************************************************
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
+    public Long getPostCommentBundleLong(String key) {
+        return postCommentBundle.getLong(key);
+    }
+
     private void addCommentToAdapter(String newCommentText) {
+        Log.d("NEW COMMENT ACTIVITY: ", newCommentText);
         if (newCommentText == null || newCommentText.isEmpty()) {
             Toast.makeText(this, "Comment cannot be empty!", Toast.LENGTH_SHORT).show();
         }
@@ -248,10 +223,9 @@ public class NewCommentActivity extends AppCompatActivity {
             bundle.putString("FIRST_NAME", userProfileParcel.getFirstname());
             if (commentCardAdapter == null)
                 initializeAdapter(null);
-            // Checks is this post is the first user comment
-            if (postCommentBundle.getInt("COMMENTS_COUNT") == 0)
-                commentsContainer.removeView(textViewNoComments);
             commentCardAdapter.addComment(newCommentText, bundle);
+            // send push notification
+            dbHelper.sendNewNotification(makeNotificationPostCommentBundle(newCommentText));
 //            new HTTPRequestsHelper.requestPOSTTask().execute(
 //                    new HTTPRequestsHelper.HTTPPostRequestObject(getApplicationContext(),
 //                                                                 postCommentBundle.getString("POST_NICKNAME"),
@@ -260,39 +234,44 @@ public class NewCommentActivity extends AppCompatActivity {
         }
     }
 
-    public Long getPostCommentBundleLong(String key) {
-        return postCommentBundle.getLong(key);
+    private Bundle makeNotificationPostCommentBundle(String comment) {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
+        bundle.putInt("TYPE", 1);
+        bundle.putString("NICKNAME", postCommentBundle.getString("POST_NICKNAME"));
+        bundle.putString("POST_ID", postCommentBundle.getString("POST_ID"));
+        bundle.putString("COMMENT", comment);
+        return bundle;
     }
 
-    private void initializeAdapter(List<DBUserComment> result) {
+    private void initializeAdapter(List<DBUserComment> results) {
         List<DBUserComment> comments = new ArrayList<>();
-        if (result != null) {
-            for (DBUserComment userComment : result)
+        if (results != null && results.size() > 0) {
+            for (DBUserComment userComment : results)
                 comments.add(userComment);
         }
         // Initialize adapter for the case that the first comment is being made
-        commentCardAdapter = new CommentCardAdapter(this, comments, userProfileParcel.getCurUserNickname());
+        commentCardAdapter = new CommentCardAdapter(this, comments, userProfileParcel);
         recyclerView.setAdapter(commentCardAdapter);
     }
 
     /***********************************************************************************************
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
-    public void refreshAdapter() {
-        Log.d("NEW COMMENT ACTIVITY", "refreshing adapter");
+    private void refreshAdapter() {
         new FetchUserPostDBTask().execute(postCommentBundle);
         new FetchPostCommentsDBTask().execute(postCommentBundle.getString("POST_ID"));
     }
 
+    public void postDeleteCommentCleanup() {
+        new FetchUserPostDBTask().execute(postCommentBundle);
+    }
+
     public void postAddCommentCleanup() {
-        refreshAdapter();
+        new FetchUserPostDBTask().execute(postCommentBundle);
         newCommentText.setText("");
         newCommentText.clearFocus();
         Helpers.hideSoftKeyboard(this, newCommentText);
-    }
-
-    public void showNoCommentsText() {
-        commentsContainer.addView(textViewNoComments);
     }
 
     private void refreshMainPostData(final DBUserPost userPost) {

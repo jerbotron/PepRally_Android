@@ -3,18 +3,18 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:id="@+id/cv_teams"
+    android:id="@+id/id_card_view_teams"
     android:layout_marginBottom="8dp"
     android:clickable="true">
     <RelativeLayout
-        android:id="@+id/rv_team_card_container"
+        android:id="@+id/id_recycler_view_notification_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp">
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/team_card_photo"
+            android:id="@+id/id_notification_card_profile_photo"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
             android:layout_marginRight="16dp"
@@ -23,9 +23,9 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/team_card_name"
-            android:layout_toRightOf="@+id/team_card_photo"
-            android:layout_toEndOf="@+id/team_card_photo"
+            android:id="@+id/id_notification_user_nickname"
+            android:layout_toRightOf="@+id/id_notification_card_profile_photo"
+            android:layout_toEndOf="@+id/id_notification_card_profile_photo"
             android:gravity="center"
             android:textSize="20sp"
             android:textStyle="bold"/>

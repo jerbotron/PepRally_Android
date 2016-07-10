@@ -9,13 +9,13 @@ import java.util.Set;
 @DynamoDBTable(tableName = "UserPosts")
 public class DBUserPost implements Comparable<DBUserPost>{
     private String nickname;
-    private Long timeInSeconds;
     private String postID;
     private String cognitoID;
     private String facebookID;
     private String firstname;
     private String timeStamp;
     private String textContent;
+    private Long timeInSeconds;
     private int fistbumpsCount;
     private int numberOfComments;
     private Set<String> fistbumpedUsers;

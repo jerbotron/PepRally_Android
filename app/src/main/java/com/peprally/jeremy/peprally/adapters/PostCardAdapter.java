@@ -4,17 +4,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -24,7 +20,6 @@ import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.utils.ActivityEnum;
-import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
@@ -64,7 +59,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
     static class PostHolder extends RecyclerView.ViewHolder {
         RelativeLayout postContainer;
         CardView cardView;
-        ImageView profilePhoto;
+        ImageView profileImage;
         TextView timeStamp;
         TextView nickname;
         TextView postContent;
@@ -76,7 +71,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
             super(itemView);
             postContainer = (RelativeLayout) itemView.findViewById(R.id.id_container_post_clickable);
             cardView = (CardView) itemView.findViewById(R.id.id_card_view_new_post);
-            profilePhoto = (ImageView) itemView.findViewById(R.id.id_image_view_post_profile);
+            profileImage = (ImageView) itemView.findViewById(R.id.id_image_view_post_profile);
             nickname = (TextView) itemView.findViewById(R.id.id_text_view_post_nickname);
             timeStamp = (TextView) itemView.findViewById(R.id.id_text_view_post_card_time_stamp);
             postContent = (TextView) itemView.findViewById(R.id.id_text_view_post_content);
@@ -96,7 +91,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
     public void onBindViewHolder(final PostHolder postHolder, int position) {
         final DBUserPost curPost = posts.get(position);
         Helpers.setFacebookProfileImage(callingContext,
-                                        postHolder.profilePhoto,
+                                        postHolder.profileImage,
                                         curPost.getFacebookID(),
                                         3);
 
@@ -116,30 +111,10 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         postHolder.postFistbumpsCount.setText(String.valueOf(fistbumpsCount));
         postHolder.postCommentsCount.setText(String.valueOf(curPost.getNumberOfComments()));
 
-        long tsLong = System.currentTimeMillis()/1000;
-        long timeInSeconds = tsLong - curPost.getTimeInSeconds();
-        if (timeInSeconds < 60) {
-            String s = String.valueOf(timeInSeconds) + "s";
-            postHolder.timeStamp.setText(s);
-        }
-        else if (timeInSeconds < 60 * 60) {
-            long timeInMins = timeInSeconds / 60;
-            String s = String.valueOf(timeInMins) + "m";
-            postHolder.timeStamp.setText(s);
-        }
-        else if (timeInSeconds < 60 * 60 * 24) {
-            long timeInHrs = timeInSeconds/60/60;
-            String s = String.valueOf(timeInHrs) + "h";
-            postHolder.timeStamp.setText(s);
-        }
-        else {
-            long timeInDays = timeInSeconds/60/60/24;
-            String s = String.valueOf(timeInDays) + "d";
-            postHolder.timeStamp.setText(s);
-        }
+        postHolder.timeStamp.setText(Helpers.getTimeStampString(curPost.getTimeInSeconds()));
 
         // Profile Picture OnClick Handlers:
-        postHolder.profilePhoto.setOnClickListener(new View.OnClickListener() {
+        postHolder.profileImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (userProfileParcel.getCurrentActivity() != ActivityEnum.PROFILE) {
@@ -200,6 +175,8 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                         dbHelper.incrementUserReceivedFistbumpsCount(curPost.getNickname());
                         // update the sent fistbumps count of the current user
                         dbHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUserNickname());
+                        // send new notification
+                        dbHelper.sendNewNotification(makeNotificationPostFistbumpBundle(curPost));
                     }
                 }
                 // update post fistbumps count
@@ -233,6 +210,10 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
     /***********************************************************************************************
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
+    private void adapterAddItemTop(DBUserPost newPost) {
+        posts.add(0, newPost);
+        notifyItemInserted(0);
+    }
     private void launchNewCommentActivity(DBUserPost curPost) {
         Bundle postCommentBundle = new Bundle();
         postCommentBundle.putString("POST_ID", curPost.getPostID());
@@ -248,6 +229,15 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         intent.putExtra("POST_COMMENT_BUNDLE", postCommentBundle);
         callingContext.startActivity(intent);
         ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
+    }
+
+    private Bundle makeNotificationPostFistbumpBundle(DBUserPost curPost) {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
+        bundle.putInt("TYPE", 2);
+        bundle.putString("NICKNAME", curPost.getNickname());    // who the notification is going to
+        bundle.putString("POST_ID", curPost.getPostID());
+        return bundle;
     }
 
     /***********************************************************************************************
@@ -293,8 +283,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
 
         @Override
         protected void onPostExecute(DBUserPost newPost) {
-            posts.add(0, newPost);
-            notifyItemInserted(0);
+            adapterAddItemTop(newPost);
         }
     }
 }

@@ -9,28 +9,29 @@
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
+        android:label="@string/label_app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
             android:name=".activities.LoginActivity"
-            android:label="@string/app_name"
+            android:label="@string/label_app_name"
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppCompat.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
             android:name=".activities.ProfileActivity"
-            android:label="@string/app_name"
+            android:label="@string/label_app_name"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar"
             android:windowSoftInputMode="adjustPan|stateHidden" />
         <activity
             android:name=".activities.HomeActivity"
-            android:label="@string/app_name"
+            android:label="@string/label_app_name"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
@@ -41,25 +42,30 @@
         <activity
             android:name="com.facebook.FacebookActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
-            android:label="@string/app_name"
+            android:label="@string/label_app_name"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <activity
             android:name=".activities.FavoriteTeamActivity"
+            android:label="@string/activity_label_fav_team"
             android:screenOrientation="portrait" />
         <activity
             android:name=".activities.FavoritePlayerActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".activities.NewPostActivity"
+            android:label="@string/activity_label_new_post"
             android:screenOrientation="portrait"
-            android:label="@string/new_post_activity_label"
             android:theme="@style/NewPostTheme"
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".activities.NewCommentActivity"
+            android:label="@string/activity_label_new_comment"
             android:screenOrientation="portrait"
-            android:label="@string/new_comment_activity_label"
             android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".activities.NotificationsActivity"
+            android:label="@string/activity_label_notifications"
+            android:screenOrientation="portrait"/>
 
         <provider
             android:name="com.facebook.FacebookContentProvider"
@@ -79,6 +85,7 @@
             </intent-filter>
             <intent-filter>
                 <action android:name=".activities.NewPostActivity" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </service>
@@ -88,7 +95,7 @@
             android:name=".services.PepRallyFirebaseInstanceIDService"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.google.firebase.INSTANCE_ID_EVENT"/>
+                <action android:name="com.google.firebase.INSTANCE_ID_EVENT" />
             </intent-filter>
         </service>
         <!-- [END firebase_iid_service] -->
@@ -96,7 +103,6 @@
         <meta-data
             android:name="com.facebook.sdk.ApplicationId"
             android:value="@string/facebook_app_id" />
-
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
