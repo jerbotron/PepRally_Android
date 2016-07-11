@@ -5,3 +5,19 @@ PepRally is a social app whose content is catered for college sports fans and co
 PepRally will be centered around sports primarily where users can browse teams, rosters and have the ability to send virtual "fistbumps" to players and other users to raise school spirit and to create an environment where fans come together and cheer for their team. PepRally will also give users the ability to share media posts (text/image/video) to the community and can be fistbumped (upvoted) by others. Moreover, users can send direct fistbumps to each other if they fancy each other's content and if a mutual exchange of fistbumps occur, a chat window is created and new friendships can be found through PepRally.
 
 Want to know more about PepRally? Mark the date August 25th in your calendar and download the app from the Google Play Store to find out! 
+
+Technologies used:
+
+UI Design:
+- viewpagers, recyclerViews, custom scrolling toolbar layouts, fragments, navigation toolbars, custom menu toolbars
+
+App Design:
+- asynctasks, custom parcelables
+- Picasso image download/caching library
+- Volley HTTP library
+- Amazon Web Services: Cognito/IAM identification services
+- Facebook API: Facebook Login 
+
+Backend Design: 
+- Amazon Web Services: DyanmoDB, EC2, Elastic Beanstalk
+- Google Firebase push notification service
