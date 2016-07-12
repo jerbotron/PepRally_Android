@@ -45,14 +45,13 @@ public class NewCommentActivity extends AppCompatActivity {
 
     // UI Variables
     private RecyclerView recyclerView;
-    private TextView mainPostCommentsCount, textViewCharCount;
-    private EditText newCommentText;
 
-    // AWS Variables
+    // AWS/HTTP Variables
     private DynamoDBHelper dbHelper;
+    private HTTPRequestsHelper httpRequestsHelper;
 
     // General Variables
-//    private static final String TAG = NewCommentActivity.class.getSimpleName();
+    private static final String TAG = NewCommentActivity.class.getSimpleName();
     private CommentCardAdapter commentCardAdapter;
     private Bundle postCommentBundle;
     private UserProfileParcel userProfileParcel;
@@ -68,6 +67,7 @@ public class NewCommentActivity extends AppCompatActivity {
         setContentView(R.layout.activity_new_post_comment);
 
         dbHelper = new DynamoDBHelper(this);
+        httpRequestsHelper = new HTTPRequestsHelper(this);
 
         // Set up toolbar buttons
         final ActionBar supportActionBar = getSupportActionBar();
@@ -80,9 +80,8 @@ public class NewCommentActivity extends AppCompatActivity {
         final TextView mainPostTimeStamp = (TextView) findViewById(R.id.id_text_view_post_card_time_stamp);
         final TextView mainPostNickname = (TextView) findViewById(R.id.id_text_view_comment_main_post_nickname);
         final TextView mainPostTextContent = (TextView) findViewById(R.id.id_text_view_comment_main_post_content);
-        mainPostCommentsCount = (TextView) findViewById(R.id.id_text_view_post_card_comments_count);
-        newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
-        textViewCharCount = (TextView) findViewById(R.id.id_text_view_comment_char_count);
+        final EditText newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
+        final  TextView textViewCharCount = (TextView) findViewById(R.id.id_text_view_comment_char_count);
         final TextView postCommentButton = (TextView) findViewById(R.id.id_text_view_post_new_comment_button);
 
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
@@ -172,7 +171,7 @@ public class NewCommentActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case android.R.id.home:
                 // Hide soft keyboard if keyboard is up
-//                EditText et = (EditText) findViewById(R.id.id_edit_text_new_comment);
+                EditText newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
                 Helpers.hideSoftKeyboard(this, newCommentText);
                 onBackPressed();
                 return true;
@@ -224,13 +223,11 @@ public class NewCommentActivity extends AppCompatActivity {
             if (commentCardAdapter == null)
                 initializeAdapter(null);
             commentCardAdapter.addComment(newCommentText, bundle);
-            // send push notification
-            dbHelper.sendNewNotification(makeNotificationPostCommentBundle(newCommentText));
-//            new HTTPRequestsHelper.requestPOSTTask().execute(
-//                    new HTTPRequestsHelper.HTTPPostRequestObject(getApplicationContext(),
-//                                                                 postCommentBundle.getString("POST_NICKNAME"),
-//                                                                 userProfileParcel.getCurUserNickname(),
-//                                                                 newCommentText));
+            // send push notification (if not commenting on own post)
+            if (!userProfileParcel.getCurUserNickname().equals(postCommentBundle.getString("POST_NICKNAME"))) {
+                dbHelper.sendNewNotification(makeNotificationPostCommentBundle(newCommentText));
+                httpRequestsHelper.makeHTTPPostRequest(makeHTTPPostRequestPostCommentBundle(newCommentText));
+            }
         }
     }
 
@@ -241,6 +238,32 @@ public class NewCommentActivity extends AppCompatActivity {
         bundle.putString("NICKNAME", postCommentBundle.getString("POST_NICKNAME"));
         bundle.putString("POST_ID", postCommentBundle.getString("POST_ID"));
         bundle.putString("COMMENT", comment);
+        return bundle;
+    }
+
+    private Bundle makeHTTPPostRequestPostCommentBundle(String comment) {
+        Bundle bundle = new Bundle();
+        bundle.putInt("TYPE", 1);
+        bundle.putString("RECEIVER_NICKNAME", postCommentBundle.getString("POST_NICKNAME"));
+        bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());
+        bundle.putString("COMMENT", comment);
+        return bundle;
+    }
+
+    private Bundle makeNotificationPostFistbumpBundle(DBUserPost curPost) {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
+        bundle.putInt("TYPE", 2);
+        bundle.putString("NICKNAME", curPost.getNickname());    // who the notification is going to
+        bundle.putString("POST_ID", curPost.getPostID());
+        return bundle;
+    }
+
+    private Bundle makeHTTPPostRequestPostFistbumpBundle(DBUserPost curPost) {
+        Bundle bundle = new Bundle();
+        bundle.putInt("TYPE", 2);
+        bundle.putString("RECEIVER_NICKNAME", curPost.getNickname());
+        bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());
         return bundle;
     }
 
@@ -269,6 +292,7 @@ public class NewCommentActivity extends AppCompatActivity {
 
     public void postAddCommentCleanup() {
         new FetchUserPostDBTask().execute(postCommentBundle);
+        EditText newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
         newCommentText.setText("");
         newCommentText.clearFocus();
         Helpers.hideSoftKeyboard(this, newCommentText);
@@ -277,6 +301,7 @@ public class NewCommentActivity extends AppCompatActivity {
     private void refreshMainPostData(final DBUserPost userPost) {
         final TextView mainPostFistbump = (TextView) findViewById(R.id.id_button_comment_main_post_fistbump);
         final TextView mainPostFistbumpsCount = (TextView) findViewById(R.id.id_text_view_post_card_fistbumps_count);
+        final TextView mainPostCommentsCount = (TextView) findViewById(R.id.id_text_view_post_card_comments_count);
 
         final String userNickname = userProfileParcel.getCurUserNickname();
 
@@ -334,6 +359,9 @@ public class NewCommentActivity extends AppCompatActivity {
                             dbHelper.incrementUserReceivedFistbumpsCount(userPost.getNickname());
                             // update the sent fistbumps count of the current user
                             dbHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUserNickname());
+                            // send push notification
+                            dbHelper.sendNewNotification(makeNotificationPostFistbumpBundle(userPost));
+                            httpRequestsHelper.makeHTTPPostRequest(makeHTTPPostRequestPostFistbumpBundle(userPost));
                         }
                     }
                     // update post fistbumps count
@@ -366,8 +394,22 @@ public class NewCommentActivity extends AppCompatActivity {
         @Override
         protected Void doInBackground(Bundle... params) {
             Bundle data = params[0];
-            // Delete UserPost
             DBUserPost post = dbHelper.loadDBPost(data.getString("POST_NICKNAME"), data.getLong("TIME_IN_SECONDS"));
+
+            // delete the comments under the post
+            if (post.getNumberOfComments() > 0) {
+                DBUserComment userComment = new DBUserComment();
+                userComment.setPostID(post.getPostID());
+                DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                        .withHashKeyValues(userComment)
+                        .withConsistentRead(false);
+                List<DBUserComment> results = dbHelper.getMapper().query(DBUserComment.class, queryExpression);
+                for (DBUserComment comment : results) {
+                    dbHelper.deleteDBObject(comment);
+                }
+            }
+
+            // delete user post
             dbHelper.deleteDBObject(post);
 
             // Update UserProfile post count
@@ -381,7 +423,7 @@ public class NewCommentActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void aVoid) {
             // Hide soft keyboard if keyboard is up
-//            EditText et = (EditText) findViewById(R.id.id_edit_text_new_comment);
+            EditText newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
             Helpers.hideSoftKeyboard(NewCommentActivity.this, newCommentText);
             finish();
             overridePendingTransition(R.anim.left_in, R.anim.right_out);

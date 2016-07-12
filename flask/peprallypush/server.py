@@ -5,35 +5,33 @@ application = Flask(__name__)
 API_ACCESS_KEY = "key=AIzaSyDH7MFAWAq9tFKTaGQYjVp5trBD2ZEORT8"
 SENDER_ID = 508839522244
 FCM_URL = 'https://gcm-http.googleapis.com/gcm/send'
-test_token = ["eo7NkHsfdYo:APA91bHG2hVMxyh98A0lPX5zEbLclSY9HvjhQlQbFKLaaKkeTB6OwjgMZhpIMt5e-ge4HZUtOjOw0TgFQD88Mk1lxFVmyK2qOeUyl9Ues1SKRVbQddpYL_MLhYed7jMhe6B_vtBRFPg-"]
-
 
 @application.route('/')
 def index():
-    return 'PepRally Push Notification Server asfasf'
+    print "sanity check"
+    return 'PepRally Push Notification Server'
 
 @application.route('/send', methods=['GET', 'POST'])
 def test():
     if request.method == 'POST':
-        print "posting something"
-        send_fcm_notification("PepRally", "new notification is here", test_token)
+        print "POST REQUEST RECEIVED"
+        data = request.get_json()
+        # print data
+        send_fcm_notification(data)
     else:
-        print "not posting"
-    return 'testing\n'
+        print "NOT POSTING"
+    return json.dumps({'test_key': 'test_value'})
 
-def send_fcm_notification(title, body, reg_tokens):
+def send_fcm_notification(jsonData):
     post_msg = {
-        'data': {
-            'title': title,
-            'body': body
-        },
-        'registration_ids': reg_tokens
+        'data': jsonData,
+        'registration_ids': [jsonData['receiver_id']]
     }
 
-    post_header = {
-        'Authorization:': API_ACCESS_KEY,
-        'Content-Type:': 'application/json'
-    }
+    # post_header = {
+    #     'Authorization:': API_ACCESS_KEY,
+    #     'Content-Type:': 'application/json'
+    # }
     data = json.dumps(post_msg)
     handler = urllib2.HTTPHandler()
     opener = urllib2.build_opener(handler)

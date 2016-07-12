@@ -24,6 +24,7 @@ import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
+import com.peprally.jeremy.peprally.utils.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
@@ -40,8 +41,9 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
-    // AWS Variables
+    // AWS/HTTP Variables
     private DynamoDBHelper dbHelper;
+    private HTTPRequestsHelper httpRequestsHelper;
 
     // General Variables
     private Context callingContext;
@@ -58,6 +60,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         this.callingContext = callingContext;
         this.userProfileParcel = userProfileParcel;
         dbHelper = new DynamoDBHelper(callingContext);
+        httpRequestsHelper = new HTTPRequestsHelper(callingContext);
     }
 
     static class CommentHolder extends RecyclerView.ViewHolder {
@@ -147,8 +150,9 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                         dbHelper.incrementUserReceivedFistbumpsCount(curComment.getNickname());
                         // update the sent fistbumps count of the current user
                         dbHelper.incrementUserSentFistbumpsCount(curUserNickname);
-                        // send new notification
+                        // send push notification
                         dbHelper.sendNewNotification(makeNotificationCommentFistbumpBundle(curComment));
+                        httpRequestsHelper.makeHTTPPostRequest(makeHTTPPostRequestCommentFistbumpBundle(curComment));
                     }
 
                 }
@@ -182,6 +186,14 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         bundle.putInt("TYPE", 3);
         bundle.putString("NICKNAME", curComment.getNickname());    // who the notification is going to
         bundle.putString("COMMENT_ID", curComment.getCommentID());
+        return bundle;
+    }
+
+    private Bundle makeHTTPPostRequestCommentFistbumpBundle(DBUserComment curComment) {
+        Bundle bundle = new Bundle();
+        bundle.putInt("TYPE", 3);
+        bundle.putString("RECEIVER_NICKNAME", curComment.getNickname());
+        bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());
         return bundle;
     }
 

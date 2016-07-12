@@ -21,6 +21,7 @@ import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.utils.ActivityEnum;
 import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
+import com.peprally.jeremy.peprally.utils.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
@@ -37,8 +38,9 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
-    // AWS Variables
+    // AWS/HTTP Variables
     private DynamoDBHelper dbHelper;
+    private HTTPRequestsHelper httpRequestsHelper;
 
     // General Variables
 //    private static final String TAG = "PostCardAdapter: ";
@@ -54,6 +56,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         this.posts = posts;
         this.userProfileParcel = userProfileParcel;
         dbHelper = new DynamoDBHelper(callingContext);
+        httpRequestsHelper = new HTTPRequestsHelper(callingContext);
     }
 
     static class PostHolder extends RecyclerView.ViewHolder {
@@ -175,8 +178,9 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                         dbHelper.incrementUserReceivedFistbumpsCount(curPost.getNickname());
                         // update the sent fistbumps count of the current user
                         dbHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUserNickname());
-                        // send new notification
+                        // send push notification
                         dbHelper.sendNewNotification(makeNotificationPostFistbumpBundle(curPost));
+                        httpRequestsHelper.makeHTTPPostRequest(makeHTTPPostRequestPostFistbumpBundle(curPost));
                     }
                 }
                 // update post fistbumps count
@@ -237,6 +241,14 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         bundle.putInt("TYPE", 2);
         bundle.putString("NICKNAME", curPost.getNickname());    // who the notification is going to
         bundle.putString("POST_ID", curPost.getPostID());
+        return bundle;
+    }
+
+    private Bundle makeHTTPPostRequestPostFistbumpBundle(DBUserPost curPost) {
+        Bundle bundle = new Bundle();
+        bundle.putInt("TYPE", 2);
+        bundle.putString("RECEIVER_NICKNAME", curPost.getNickname());
+        bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());
         return bundle;
     }
 

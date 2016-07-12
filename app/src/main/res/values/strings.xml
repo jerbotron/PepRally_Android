@@ -53,10 +53,10 @@
         look like on a card. This sentence has no meaning, it\'s a waste of time to read it. Okay thanks bye.</string>
 
     <!-- Notification content placeholders -->
-    <string name="notification_0_placeholder">" sent you a direct fistbump.</string>
-    <string name="notification_1_placeholder">" commented: \""</string>
-    <string name="notification_2_placeholder">" fistbumped your post.</string>
-    <string name="notification_3_placeholder">" fistbumped your comment.</string>
+    <string name="notification_0_placeholder">"sent you a direct fistbump.</string>
+    <string name="notification_1_placeholder">"commented: \""</string>
+    <string name="notification_2_placeholder">"fistbumped your post.</string>
+    <string name="notification_3_placeholder">"fistbumped your comment.</string>
 
     <!-- Error Message Strings -->
     <string name="no_connection_text">Oops! Looks like you\'ve lost internet connection. Please check your

@@ -94,7 +94,7 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
                 break;
         }
 
-        notificationCardHolder.content.setText(Html.fromHtml("<b>"+userNotification.getNicknameSender()+"</b>" + content));
+        notificationCardHolder.content.setText(Html.fromHtml("<b>"+userNotification.getNicknameSender()+"</b> " + content));
 
         notificationCardHolder.clickableContainer.setOnClickListener(new View.OnClickListener() {
             @Override
