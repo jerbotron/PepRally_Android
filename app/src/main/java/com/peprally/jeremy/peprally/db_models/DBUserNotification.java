@@ -23,6 +23,7 @@ public class DBUserNotification implements Comparable<DBUserNotification>{
     }
 
     @DynamoDBHashKey(attributeName = "Nickname")
+    @DynamoDBIndexHashKey(globalSecondaryIndexNames = {"Nickname-PostID-index", "Nickname-CommentID-index"}, attributeName = "Nickname")
     public String getNickname() {
         return nickname;
     }
@@ -67,7 +68,8 @@ public class DBUserNotification implements Comparable<DBUserNotification>{
         this.comment = comment;
     }
 
-    @DynamoDBAttribute(attributeName = "PostID")
+    @DynamoDBIndexHashKey(globalSecondaryIndexNames = {"PostID-index", "PostID-CommentID-index"}, attributeName = "PostID")
+    @DynamoDBIndexRangeKey(globalSecondaryIndexName = "Nickname-PostID-index", attributeName = "PostID")
     public String getPostID() {
         return postID;
     }
@@ -76,7 +78,8 @@ public class DBUserNotification implements Comparable<DBUserNotification>{
         this.postID = postID;
     }
 
-    @DynamoDBAttribute(attributeName = "CommentID")
+    @DynamoDBIndexHashKey(globalSecondaryIndexNames = "CommentID-index", attributeName = "CommentID")
+    @DynamoDBIndexRangeKey(globalSecondaryIndexNames = {"Nickname-CommentID-index", "PostID-CommentID-index"}, attributeName = "CommentID")
     public String getCommentID() {
         return commentID;
     }

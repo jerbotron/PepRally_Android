@@ -78,7 +78,8 @@
                 android:id="@+id/id_text_view_comment_fistbumps_count"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/placeholder_post_fistbumps_count"/>
+                android:text="@string/placeholder_post_fistbumps_count"
+                android:clickable="true"/>
         </LinearLayout>
     </LinearLayout>
 </android.support.v7.widget.CardView>

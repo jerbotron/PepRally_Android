@@ -7,7 +7,7 @@
     android:layout_marginBottom="8dp"
     android:clickable="true">
     <RelativeLayout
-        android:id="@+id/id_recycler_view_notification_container"
+        android:id="@+id/id_recycler_view_container_notification"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp">

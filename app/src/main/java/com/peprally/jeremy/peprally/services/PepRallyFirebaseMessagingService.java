@@ -21,23 +21,20 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.res.ResourcesCompat;
-import android.text.Html;
 import android.util.Log;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.LoginActivity;
+import com.peprally.jeremy.peprally.utils.Helpers;
 
 import java.util.Map;
-import java.util.Random;
 
 public class PepRallyFirebaseMessagingService extends FirebaseMessagingService {
 
@@ -109,9 +106,7 @@ public class PepRallyFirebaseMessagingService extends FirebaseMessagingService {
 
             NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-            Random random = new Random();
-            int id = random.nextInt(9999 - 1000) + 1000;
-            notificationManager.notify(id, notificationBuilder.build());
+            notificationManager.notify(Helpers.generateRandomInteger(), notificationBuilder.build());
             Log.d(TAG, "NOTIFICATION RECEIVED");
         }
     }

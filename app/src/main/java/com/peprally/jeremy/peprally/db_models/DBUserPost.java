@@ -1,13 +1,17 @@
 package com.peprally.jeremy.peprally.db_models;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 @DynamoDBTable(tableName = "UserPosts")
-public class DBUserPost implements Comparable<DBUserPost>{
+public class DBUserPost implements Comparable<DBUserPost>, Parcelable{
     private String nickname;
     private String postID;
     private String cognitoID;
@@ -17,8 +21,12 @@ public class DBUserPost implements Comparable<DBUserPost>{
     private String textContent;
     private Long timeInSeconds;
     private int fistbumpsCount;
-    private int numberOfComments;
+    private int commentsCount;
     private Set<String> fistbumpedUsers;
+
+    // Public Constructor
+
+    public DBUserPost() {}
 
     @Override
     public int compareTo(@NonNull DBUserPost another) {
@@ -102,17 +110,33 @@ public class DBUserPost implements Comparable<DBUserPost>{
         return fistbumpsCount;
     }
 
+    public void incrementFistbumpsCount() {
+        fistbumpsCount += 1;
+    }
+
+    public void decrementFistbumpsCount() {
+        fistbumpsCount -= 1;
+    }
+
     public void setFistbumpsCount(int fistbumpsCount) {
         this.fistbumpsCount = fistbumpsCount;
     }
 
     @DynamoDBAttribute(attributeName = "CommentsCount")
-    public int getNumberOfComments() {
-        return numberOfComments;
+    public int getCommentsCount() {
+        return commentsCount;
     }
 
-    public void setNumberOfComments(int numberOfComments) {
-        this.numberOfComments = numberOfComments;
+    public void setCommentsCount(int commentsCount) {
+        this.commentsCount = commentsCount;
+    }
+
+    public void incrementCommentsCount() {
+        commentsCount += 1;
+    }
+
+    public void decrementCommentsCount() {
+        commentsCount -= 1;
     }
 
     @DynamoDBAttribute(attributeName = "FistbumpedUsers")
@@ -131,4 +155,53 @@ public class DBUserPost implements Comparable<DBUserPost>{
     public void removeFistbumpedUser(String user) {
         fistbumpedUsers.remove(user);
     }
+
+    // Parcelable Methods
+
+    // Parcel Constructor
+    private DBUserPost(Parcel in) {
+        this.nickname = in.readString();
+        this.postID = in.readString();
+        this.cognitoID = in.readString();
+        this.facebookID = in.readString();
+        this.firstname = in.readString();
+        this.timeStamp = in.readString();
+        this.textContent = in.readString();
+        this.timeInSeconds = in.readLong();
+        this.fistbumpsCount = in.readInt();
+        this.commentsCount = in.readInt();
+        this.fistbumpedUsers = new HashSet<>(Arrays.asList(in.createStringArray()));
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(nickname);
+        dest.writeString(postID);
+        dest.writeString(cognitoID);
+        dest.writeString(facebookID);
+        dest.writeString(firstname);
+        dest.writeString(timeStamp);
+        dest.writeString(textContent);
+        dest.writeLong(timeInSeconds);
+        dest.writeInt(fistbumpsCount);
+        dest.writeInt(commentsCount);
+        dest.writeStringArray(fistbumpedUsers.toArray(new String[fistbumpedUsers.size()]));
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    public static final Parcelable.Creator<DBUserPost> CREATOR = new Parcelable.Creator<DBUserPost>() {
+        @Override
+        public DBUserPost createFromParcel(Parcel source) {
+            return new DBUserPost(source);
+        }
+
+        @Override
+        public DBUserPost[] newArray(int size) {
+            return new DBUserPost[size];
+        }
+    };
 }

@@ -4,8 +4,10 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +25,7 @@ import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.PostCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
@@ -36,9 +39,9 @@ public class TrendingFragment extends Fragment {
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // UI Variables
-//    private ScrollView postsContainer;
     private PostCardAdapter postCardAdapter;
     private RecyclerView recyclerView;
+    private SwipeRefreshLayout trendingSwipeRefreshContainer;
 
     // General Variables
     private List<DBUserPost> posts;
@@ -52,15 +55,23 @@ public class TrendingFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_trending, container, false);
         userProfileParcel = ((HomeActivity) getActivity()).getUserProfileParcel();
 
+        // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
         recyclerView = (RecyclerView) view.findViewById(R.id.id_recycler_view_trending_posts);
         LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setHasFixedSize(true);
-        // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
         recyclerView.setAdapter(new EmptyAdapter());
         recyclerView.setLayoutManager(rvLayoutManager);
 
-//        postsContainer = (ScrollView) view.findViewById(R.id.container_trending_posts);
+        // setup swipe refresh container
+        trendingSwipeRefreshContainer = (SwipeRefreshLayout) view.findViewById(R.id.container_swipe_refresh_trending_posts);
+        trendingSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refreshAdapter();
+            }
+        });
 
+        // new post fab onclick handler
         FloatingActionButton actionFAB = (FloatingActionButton) view.findViewById(R.id.fab_trending_action);
         actionFAB.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -116,21 +127,19 @@ public class TrendingFragment extends Fragment {
     private class FetchTrendingPostsTask extends AsyncTask<Void, Void, PaginatedScanList<DBUserPost>> {
         @Override
         protected PaginatedScanList<DBUserPost> doInBackground(Void... params) {
-            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    getActivity(),                            // Context
-                    AWSCredentialProvider.IDENTITY_POOL_ID,   // Identity Pool ID
-                    AWSCredentialProvider.COGNITO_REGION      // Region
-            );
-            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            ddbClient.setRegion(Region.getRegion(Regions.US_EAST_1));
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBHelper dynamoDBHelper = new DynamoDBHelper(getActivity().getApplicationContext());
             DynamoDBScanExpression scanExpression = new DynamoDBScanExpression();
-            return mapper.scan(DBUserPost.class, scanExpression);
+            return dynamoDBHelper.getMapper().scan(DBUserPost.class, scanExpression);
         }
 
         @Override
         protected void onPostExecute(PaginatedScanList<DBUserPost> result) {
-            initializeAdapter(result);
+            if (result != null)
+                initializeAdapter(result);
+
+            // stop refresh loading animation
+            if (trendingSwipeRefreshContainer.isRefreshing())
+                trendingSwipeRefreshContainer.setRefreshing(false);
         }
     }
 }

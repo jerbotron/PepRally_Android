@@ -29,12 +29,14 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMappingE
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
+import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.fragments.ProfileEditFragment;
 import com.peprally.jeremy.peprally.fragments.ProfilePostsFragment;
 import com.peprally.jeremy.peprally.fragments.ProfileInfoFragment;
 import com.peprally.jeremy.peprally.utils.ActivityEnum;
 import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
+import com.peprally.jeremy.peprally.utils.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.ProfileViewPager;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
@@ -45,13 +47,13 @@ public class ProfileActivity extends AppCompatActivity {
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
-    // AWS Variables
+    // AWS/HTTP Variables
     private DynamoDBHelper dbHelper;
+    private HTTPRequestsHelper httpRequestsHelper;
 
     // UI Variables
     private ActionBar supportActionBar;
     private AppBarLayout appBarLayout;
-    private FloatingActionButton actionFAB;
     private ProfilePostsFragment postsFragment;
     private ProfileEditFragment editFragment;
     private MenuItem menuItemChat;
@@ -74,6 +76,7 @@ public class ProfileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         dbHelper = new DynamoDBHelper(this);
+        httpRequestsHelper = new HTTPRequestsHelper(this);
 
         userProfileParcel = getIntent().getExtras().getParcelable("USER_PROFILE_PARCEL");
 
@@ -111,7 +114,7 @@ public class ProfileActivity extends AppCompatActivity {
         // Follow Button and FAB
         final LinearLayout buttonEditProfile = (LinearLayout) findViewById(R.id.id_button_edit_profile_container);
         final TextView buttonEditProfileContent = (TextView) findViewById(R.id.id_button_edit_profile_content);
-        actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
+        final FloatingActionButton actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
         if (buttonEditProfile != null && buttonEditProfileContent != null) {
             // If user is viewing their own profile
             if (userProfileParcel.getIsSelfProfile()) {
@@ -146,6 +149,7 @@ public class ProfileActivity extends AppCompatActivity {
                     }
                 });
 
+                // launch new post activity
                 actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_new_post));
                 actionFAB.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -167,11 +171,14 @@ public class ProfileActivity extends AppCompatActivity {
                     }
                 });
 
+                // direct fistbump feature
                 actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_fistbump_50_white));
                 actionFAB.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Toast.makeText(ProfileActivity.this, "FIST BUMP", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(ProfileActivity.this, "FISTBUMPED!", Toast.LENGTH_SHORT).show();
+                        dbHelper.makeNewNotification(makeNotificationDirectFistbumpBundle());
+                        httpRequestsHelper.makeHTTPPostRequest(makeNotificationDirectFistbumpBundle());
                     }
                 });
             }
@@ -222,7 +229,6 @@ public class ProfileActivity extends AppCompatActivity {
                     break;
                 case Helpers.NEW_POST_REQUEST_CODE:
                     postsFragment.addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
-                    viewPagerProfile.setCurrentItem(1);
                     break;
             }
         }
@@ -233,39 +239,17 @@ public class ProfileActivity extends AppCompatActivity {
         handleBackPressed();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-//        Log.d(TAG, "img_default_profile activity resumed");
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-//        Log.d(TAG, "img_default_profile activity paused");
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-//        Log.d(TAG, "img_default_profile activity started");
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-//        Log.d(TAG, "img_default_profile activity stopped");
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-//        Log.d(TAG, "img_default_profile activity destroyed");
-    }
-
     /***********************************************************************************************
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
+    private Bundle makeNotificationDirectFistbumpBundle() {
+        Bundle bundle = new Bundle();
+        bundle.putInt("TYPE", 0);
+        bundle.putString("RECEIVER_NICKNAME", userProfileParcel.getProfileNickname());  // who the notification is going to
+        bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());    // who the notification is from
+        return bundle;
+    }
+
     public UserProfileParcel getUserProfileParcel() {
         return userProfileParcel;
     }
@@ -371,6 +355,10 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     *  This method is used to set the proper margins on the custom implemented toolbar in profile
+     *  layout.
+     */
     private void fixProfileHeaderMarginTop() {
         final LinearLayout profileHeaderContainer = (LinearLayout) findViewById(R.id.id_container_profile_header);
         CollapsingToolbarLayout.LayoutParams headerParams = (CollapsingToolbarLayout.LayoutParams) profileHeaderContainer.getLayoutParams();
@@ -398,6 +386,8 @@ public class ProfileActivity extends AppCompatActivity {
             new PushProfileChangesToDBTask().execute();
 
             // Switch Fragment back to infoFragment
+            final FloatingActionButton actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
+
             appBarLayout.setExpanded(true, false);
             tabLayout.setVisibility(View.VISIBLE);
             actionFAB.setVisibility(View.VISIBLE);

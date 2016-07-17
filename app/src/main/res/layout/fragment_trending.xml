@@ -3,19 +3,26 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-    <LinearLayout
-        android:id="@+id/container_trending_posts"
+    android:layout_height="match_parent"
+    tools:context=".fragments.TrendingFragment">
+    <TextView
+        android:id="@+id/trending_fragment_empty_text"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        tools:context=".fragments.TrendingFragment">
+        android:layout_height="wrap_content"
+        android:padding="@dimen/activity_vertical_margin"
+        android:text="@string/placeholder_nothing_trending"
+        android:textStyle="italic"
+        android:gravity="center"/>
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/container_swipe_refresh_trending_posts"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
         <android.support.v7.widget.RecyclerView
             android:id="@+id/id_recycler_view_trending_posts"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
         </android.support.v7.widget.RecyclerView>
-    </LinearLayout>
+    </android.support.v4.widget.SwipeRefreshLayout>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_trending_action"

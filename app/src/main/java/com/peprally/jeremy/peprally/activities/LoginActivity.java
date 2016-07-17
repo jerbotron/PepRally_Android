@@ -53,6 +53,8 @@ import org.json.JSONException;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 
@@ -431,8 +433,6 @@ public class LoginActivity extends AppCompatActivity {
                     if (userProfile.getIsVarsityPlayer()) {
                         playerProfile = mapper.load(DBPlayerProfile.class, userProfile.getTeam(), userProfile.getPlayerIndex());
                     }
-//                    userProfile.setFMSInstanceID(FMSInstanceID);
-//                    dbHelper.saveDBObject(userProfile);
                 }
                 else{
                     Log.d(TAG, "Query result should have only returned single user!");
@@ -497,6 +497,8 @@ public class LoginActivity extends AppCompatActivity {
                 userProfile.setGender(fbDataBundle.getString("GENDER"));
                 userProfile.setBirthday(fbDataBundle.getString("BIRTHDAY"));
                 userProfile.setNewUser(true);
+                userProfile.setUsersDirectFistbumpSent(new HashSet<>(Collections.singletonList("_")));
+                userProfile.setUsersDirectFistbumpReceived(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setDateJoined(df.format(c.getTime()));
                 dbHelper.saveDBObject(userProfile);
                 return userProfile;

@@ -1,34 +1,34 @@
 package com.peprally.jeremy.peprally.adapters;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.NewCommentActivity;
+import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
-import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
+import com.peprally.jeremy.peprally.utils.NotificationEnum;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashSet;
@@ -49,16 +49,22 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     private Context callingContext;
     private List<DBUserComment> comments;
     private UserProfileParcel userProfileParcel;
+    private DBUserPost mainPost;
+
+    // UI Variables
+    private ProgressDialog progressDialogDeleteComment;
 
     /***********************************************************************************************
      ********************************** ADAPTER CONSTRUCTOR/METHODS ********************************
      **********************************************************************************************/
     public CommentCardAdapter(Context callingContext,
                               List<DBUserComment> comments,
-                              UserProfileParcel userProfileParcel) {
+                              UserProfileParcel userProfileParcel,
+                              DBUserPost mainPost) {
         this.comments = comments;
         this.callingContext = callingContext;
         this.userProfileParcel = userProfileParcel;
+        this.mainPost = mainPost;
         dbHelper = new DynamoDBHelper(callingContext);
         httpRequestsHelper = new HTTPRequestsHelper(callingContext);
     }
@@ -113,7 +119,19 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
 
         commentHolder.timeStamp.setText(Helpers.getTimeStampString(curComment.getTimeInSeconds()));
 
-        // fistbump button onClick handler:
+        // fistbumps count button onclick handler:
+        commentHolder.fistbumpsCount.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (curComment.getFistbumpsCount() > 0) {
+                    Intent intent = new Intent(callingContext, ViewFistbumpsActivity.class);
+                    intent.putStringArrayListExtra("FISTBUMPED_USERS", new ArrayList<>(curComment.getFistbumpedUsers()));
+                    callingContext.startActivity(intent);
+                }
+            }
+        });
+
+        // fistbump button onclick handler:
         commentHolder.fistbumpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -134,7 +152,11 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                         dbHelper.decrementUserReceivedFistbumpsCount(curComment.getNickname());
                         // update the sent fistbumps count of the current user
                         dbHelper.decrementUserSentFistbumpsCount(curUserNickname);
+                        // remove notification
+                        dbHelper.deleteCommentNotification(NotificationEnum.COMMENT_FISTBUMP, curComment);
                     }
+                    // remove current user from fistbumped users
+                    curComment.removeFistbumpedUser(userProfileParcel.getCurUserNickname());
                 }
                 // If user has not liked the comment yet
                 else {
@@ -151,9 +173,11 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                         // update the sent fistbumps count of the current user
                         dbHelper.incrementUserSentFistbumpsCount(curUserNickname);
                         // send push notification
-                        dbHelper.sendNewNotification(makeNotificationCommentFistbumpBundle(curComment));
+                        dbHelper.makeNewNotification(makeNotificationCommentFistbumpBundle(curComment));
                         httpRequestsHelper.makeHTTPPostRequest(makeHTTPPostRequestCommentFistbumpBundle(curComment));
                     }
+                    // add current user to fistbumped users
+                    curComment.addFistbumpedUser(userProfileParcel.getCurUserNickname());
 
                 }
                 // update comment fistbumps count
@@ -184,7 +208,8 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         Bundle bundle = new Bundle();
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
         bundle.putInt("TYPE", 3);
-        bundle.putString("NICKNAME", curComment.getNickname());    // who the notification is going to
+        bundle.putString("RECEIVER_NICKNAME", curComment.getNickname());    // who the notification is going to
+        bundle.putString("POST_ID", curComment.getPostID());
         bundle.putString("COMMENT_ID", curComment.getCommentID());
         return bundle;
     }
@@ -215,7 +240,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         Calendar c = Calendar.getInstance();
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
         Long timeInSeconds = System.currentTimeMillis() / 1000;
-        Long postTimeInSeconds = ((NewCommentActivity) callingContext).getPostCommentBundleLong("TIME_IN_SECONDS");
+        Long postTimeInSeconds = mainPost.getTimeInSeconds();
         newComment.setPostID(bundle.getString("POST_NICKNAME") + "_" + postTimeInSeconds.toString());
         newComment.setCommentID(bundle.getString("CUR_USER_NICKNAME") + "_" + timeInSeconds.toString());
         newComment.setNickname(bundle.getString("CUR_USER_NICKNAME"));
@@ -228,14 +253,12 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         newComment.setFistbumpedUsers(new HashSet<>(Collections.singletonList("_")));
         newComment.setFistbumpsCount(0);
         new PushNewUserCommentToDBTask().execute(newComment);
-        Bundle asyncData = new Bundle();
-        asyncData.putLong("POST_TIME_IN_SECONDS", postTimeInSeconds);
-        asyncData.putBoolean("INCREMENT_COMMENTS_COUNT", true);
-        new AsyncHelpers.PushPostCommentsCountToDBTask().execute(
-                new AsyncHelpers.asyncTaskObjectUserCommentBundle(
-                        newComment,
-                        dbHelper.getMapper(),
-                        asyncData));
+        dbHelper.incrementPostCommentsCount(mainPost);
+        // send push notification (if not commenting on own post)
+        if (!newComment.getNickname().equals(newComment.getPostNickname())) {
+            dbHelper.makeNewNotification(makeNotificationPostCommentBundle(commentText, newComment.getCommentID()));
+            httpRequestsHelper.makeHTTPPostRequest(makeHTTPPostRequestPostCommentBundle(commentText));
+        }
     }
 
     private void launchDeleteCommentDialog(final DBUserComment curComment, final int position) {
@@ -253,15 +276,15 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         dialogBuilderConfirmDelete.setMessage("Are you sure you want to delete this comment?");
         dialogBuilderConfirmDelete.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
+                // launch delete comment progress dialog
+                toggleDeletingCommentLoadingDialog(true);
+                // delete the comment
                 new DeleteUserCommentDBTask().execute(position);
-                Bundle asyncData = new Bundle();
-                asyncData.putLong("POST_TIME_IN_SECONDS", ((NewCommentActivity) callingContext).getPostCommentBundleLong("TIME_IN_SECONDS"));
-                asyncData.putBoolean("INCREMENT_COMMENTS_COUNT", false);
-                new AsyncHelpers.PushPostCommentsCountToDBTask().execute(
-                        new AsyncHelpers.asyncTaskObjectUserCommentBundle(
-                                curComment,
-                                dbHelper.getMapper(),
-                                asyncData));
+                // decrement post comments count
+                dbHelper.decrementPostCommentsCount(mainPost);
+                // remove notification if comment is not by the same post user
+                if (!curComment.getNickname().equals(mainPost.getNickname()))
+                    dbHelper.deleteCommentNotification(NotificationEnum.POST_COMMENT, curComment);
             }
         });
         dialogBuilderConfirmDelete.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -281,6 +304,36 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         });
 
         deleteDialog.show();
+    }
+
+    /***********************************************************************************************
+     *********************************** GENERAL METHODS/INTERFACES ********************************
+     **********************************************************************************************/
+    private Bundle makeNotificationPostCommentBundle(String comment, String commentID) {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
+        bundle.putInt("TYPE", 1);
+        bundle.putString("RECEIVER_NICKNAME", mainPost.getNickname());
+        bundle.putString("POST_ID", mainPost.getPostID());
+        bundle.putString("COMMENT_ID", commentID);
+        bundle.putString("COMMENT", comment);
+        return bundle;
+    }
+
+    private Bundle makeHTTPPostRequestPostCommentBundle(String comment) {
+        Bundle bundle = new Bundle();
+        bundle.putInt("TYPE", 1);
+        bundle.putString("RECEIVER_NICKNAME", mainPost.getNickname());
+        bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());
+        bundle.putString("COMMENT", comment);
+        return bundle;
+    }
+
+    private void toggleDeletingCommentLoadingDialog(boolean show) {
+        if (show)
+            progressDialogDeleteComment = ProgressDialog.show(callingContext, "Delete Comment", "Deleting ... ", true);
+        else
+            progressDialogDeleteComment.dismiss();
     }
 
     /***********************************************************************************************
@@ -315,6 +368,8 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         protected void onPostExecute(Integer position) {
             adapterRemoveItemAt(position);
             ((NewCommentActivity) callingContext).postDeleteCommentCleanup();
+            // dismiss comment delete loading dialog
+            toggleDeletingCommentLoadingDialog(false);
         }
     }
 }

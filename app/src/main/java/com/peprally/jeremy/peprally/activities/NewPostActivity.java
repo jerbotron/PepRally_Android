@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.utils.Helpers;
@@ -75,12 +76,17 @@ public class NewPostActivity extends AppCompatActivity {
         newPostButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent();
-                intent.putExtra("NEW_POST_TEXT", editTextNewPost.getText().toString());
-                setResult(Activity.RESULT_OK, intent);
-                finish();
+                if (editTextNewPost.getText().toString().isEmpty())
+                    Toast.makeText(getApplicationContext(), "Post can't be empty!", Toast.LENGTH_SHORT).show();
+                else {
+                    Intent intent = new Intent();
+                    intent.putExtra("NEW_POST_TEXT", editTextNewPost.getText().toString());
+                    setResult(Activity.RESULT_OK, intent);
+                    finish();
+//                overridePendingTransition(R.anim.top_in, R.anim.bottom_out);
+                }
                 // Hide soft keyboard if keyboard is up
-                Helpers.hideSoftKeyboard(NewPostActivity.this, editTextNewPost);
+                Helpers.hideSoftKeyboard(getApplicationContext(), editTextNewPost);
             }
         });
     }
@@ -92,7 +98,7 @@ public class NewPostActivity extends AppCompatActivity {
                 finish();
                 // Hide soft keyboard if keyboard is up
                 EditText et = (EditText) findViewById(R.id.id_edit_text_new_post);
-                Helpers.hideSoftKeyboard(this, et);
+                Helpers.hideSoftKeyboard(getApplicationContext(), et);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

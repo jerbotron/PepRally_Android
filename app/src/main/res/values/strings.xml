@@ -4,6 +4,7 @@
     <string name="activity_label_new_comment">Comments</string>
     <string name="activity_label_notifications">Notifications</string>
     <string name="activity_label_fav_team">Browse Teams</string>
+    <string name="activity_label_view_fistbumps">Fistbumps</string>
     <string name="team_slogan">Hook\'em Horns</string>
 
     <!-- Strings related to Login Activity -->
@@ -86,6 +87,7 @@
     <string name="placeholder_messages">Messages</string>
     <string name="placeholder_app_version">Version 1.0 - UT BETA</string>
     <string name="placeholder_no_notifications">No new notifications.</string>
+    <string name="placeholder_nothing_trending">Make a post! :)</string>
 
 
 </resources>

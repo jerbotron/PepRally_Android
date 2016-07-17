@@ -16,23 +16,19 @@ import android.widget.TextView;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.db_models.DBUserNotification;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.List;
 
 public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCardAdapter.NotificationCardHolder>{
 
-    Context callingContext;
+    private Context callingContext;
 
     private List<DBUserNotification> notifications;
-    private UserProfileParcel userProfileParcel;
 
     public NotificationCardAdapter(Context callingContext,
-                                   List<DBUserNotification> notifications,
-                                   UserProfileParcel userProfileParcel) {
+                                   List<DBUserNotification> notifications) {
         this.callingContext = callingContext;
         this.notifications = notifications;
-        this.userProfileParcel = userProfileParcel;
     }
 
     static class NotificationCardHolder extends RecyclerView.ViewHolder {

@@ -65,7 +65,12 @@
         <activity
             android:name=".activities.NotificationsActivity"
             android:label="@string/activity_label_notifications"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
+
+        <activity
+            android:name=".activities.ViewFistbumpsActivity"
+            android:label="@string/activity_label_view_fistbumps"
+            android:screenOrientation="portrait" />
 
         <provider
             android:name="com.facebook.FacebookContentProvider"
@@ -106,6 +111,7 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
+
     </application>
 
 </manifest>

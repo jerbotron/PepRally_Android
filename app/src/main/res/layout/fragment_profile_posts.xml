@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -12,8 +12,13 @@
         android:text="@string/placeholder_sample_text"
         android:textStyle="italic"
         android:gravity="center"/>
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recycler_view_profile_posts"
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/container_swipe_refresh_profile_posts"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-</LinearLayout>
+        android:layout_height="match_parent">
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recycler_view_profile_posts"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </android.support.v4.widget.SwipeRefreshLayout>
+</RelativeLayout>

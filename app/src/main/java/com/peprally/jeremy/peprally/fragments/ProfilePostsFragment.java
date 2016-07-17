@@ -3,8 +3,10 @@ package com.peprally.jeremy.peprally.fragments;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +24,10 @@ import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.PostCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,10 +38,10 @@ public class ProfilePostsFragment extends Fragment {
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // UI Variables
-    private LinearLayout postsContainer;
     private PostCardAdapter postCardAdapter;
     private RecyclerView recyclerView;
     private TextView noPostsText;
+    private SwipeRefreshLayout profilePostsSwipeRefreshContainer;
 
     // General Variables
 //    private static final String TAG = ProfilePostsFragment.class.getSimpleName();
@@ -47,25 +52,27 @@ public class ProfilePostsFragment extends Fragment {
      *************************************** FRAGMENT METHODS **************************************
      **********************************************************************************************/
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        // Get copy of userProfileParcel from ProfileActivity
-        userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile_posts, container, false);
+        userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
 
+        // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
         recyclerView = (RecyclerView) view.findViewById(R.id.recycler_view_profile_posts);
         LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getActivity());
         recyclerView.setHasFixedSize(true);
-        // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
         recyclerView.setAdapter(new EmptyAdapter());
         recyclerView.setLayoutManager(rvLayoutManager);
 
+        // setup swipe refresh container
+        profilePostsSwipeRefreshContainer = (SwipeRefreshLayout) view.findViewById(R.id.container_swipe_refresh_profile_posts);
+        profilePostsSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refreshAdapter();
+            }
+        });
+
         noPostsText = (TextView) view.findViewById(R.id.profile_posts_empty_text);
-        postsContainer = (LinearLayout) view.findViewById(R.id.id_container_profile_posts);
         return view;
     }
 
@@ -78,6 +85,15 @@ public class ProfilePostsFragment extends Fragment {
     /***********************************************************************************************
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
+    private void initializeAdapter(List<DBUserPost> result) {
+        posts = new ArrayList<>();
+        for (DBUserPost userPost : result) {
+            posts.add(userPost);
+        }
+        postCardAdapter = new PostCardAdapter(getActivity(), posts, userProfileParcel);
+        recyclerView.setAdapter(postCardAdapter);
+    }
+
     public void addPostToAdapter(String newPostText) {
         Bundle bundle = new Bundle();
         bundle.putString("NICKNAME", userProfileParcel.getProfileNickname());
@@ -88,36 +104,11 @@ public class ProfilePostsFragment extends Fragment {
             postCardAdapter = new PostCardAdapter(getActivity(), posts, userProfileParcel);
             recyclerView.setAdapter(postCardAdapter);
         }
-        // Checks is this post is the first user post
-        if (userProfileParcel.getPostsCount() == 0) {
-            postsContainer.removeView(noPostsText);
-        }
         postCardAdapter.addPost(newPostText, bundle);
     }
 
     private void refreshAdapter() {
-        if (userProfileParcel.getPostsCount() == 0) {
-            if (userProfileParcel.getIsSelfProfile()) {
-                noPostsText.setText(getResources().getString(R.string.no_posts_message));
-            }
-            else {
-                String s = userProfileParcel.getFirstname() + " has not created any posts yet!";
-                noPostsText.setText(s);
-            }
-        }
-        else {
-            postsContainer.removeView(noPostsText);
-            new FetchUserPostsTask().execute(userProfileParcel.getProfileNickname());
-        }
-    }
-
-    private void initializeAdapter(List<DBUserPost> result) {
-        posts = new ArrayList<>();
-        for (DBUserPost userPost : result) {
-            posts.add(userPost);
-        }
-        postCardAdapter = new PostCardAdapter(getActivity(), posts, userProfileParcel);
-        recyclerView.setAdapter(postCardAdapter);
+        new FetchUserPostsTask().execute(userProfileParcel.getProfileNickname());
     }
 
     /***********************************************************************************************
@@ -128,28 +119,38 @@ public class ProfilePostsFragment extends Fragment {
         protected PaginatedQueryList<DBUserPost> doInBackground(String... params) {
             String nickname = params[0];
             if (nickname == null) return null;
-
-            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    getActivity(),                            // Context
-                    AWSCredentialProvider.IDENTITY_POOL_ID,   // Identity Pool ID
-                    AWSCredentialProvider.COGNITO_REGION      // Region
-            );
-            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
+            DynamoDBHelper dynamoDBHelper = new DynamoDBHelper(getActivity().getApplicationContext());
             DBUserPost userPost = new DBUserPost();
             userPost.setNickname(nickname);
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withHashKeyValues(userPost)
                     .withConsistentRead(false)
                     .withScanIndexForward(false);
-            return mapper.query(DBUserPost.class, queryExpression);
+            return dynamoDBHelper.getMapper().query(DBUserPost.class, queryExpression);
         }
 
         @Override
         protected void onPostExecute(PaginatedQueryList<DBUserPost> result) {
-            if (result!= null)
+
+            if (result != null && result.size() != 0) {
+                Log.d("profile fragment: ", "size = " + result.size());
+                userProfileParcel.setPostsCount(result.size());
                 initializeAdapter(result);
+            }
+            else {
+                recyclerView.setAdapter(new EmptyAdapter());
+                if (userProfileParcel.getIsSelfProfile()) {
+                    noPostsText.setText(getResources().getString(R.string.no_posts_message));
+                }
+                else {
+                    String s = userProfileParcel.getFirstname() + " has not created any posts yet!";
+                    noPostsText.setText(s);
+                }
+            }
+
+            // stop refresh loading animation
+            if (profilePostsSwipeRefreshContainer.isRefreshing())
+                profilePostsSwipeRefreshContainer.setRefreshing(false);
         }
     }
 }

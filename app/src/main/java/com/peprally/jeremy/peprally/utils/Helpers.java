@@ -18,6 +18,8 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import com.peprally.jeremy.peprally.R;
 import com.squareup.picasso.Picasso;
 
+import java.util.Random;
+
 public class Helpers {
 
     // CONSTANTS
@@ -48,7 +50,7 @@ public class Helpers {
         return isKeyboardShown;
     }
 
-    public static void hideSoftKeyboard(Activity context, View view) {
+    public static void hideSoftKeyboard(Context context, View view) {
         // Hide soft keyboard if keyboard is up
         if (isKeyboardShown(view.getRootView())) {
             InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -113,6 +115,12 @@ public class Helpers {
             timestampString = String.valueOf(timeInDays) + "d";
         }
         return timestampString;
+    }
+
+    public static int generateRandomInteger() {
+        Random random = new Random(System.currentTimeMillis() % 1000);
+
+        return random.nextInt(1000000000);
     }
 
     // Network Helpers

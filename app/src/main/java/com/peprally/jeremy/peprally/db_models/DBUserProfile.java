@@ -2,6 +2,8 @@ package com.peprally.jeremy.peprally.db_models;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 
+import java.util.Set;
+
 @DynamoDBTable(tableName = "UserProfiles")
 public class DBUserProfile {
     private String cognitoID;
@@ -20,6 +22,8 @@ public class DBUserProfile {
     private String dateJoined;
     private String team;
     private String FMSInstanceID;
+    private Set<String> usersDirectFistbumpSent;
+    private Set<String> usersDirectFistbumpReceived;
     private int age;
     private int followersCount;
     private int followingCount;
@@ -149,6 +153,14 @@ public class DBUserProfile {
         this.sentFistbumpsCount = sentFistbumpsCount;
     }
 
+    public void incrementSentFistbumpsCount() {
+        sentFistbumpsCount += 1;
+    }
+
+    public void decrementSentFistbumpsCount() {
+        sentFistbumpsCount -= 1;
+    }
+
     @DynamoDBAttribute(attributeName = "ReceivedFistbumpsCount")
     public int getReceivedFistbumpsCount() {
         return receivedFistbumpsCount;
@@ -158,6 +170,14 @@ public class DBUserProfile {
         this.receivedFistbumpsCount = receivedFistbumpsCount;
     }
 
+    public void incrementReceivedFistbumpsCount() {
+        receivedFistbumpsCount += 1;
+    }
+
+    public void decrementReceivedFistbumpsCount() {
+        receivedFistbumpsCount -= 1;
+    }
+
     @DynamoDBAttribute(attributeName = "PostsCount")
     public int getPostsCount() {
         return postsCount;
@@ -165,6 +185,14 @@ public class DBUserProfile {
 
     public void setPostsCount(int postsCount) {
         this.postsCount = postsCount;
+    }
+
+    public void incrementPostCount() {
+        postsCount += 1;
+    }
+
+    public void decrementPostCount() {
+        postsCount -= 1;
     }
 
     @DynamoDBAttribute(attributeName = "FavoriteTeam")
@@ -237,6 +265,40 @@ public class DBUserProfile {
 
     public void setFMSInstanceID(String FMSInstanceID) {
         this.FMSInstanceID = FMSInstanceID;
+    }
+
+    @DynamoDBAttribute(attributeName = "UsersDirectFistbumpSent")
+    public Set<String> getUsersDirectFistbumpSent() {
+        return usersDirectFistbumpSent;
+    }
+
+    public void setUsersDirectFistbumpSent(Set<String> usersDirectFistbumpSent) {
+        this.usersDirectFistbumpSent = usersDirectFistbumpSent;
+    }
+
+    public void addUsersDirectFistbumpSent(String user) {
+        usersDirectFistbumpSent.add(user);
+    }
+
+    public void removeUsersDirectFistbumpSent(String user) {
+        usersDirectFistbumpSent.remove(user);
+    }
+
+    @DynamoDBAttribute(attributeName = "UsersDirectFistbumpReceived")
+    public Set<String> getUsersDirectFistbumpReceived() {
+        return usersDirectFistbumpReceived;
+    }
+
+    public void setUsersDirectFistbumpReceived(Set<String> usersDirectFistbumpReceived) {
+        this.usersDirectFistbumpReceived = usersDirectFistbumpReceived;
+    }
+
+    public void addUsersDirectFistbumpReceived(String user) {
+        usersDirectFistbumpReceived.add(user);
+    }
+
+    public void removeUsersDirectFistbumpReceived(String user) {
+        usersDirectFistbumpReceived.remove(user);
     }
 
     @DynamoDBAttribute(attributeName = "NewNotification")

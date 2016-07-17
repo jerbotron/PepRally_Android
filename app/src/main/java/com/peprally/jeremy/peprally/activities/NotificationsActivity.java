@@ -1,6 +1,7 @@
 package com.peprally.jeremy.peprally.activities;
 
 import android.os.AsyncTask;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -30,17 +31,15 @@ public class NotificationsActivity extends AppCompatActivity {
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
-
     // UI Variables
     private RecyclerView recyclerView;
-    private NotificationCardAdapter notificationCardAdapter;
+    private SwipeRefreshLayout notificationsSwipeRefreshContainer;
 
     // AWS Variables
     private DynamoDBHelper dbHelper;
 
     // General Variables
     private UserProfileParcel userProfileParcel;
-    private List<DBUserNotification> notifications;
 
     /***********************************************************************************************
      *************************************** ACTIVITY METHODS **************************************
@@ -54,20 +53,32 @@ public class NotificationsActivity extends AppCompatActivity {
 
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
 
-        new FetchUserNotificationsDBTask().execute();
-
         ActionBar supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
             supportActionBar.setDisplayHomeAsUpEnabled(true);
         }
 
-        // Recycler View Setup
+        // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
         recyclerView = (RecyclerView) findViewById(R.id.id_recycler_view_notifications);
         LinearLayoutManager rvLayoutManager = new LinearLayoutManager(this);
         recyclerView.setHasFixedSize(true);
-        // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
         recyclerView.setAdapter(new EmptyAdapter());
         recyclerView.setLayoutManager(rvLayoutManager);
+
+        // setup swipe refresh container
+        notificationsSwipeRefreshContainer = (SwipeRefreshLayout) findViewById(R.id.container_swipe_refresh_notifications);
+        notificationsSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refreshAdapter();
+            }
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshAdapter();
     }
 
     @Override
@@ -93,26 +104,20 @@ public class NotificationsActivity extends AppCompatActivity {
 
     private void initializeAdapter(List<DBUserNotification> results) {
         if (results != null && results.size() > 0) {
-            notifications = new ArrayList<>();
+            List<DBUserNotification> notifications = new ArrayList<>();
             for (DBUserNotification userNotification : results) {
                 notifications.add(userNotification);
             }
             // Reverse notifications so they are shown in ascending order w.r.t time stamp
             Collections.sort(notifications);
             Collections.reverse(notifications);
-            notificationCardAdapter = new NotificationCardAdapter(this, notifications, userProfileParcel);
+            NotificationCardAdapter notificationCardAdapter = new NotificationCardAdapter(this, notifications);
             recyclerView.setAdapter(notificationCardAdapter);
         }
-        else {
-            // no notifications
-            LinearLayout activityContainer = (LinearLayout) findViewById(R.id.id_activity_notifications);
-            TextView emptyAdapterText = new TextView(this);
-            emptyAdapterText.setText(getResources().getString(R.string.placeholder_no_notifications));
-            emptyAdapterText.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-            emptyAdapterText.setGravity(Gravity.CENTER);
-            emptyAdapterText.setPadding(16,16,16,16);
-            activityContainer.addView(emptyAdapterText);
-        }
+    }
+
+    private void refreshAdapter() {
+        new FetchUserNotificationsDBTask().execute();
     }
 
     /***********************************************************************************************
@@ -131,7 +136,11 @@ public class NotificationsActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(PaginatedQueryList<DBUserNotification> results) {
-            initializeAdapter(results);
+            if (results != null && results.size() > 0)
+                initializeAdapter(results);
+            // stop refresh loading animation
+            if (notificationsSwipeRefreshContainer.isRefreshing())
+                notificationsSwipeRefreshContainer.setRefreshing(false);
         }
     }
 }

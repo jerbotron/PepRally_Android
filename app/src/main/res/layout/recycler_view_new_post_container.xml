@@ -77,7 +77,8 @@
                     android:text="@string/placeholder_post_fistbumps_count"
                     android:drawablePadding="4dp"
                     android:drawableStart="@drawable/ic_fistbump_20"
-                    android:drawableLeft="@drawable/ic_fistbump_20" />
+                    android:drawableLeft="@drawable/ic_fistbump_20"
+                    android:clickable="true"/>
                 <TextView
                     android:id="@+id/id_text_view_post_card_comments_count"
                     android:layout_width="wrap_content"
@@ -88,7 +89,8 @@
                     android:text="@string/placeholder_post_fistbumps_count"
                     android:drawablePadding="4dp"
                     android:drawableStart="@drawable/ic_replies"
-                    android:drawableLeft="@drawable/ic_replies"/>
+                    android:drawableLeft="@drawable/ic_replies"
+                    android:clickable="true"/>
             </LinearLayout>
         </RelativeLayout>
         <LinearLayout
