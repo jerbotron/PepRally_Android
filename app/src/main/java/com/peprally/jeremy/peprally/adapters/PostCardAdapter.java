@@ -177,7 +177,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                         // update the sent fistbumps count of the current user
                         dbHelper.decrementUserSentFistbumpsCount(userProfileParcel.getCurUserNickname());
                         // remove notification
-                        dbHelper.deletePostNotification(NotificationEnum.POST_FISTBUMP, curPost);
+                        dbHelper.deletePostFistbumpNotification(NotificationEnum.POST_FISTBUMP, curPost.getPostID(), userProfileParcel.getCurUserNickname());
                     }
                     // remove current user from fistbumped users
                     curPost.removeFistbumpedUser(userProfileParcel.getCurUserNickname());

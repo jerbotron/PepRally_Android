@@ -153,7 +153,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                         // update the sent fistbumps count of the current user
                         dbHelper.decrementUserSentFistbumpsCount(curUserNickname);
                         // remove notification
-                        dbHelper.deleteCommentNotification(NotificationEnum.COMMENT_FISTBUMP, curComment);
+                        dbHelper.deleteCommentFistbumpNotification(NotificationEnum.COMMENT_FISTBUMP, curComment.getCommentID(), curComment.getNickname());
                     }
                     // remove current user from fistbumped users
                     curComment.removeFistbumpedUser(userProfileParcel.getCurUserNickname());
@@ -284,7 +284,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                 dbHelper.decrementPostCommentsCount(mainPost);
                 // remove notification if comment is not by the same post user
                 if (!curComment.getNickname().equals(mainPost.getNickname()))
-                    dbHelper.deleteCommentNotification(NotificationEnum.POST_COMMENT, curComment);
+                    dbHelper.deletePostCommentNotification(NotificationEnum.POST_COMMENT, curComment);
             }
         });
         dialogBuilderConfirmDelete.setNegativeButton("No", new DialogInterface.OnClickListener() {
