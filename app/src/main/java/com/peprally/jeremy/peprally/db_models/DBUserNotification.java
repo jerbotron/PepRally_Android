@@ -23,7 +23,6 @@ public class DBUserNotification implements Comparable<DBUserNotification>{
     }
 
     @DynamoDBHashKey(attributeName = "Nickname")
-    @DynamoDBIndexHashKey(globalSecondaryIndexNames = {"Nickname-PostID-index", "Nickname-CommentID-index"}, attributeName = "Nickname")
     public String getNickname() {
         return nickname;
     }
@@ -41,7 +40,8 @@ public class DBUserNotification implements Comparable<DBUserNotification>{
         this.timeInSeconds = timeInSeconds;
     }
 
-    @DynamoDBAttribute(attributeName = "NicknameSender")
+    @DynamoDBAttribute(attributeName = "SenderNickname")
+    @DynamoDBIndexRangeKey(globalSecondaryIndexNames = {"PostID-SenderNickname-index", "CommentID-SenderNickname-index"}, attributeName = "SenderNickname")
     public String getNicknameSender() {
         return nicknameSender;
     }
@@ -68,8 +68,7 @@ public class DBUserNotification implements Comparable<DBUserNotification>{
         this.comment = comment;
     }
 
-    @DynamoDBIndexHashKey(globalSecondaryIndexNames = {"PostID-index", "PostID-CommentID-index"}, attributeName = "PostID")
-    @DynamoDBIndexRangeKey(globalSecondaryIndexName = "Nickname-PostID-index", attributeName = "PostID")
+    @DynamoDBIndexHashKey(globalSecondaryIndexNames = {"PostID-index", "PostID-CommentID-index", "PostID-SenderNickname-index"}, attributeName = "PostID")
     public String getPostID() {
         return postID;
     }
@@ -78,8 +77,8 @@ public class DBUserNotification implements Comparable<DBUserNotification>{
         this.postID = postID;
     }
 
-    @DynamoDBIndexHashKey(globalSecondaryIndexNames = "CommentID-index", attributeName = "CommentID")
-    @DynamoDBIndexRangeKey(globalSecondaryIndexNames = {"Nickname-CommentID-index", "PostID-CommentID-index"}, attributeName = "CommentID")
+    @DynamoDBIndexHashKey(globalSecondaryIndexNames = {"CommentID-index", "CommentID-SenderNickname-index"}, attributeName = "CommentID")
+    @DynamoDBIndexRangeKey(globalSecondaryIndexName = "PostID-CommentID-index", attributeName = "CommentID")
     public String getCommentID() {
         return commentID;
     }
@@ -97,7 +96,7 @@ public class DBUserNotification implements Comparable<DBUserNotification>{
         this.timeStamp = timeStamp;
     }
 
-    @DynamoDBAttribute(attributeName = "Type")
+    @DynamoDBAttribute(attributeName = "NotificationType")
     public int getType() {
         return type;
     }

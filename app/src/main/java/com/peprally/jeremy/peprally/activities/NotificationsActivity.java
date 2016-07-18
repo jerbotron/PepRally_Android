@@ -114,6 +114,9 @@ public class NotificationsActivity extends AppCompatActivity {
             NotificationCardAdapter notificationCardAdapter = new NotificationCardAdapter(this, notifications);
             recyclerView.setAdapter(notificationCardAdapter);
         }
+        else {
+            recyclerView.setAdapter(new EmptyAdapter());
+        }
     }
 
     private void refreshAdapter() {
@@ -136,8 +139,8 @@ public class NotificationsActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(PaginatedQueryList<DBUserNotification> results) {
-            if (results != null && results.size() > 0)
-                initializeAdapter(results);
+            initializeAdapter(results);
+
             // stop refresh loading animation
             if (notificationsSwipeRefreshContainer.isRefreshing())
                 notificationsSwipeRefreshContainer.setRefreshing(false);

@@ -238,6 +238,7 @@ public class NewCommentActivity extends AppCompatActivity {
             bundle.putString("CUR_USER_NICKNAME", userProfileParcel.getCurUserNickname());
             bundle.putString("FACEBOOK_ID", userProfileParcel.getFacebookID());
             bundle.putString("FIRST_NAME", userProfileParcel.getFirstname());
+            // when adding the first comment, initialize commentCardAdapter with null list
             if (commentCardAdapter == null)
                 initializeAdapter(null);
             commentCardAdapter.addComment(newCommentText, bundle);
@@ -267,7 +268,6 @@ public class NewCommentActivity extends AppCompatActivity {
             for (DBUserComment userComment : results)
                 comments.add(userComment);
         }
-        // Initialize adapter for the case that the first comment is being made
         commentCardAdapter = new CommentCardAdapter(this, comments, userProfileParcel, mainPost);
         recyclerView.setAdapter(commentCardAdapter);
     }
@@ -354,7 +354,7 @@ public class NewCommentActivity extends AppCompatActivity {
                             // update the sent fistbumps count of the current user
                             dbHelper.decrementUserSentFistbumpsCount(userProfileParcel.getCurUserNickname());
                             // remove notification
-                            dbHelper.deletePostNotification(NotificationEnum.POST_FISTBUMP, userPost);
+                            dbHelper.deletePostFistbumpNotification(NotificationEnum.POST_FISTBUMP, userPost.getPostID(), userProfileParcel.getCurUserNickname());
                         }
                         // remove current user from fistbumped users
                         userPost.removeFistbumpedUser(userProfileParcel.getCurUserNickname());

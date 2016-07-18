@@ -22,8 +22,10 @@ import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class DynamoDBHelper {
 
@@ -145,17 +147,26 @@ public class DynamoDBHelper {
         new MakeNewNotificationAsyncTask().execute(bundle);
     }
 
-    public void deleteCommentNotification(NotificationEnum notificationEnum, DBUserComment userComment) {
+    public void deleteCommentFistbumpNotification(NotificationEnum notificationEnum, String commentID, String senderNickname) {
         Bundle bundle = new Bundle();
         bundle.putSerializable("NOTIFICATION_ENUM", notificationEnum);
-        bundle.putParcelable("USER_COMMENT", userComment);
+        bundle.putString("COMMENT_ID", commentID);
+        bundle.putString("SENDER_NICKNAME", senderNickname);
         new DeleteNotificationAsyncTask().execute(bundle);
     }
 
-    public void deletePostNotification(NotificationEnum notificationEnum, DBUserPost userPost) {
+    public void deletePostFistbumpNotification(NotificationEnum notificationEnum, String postID, String senderNickname) {
         Bundle bundle = new Bundle();
         bundle.putSerializable("NOTIFICATION_ENUM", notificationEnum);
-        bundle.putParcelable("USER_POST", userPost);
+        bundle.putString("POST_ID", postID);
+        bundle.putString("SENDER_NICKNAME", senderNickname);
+        new DeleteNotificationAsyncTask().execute(bundle);
+    }
+
+    public void deletePostCommentNotification(NotificationEnum notificationEnum, DBUserComment userComment) {
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("NOTIFICATION_ENUM", notificationEnum);
+        bundle.putParcelable("USER_COMMENT", userComment);
         new DeleteNotificationAsyncTask().execute(bundle);
     }
 
@@ -292,14 +303,17 @@ public class DynamoDBHelper {
     private class DeleteNotificationAsyncTask extends AsyncTask<Bundle, Void, Void> {
         @Override
         protected Void doInBackground(Bundle... params) {
-            NotificationEnum notificationEnum = (NotificationEnum) params[0].get("NOTIFICATION_ENUM");
+            Bundle bundle = params[0];
+            NotificationEnum notificationEnum = (NotificationEnum) bundle.get("NOTIFICATION_ENUM");
 
             if (notificationEnum != null) {
                 DBUserNotification userNotification = new DBUserNotification();
                 DynamoDBQueryExpression<DBUserNotification> queryExpression = null;
+                Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
                 switch (notificationEnum) {
                     case POST_COMMENT:
-                        DBUserComment postComment = params[0].getParcelable("USER_COMMENT");
+                        DBUserComment postComment = bundle.getParcelable("USER_COMMENT");
+                        expressionAttributeValues.put(":type", new AttributeValue().withN("1"));
                         if (postComment != null) {
                             userNotification.setPostID(postComment.getPostID());
                             queryExpression = new DynamoDBQueryExpression<DBUserNotification>()
@@ -308,39 +322,38 @@ public class DynamoDBHelper {
                                     .withRangeKeyCondition("CommentID", new Condition()
                                             .withComparisonOperator(ComparisonOperator.EQ)
                                             .withAttributeValueList(new AttributeValue().withS(postComment.getCommentID())))
-                                    .withConsistentRead(false);
-                        }
-                    case POST_FISTBUMP:
-                        DBUserPost userPost = params[0].getParcelable("USER_POST");
-                        if (userPost != null) {
-                            userNotification.setNickname(userPost.getNickname());
-                            queryExpression = new DynamoDBQueryExpression<DBUserNotification>()
-                                    .withIndexName("Nickname-PostID-index")
-                                    .withHashKeyValues(userNotification)
-                                    .withRangeKeyCondition("PostID", new Condition()
-                                            .withComparisonOperator(ComparisonOperator.EQ)
-                                            .withAttributeValueList(new AttributeValue().withS(userPost.getPostID())))
+                                    .withFilterExpression("NotificationType = :type")
+                                    .withExpressionAttributeValues(expressionAttributeValues)
                                     .withConsistentRead(false);
                         }
                         break;
+                    case POST_FISTBUMP:
+                        userNotification.setPostID(bundle.getString("POST_ID"));
+                        expressionAttributeValues.put(":type", new AttributeValue().withN("2"));
+                        queryExpression = new DynamoDBQueryExpression<DBUserNotification>()
+                                .withIndexName("PostID-SenderNickname-index")
+                                .withHashKeyValues(userNotification)
+                                .withRangeKeyCondition("SenderNickname", new Condition()
+                                        .withComparisonOperator(ComparisonOperator.EQ)
+                                        .withAttributeValueList(new AttributeValue().withS(bundle.getString("SENDER_NICKNAME"))))
+                                .withFilterExpression("NotificationType = :type")
+                                .withExpressionAttributeValues(expressionAttributeValues)
+                                .withConsistentRead(false);
+                        break;
                     case COMMENT_FISTBUMP:
-                        DBUserComment userComment = params[0].getParcelable("USER_COMMENT");
-                        if (userComment != null) {
-                            userNotification.setNickname(userComment.getNickname());
-                            queryExpression = new DynamoDBQueryExpression<DBUserNotification>()
-                                    .withIndexName("Nickname-CommentID-index")
-                                    .withHashKeyValues(userNotification)
-                                    .withRangeKeyCondition("CommentID", new Condition()
-                                            .withComparisonOperator(ComparisonOperator.EQ)
-                                            .withAttributeValueList(new AttributeValue().withS(userComment.getCommentID())))
-                                    .withConsistentRead(false);
-                        }
+                        userNotification.setCommentID(bundle.getString("COMMENT_ID"));
+                        queryExpression = new DynamoDBQueryExpression<DBUserNotification>()
+                                .withIndexName("CommentID-SenderNickname-index")
+                                .withHashKeyValues(userNotification)
+                                .withRangeKeyCondition("SenderNickname", new Condition()
+                                        .withComparisonOperator(ComparisonOperator.EQ)
+                                        .withAttributeValueList(new AttributeValue().withS(bundle.getString("SENDER_NICKNAME"))))
+                                .withConsistentRead(false);
                         break;
                 }
 
                 if (queryExpression != null) {
                     List<DBUserNotification> queryResults = mapper.query(DBUserNotification.class, queryExpression);
-                    Log.d("DYNAMODBHELPER: ", "size = " + queryResults.size());
                     // make sure only 1 entry is found
                     if (queryResults != null && queryResults.size() == 1) {
                         mapper.delete(queryResults.get(0));

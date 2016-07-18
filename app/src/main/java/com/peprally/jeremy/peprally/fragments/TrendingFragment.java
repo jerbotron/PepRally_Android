@@ -93,15 +93,20 @@ public class TrendingFragment extends Fragment {
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
     private void initializeAdapter(List<DBUserPost> result) {
-        posts = new ArrayList<>();
-        for (DBUserPost userPost : result) {
-            posts.add(userPost);
+        if (result != null && result.size() > 0) {
+            posts = new ArrayList<>();
+            for (DBUserPost userPost : result) {
+                posts.add(userPost);
+            }
+            // Reverse Posts so they are shown in ascending order w.r.t time stamp
+            Collections.sort(posts);
+            Collections.reverse(posts);
+            postCardAdapter = new PostCardAdapter(getActivity(), posts, userProfileParcel);
+            recyclerView.setAdapter(postCardAdapter);
         }
-        // Reverse Posts so they are shown in ascending order w.r.t time stamp
-        Collections.sort(posts);
-        Collections.reverse(posts);
-        postCardAdapter = new PostCardAdapter(getActivity(), posts, userProfileParcel);
-        recyclerView.setAdapter(postCardAdapter);
+        else {
+            recyclerView.setAdapter(new EmptyAdapter());
+        }
     }
 
     public void addPostToAdapter(String newPostText) {
@@ -134,8 +139,7 @@ public class TrendingFragment extends Fragment {
 
         @Override
         protected void onPostExecute(PaginatedScanList<DBUserPost> result) {
-            if (result != null)
-                initializeAdapter(result);
+            initializeAdapter(result);
 
             // stop refresh loading animation
             if (trendingSwipeRefreshContainer.isRefreshing())
