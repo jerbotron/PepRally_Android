@@ -50,6 +50,7 @@ import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -107,7 +108,6 @@ public class LoginActivity extends AppCompatActivity {
             LoginManager.getInstance().logOut();
             final LinearLayout container = (LinearLayout) findViewById(R.id.id_activity_login_container);
             final LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
-            assert container != null && loginButton != null;
             final Snackbar snackbar = Snackbar.make(container, getResources().getString(R.string.no_connection_text), Snackbar.LENGTH_INDEFINITE);
             snackbar.setAction("OKAY", new View.OnClickListener() {
                 @Override
@@ -143,11 +143,16 @@ public class LoginActivity extends AppCompatActivity {
                     @Override
                     protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken newAccessToken) {
                         // When a new facebook account is used to login
-                        updateWithToken();
+                        Log.d(TAG, "onCurrentAccessTokenChanged");
                     }
                 };
 
-                updateWithToken();
+                if (AccessToken.getCurrentAccessToken() == null) {
+                    setupLoginScreen();
+                } else {
+                    setContentView(R.layout.splash);
+                    AWSLoginTask();
+                }
             }
         }
     }
@@ -199,7 +204,6 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void AWSLoginTask() {
-        setContentView(R.layout.splash);
         AWSCredentialProvider credentialProviderTask = new AWSCredentialProvider(getApplicationContext(), new AWSLoginTaskCallback() {
             @Override
             public void onTaskDone(CognitoCachingCredentialsProvider credentialsProvider) {
@@ -208,14 +212,6 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
         credentialProviderTask.execute();
-    }
-
-    private void updateWithToken() {
-        if (AccessToken.getCurrentAccessToken() == null) {
-            setupLoginScreen();
-        } else {
-            AWSLoginTask();
-        }
     }
 
     private String getFacebookDataSafely(GraphResponse response, String key) {
@@ -227,14 +223,12 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private void bundleFacebookData(AccessToken accessToken) {
-        GraphRequest request = new GraphRequest(
-                accessToken,
-                "/{user-id}",
-                null,
-                HttpMethod.GET,
-                new GraphRequest.Callback() {
-                    public void onCompleted(GraphResponse response) {
+    private void bundleFacebookData() {
+        GraphRequest request = GraphRequest.newMeRequest(
+                AccessToken.getCurrentAccessToken(),
+                new GraphRequest.GraphJSONObjectCallback() {
+                    @Override
+                    public void onCompleted(JSONObject object, GraphResponse response) {
                         Log.d(TAG, response.toString());
                         String id = getFacebookDataSafely(response, "id");
                         String email = getFacebookDataSafely(response, "email");
@@ -259,16 +253,24 @@ public class LoginActivity extends AppCompatActivity {
         request.executeAsync();
     }
 
+    /***********************************************************************************************
+     ****************************************** UI METHODS *****************************************
+     **********************************************************************************************/
     private void setupLoginScreen() {
         setContentView(R.layout.activity_login);
         final LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
-        assert loginButton != null;
+        loginButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d(TAG, "login button onclick");
+                setContentView(R.layout.splash);
+            }
+        });
         loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
             @Override
             public void onSuccess(LoginResult loginResult) {
                 Log.d(TAG, "fb login success");
-//                AWSLoginTask();
-//                bundleFacebookData(loginResult.getAccessToken());
+                AWSLoginTask();
             }
 
             @Override
@@ -283,9 +285,6 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    /***********************************************************************************************
-     ****************************************** UI METHODS *****************************************
-     **********************************************************************************************/
     private void showNewNicknameDialog() {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         final View dialogView = View.inflate(this, R.layout.dialog_create_nickname, null);
@@ -329,6 +328,7 @@ public class LoginActivity extends AppCompatActivity {
         });
         dialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
+                Log.d(TAG, "----- logging out of facebook -----");
                 LoginManager.getInstance().logOut();
                 setupLoginScreen();
             }
@@ -406,12 +406,11 @@ public class LoginActivity extends AppCompatActivity {
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
     private class CheckIfNewUserDBTask extends AsyncTask<CognitoCachingCredentialsProvider, Void, Boolean> {
-        CognitoCachingCredentialsProvider credentialsProvider;
         DBUserProfile userProfile;
         DBPlayerProfile playerProfile;
         @Override
         protected Boolean doInBackground(CognitoCachingCredentialsProvider... params) {
-            credentialsProvider = params[0];
+            CognitoCachingCredentialsProvider credentialsProvider = params[0];
             AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
             ddbClient.setRegion(Region.getRegion(Regions.US_EAST_1));
             DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
@@ -444,7 +443,7 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean isNewUser) {
             if (isNewUser) {
-                bundleFacebookData(AccessToken.getCurrentAccessToken());
+                bundleFacebookData();
                 showNewNicknameDialog();
             }
             else {
