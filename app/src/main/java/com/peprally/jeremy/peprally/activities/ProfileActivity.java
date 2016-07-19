@@ -508,11 +508,11 @@ public class ProfileActivity extends AppCompatActivity {
                 userProfile.setIsVarsityPlayer(true);
                 userProfile.setTeam(playerProfile.getTeam());
                 userProfile.setPlayerIndex(playerProfile.getIndex());
+                dbHelper.saveDBObject(playerProfile);
             }
             else {
                 userProfile.setIsVarsityPlayer(false);
                 userProfile.setPlayerIndex(Helpers.INTEGER_INVALID);
-                dbHelper.saveDBObject(playerProfile);
             }
             dbHelper.saveDBObject(userProfile);
         }
