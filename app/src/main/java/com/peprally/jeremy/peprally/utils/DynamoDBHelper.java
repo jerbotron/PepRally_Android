@@ -274,6 +274,9 @@ public class DynamoDBHelper {
             switch (bundle.getInt("TYPE")) {
                 case 0: // direct fistbump
                     userNotification.setType(0);
+                    userNotification.setNicknameSender(bundle.getString("SENDER_NICKNAME"));
+                    DBUserProfile senderProfile = loadDBUserProfile(bundle.getString("SENDER_NICKNAME"));
+                    userNotification.setFacebookIDSender(senderProfile.getFacebookID());
                     break;
                 case 1: // comment on post
                     userNotification.setType(1);

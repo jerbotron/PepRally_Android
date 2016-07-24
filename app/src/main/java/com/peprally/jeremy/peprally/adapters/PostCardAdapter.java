@@ -119,18 +119,19 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
 
         postHolder.timeStamp.setText(Helpers.getTimeStampString(curPost.getTimeInSeconds()));
 
-        // Profile Picture OnClick Handlers:
+        // profile picture onclick handlers:
         postHolder.profileImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (userProfileParcel.getCurrentActivity() != ActivityEnum.PROFILE) {
                     Intent intent = new Intent(callingContext, ProfileActivity.class);
-                    // Clicked on own profile
+                    // clicked on own profile
                     if (curPost.getNickname().equals(curUserNickname)) {
                         userProfileParcel.setCurrentActivity(ActivityEnum.PROFILE);
+                        userProfileParcel.setIsSelfProfile(true);
                         intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                     }
-                    // Clicked on another user's profile
+                    // clicked on another user's profile
                     else {
                         UserProfileParcel parcel = new UserProfileParcel(ActivityEnum.PROFILE,
                                                                          curUserNickname,

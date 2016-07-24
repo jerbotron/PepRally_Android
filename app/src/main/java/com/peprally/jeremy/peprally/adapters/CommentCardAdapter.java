@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -18,9 +19,11 @@ import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.NewCommentActivity;
+import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
+import com.peprally.jeremy.peprally.utils.ActivityEnum;
 import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
@@ -72,7 +75,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     static class CommentHolder extends RecyclerView.ViewHolder {
         RelativeLayout commentContainer;
         CardView cardView;
-        ImageView profilePhoto;
+        ImageView profileImage;
         TextView timeStamp;
         TextView nickname;
         TextView postContent;
@@ -83,7 +86,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
             super(itemView);
             commentContainer = (RelativeLayout) itemView.findViewById(R.id.id_container_comment_clickable);
             cardView = (CardView) itemView.findViewById(R.id.id_card_view_new_comment);
-            profilePhoto = (ImageView) itemView.findViewById(R.id.id_image_view_comment_profile);
+            profileImage = (ImageView) itemView.findViewById(R.id.id_image_view_comment_profile);
             nickname = (TextView) itemView.findViewById(R.id.id_text_view_comment_nickname);
             timeStamp = (TextView) itemView.findViewById(R.id.id_text_view_comment_time_stamp);
             postContent = (TextView) itemView.findViewById(R.id.id_text_view_comment_content);
@@ -102,7 +105,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     public void onBindViewHolder(final CommentHolder commentHolder, int position) {
         final DBUserComment curComment = comments.get(position);
         Helpers.setFacebookProfileImage(callingContext,
-                                        commentHolder.profilePhoto,
+                                        commentHolder.profileImage,
                                         curComment.getFacebookID(),
                                         3);
 
@@ -118,6 +121,28 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         commentHolder.fistbumpsCount.setText(String.valueOf(fistbumpsCount));
 
         commentHolder.timeStamp.setText(Helpers.getTimeStampString(curComment.getTimeInSeconds()));
+
+        // profile picture onclick handler
+        commentHolder.profileImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(callingContext, ProfileActivity.class);
+                // clicked on own profile
+                if (curComment.getNickname().equals(curUserNickname)) {
+                    userProfileParcel.setCurrentActivity(ActivityEnum.PROFILE);
+                    intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
+                }
+                // clicked on another user's profile
+                else {
+                    UserProfileParcel parcel = new UserProfileParcel(ActivityEnum.PROFILE,
+                            curUserNickname,
+                            curComment);
+                    intent.putExtra("USER_PROFILE_PARCEL", parcel);
+                }
+                callingContext.startActivity(intent);
+                ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
+            }
+        });
 
         // fistbumps count button onclick handler:
         commentHolder.fistbumpsCount.setOnClickListener(new View.OnClickListener() {
@@ -245,6 +270,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         newComment.setCommentID(bundle.getString("CUR_USER_NICKNAME") + "_" + timeInSeconds.toString());
         newComment.setNickname(bundle.getString("CUR_USER_NICKNAME"));
         newComment.setPostNickname(bundle.getString("POST_NICKNAME"));
+        newComment.setFirstname(bundle.getString("FIRST_NAME"));
         newComment.setTimeInSeconds(timeInSeconds);
         newComment.setCognitoID(dbHelper.getIdentityID());
         newComment.setFacebookID(bundle.getString("FACEBOOK_ID"));

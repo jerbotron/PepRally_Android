@@ -15,6 +15,7 @@ public class DBUserComment implements Parcelable {
     private String commentID;
     private String nickname;
     private String postNickname;
+    private String firstname;
     private String cognitoID;
     private String facebookID;
     private String timeStamp;
@@ -69,6 +70,15 @@ public class DBUserComment implements Parcelable {
 
     public void setPostNickname(String postNickname) {
         this.postNickname = postNickname;
+    }
+
+    @DynamoDBAttribute(attributeName = "Fistname")
+    public String getFirstname() {
+        return firstname;
+    }
+
+    public void setFirstname(String firstname) {
+        this.firstname = firstname;
     }
 
     @DynamoDBAttribute(attributeName = "CognitoID")
@@ -141,6 +151,7 @@ public class DBUserComment implements Parcelable {
         this.commentID = in.readString();
         this.nickname = in.readString();
         this.postNickname = in.readString();
+        this.firstname = in.readString();
         this.cognitoID = in.readString();
         this.facebookID = in.readString();
         this.timeStamp = in.readString();
@@ -156,6 +167,7 @@ public class DBUserComment implements Parcelable {
         dest.writeString(commentID);
         dest.writeString(nickname);
         dest.writeString(postNickname);
+        dest.writeString(firstname);
         dest.writeString(cognitoID);
         dest.writeString(facebookID);
         dest.writeString(timeStamp);

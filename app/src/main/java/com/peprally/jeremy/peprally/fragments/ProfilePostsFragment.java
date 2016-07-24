@@ -133,7 +133,6 @@ public class ProfilePostsFragment extends Fragment {
         protected void onPostExecute(PaginatedQueryList<DBUserPost> result) {
 
             if (result != null && result.size() != 0) {
-                Log.d("profile fragment: ", "size = " + result.size());
                 userProfileParcel.setPostsCount(result.size());
                 initializeAdapter(result);
             }

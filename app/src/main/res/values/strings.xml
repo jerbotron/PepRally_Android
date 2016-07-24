@@ -5,6 +5,7 @@
     <string name="activity_label_notifications">Notifications</string>
     <string name="activity_label_fav_team">Browse Teams</string>
     <string name="activity_label_view_fistbumps">Fistbumps</string>
+    <string name="activity_label_messages">Messages</string>
     <string name="team_slogan">Hook\'em Horns</string>
 
     <!-- Strings related to Login Activity -->
@@ -20,12 +21,15 @@
     <string name="profile_follow_text">Follow</string>
     <string name="profile_following_text">+ Follow</string>
     <string name="profile_send_fistbump_text">SEND FISTBUMP</string>
+    <string name="profile_fistbumped_text">FISTBUMPED</string>
+    <string name="profile_fistbump_sent">Fistbump sent to </string>
+    <string name="profile_already_fistbumped">Fistbump already sent to</string>
 
     <string name="title_activity_profile">ProfileActivity</string>
     <string name="title_activity_events">EventsActivity</string>
     <string name="title_activity_browse_teams">BrowseTeamsActivity</string>
     <string name="title_activity_trending">TrendingActivity</string>
-    <string name="title_activity_settings">SettingsActivity</string>
+    <string name="title_activity_settings">Settings</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -88,6 +92,8 @@
     <string name="placeholder_app_version">Version 1.0 - UT BETA</string>
     <string name="placeholder_no_notifications">No new notifications.</string>
     <string name="placeholder_nothing_trending">Make a post! :)</string>
+    <string name="placeholder_logout">Logout</string>
+    <string name="placeholder_delete_profile">Delete Profile</string>
 
 
 </resources>
