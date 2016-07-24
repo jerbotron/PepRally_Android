@@ -84,6 +84,7 @@ public class ProfileEditFragment extends Fragment {
         Log.d(TAG, "edit fragment paused");
         updateUserProfileBundleData();
     }
+
     /***********************************************************************************************
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
@@ -130,8 +131,4 @@ public class ProfileEditFragment extends Fragment {
     public void setFavPlayer(String favoritePlayer) {
         textViewFavPlayer.setText(favoritePlayer);
     }
-
-    /***********************************************************************************************
-     ****************************************** ASYNC TASKS ****************************************
-     **********************************************************************************************/
 }

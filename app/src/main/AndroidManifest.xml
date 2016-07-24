@@ -66,11 +66,13 @@
             android:name=".activities.NotificationsActivity"
             android:label="@string/activity_label_notifications"
             android:screenOrientation="portrait" />
-
         <activity
             android:name=".activities.ViewFistbumpsActivity"
             android:label="@string/activity_label_view_fistbumps"
             android:screenOrientation="portrait" />
+        <activity android:name=".activities.MessagesActivity"
+            android:label="@string/activity_label_messages"
+            android:screenOrientation="portrait"/>
 
         <provider
             android:name="com.facebook.FacebookContentProvider"

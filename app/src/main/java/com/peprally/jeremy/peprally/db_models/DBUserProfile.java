@@ -1,5 +1,7 @@
 package com.peprally.jeremy.peprally.db_models;
 
+import android.util.Log;
+
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 
 import java.util.Set;
@@ -150,7 +152,10 @@ public class DBUserProfile {
     }
 
     public void setSentFistbumpsCount(int sentFistbumpsCount) {
-        this.sentFistbumpsCount = sentFistbumpsCount;
+        if (sentFistbumpsCount > 0)
+            this.sentFistbumpsCount = sentFistbumpsCount;
+        else
+            this.sentFistbumpsCount = 0;
     }
 
     public void incrementSentFistbumpsCount() {
@@ -158,7 +163,8 @@ public class DBUserProfile {
     }
 
     public void decrementSentFistbumpsCount() {
-        sentFistbumpsCount -= 1;
+        if (sentFistbumpsCount > 0)
+            sentFistbumpsCount -= 1;
     }
 
     @DynamoDBAttribute(attributeName = "ReceivedFistbumpsCount")
@@ -167,7 +173,10 @@ public class DBUserProfile {
     }
 
     public void setReceivedFistbumpsCount(int receivedFistbumpsCount) {
-        this.receivedFistbumpsCount = receivedFistbumpsCount;
+        if (receivedFistbumpsCount > 0)
+            this.receivedFistbumpsCount = receivedFistbumpsCount;
+        else
+            this.receivedFistbumpsCount = 0;
     }
 
     public void incrementReceivedFistbumpsCount() {
@@ -175,7 +184,8 @@ public class DBUserProfile {
     }
 
     public void decrementReceivedFistbumpsCount() {
-        receivedFistbumpsCount -= 1;
+        if (receivedFistbumpsCount > 0)
+            receivedFistbumpsCount -= 1;
     }
 
     @DynamoDBAttribute(attributeName = "PostsCount")
@@ -184,7 +194,10 @@ public class DBUserProfile {
     }
 
     public void setPostsCount(int postsCount) {
-        this.postsCount = postsCount;
+        if (postsCount > 0)
+            this.postsCount = postsCount;
+        else
+            this.postsCount = 0;
     }
 
     public void incrementPostCount() {
@@ -192,7 +205,8 @@ public class DBUserProfile {
     }
 
     public void decrementPostCount() {
-        postsCount -= 1;
+        if (postsCount > 0)
+            postsCount -= 1;
     }
 
     @DynamoDBAttribute(attributeName = "FavoriteTeam")
@@ -277,11 +291,13 @@ public class DBUserProfile {
     }
 
     public void addUsersDirectFistbumpSent(String user) {
-        usersDirectFistbumpSent.add(user);
+        if (usersDirectFistbumpSent != null)
+            usersDirectFistbumpSent.add(user);
     }
 
     public void removeUsersDirectFistbumpSent(String user) {
-        usersDirectFistbumpSent.remove(user);
+        if (usersDirectFistbumpSent != null)
+            usersDirectFistbumpSent.remove(user);
     }
 
     @DynamoDBAttribute(attributeName = "UsersDirectFistbumpReceived")
@@ -294,11 +310,13 @@ public class DBUserProfile {
     }
 
     public void addUsersDirectFistbumpReceived(String user) {
-        usersDirectFistbumpReceived.add(user);
+        if (usersDirectFistbumpReceived != null)
+            usersDirectFistbumpReceived.add(user);
     }
 
     public void removeUsersDirectFistbumpReceived(String user) {
-        usersDirectFistbumpReceived.remove(user);
+        if (usersDirectFistbumpReceived != null)
+            usersDirectFistbumpReceived.remove(user);
     }
 
     @DynamoDBAttribute(attributeName = "NewNotification")

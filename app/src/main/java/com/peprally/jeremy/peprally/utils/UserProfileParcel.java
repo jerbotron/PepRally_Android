@@ -4,6 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
+import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 
@@ -157,6 +158,33 @@ public class UserProfileParcel implements Parcelable {
         this.profileNickname = userPost.getNickname();
         this.facebookID = userPost.getFacebookID();
         this.cognitoID = userPost.getCognitoID();
+        this.isSelfProfile = false;
+
+        // Initialize integer values to invalid value
+        this.followersCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.followingCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.sentFistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.receivedFistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.postsCount = Helpers.INTEGER_DEFAULT_COUNT;
+        this.index = Helpers.INTEGER_INVALID;
+        this.number = Helpers.INTEGER_INVALID;
+        // Initialize un-used boolean members to temporary false value
+        this.newNotification = false;
+        this.hasUserProfile = false;
+        this.isVarsityPlayer = false;
+    }
+
+    // Comment Adapter Constructor, only used to initialize a few required members
+    public UserProfileParcel(ActivityEnum currentActivity,
+                             String curUserNickname,
+                             DBUserComment userComment)
+    {
+        this.currentActivity = currentActivity;
+        this.curUserNickname = curUserNickname;
+        this.firstname = userComment.getFirstname();
+        this.profileNickname = userComment.getNickname();
+        this.facebookID = userComment.getFacebookID();
+        this.cognitoID = userComment.getCognitoID();
         this.isSelfProfile = false;
 
         // Initialize integer values to invalid value

@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
@@ -16,10 +17,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -29,7 +32,6 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMappingE
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
-import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.fragments.ProfileEditFragment;
 import com.peprally.jeremy.peprally.fragments.ProfilePostsFragment;
@@ -54,6 +56,7 @@ public class ProfileActivity extends AppCompatActivity {
     // UI Variables
     private ActionBar supportActionBar;
     private AppBarLayout appBarLayout;
+    private ProfileInfoFragment infoFragment;
     private ProfilePostsFragment postsFragment;
     private ProfileEditFragment editFragment;
     private MenuItem menuItemChat;
@@ -64,9 +67,9 @@ public class ProfileActivity extends AppCompatActivity {
 
     // General Variables
     private static UserProfileParcel userProfileParcel;
-
     private static final String TAG = ProfileActivity.class.getSimpleName();
     private boolean editMode = false;
+    private boolean didCurrentUserFistbumpProfileUserAlready = false;
 
     /***********************************************************************************************
      *************************************** ACTIVITY METHODS **************************************
@@ -91,7 +94,6 @@ public class ProfileActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
-            supportActionBar.setTitle(null);
             supportActionBar.setDisplayHomeAsUpEnabled(true);
         }
         fixProfileHeaderMarginTop();
@@ -102,9 +104,9 @@ public class ProfileActivity extends AppCompatActivity {
             public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
                 if (!editMode) {
                     if (verticalOffset == 0 && supportActionBar.getTitle() != null) {
-                        supportActionBar.setTitle(null);
+                        supportActionBar.setTitle(userProfileParcel.getProfileNickname());
                     }
-                    else if(verticalOffset <= -375 && supportActionBar.getTitle() == null) {
+                    else if(verticalOffset <= -375 && supportActionBar.getTitle() != null) {
                         supportActionBar.setTitle(userProfileParcel.getFirstname());
                     }
                 }
@@ -118,10 +120,6 @@ public class ProfileActivity extends AppCompatActivity {
         if (buttonEditProfile != null && buttonEditProfileContent != null) {
             // If user is viewing their own profile
             if (userProfileParcel.getIsSelfProfile()) {
-//                buttonEditProfile.setBackground(ContextCompat.getDrawable(this, R.drawable.button_view_fistbumps));
-//                buttonEditProfileContent.setTextColor(ContextCompat.getColor(this, R.color.colorAccentDark));
-//                buttonEditProfileContent.setText(getResources().getString(R.string.placeholder_edit_profile));
-//                buttonEditProfileContent.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
                 buttonEditProfile.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
@@ -150,35 +148,12 @@ public class ProfileActivity extends AppCompatActivity {
                 });
 
                 // launch new post activity
-                actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_new_post));
                 actionFAB.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         Intent intent = new Intent(getApplicationContext(), NewPostActivity.class);
                         startActivityForResult(intent, Helpers.NEW_POST_REQUEST_CODE);
                         overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
-                    }
-                });
-            }
-            // If user is viewing another user's profile
-            else {
-                buttonEditProfileContent.setText(getResources().getString(R.string.profile_send_fistbump_text));
-                buttonEditProfileContent.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_fistbump_20_ut, 0);
-                buttonEditProfile.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Toast.makeText(ProfileActivity.this, "FIST BUMP", Toast.LENGTH_SHORT).show();
-                    }
-                });
-
-                // direct fistbump feature
-                actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_fistbump_50_white));
-                actionFAB.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Toast.makeText(ProfileActivity.this, "FISTBUMPED!", Toast.LENGTH_SHORT).show();
-                        dbHelper.makeNewNotification(makeNotificationDirectFistbumpBundle());
-                        httpRequestsHelper.makeHTTPPostRequest(makeNotificationDirectFistbumpBundle());
                     }
                 });
             }
@@ -242,14 +217,6 @@ public class ProfileActivity extends AppCompatActivity {
     /***********************************************************************************************
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
-    private Bundle makeNotificationDirectFistbumpBundle() {
-        Bundle bundle = new Bundle();
-        bundle.putInt("TYPE", 0);
-        bundle.putString("RECEIVER_NICKNAME", userProfileParcel.getProfileNickname());  // who the notification is going to
-        bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());    // who the notification is from
-        return bundle;
-    }
-
     public UserProfileParcel getUserProfileParcel() {
         return userProfileParcel;
     }
@@ -274,12 +241,24 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
+    private Bundle makeNotificationDirectFistbumpBundle() {
+        Bundle bundle = new Bundle();
+        bundle.putInt("TYPE", 0);
+        bundle.putString("RECEIVER_NICKNAME", userProfileParcel.getProfileNickname());  // who the notification is going to
+        bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());    // who the notification is from
+        return bundle;
+    }
+
+    private void setDidCurrentUserFistbumpProfileUserAlready(boolean setDidCurrentUserFistbumpProfileUserAlready) {
+        this.didCurrentUserFistbumpProfileUserAlready = setDidCurrentUserFistbumpProfileUserAlready;
+    }
+
     /***********************************************************************************************
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
     private void createView() {
         FragmentManager fragmentManager = getSupportFragmentManager();
-        ProfileInfoFragment infoFragment = new ProfileInfoFragment();
+        infoFragment = new ProfileInfoFragment();
         postsFragment = new ProfilePostsFragment();
         editFragment = new ProfileEditFragment();
 
@@ -353,6 +332,10 @@ public class ProfileActivity extends AppCompatActivity {
                     + Integer.toString(userProfileParcel.getPostsCount())
                     + "</b> " + getString(R.string.profile_posts)));
         }
+
+        // update user fistbump and edit profile button
+        if (!userProfileParcel.getIsSelfProfile())
+            updateDirectFistbumpButtons(didCurrentUserFistbumpProfileUserAlready);
     }
 
     /**
@@ -385,7 +368,7 @@ public class ProfileActivity extends AppCompatActivity {
             // Push profile changes to DB
             new PushProfileChangesToDBTask().execute();
 
-            // Switch Fragment back to infoFragment
+            // Switch fragment back to infoFragment
             final FloatingActionButton actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
 
             appBarLayout.setExpanded(true, false);
@@ -394,10 +377,12 @@ public class ProfileActivity extends AppCompatActivity {
             adapter.detachFrag(2);
             adapter.removeFrag(2);
             adapter.notifyDataSetChanged();
+            editFragment.onPause();
             viewPagerProfile.setCurrentItem(0);
+            infoFragment.onResume();
             ((ProfileViewPager) viewPagerProfile).setAllowedSwipeDirection(ProfileViewPager.SwipeDirection.all);
 
-            // Re-enable Edit Icon
+            // re-enable app bar menu icons
             menuItemChat.setVisible(true);
             menuItemChat.setEnabled(true);
             menuItemNotification.setVisible(true);
@@ -405,7 +390,7 @@ public class ProfileActivity extends AppCompatActivity {
             editMode = false;
 
             // Change back Actionbar title
-            supportActionBar.setTitle(null);
+            supportActionBar.setTitle(userProfileParcel.getProfileNickname());
         }
         else {
             if (userProfileParcel.getIsSelfProfile()) {
@@ -438,6 +423,132 @@ public class ProfileActivity extends AppCompatActivity {
 
         AlertDialog b = dialogBuilder.create();
         b.show();
+    }
+
+    private void showDirectFistbumpSnackbarConfirmation(boolean fistbumpSent) {
+        final Snackbar snackbar;
+        if (fistbumpSent) {
+            snackbar = Snackbar.make(findViewById(R.id.id_activity_profile),
+                        getResources().getString(R.string.profile_fistbump_sent) + " " + userProfileParcel.getProfileNickname(),
+                        Snackbar.LENGTH_LONG);
+        }
+        else {
+            snackbar = Snackbar.make(findViewById(R.id.id_activity_profile),
+                        userProfileParcel.getFirstname() + " has not made a profile yet, fistbump not sent.",
+                        Snackbar.LENGTH_LONG);
+        }
+        snackbar.setAction("OKAY", new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                snackbar.dismiss();
+            }});
+        snackbar.show();
+    }
+
+    private void showVerifySendDirectFistbumpDialog() {
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+        final View dialogView = View.inflate(this, R.layout.dialog_verify_direct_fistbump, null);
+        dialogBuilder.setView(dialogView);
+
+        final ImageButton fistbumpButton = (ImageButton) dialogView.findViewById(R.id.id_dialog_button_fistbump);
+
+        dialogBuilder.setTitle("Send fistbump to " + userProfileParcel.getFirstname() + " ?");
+        final AlertDialog b = dialogBuilder.create();
+        fistbumpButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // increase appropriate fistbump counts
+                dbHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUserNickname());
+                dbHelper.incrementUserReceivedFistbumpsCount(userProfileParcel.getProfileNickname());
+                // add users to respective sent/received fistbump lists
+                new HandleCurUserDirectFistbumpToProfileUserTask().execute();
+                // make push notifications
+                dbHelper.makeNewNotification(makeNotificationDirectFistbumpBundle());
+                httpRequestsHelper.makeHTTPPostRequest(makeNotificationDirectFistbumpBundle());
+                // update UI
+                final LinearLayout buttonEditProfile = (LinearLayout) findViewById(R.id.id_button_edit_profile_container);
+                final TextView buttonEditProfileContent = (TextView) findViewById(R.id.id_button_edit_profile_content);
+                final FloatingActionButton actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
+                buttonEditProfileContent.setText(getResources().getString(R.string.profile_fistbumped_text));
+                actionFAB.setImageDrawable(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_fistbump_filled_50));
+                actionFAB.setBackgroundTintList(ContextCompat.getColorStateList(getApplicationContext(), R.color.colorPrimaryLight));
+                // show confirmation snackbar msg
+                showDirectFistbumpSnackbarConfirmation(true);
+                b.dismiss();
+            }
+        });
+        b.show();
+    }
+
+    private void showDirectFistbumpSnackbarFistbumpAlreadySentConfirmation() {
+        final Snackbar snackbar = Snackbar.make(findViewById(R.id.id_activity_profile),
+                                    getResources().getString(R.string.profile_already_fistbumped) + " " + userProfileParcel.getProfileNickname(),
+                                    Snackbar.LENGTH_LONG);
+        snackbar.setAction("Okay", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                snackbar.dismiss();
+            }
+        });
+        snackbar.show();
+    }
+
+    private void updateDirectFistbumpButtons(boolean fistbumped) {
+        final LinearLayout buttonEditProfile = (LinearLayout) findViewById(R.id.id_button_edit_profile_container);
+        final TextView buttonEditProfileContent = (TextView) findViewById(R.id.id_button_edit_profile_content);
+        final FloatingActionButton actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
+        // if current user already fistbumped profile user
+        if (fistbumped) {
+            buttonEditProfileContent.setText(getResources().getString(R.string.profile_fistbumped_text));
+            buttonEditProfile.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showDirectFistbumpSnackbarFistbumpAlreadySentConfirmation();
+                }
+            });
+            actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_fistbump_filled_50));
+            actionFAB.setBackgroundTintList(ContextCompat.getColorStateList(getApplicationContext(), R.color.colorPrimaryLight));
+            actionFAB.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showDirectFistbumpSnackbarFistbumpAlreadySentConfirmation();
+                }
+            });
+        }
+        // if current user has not fistbumped profile user
+        else {
+            buttonEditProfileContent.setText(getResources().getString(R.string.profile_send_fistbump_text));
+            buttonEditProfile.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // check if profileUser is a varsity player who hasn't created a profile yet
+                    if (userProfileParcel.getIsVarsityPlayer() && !userProfileParcel.getHasUserProfile()) {
+                        showDirectFistbumpSnackbarConfirmation(false);
+                    }
+                    else {
+                        showVerifySendDirectFistbumpDialog();
+                    }
+                }
+            });
+
+            // direct fistbump feature
+            actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_fistbump_50_white));
+            actionFAB.setBackgroundTintList(ContextCompat.getColorStateList(getApplicationContext(), R.color.colorAccent));
+            actionFAB.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    // check if profileUser is a varsity player who hasn't created a profile yet
+                    if (userProfileParcel.getIsVarsityPlayer() && !userProfileParcel.getHasUserProfile()) {
+                        showDirectFistbumpSnackbarConfirmation(false);
+                    }
+                    else {
+                        showVerifySendDirectFistbumpDialog();
+                    }
+                }
+            });
+        }
+        // remove edit icon drawable
+        buttonEditProfileContent.setCompoundDrawablesWithIntrinsicBounds(0,0,0,0);
     }
 
     /***********************************************************************************************
@@ -478,9 +589,16 @@ public class ProfileActivity extends AppCompatActivity {
                 playerProfile = null;
             }
 
-            if (userProfile != null && playerProfile == null) {
+            if (userProfile != null) {
                 if (userProfile.getNewUser())
                     SetupNewUserProfile();
+                if (!userProfileParcel.getIsSelfProfile()) {
+                    // check if current user has fistbumped profile user
+                    DBUserProfile curUser = dbHelper.loadDBUserProfile(userProfileParcel.getCurUserNickname());
+                    if (curUser.getUsersDirectFistbumpSent().contains(userProfileParcel.getProfileNickname())) {
+                        setDidCurrentUserFistbumpProfileUserAlready(true);
+                    }
+                }
             }
 
             return null;
@@ -508,11 +626,11 @@ public class ProfileActivity extends AppCompatActivity {
                 userProfile.setIsVarsityPlayer(true);
                 userProfile.setTeam(playerProfile.getTeam());
                 userProfile.setPlayerIndex(playerProfile.getIndex());
+                dbHelper.saveDBObject(playerProfile);
             }
             else {
                 userProfile.setIsVarsityPlayer(false);
                 userProfile.setPlayerIndex(Helpers.INTEGER_INVALID);
-                dbHelper.saveDBObject(playerProfile);
             }
             dbHelper.saveDBObject(userProfile);
         }
@@ -565,14 +683,38 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
         private void pushUserProfileChanges() {
-//            DBUserProfile.setFollowingCount(userProfileParcel.getFollowingCount());
-//            DBUserProfile.setSentFistbumpsCount(userProfileParcel.getSentFistbumpsCount());
-//            DBUserProfile.setReceivedFistbumpsCount(userProfileParcel.getReceivedFistbumpsCount());
             DBUserProfile.setFavoriteTeam(userProfileParcel.getFavoriteTeam());
             DBUserProfile.setFavoritePlayer(userProfileParcel.getFavoritePlayer());
             DBUserProfile.setPepTalk(userProfileParcel.getPepTalk());
             DBUserProfile.setTrashTalk(userProfileParcel.getTrashTalk());
             dbHelper.saveDBObject(DBUserProfile);
+        }
+    }
+
+    private class HandleCurUserDirectFistbumpToProfileUserTask extends AsyncTask<Void, Void, Boolean> {
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            DBUserProfile profileUser = dbHelper.loadDBUserProfile(userProfileParcel.getProfileNickname());
+            DBUserProfile curUser = dbHelper.loadDBUserProfile(userProfileParcel.getCurUserNickname());
+            if (profileUser != null && curUser != null) {
+                curUser.addUsersDirectFistbumpSent(userProfileParcel.getProfileNickname());
+                profileUser.addUsersDirectFistbumpReceived(userProfileParcel.getCurUserNickname());
+                dbHelper.saveDBObject(curUser);
+                dbHelper.saveDBObject(profileUser);
+                // if the profile user has also sent a direct fistbump to current user
+                if (profileUser.getUsersDirectFistbumpSent().contains(userProfileParcel.getCurUserNickname())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean launchChatWindow) {
+            if (launchChatWindow)
+                Log.d(TAG, "launch chat window");
+            else
+                Log.d(TAG, "profile user has not fistbumped cur user yet");
         }
     }
 }

@@ -39,8 +39,6 @@ public class ProfileInfoFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Get copy of userProfileParcel from ProfileActivity
-        userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
         initializePositionMaps();
     }
 
@@ -52,8 +50,10 @@ public class ProfileInfoFragment extends Fragment {
 
     @Override
     public void onResume() {
-        Log.d(TAG, "profile info fragment resumed");
         super.onResume();
+        Log.d(TAG, "profile info fragment resumed");
+        // get latest copy of userProfileParcel from ProfileActivity
+        userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
         refresh();
     }
 
@@ -73,7 +73,7 @@ public class ProfileInfoFragment extends Fragment {
         final TextView textViewPepTalk = (TextView) view.findViewById(R.id.profile_view_pep_talk);
         final TextView textViewTrashTalk = (TextView) view.findViewById(R.id.profile_view_trash_talk);
 
-        textViewFirstName.setText("");    // set to empty so I can check later if populated under varsity img_default_profile
+        textViewFirstName.setText("");    // set to empty so I can check later if populated under varsity profile
 
         if (userProfileParcel.getIsVarsityPlayer()) {
             String nameText = userProfileParcel.getFirstname() + " "
@@ -89,14 +89,14 @@ public class ProfileInfoFragment extends Fragment {
             }
             textViewFirstName.setText(nameText);
 
-            LinearLayout playerInfoLayout = new LinearLayout(getActivity());
-            playerInfoLayout.setOrientation(LinearLayout.VERTICAL);
-            LinearLayout.LayoutParams llparams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            final LinearLayout playerInfoLayout = (LinearLayout) view.findViewById(R.id.profile_container_varsity_profile);
+            LinearLayout.LayoutParams llparams = (LinearLayout.LayoutParams) playerInfoLayout.getLayoutParams();
             llparams.setMargins((int) getResources().getDimension(R.dimen.activity_horizontal_margin),
                     0,
                     (int) getResources().getDimension(R.dimen.activity_horizontal_margin),
                     (int) getResources().getDimension(R.dimen.activity_horizontal_margin));
             playerInfoLayout.setLayoutParams(llparams);
+            playerInfoLayout.removeAllViews();
 
             final LinearLayout.LayoutParams tvparams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
             tvparams.setMargins(0, 0, 0, 4);
@@ -188,7 +188,6 @@ public class ProfileInfoFragment extends Fragment {
                 tv_no_profile.setGravity(Gravity.CENTER_HORIZONTAL);
                 playerInfoLayout.addView(tv_no_profile);
             }
-            parent_container.addView(playerInfoLayout, 2);
         }
 
         if (textViewFirstName.getText().toString().isEmpty()) {

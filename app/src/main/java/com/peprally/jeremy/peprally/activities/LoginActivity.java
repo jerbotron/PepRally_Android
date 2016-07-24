@@ -33,7 +33,6 @@ import com.facebook.FacebookException;
 import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
-import com.facebook.HttpMethod;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
@@ -106,9 +105,8 @@ public class LoginActivity extends AppCompatActivity {
             setContentView(R.layout.activity_login);
             connectionSecured = false;
             LoginManager.getInstance().logOut();
-            final LinearLayout container = (LinearLayout) findViewById(R.id.id_activity_login_container);
             final LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
-            final Snackbar snackbar = Snackbar.make(container, getResources().getString(R.string.no_connection_text), Snackbar.LENGTH_INDEFINITE);
+            final Snackbar snackbar = Snackbar.make(findViewById(R.id.id_activity_login_container), getResources().getString(R.string.no_connection_text), Snackbar.LENGTH_INDEFINITE);
             snackbar.setAction("OKAY", new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
