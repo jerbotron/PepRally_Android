@@ -91,9 +91,12 @@
     <string name="placeholder_messages">Messages</string>
     <string name="placeholder_app_version">Version 1.0 - UT BETA</string>
     <string name="placeholder_no_notifications">No new notifications.</string>
+    <string name="placeholder_no_messages">No messages yet. Give someone a fistbump!</string>
     <string name="placeholder_nothing_trending">Make a post! :)</string>
     <string name="placeholder_logout">Logout</string>
     <string name="placeholder_delete_profile">Delete Profile</string>
+    <string name="placeholder_fistbump_match_send_message">SEND A MESSAGE</string>
+    <string name="placeholder_fistbump_match_go_back">GO BACK</string>
 
 
 </resources>

@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Vibrator;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
@@ -181,5 +182,11 @@ public class Helpers {
             Log.d("HELPERS: ", "FMS reg token = " + token);
         }
         return token;
+    }
+
+    // Physical Helpers
+    public static void vibrateDeviceNotification(Context callingContext) {
+        Vibrator v = (Vibrator) callingContext.getSystemService(Context.VIBRATOR_SERVICE);
+        v.vibrate(500);
     }
 }

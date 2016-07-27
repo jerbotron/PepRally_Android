@@ -150,6 +150,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
             public void onClick(View view) {
                 if (curComment.getFistbumpsCount() > 0) {
                     Intent intent = new Intent(callingContext, ViewFistbumpsActivity.class);
+                    intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                     intent.putStringArrayListExtra("FISTBUMPED_USERS", new ArrayList<>(curComment.getFistbumpedUsers()));
                     callingContext.startActivity(intent);
                 }

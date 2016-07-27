@@ -150,6 +150,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
             public void onClick(View view) {
                 if (curPost.getFistbumpsCount() > 0) {
                     Intent intent = new Intent(callingContext, ViewFistbumpsActivity.class);
+                    intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                     intent.putStringArrayListExtra("FISTBUMPED_USERS", new ArrayList<>(curPost.getFistbumpedUsers()));
                     callingContext.startActivity(intent);
                 }

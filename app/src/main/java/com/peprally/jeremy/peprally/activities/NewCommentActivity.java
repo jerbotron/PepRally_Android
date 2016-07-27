@@ -324,6 +324,7 @@ public class NewCommentActivity extends AppCompatActivity {
                 public void onClick(View view) {
                     if (mainPost.getFistbumpsCount() > 0) {
                         Intent intent = new Intent(getApplicationContext(), ViewFistbumpsActivity.class);
+                        intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                         intent.putStringArrayListExtra("FISTBUMPED_USERS", new ArrayList<>(mainPost.getFistbumpedUsers()));
                         startActivity(intent);
                     }

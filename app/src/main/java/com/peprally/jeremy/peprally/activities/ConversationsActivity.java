@@ -10,11 +10,11 @@ import android.support.v7.widget.RecyclerView;
 import android.view.MenuItem;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
-import com.peprally.jeremy.peprally.adapters.NotificationCardAdapter;
-import com.peprally.jeremy.peprally.db_models.DBUserNotification;
+import com.peprally.jeremy.peprally.adapters.ConversationCardAdapter;
+import com.peprally.jeremy.peprally.db_models.DBUserConversation;
+import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
@@ -22,30 +22,27 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class NotificationsActivity extends AppCompatActivity {
+public class ConversationsActivity extends AppCompatActivity {
 
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // UI Variables
     private RecyclerView recyclerView;
-    private SwipeRefreshLayout notificationsSwipeRefreshContainer;
+    private SwipeRefreshLayout conversationSwipeRefreshContainer;
 
     // AWS Variables
-    private DynamoDBHelper dbHelper;
+    private DynamoDBHelper dynamoDBHelper;
 
     // General Variables
     private UserProfileParcel userProfileParcel;
 
-    /***********************************************************************************************
-     *************************************** ACTIVITY METHODS **************************************
-     **********************************************************************************************/
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_notifications);
+        setContentView(R.layout.activity_conversations);
 
-        dbHelper = new DynamoDBHelper(this);
+        dynamoDBHelper = new DynamoDBHelper(this);
 
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
 
@@ -56,15 +53,15 @@ public class NotificationsActivity extends AppCompatActivity {
         }
 
         // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
-        recyclerView = (RecyclerView) findViewById(R.id.id_recycler_view_notifications);
+        recyclerView = (RecyclerView) findViewById(R.id.id_recycler_view_conversation);
         LinearLayoutManager rvLayoutManager = new LinearLayoutManager(this);
         recyclerView.setHasFixedSize(true);
         recyclerView.setAdapter(new EmptyAdapter());
         recyclerView.setLayoutManager(rvLayoutManager);
 
         // setup swipe refresh container
-        notificationsSwipeRefreshContainer = (SwipeRefreshLayout) findViewById(R.id.id_container_swipe_refresh_notifications);
-        notificationsSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+        conversationSwipeRefreshContainer = (SwipeRefreshLayout) findViewById(R.id.id_container_swipe_refresh_conversation);
+        conversationSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 refreshAdapter();
@@ -100,17 +97,12 @@ public class NotificationsActivity extends AppCompatActivity {
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
 
-    private void initializeAdapter(List<DBUserNotification> results) {
+    private void initializeAdapter(List<DBUserConversation> results) {
         if (results != null && results.size() > 0) {
-            List<DBUserNotification> notifications = new ArrayList<>();
-            for (DBUserNotification userNotification : results) {
-                notifications.add(userNotification);
-            }
             // Reverse notifications so they are shown in ascending order w.r.t time stamp
-            Collections.sort(notifications);
-            Collections.reverse(notifications);
-            NotificationCardAdapter notificationCardAdapter = new NotificationCardAdapter(this, notifications);
-            recyclerView.setAdapter(notificationCardAdapter);
+            Collections.sort(results);
+            ConversationCardAdapter conversationCardAdapter = new ConversationCardAdapter(this, results, userProfileParcel);
+            recyclerView.setAdapter(conversationCardAdapter);
         }
         else {
             recyclerView.setAdapter(new EmptyAdapter());
@@ -118,30 +110,43 @@ public class NotificationsActivity extends AppCompatActivity {
     }
 
     private void refreshAdapter() {
-        new FetchUserNotificationsDBTask().execute();
+        new FetchUserConversationsAsyncTask().execute(userProfileParcel.getCurUserNickname());
     }
 
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
-    private class FetchUserNotificationsDBTask extends AsyncTask<Void, Void, PaginatedQueryList<DBUserNotification>> {
+    private class FetchUserConversationsAsyncTask extends AsyncTask<String, Void, List<DBUserConversation>> {
         @Override
-        protected PaginatedQueryList<DBUserNotification> doInBackground(Void... params) {
-            DBUserNotification userNotification = new DBUserNotification();
-            userNotification.setNickname(userProfileParcel.getCurUserNickname());
-            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
-                    .withHashKeyValues(userNotification)
-                    .withConsistentRead(true);
-            return dbHelper.getMapper().query(DBUserNotification.class, queryExpression);
+        protected List<DBUserConversation> doInBackground(String... nicknames) {
+            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(nicknames[0]);
+            List<DBUserConversation> userConversations = new ArrayList<>();
+            if (userProfile != null && userProfile.getConversationIDs().size() > 1) {   // set has a default value of "_"
+                for (String conversationID : userProfile.getConversationIDs()) {
+                    if (!conversationID.equals("_")) {  // special case inside conversationID Set
+                        DBUserConversation userConversation = new DBUserConversation();
+                        userConversation.setConversationID(conversationID);
+                        DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                                .withHashKeyValues(userConversation)
+                                .withConsistentRead(true);
+
+                        // query should just return a single conversation
+                        List<DBUserConversation> convo = dynamoDBHelper.getMapper().query(DBUserConversation.class, queryExpression);
+                        if (convo.size() == 1)
+                            userConversations.add(convo.get(0));
+                    }
+                }
+            }
+            return userConversations;
         }
 
         @Override
-        protected void onPostExecute(PaginatedQueryList<DBUserNotification> results) {
-            initializeAdapter(results);
+        protected void onPostExecute(List<DBUserConversation> userConversations) {
+            initializeAdapter(userConversations);
 
             // stop refresh loading animation
-            if (notificationsSwipeRefreshContainer.isRefreshing())
-                notificationsSwipeRefreshContainer.setRefreshing(false);
+            if (conversationSwipeRefreshContainer.isRefreshing())
+                conversationSwipeRefreshContainer.setRefreshing(false);
         }
     }
 }

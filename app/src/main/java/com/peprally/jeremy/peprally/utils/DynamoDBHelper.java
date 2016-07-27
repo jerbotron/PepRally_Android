@@ -13,16 +13,21 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
 import com.amazonaws.services.dynamodbv2.model.Condition;
+import com.peprally.jeremy.peprally.db_models.Conversation;
+import com.peprally.jeremy.peprally.db_models.DBUserConversation;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserNickname;
 import com.peprally.jeremy.peprally.db_models.DBUserNotification;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
+import com.peprally.jeremy.peprally.db_models.Message;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -169,6 +174,14 @@ public class DynamoDBHelper {
         bundle.putParcelable("USER_COMMENT", userComment);
         new DeleteNotificationAsyncTask().execute(bundle);
     }
+
+    // Database create methods
+
+    public void createNewConversation(String nickname1, String nickname2) {
+        new CreateNewConversationAsyncTask().execute(nickname1, nickname2);
+    }
+
+    // Database delete methods
 
     public void batchDeleteCommentNotifications(DBUserComment userComment) {
         new BatchDeleteCommentNotifications().execute(userComment);
@@ -408,6 +421,34 @@ public class DynamoDBHelper {
                         mapper.delete(notification);
                     }
                 }
+            }
+            return null;
+        }
+    }
+
+    private class CreateNewConversationAsyncTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... nicknames) {
+            DBUserProfile fistbumpedUserProfile1 = loadDBUserProfile(nicknames[0]);
+            DBUserProfile fistbumpedUserProfile2 = loadDBUserProfile(nicknames[1]);
+            if (fistbumpedUserProfile1 != null && fistbumpedUserProfile2 != null) {
+                DBUserConversation newConversation = new DBUserConversation();
+                String conversation_id = fistbumpedUserProfile1.getFacebookID() + "_" + fistbumpedUserProfile2.getFacebookID();
+                newConversation.setConversationID(conversation_id);
+                Long timeInSeconds = System.currentTimeMillis() / 1000;
+                newConversation.setTimeStampCreated(timeInSeconds);
+                newConversation.setTimeStampLatest(timeInSeconds);
+                Map<String, String> nicknameFacebookIDMap = new HashMap<>();
+                nicknameFacebookIDMap.put(fistbumpedUserProfile1.getNickname(), fistbumpedUserProfile1.getFacebookID());
+                nicknameFacebookIDMap.put(fistbumpedUserProfile2.getNickname(), fistbumpedUserProfile2.getFacebookID());
+                newConversation.setConversation(new Conversation(new ArrayList<Message>(), nicknameFacebookIDMap));
+
+                // append conversation_id to each user
+                mapper.save(newConversation);
+                fistbumpedUserProfile1.addConversationID(conversation_id);
+                fistbumpedUserProfile2.addConversationID(conversation_id);
+                mapper.save(fistbumpedUserProfile1);
+                mapper.save(fistbumpedUserProfile2);
             }
             return null;
         }

@@ -13,6 +13,7 @@ import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.FistbumpedUserCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
+import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,7 @@ public class ViewFistbumpsActivity extends AppCompatActivity {
     private DynamoDBHelper dynamoDBHelper;
 
     // General Variables
+    UserProfileParcel userProfileParcel;
 
     /***********************************************************************************************
      *************************************** ACTIVITY METHODS **************************************
@@ -39,6 +41,8 @@ public class ViewFistbumpsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_view_fistbumps);
 
         dynamoDBHelper = new DynamoDBHelper(this);
+
+        userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
 
         List<String> fistbumpedUsers = getIntent().getStringArrayListExtra("FISTBUMPED_USERS");
         if (fistbumpedUsers != null)
@@ -80,7 +84,7 @@ public class ViewFistbumpsActivity extends AppCompatActivity {
      **********************************************************************************************/
     private void initializeAdapter(List<DBUserProfile> results) {
         if (results != null && results.size() > 0) {
-            FistbumpedUserCardAdapter fistbumpedUserCardAdapter = new FistbumpedUserCardAdapter(this, results);
+            FistbumpedUserCardAdapter fistbumpedUserCardAdapter = new FistbumpedUserCardAdapter(this, results, userProfileParcel);
             recyclerView.setAdapter(fistbumpedUserCardAdapter);
         }
     }

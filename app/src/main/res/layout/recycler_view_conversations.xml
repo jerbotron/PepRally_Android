@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.v7.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/id_card_view_messages"
+    android:id="@+id/id_card_view_conversation"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="2dp"
     android:clickable="true">
     <LinearLayout
-        android:id="@+id/id_recycler_view_container_messages"
+        android:id="@+id/id_recycler_view_container_conversation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:minHeight="64dp"
         android:orientation="horizontal"
         android:padding="8dp">
         <ImageView
-            android:id="@+id/id_messages_card_profile_photo"
+            android:id="@+id/id_conversation_card_profile_photo"
             android:src="@drawable/img_default_profile"
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:contentDescription="@string/content_description_image_view"/>
-        <LinearLayout
-            android:id="@+id/id_messages_card_container_clickable"
+        <RelativeLayout
+            android:id="@+id/id_conversation_card_container_clickable"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="match_parent"
@@ -32,21 +32,22 @@
             android:gravity="center_vertical"
             android:clickable="true">
             <TextView
-                android:id="@+id/id_messages_card_nickname"
+                android:id="@+id/id_conversation_card_nickname"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/placeholder_nickname"
                 android:textStyle="bold"
                 android:textSize="12sp"/>
             <TextView
-                android:id="@+id/id_messages_card_content"
+                android:id="@+id/id_conversation_card_content"
+                android:layout_below="@+id/id_conversation_card_nickname"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/placeholder_sample_text"
                 android:textSize="12sp"/>
-        </LinearLayout>
+        </RelativeLayout>
         <TextView
-            android:id="@+id/id_messages_card_time_stamp"
+            android:id="@+id/id_conversation_card_time_stamp"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:gravity="center"

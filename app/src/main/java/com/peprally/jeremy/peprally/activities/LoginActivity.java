@@ -15,7 +15,6 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.util.Log;
@@ -274,11 +273,13 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onCancel() {
                 Toast.makeText(getApplicationContext(), "Login attempt canceled.", Toast.LENGTH_LONG).show();
+                setContentView(R.layout.activity_login);
             }
 
             @Override
             public void onError(FacebookException error) {
                 Toast.makeText(getApplicationContext(), "Login attempt failed.", Toast.LENGTH_LONG).show();
+                setContentView(R.layout.activity_login);
             }
         });
     }
@@ -335,8 +336,8 @@ public class LoginActivity extends AppCompatActivity {
         b.show();
     }
 
-    private void showVerifyVarsityPlayerDialog(final DBUserProfile userProfile,
-                                               final DBPlayerProfile playerProfile) {
+    private void launchVerifyVarsityPlayerDialog(final DBUserProfile userProfile,
+                                                 final DBPlayerProfile playerProfile) {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         final View dialogView = View.inflate(this, R.layout.dialog_verify_varsity_player, null);
         dialogBuilder.setView(dialogView);
@@ -494,6 +495,7 @@ public class LoginActivity extends AppCompatActivity {
                 userProfile.setGender(fbDataBundle.getString("GENDER"));
                 userProfile.setBirthday(fbDataBundle.getString("BIRTHDAY"));
                 userProfile.setNewUser(true);
+                userProfile.setConversationIDs(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setUsersDirectFistbumpSent(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setUsersDirectFistbumpReceived(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setDateJoined(df.format(c.getTime()));
@@ -549,7 +551,7 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean isVarsityPlayer) {
             if (isVarsityPlayer) {
-                showVerifyVarsityPlayerDialog(userProfile, playerProfile);
+                launchVerifyVarsityPlayerDialog(userProfile, playerProfile);
             }
             else {
                 UserProfileParcel userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, null);

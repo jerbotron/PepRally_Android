@@ -4,20 +4,20 @@
     android:id="@+id/id_activity_messages"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activities.MessagesActivity">
+    tools:context=".activities.ConversationsActivity">
     <TextView
-        android:id="@+id/id_text_view_messages_empty"
+        android:id="@+id/id_text_view_conversation_empty"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="@dimen/activity_vertical_margin"
-        android:text="@string/placeholder_no_notifications"
+        android:text="@string/placeholder_no_messages"
         android:gravity="center"/>
     <android.support.v4.widget.SwipeRefreshLayout
-        android:id="@+id/id_container_swipe_refresh_messages"
+        android:id="@+id/id_container_swipe_refresh_conversation"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
         <android.support.v7.widget.RecyclerView
-            android:id="@+id/id_recycler_view_messages"
+            android:id="@+id/id_recycler_view_conversation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>
     </android.support.v4.widget.SwipeRefreshLayout>
