@@ -1,6 +1,4 @@
-package com.peprally.jeremy.peprally.db_models;
-
-import android.util.Log;
+package com.peprally.jeremy.peprally.messaging;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMarshaller;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.JsonMarshaller;
@@ -19,14 +17,16 @@ public class ConversationJSONMarshaller extends JsonMarshaller<Conversation> imp
     public String marshall(Conversation conversation) {
         JSONObject jsonConversation = new JSONObject();
         try {
-            ArrayList<Message> messages = conversation.getMessages();
+            jsonConversation.put("conversation_id", conversation.getConversationID());
+            ArrayList<ChatMessage> messages = conversation.getChatMessages();
             if (messages != null) {
                 JSONArray jsonMessagesArray = new JSONArray();
-                for (Message msg : messages) {
+                for (ChatMessage msg : messages) {
                     JSONObject jsonMessage = new JSONObject();
                     jsonMessage.put("conversation_id", msg.getConversationID());
                     jsonMessage.put("nickname", msg.getNickname());
-                    jsonMessage.put("content", msg.getContent());
+                    jsonMessage.put("facebook_id", msg.getFacebookID());
+                    jsonMessage.put("content", msg.getMessageContent());
                     jsonMessage.put("timestamp", msg.getTimestamp());
                     jsonMessagesArray.put(jsonMessage);
                 }
@@ -34,7 +34,6 @@ public class ConversationJSONMarshaller extends JsonMarshaller<Conversation> imp
                 jsonConversation.put("conversation", jsonMessagesArray);
             }
 
-            jsonConversation.put("isEmpty", conversation.isEmpty());
             JSONObject jsonUserFacebookIDs = new JSONObject();
             Map<String, String> nicknameFacebookIDMap = conversation.getNicknameFacebookIDMap();
             if (nicknameFacebookIDMap != null) {
@@ -50,14 +49,17 @@ public class ConversationJSONMarshaller extends JsonMarshaller<Conversation> imp
 
     @Override
     public Conversation unmarshall(Class<Conversation> clazz, String json) {
-        ArrayList<Message> messages = new ArrayList<>();
-        Map<String, String> nicknameFacebookIDMap = new HashMap<>();
         try {
             JSONObject jsonConversation = new JSONObject(json);
+
+            ArrayList<ChatMessage> messages = new ArrayList<>();
+            Map<String, String> nicknameFacebookIDMap = new HashMap<>();
+            String conversationID = jsonConversation.getString("conversation_id");
+
             JSONArray jsonMessages = jsonConversation.getJSONArray("conversation");
             for (int i = 0; i < jsonMessages.length(); i++) {
                 JSONObject jsonMsg = jsonMessages.getJSONObject(i);
-                Message msg = new Message(jsonMsg);
+                ChatMessage msg = new ChatMessage(jsonMsg);
                 messages.add(msg);
             }
             JSONObject jsonFacebookIDs = jsonConversation.getJSONObject("user_facebook_ids");
@@ -65,9 +67,11 @@ public class ConversationJSONMarshaller extends JsonMarshaller<Conversation> imp
                 String nickname = jsonFacebookIDs.names().get(i).toString();
                 nicknameFacebookIDMap.put(nickname, jsonFacebookIDs.getString(nickname));
             }
+            return new Conversation(conversationID, messages, nicknameFacebookIDMap);
         }
-        catch (JSONException e) { e.printStackTrace(); }
-
-        return new Conversation(messages, nicknameFacebookIDMap);
+        catch (JSONException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

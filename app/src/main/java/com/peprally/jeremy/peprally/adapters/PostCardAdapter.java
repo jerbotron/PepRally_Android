@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -37,7 +38,6 @@ import java.util.Locale;
 import java.util.Set;
 
 public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHolder> {
-
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
@@ -101,7 +101,6 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                                         curPost.getFacebookID(),
                                         3);
 
-//        final String profileNickname = userProfileParcel.getProfileNickname();
         final String curUserNickname = userProfileParcel.getCurUserNickname();
 
         Set<String> fistbumpedUsers = curPost.getFistbumpedUsers();
@@ -117,7 +116,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         postHolder.postFistbumpsCount.setText(String.valueOf(fistbumpsCount));
         postHolder.postCommentsCount.setText(String.valueOf(curPost.getCommentsCount()));
 
-        postHolder.timeStamp.setText(Helpers.getTimeStampString(curPost.getTimeInSeconds()));
+        postHolder.timeStamp.setText(Helpers.getTimetampString(curPost.getTimeInSeconds()));
 
         // profile picture onclick handlers:
         postHolder.profileImage.setOnClickListener(new View.OnClickListener() {
@@ -273,16 +272,14 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
      **********************************************************************************************/
     public void addPost(String newPostText, Bundle bundle) {
         DBUserPost newPost = new DBUserPost();
-        Calendar c = Calendar.getInstance();
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
         newPost.setNickname(bundle.getString("NICKNAME"));
-        Long timeInSeconds = System.currentTimeMillis() / 1000;
+        Long timeInSeconds = Helpers.getTimestampMiliseconds();
         newPost.setTimeInSeconds(timeInSeconds);
         newPost.setPostID(bundle.getString("NICKNAME") + "_" + timeInSeconds.toString());
         newPost.setCognitoID(dbHelper.getIdentityID());
         newPost.setFacebookID(bundle.getString("FACEBOOK_ID"));
         newPost.setFirstname(bundle.getString("FIRST_NAME"));
-        newPost.setTimeStamp(df.format(c.getTime()));
+        newPost.setTimeStamp(Helpers.getTimestampString());
         newPost.setTextContent(newPostText);
         newPost.setFistbumpedUsers(new HashSet<>(Collections.singletonList("_")));
         newPost.setFistbumpsCount(0);

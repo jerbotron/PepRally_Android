@@ -29,6 +29,7 @@
                     android:layout_height="50dp"
                     android:clickable="true"
                     android:src="@drawable/img_default_profile"
+                    app:srcCompat="@drawable/img_default_profile"
                     android:contentDescription="@string/content_description_image_view"/>
                 <TextView
                     android:id="@+id/id_text_view_post_card_time_stamp"

@@ -13,7 +13,8 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
 import com.amazonaws.services.dynamodbv2.model.Condition;
-import com.peprally.jeremy.peprally.db_models.Conversation;
+import com.peprally.jeremy.peprally.messaging.ChatMessage;
+import com.peprally.jeremy.peprally.messaging.Conversation;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserComment;
@@ -21,15 +22,10 @@ import com.peprally.jeremy.peprally.db_models.DBUserNickname;
 import com.peprally.jeremy.peprally.db_models.DBUserNotification;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
-import com.peprally.jeremy.peprally.db_models.Message;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 public class DynamoDBHelper {
@@ -97,6 +93,10 @@ public class DynamoDBHelper {
 
     public DBUserNickname loadDBNickname(String nickname) {
         return mapper.load(DBUserNickname.class, nickname);
+    }
+
+    public DBUserConversation loadDBUserConversation(String conversationID) {
+        return mapper.load(DBUserConversation.class, conversationID);
     }
 
     public DBUserProfile queryDBUserProfileWithCognitoID() {
@@ -273,10 +273,8 @@ public class DynamoDBHelper {
             UserProfileParcel userProfileParcel = bundle.getParcelable("USER_PROFILE_PARCEL");
             DBUserNotification userNotification = new DBUserNotification();
             // getting time stamp
-            Calendar c = Calendar.getInstance();
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
-            userNotification.setTimeInSeconds(System.currentTimeMillis()/1000);
-            userNotification.setTimeStamp(df.format(c.getTime()));
+            userNotification.setTimeInSeconds(Helpers.getTimestampMiliseconds());
+            userNotification.setTimeStamp(Helpers.getTimestampString());
             // setting up new user notification
             userNotification.setNickname(bundle.getString("RECEIVER_NICKNAME")); // who the notification is going to
             if (userProfileParcel != null) {
@@ -435,13 +433,13 @@ public class DynamoDBHelper {
                 DBUserConversation newConversation = new DBUserConversation();
                 String conversation_id = fistbumpedUserProfile1.getFacebookID() + "_" + fistbumpedUserProfile2.getFacebookID();
                 newConversation.setConversationID(conversation_id);
-                Long timeInSeconds = System.currentTimeMillis() / 1000;
+                Long timeInSeconds = Helpers.getTimestampMiliseconds();
                 newConversation.setTimeStampCreated(timeInSeconds);
                 newConversation.setTimeStampLatest(timeInSeconds);
                 Map<String, String> nicknameFacebookIDMap = new HashMap<>();
                 nicknameFacebookIDMap.put(fistbumpedUserProfile1.getNickname(), fistbumpedUserProfile1.getFacebookID());
                 nicknameFacebookIDMap.put(fistbumpedUserProfile2.getNickname(), fistbumpedUserProfile2.getFacebookID());
-                newConversation.setConversation(new Conversation(new ArrayList<Message>(), nicknameFacebookIDMap));
+                newConversation.setConversation(new Conversation(conversation_id, new ArrayList<ChatMessage>(), nicknameFacebookIDMap));
 
                 // append conversation_id to each user
                 mapper.save(newConversation);

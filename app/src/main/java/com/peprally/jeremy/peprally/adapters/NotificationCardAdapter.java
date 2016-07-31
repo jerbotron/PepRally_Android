@@ -62,7 +62,7 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
                                         userNotification.getFacebookIDSender(),
                                         3);
 
-        notificationCardHolder.timeStamp.setText(Helpers.getTimeStampString(userNotification.getTimeInSeconds()));
+        notificationCardHolder.timeStamp.setText(Helpers.getTimetampString(userNotification.getTimeInSeconds()));
 
         String content;
         switch (userNotification.getType()) {

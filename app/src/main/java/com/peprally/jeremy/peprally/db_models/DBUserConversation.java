@@ -5,8 +5,10 @@ import android.support.annotation.NonNull;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBAttribute;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBHashKey;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMarshalling;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBRangeKey;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBTable;
+import com.peprally.jeremy.peprally.messaging.ChatMessage;
+import com.peprally.jeremy.peprally.messaging.Conversation;
+import com.peprally.jeremy.peprally.messaging.ConversationJSONMarshaller;
 
 @DynamoDBTable(tableName = "UserConversations")
 public class DBUserConversation implements Comparable<DBUserConversation> {
@@ -24,7 +26,7 @@ public class DBUserConversation implements Comparable<DBUserConversation> {
     public String getConversationID() { return conversationID; }
     public void setConversationID(String conversationID) { this.conversationID = conversationID; }
 
-    @DynamoDBRangeKey(attributeName = "TimestampLatest")
+    @DynamoDBAttribute(attributeName = "TimestampLatest")
     public Long getTimeStampLatest() { return timeStampLatest; }
     public void setTimeStampLatest(Long timeStampLatest) { this.timeStampLatest = timeStampLatest; }
 
@@ -36,4 +38,8 @@ public class DBUserConversation implements Comparable<DBUserConversation> {
     @DynamoDBMarshalling (marshallerClass = ConversationJSONMarshaller.class)
     public Conversation getConversation() { return conversation; }
     public void setConversation(Conversation conversation) { this.conversation = conversation; }
+
+    public void addConversationChatMessage(ChatMessage message) {
+        conversation.addChatMessage(message);
+    }
 }

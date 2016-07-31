@@ -5,7 +5,8 @@
     <string name="activity_label_notifications">Notifications</string>
     <string name="activity_label_fav_team">Browse Teams</string>
     <string name="activity_label_view_fistbumps">Fistbumps</string>
-    <string name="activity_label_messages">Messages</string>
+    <string name="activity_label_conversations">Messages</string>
+    <string name="activity_label_messaging">Chat</string>
     <string name="team_slogan">Hook\'em Horns</string>
 
     <!-- Strings related to Login Activity -->
@@ -97,6 +98,7 @@
     <string name="placeholder_delete_profile">Delete Profile</string>
     <string name="placeholder_fistbump_match_send_message">SEND A MESSAGE</string>
     <string name="placeholder_fistbump_match_go_back">GO BACK</string>
+    <string name="placeholder_messaging_hint">Send a message&#8230;</string>
 
 
 </resources>

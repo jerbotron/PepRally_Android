@@ -5,9 +5,11 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.support.design.widget.Snackbar;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatDelegate;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.Spanned;
@@ -58,6 +60,9 @@ import java.util.List;
 import java.util.Locale;
 
 public class LoginActivity extends AppCompatActivity {
+    static {
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+    }
 
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
@@ -296,6 +301,7 @@ public class LoginActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {
                 if (s.toString().trim().isEmpty() || s.length() < 2) {
                     editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_error, 0);
+//                    editTextNickname.setCompoundDrawables(null, null, ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_error), null);
                 }
                 else {
                     new CheckUniqueNicknameDBTask().execute(s.toString().trim().replace(" ", "_"));
@@ -479,8 +485,6 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected DBUserProfile doInBackground(String... params) {
             String userNickname = params[0];
-            Calendar c = Calendar.getInstance();
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
             DBUserProfile userProfile = dbHelper.loadDBUserProfile(userNickname);
             if (userProfile == null) {
                 userProfile = new DBUserProfile();
@@ -498,7 +502,7 @@ public class LoginActivity extends AppCompatActivity {
                 userProfile.setConversationIDs(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setUsersDirectFistbumpSent(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setUsersDirectFistbumpReceived(new HashSet<>(Collections.singletonList("_")));
-                userProfile.setDateJoined(df.format(c.getTime()));
+                userProfile.setDateJoined(Helpers.getTimestampString());
                 dbHelper.saveDBObject(userProfile);
                 return userProfile;
             }

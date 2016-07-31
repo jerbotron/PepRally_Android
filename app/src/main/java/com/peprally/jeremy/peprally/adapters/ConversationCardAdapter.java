@@ -2,6 +2,8 @@ package com.peprally.jeremy.peprally.adapters;
 
 
 import android.content.Context;
+import android.content.Intent;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -9,21 +11,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.db_models.Conversation;
+import com.peprally.jeremy.peprally.activities.MessagingActivity;
+import com.peprally.jeremy.peprally.messaging.ChatMessage;
+import com.peprally.jeremy.peprally.messaging.Conversation;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
-import com.peprally.jeremy.peprally.db_models.Message;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCardAdapter.MessageCardHolder>{
 
@@ -66,8 +67,8 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
 
     @Override
     public void onBindViewHolder(MessageCardHolder MessageCardHolder, int position) {
-        DBUserConversation userConversation = conversations.get(position);
-        Conversation conversation = userConversation.getConversation();
+        final DBUserConversation userConversation = conversations.get(position);
+        final Conversation conversation = userConversation.getConversation();
         Map<String, String> nicknameFacebookIDMap = conversation.getNicknameFacebookIDMap();
         for (String nickname : nicknameFacebookIDMap.keySet()) {
             if (!nickname.equals(userProfileParcel.getCurUserNickname())) {
@@ -79,9 +80,9 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
             }
         }
 
-        ArrayList<Message> messages = conversation.getMessages();
+        ArrayList<ChatMessage> messages = conversation.getChatMessages();
         if (messages != null && messages.size() > 0) {
-            String preview = messages.get(0).getContent();
+            String preview = messages.get(messages.size() - 1).getMessageContent();
             if (preview.length() > 20) {
                 preview = preview.substring(0, 20) + "...";
             }
@@ -92,7 +93,19 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
             MessageCardHolder.lastMessageContent.setHeight(0);
         }
 
-        MessageCardHolder.timeStamp.setText(Helpers.getTimeStampString(userConversation.getTimeStampLatest()));
+        MessageCardHolder.timeStamp.setText(Helpers.getTimetampString(userConversation.getTimeStampLatest()));
+
+        // conversation onclick handler
+        MessageCardHolder.clickableContainer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(callingContext, MessagingActivity.class);
+                intent.putExtra("CONVERSATION", conversation);
+                intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
+                callingContext.startActivity(intent);
+                ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
+            }
+        });
     }
 
     @Override

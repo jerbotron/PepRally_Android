@@ -14,7 +14,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -115,7 +114,7 @@ public class NewCommentActivity extends AppCompatActivity {
                     mainPost.getFacebookID(),
                     3);
 
-            mainPostTimeStamp.setText(Helpers.getTimeStampString(mainPost.getTimeInSeconds()));
+            mainPostTimeStamp.setText(Helpers.getTimetampString(mainPost.getTimeInSeconds()));
 
             // Post Button onClick handler
             postCommentButton.setOnClickListener(new View.OnClickListener() {

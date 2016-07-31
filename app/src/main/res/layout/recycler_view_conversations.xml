@@ -29,8 +29,7 @@
             android:layout_marginLeft="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginRight="8dp"
-            android:gravity="center_vertical"
-            android:clickable="true">
+            android:gravity="center_vertical">
             <TextView
                 android:id="@+id/id_conversation_card_nickname"
                 android:layout_width="wrap_content"

@@ -120,7 +120,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         int fistbumpsCount = curComment.getFistbumpsCount();
         commentHolder.fistbumpsCount.setText(String.valueOf(fistbumpsCount));
 
-        commentHolder.timeStamp.setText(Helpers.getTimeStampString(curComment.getTimeInSeconds()));
+        commentHolder.timeStamp.setText(Helpers.getTimetampString(curComment.getTimeInSeconds()));
 
         // profile picture onclick handler
         commentHolder.profileImage.setOnClickListener(new View.OnClickListener() {
@@ -263,9 +263,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
      **********************************************************************************************/
     public void addComment(String commentText, Bundle bundle) {
         DBUserComment newComment = new DBUserComment();
-        Calendar c = Calendar.getInstance();
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
-        Long timeInSeconds = System.currentTimeMillis() / 1000;
+        Long timeInSeconds = Helpers.getTimestampMiliseconds();
         Long postTimeInSeconds = mainPost.getTimeInSeconds();
         newComment.setPostID(bundle.getString("POST_NICKNAME") + "_" + postTimeInSeconds.toString());
         newComment.setCommentID(bundle.getString("CUR_USER_NICKNAME") + "_" + timeInSeconds.toString());
@@ -275,7 +273,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         newComment.setTimeInSeconds(timeInSeconds);
         newComment.setCognitoID(dbHelper.getIdentityID());
         newComment.setFacebookID(bundle.getString("FACEBOOK_ID"));
-        newComment.setTimeStamp(df.format(c.getTime()));
+        newComment.setTimeStamp(Helpers.getTimestampString());
         newComment.setTextContent(commentText);
         newComment.setFistbumpedUsers(new HashSet<>(Collections.singletonList("_")));
         newComment.setFistbumpsCount(0);
