@@ -24,19 +24,16 @@ import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.utils.ActivityEnum;
-import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
-import com.peprally.jeremy.peprally.utils.HTTPRequestsHelper;
+import com.peprally.jeremy.peprally.network.DynamoDBHelper;
+import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.NotificationEnum;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.CommentHolder> {
@@ -120,7 +117,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         int fistbumpsCount = curComment.getFistbumpsCount();
         commentHolder.fistbumpsCount.setText(String.valueOf(fistbumpsCount));
 
-        commentHolder.timeStamp.setText(Helpers.getTimeStampString(curComment.getTimeInSeconds()));
+        commentHolder.timeStamp.setText(Helpers.getTimetampString(curComment.getTimeInSeconds()));
 
         // profile picture onclick handler
         commentHolder.profileImage.setOnClickListener(new View.OnClickListener() {
@@ -150,6 +147,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
             public void onClick(View view) {
                 if (curComment.getFistbumpsCount() > 0) {
                     Intent intent = new Intent(callingContext, ViewFistbumpsActivity.class);
+                    intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                     intent.putStringArrayListExtra("FISTBUMPED_USERS", new ArrayList<>(curComment.getFistbumpedUsers()));
                     callingContext.startActivity(intent);
                 }
@@ -262,9 +260,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
      **********************************************************************************************/
     public void addComment(String commentText, Bundle bundle) {
         DBUserComment newComment = new DBUserComment();
-        Calendar c = Calendar.getInstance();
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
-        Long timeInSeconds = System.currentTimeMillis() / 1000;
+        Long timeInSeconds = Helpers.getTimestampMiliseconds();
         Long postTimeInSeconds = mainPost.getTimeInSeconds();
         newComment.setPostID(bundle.getString("POST_NICKNAME") + "_" + postTimeInSeconds.toString());
         newComment.setCommentID(bundle.getString("CUR_USER_NICKNAME") + "_" + timeInSeconds.toString());
@@ -274,7 +270,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         newComment.setTimeInSeconds(timeInSeconds);
         newComment.setCognitoID(dbHelper.getIdentityID());
         newComment.setFacebookID(bundle.getString("FACEBOOK_ID"));
-        newComment.setTimeStamp(df.format(c.getTime()));
+        newComment.setTimeStamp(Helpers.getTimestampString());
         newComment.setTextContent(commentText);
         newComment.setFistbumpedUsers(new HashSet<>(Collections.singletonList("_")));
         newComment.setFistbumpsCount(0);

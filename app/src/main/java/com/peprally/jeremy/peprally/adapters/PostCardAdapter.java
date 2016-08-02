@@ -21,23 +21,19 @@ import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.utils.ActivityEnum;
-import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
-import com.peprally.jeremy.peprally.utils.HTTPRequestsHelper;
+import com.peprally.jeremy.peprally.network.DynamoDBHelper;
+import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.NotificationEnum;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHolder> {
-
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
@@ -101,7 +97,6 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                                         curPost.getFacebookID(),
                                         3);
 
-//        final String profileNickname = userProfileParcel.getProfileNickname();
         final String curUserNickname = userProfileParcel.getCurUserNickname();
 
         Set<String> fistbumpedUsers = curPost.getFistbumpedUsers();
@@ -117,7 +112,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         postHolder.postFistbumpsCount.setText(String.valueOf(fistbumpsCount));
         postHolder.postCommentsCount.setText(String.valueOf(curPost.getCommentsCount()));
 
-        postHolder.timeStamp.setText(Helpers.getTimeStampString(curPost.getTimeInSeconds()));
+        postHolder.timeStamp.setText(Helpers.getTimetampString(curPost.getTimeInSeconds()));
 
         // profile picture onclick handlers:
         postHolder.profileImage.setOnClickListener(new View.OnClickListener() {
@@ -150,6 +145,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
             public void onClick(View view) {
                 if (curPost.getFistbumpsCount() > 0) {
                     Intent intent = new Intent(callingContext, ViewFistbumpsActivity.class);
+                    intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                     intent.putStringArrayListExtra("FISTBUMPED_USERS", new ArrayList<>(curPost.getFistbumpedUsers()));
                     callingContext.startActivity(intent);
                 }
@@ -272,16 +268,14 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
      **********************************************************************************************/
     public void addPost(String newPostText, Bundle bundle) {
         DBUserPost newPost = new DBUserPost();
-        Calendar c = Calendar.getInstance();
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
         newPost.setNickname(bundle.getString("NICKNAME"));
-        Long timeInSeconds = System.currentTimeMillis() / 1000;
+        Long timeInSeconds = Helpers.getTimestampMiliseconds();
         newPost.setTimeInSeconds(timeInSeconds);
         newPost.setPostID(bundle.getString("NICKNAME") + "_" + timeInSeconds.toString());
         newPost.setCognitoID(dbHelper.getIdentityID());
         newPost.setFacebookID(bundle.getString("FACEBOOK_ID"));
         newPost.setFirstname(bundle.getString("FIRST_NAME"));
-        newPost.setTimeStamp(df.format(c.getTime()));
+        newPost.setTimeStamp(Helpers.getTimestampString());
         newPost.setTextContent(newPostText);
         newPost.setFistbumpedUsers(new HashSet<>(Collections.singletonList("_")));
         newPost.setFistbumpsCount(0);

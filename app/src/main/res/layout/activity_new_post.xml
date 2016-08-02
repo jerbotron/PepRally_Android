@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.peprally.jeremy.peprally.activities.NewPostActivity">
+    tools:context="com.peprally.jeremy.peprally.activities.NewPostActivity"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -21,7 +22,7 @@
             android:layout_marginLeft="8dp"
             android:layout_marginRight="8dp"
             android:maxLength="200"
-            android:inputType="text">
+            android:inputType="textMultiLine">
         </EditText>
     </LinearLayout>
 
@@ -45,14 +46,13 @@
             <ImageButton
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:src="@drawable/ic_photo"
                 android:layout_margin="8dp"
                 android:paddingLeft="8dp"
                 android:paddingRight="8dp"
                 android:background="@color/colorBackground"
                 android:clickable="true"
-                android:contentDescription="@string/content_description_image_button">
-            </ImageButton>
+                app:srcCompat="@drawable/ic_photo"
+                android:contentDescription="@string/content_description_image_button"/>
         </LinearLayout>
 
         <LinearLayout
@@ -74,7 +74,7 @@
                 android:layout_height="match_parent"
                 android:text="@string/new_post_button_text"
                 android:background="@color/colorPrimaryDark"
-                android:layout_margin="8dp"
+                android:layout_margin="2dp"
                 android:clickable="true">
             </Button>
         </LinearLayout>

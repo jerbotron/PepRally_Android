@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.Vibrator;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
@@ -18,6 +19,9 @@ import com.google.firebase.iid.FirebaseInstanceId;
 import com.peprally.jeremy.peprally.R;
 import com.squareup.picasso.Picasso;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 import java.util.Random;
 
 public class Helpers {
@@ -95,8 +99,18 @@ public class Helpers {
         }
     }
 
-    public static String getTimeStampString(Long timestampInSeconds) {
-        long tsLongNow = System.currentTimeMillis()/1000;
+    public static Long getTimestampMiliseconds() {
+        return System.currentTimeMillis() / 1000;
+    }
+
+    public static String getTimestampString() {
+        Calendar c = Calendar.getInstance();
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+        return df.format(c.getTime());
+    }
+
+    public static String getTimetampString(Long timestampInSeconds) {
+        long tsLongNow = getTimestampMiliseconds();
         long timeInSeconds = tsLongNow - timestampInSeconds;
         String timestampString;
         if (timeInSeconds < 60) {
@@ -118,7 +132,7 @@ public class Helpers {
     }
 
     public static int generateRandomInteger() {
-        Random random = new Random(System.currentTimeMillis() % 1000);
+        Random random = new Random(getTimestampMiliseconds());
 
         return random.nextInt(1000000000);
     }
@@ -181,5 +195,11 @@ public class Helpers {
             Log.d("HELPERS: ", "FMS reg token = " + token);
         }
         return token;
+    }
+
+    // Physical Helpers
+    public static void vibrateDeviceNotification(Context callingContext) {
+        Vibrator v = (Vibrator) callingContext.getSystemService(Context.VIBRATOR_SERVICE);
+        v.vibrate(500);
     }
 }

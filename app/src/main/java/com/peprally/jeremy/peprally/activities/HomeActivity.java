@@ -17,7 +17,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.facebook.AccessToken;
@@ -32,7 +31,7 @@ import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.fragments.BrowseTeamsFragment;
 import com.peprally.jeremy.peprally.fragments.TrendingFragment;
 import com.peprally.jeremy.peprally.utils.ActivityEnum;
-import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
+import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
@@ -121,14 +120,18 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Intent intent;
         switch (item.getItemId()) {
             case android.R.id.home:
                 return true;
             case R.id.id_item_chat:
-                Toast.makeText(HomeActivity.this, "See chats", Toast.LENGTH_SHORT).show();
+                intent = new Intent(this, ConversationsActivity.class);
+                intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
+                startActivity(intent);
+                overridePendingTransition(R.anim.right_in, R.anim.left_out);
                 return true;
             case R.id.id_item_notifications:
-                Intent intent = new Intent(this, NotificationsActivity.class);
+                intent = new Intent(this, NotificationsActivity.class);
                 intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                 startActivity(intent);
                 overridePendingTransition(R.anim.right_in, R.anim.left_out);
@@ -142,18 +145,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-//        viewPagerHome = (ViewPager) findViewById(R.id.viewpager_home);
-//        if (id == R.id.nav_trending) {
-//            viewPagerHome.setCurrentItem(0);
-//        } else if (id == R.id.nav_events) {
-//            viewPagerHome.setCurrentItem(1);
-//        } else if (id == R.id.nav_browse_teams) {
-//            viewPagerHome.setCurrentItem(2);
         if (id == R.id.nav_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
             overridePendingTransition(R.anim.right_in, R.anim.left_out);
-        } else if (id == R.id.nav_logout) {
+        }
+        else if (id == R.id.nav_logout) {
             finish();
             LoginManager.getInstance().logOut();
             Intent intent = new Intent(this, LoginActivity.class);
@@ -289,15 +286,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                         playerProfile = dbHelper.loadDBPlayerProfile(userProfile.getTeam(), userProfile.getPlayerIndex());
                     }
                     userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
-//                    nickname = userProfile.getNickname();
-//                    Profile fbProfile = params[0];
-//                    userProfileParcel = new UserProfileParcel(ActivityEnum.HOME,
-//                                                              nickname,
-//                                                              fbProfile.getFirstName(),
-//                                                              fbProfile.getLastName(),
-//                                                              nickname,
-//                                                              fbProfile.getId(),
-//                                                              true);  // user is viewing self profile
                     return true;
                 }
                 Log.d(TAG, "Query result should have only returned single user!");

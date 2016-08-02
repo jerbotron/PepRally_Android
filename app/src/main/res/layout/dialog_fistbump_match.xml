@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:weightSum="1"
+        android:layout_margin="@dimen/activity_horizontal_margin">
+        <ImageView
+            android:id="@+id/id_dialog_fistbumped_user_profile_left"
+            android:src="@drawable/img_default_profile"
+            android:layout_width="0dp"
+            android:layout_weight="0.35"
+            android:layout_height="100dp"
+            android:contentDescription="@string/content_description_image_view"/>
+        <ImageButton
+            android:id="@+id/id_dialog_button_fistbump_match"
+            android:layout_width="0dp"
+            android:layout_weight="0.3"
+            android:scaleType="fitCenter"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_fistbump_match"
+            android:background="@color/colorWhite" />
+        <ImageView
+            android:id="@+id/id_dialog_fistbumped_user_profile_right"
+            android:src="@drawable/img_default_profile"
+            android:layout_width="0dp"
+            android:layout_weight="0.35"
+            android:layout_height="100dp"
+            android:contentDescription="@string/content_description_image_view"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/id_dialog_fistbumped_button_send_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@color/colorPrimary"
+        android:padding="16dp"
+        android:clickable="true"
+        android:layout_margin="@dimen/activity_horizontal_margin">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/placeholder_fistbump_match_send_message"
+            android:textSize="16sp"
+            android:textColor="@color/colorWhite"
+            android:gravity="center" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/id_dialog_fistbumped_button_back_to_profile"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@color/colorAccent"
+        android:padding="16dp"
+        android:clickable="true"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:layout_marginBottom="@dimen/activity_horizontal_margin">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/placeholder_fistbump_match_go_back"
+            android:textSize="16sp"
+            android:textColor="@color/colorWhite"
+            android:gravity="center" />
+    </LinearLayout>
+
+</LinearLayout>

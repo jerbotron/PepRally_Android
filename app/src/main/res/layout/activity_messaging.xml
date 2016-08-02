@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="#efefef"
+    android:orientation="vertical"
+    tools:context=".activities.MessagingActivity">
+
+    <ListView
+        android:id="@+id/id_list_view_container_messaging"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:divider="@null"
+        android:stackFromBottom="true"
+        android:transcriptMode="alwaysScroll">
+    </ListView>
+
+    <View android:layout_height="1dp"
+        android:layout_width="match_parent"
+        android:background="@color/colorAccent"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="1">
+
+        <ImageButton
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_margin="8dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:background="@null"
+            android:clickable="true"
+            app:srcCompat="@drawable/ic_photo"
+            android:contentDescription="@string/content_description_image_button"/>
+
+        <EditText
+            android:id="@+id/id_edit_text_messaging_container"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:inputType="textMultiLine"
+            android:hint="@string/placeholder_messaging_hint"/>
+
+        <ImageButton
+            android:id="@+id/id_image_button_messaging_send"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:padding="@dimen/activity_vertical_margin"
+            android:layout_margin="2dp"
+            android:gravity="center"
+            android:background="@color/colorPrimary"
+            app:srcCompat="@drawable/ic_send"
+            android:contentDescription="@string/placeholder_content"/>
+    </LinearLayout>
+</LinearLayout>

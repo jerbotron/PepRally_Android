@@ -15,7 +15,7 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.NotificationCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserNotification;
-import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
+import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.ArrayList;
@@ -49,6 +49,7 @@ public class NotificationsActivity extends AppCompatActivity {
 
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
 
+        // setup home button on action bar
         ActionBar supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
             supportActionBar.setDisplayHomeAsUpEnabled(true);
@@ -94,6 +95,7 @@ public class NotificationsActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
+
     /***********************************************************************************************
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
@@ -129,7 +131,7 @@ public class NotificationsActivity extends AppCompatActivity {
             userNotification.setNickname(userProfileParcel.getCurUserNickname());
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withHashKeyValues(userNotification)
-                    .withConsistentRead(false);
+                    .withConsistentRead(true);
             return dbHelper.getMapper().query(DBUserNotification.class, queryExpression);
         }
 

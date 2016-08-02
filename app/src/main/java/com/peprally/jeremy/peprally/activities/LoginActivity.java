@@ -8,6 +8,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatDelegate;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.Spanned;
@@ -15,7 +16,6 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.util.Log;
@@ -42,23 +42,23 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserNickname;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
-import com.peprally.jeremy.peprally.utils.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.network.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.utils.ActivityEnum;
-import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
+import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 
 public class LoginActivity extends AppCompatActivity {
+    static {
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+    }
 
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
@@ -274,11 +274,13 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onCancel() {
                 Toast.makeText(getApplicationContext(), "Login attempt canceled.", Toast.LENGTH_LONG).show();
+                setContentView(R.layout.activity_login);
             }
 
             @Override
             public void onError(FacebookException error) {
                 Toast.makeText(getApplicationContext(), "Login attempt failed.", Toast.LENGTH_LONG).show();
+                setContentView(R.layout.activity_login);
             }
         });
     }
@@ -295,6 +297,7 @@ public class LoginActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {
                 if (s.toString().trim().isEmpty() || s.length() < 2) {
                     editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_error, 0);
+//                    editTextNickname.setCompoundDrawables(null, null, ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_error), null);
                 }
                 else {
                     new CheckUniqueNicknameDBTask().execute(s.toString().trim().replace(" ", "_"));
@@ -335,8 +338,8 @@ public class LoginActivity extends AppCompatActivity {
         b.show();
     }
 
-    private void showVerifyVarsityPlayerDialog(final DBUserProfile userProfile,
-                                               final DBPlayerProfile playerProfile) {
+    private void launchVerifyVarsityPlayerDialog(final DBUserProfile userProfile,
+                                                 final DBPlayerProfile playerProfile) {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         final View dialogView = View.inflate(this, R.layout.dialog_verify_varsity_player, null);
         dialogBuilder.setView(dialogView);
@@ -478,8 +481,6 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected DBUserProfile doInBackground(String... params) {
             String userNickname = params[0];
-            Calendar c = Calendar.getInstance();
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
             DBUserProfile userProfile = dbHelper.loadDBUserProfile(userNickname);
             if (userProfile == null) {
                 userProfile = new DBUserProfile();
@@ -494,9 +495,10 @@ public class LoginActivity extends AppCompatActivity {
                 userProfile.setGender(fbDataBundle.getString("GENDER"));
                 userProfile.setBirthday(fbDataBundle.getString("BIRTHDAY"));
                 userProfile.setNewUser(true);
+                userProfile.setConversationIDs(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setUsersDirectFistbumpSent(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setUsersDirectFistbumpReceived(new HashSet<>(Collections.singletonList("_")));
-                userProfile.setDateJoined(df.format(c.getTime()));
+                userProfile.setDateJoined(Helpers.getTimestampString());
                 dbHelper.saveDBObject(userProfile);
                 return userProfile;
             }
@@ -549,7 +551,7 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean isVarsityPlayer) {
             if (isVarsityPlayer) {
-                showVerifyVarsityPlayerDialog(userProfile, playerProfile);
+                launchVerifyVarsityPlayerDialog(userProfile, playerProfile);
             }
             else {
                 UserProfileParcel userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, null);
