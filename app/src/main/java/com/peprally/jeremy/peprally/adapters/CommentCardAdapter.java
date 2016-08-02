@@ -24,19 +24,16 @@ import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.utils.ActivityEnum;
-import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
-import com.peprally.jeremy.peprally.utils.HTTPRequestsHelper;
+import com.peprally.jeremy.peprally.network.DynamoDBHelper;
+import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.NotificationEnum;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.CommentHolder> {

@@ -30,8 +30,11 @@ public class Conversation implements Parcelable{
     public void setNicknameFacebookIDMap(Map<String, String> facebookIDMap) { this.nicknameFacebookIDMap = facebookIDMap; }
 
     public ArrayList<ChatMessage> getChatMessages() {
-        ArrayList<ChatMessage> chatMessagesSortedOut = chatMessages;
-        Collections.sort(chatMessagesSortedOut);
+        ArrayList<ChatMessage> chatMessagesSortedOut = null;
+        if (chatMessages != null) {
+            chatMessagesSortedOut = chatMessages;
+            Collections.sort(chatMessagesSortedOut);
+        }
         return chatMessagesSortedOut;
     }
     public void setChatMessages(ArrayList<ChatMessage> chatMessages) { this.chatMessages = chatMessages; }

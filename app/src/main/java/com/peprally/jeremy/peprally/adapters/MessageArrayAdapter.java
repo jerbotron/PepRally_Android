@@ -3,7 +3,6 @@ package com.peprally.jeremy.peprally.adapters;
 
 import android.content.Context;
 import android.os.AsyncTask;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,18 +10,14 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
-import com.peprally.jeremy.peprally.db_models.DBUserNotification;
 import com.peprally.jeremy.peprally.messaging.ChatMessage;
-import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
+import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
@@ -85,6 +80,10 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
         return messageView;
     }
 
+    public void fetchNewMessages(String conversationID) {
+        new FetchNewMessagesFromDBAsyncTask().execute(conversationID);
+    }
+
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
@@ -98,6 +97,26 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
             userConversation.addConversationChatMessage(chatMessage);
             dynamoDBHelper.saveDBObject(userConversation);
             return null;
+        }
+    }
+
+    private class FetchNewMessagesFromDBAsyncTask extends AsyncTask<String, Void, ArrayList<ChatMessage>> {
+        @Override
+        protected ArrayList<ChatMessage> doInBackground(String... strings) {
+            String conversationID = strings[0];
+            DBUserConversation userConversation = dynamoDBHelper.loadDBUserConversation(conversationID);
+            if (userConversation != null)
+                return userConversation.getConversation().getChatMessages();
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<ChatMessage> chatMessages) {
+            super.onPostExecute(chatMessages);
+            if (chatMessages != null) {
+                messageHistoryList = chatMessages;
+                notifyDataSetChanged();
+            }
         }
     }
 }

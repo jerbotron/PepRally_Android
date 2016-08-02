@@ -12,11 +12,16 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
 
+import com.github.nkzawa.emitter.Emitter;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.MessageArrayAdapter;
 import com.peprally.jeremy.peprally.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.messaging.Conversation;
+import com.peprally.jeremy.peprally.network.SocketIO;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MessagingActivity extends AppCompatActivity {
 
@@ -31,6 +36,9 @@ public class MessagingActivity extends AppCompatActivity {
     // General Variables
     private Conversation conversation;
     private UserProfileParcel userProfileParcel;
+    private String recipientNickname;
+
+    private SocketIO mSocket;
 
     /***********************************************************************************************
      *************************************** ACTIVITY METHODS **************************************
@@ -40,14 +48,19 @@ public class MessagingActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_messaging);
 
+        // initialize parcels
         conversation = getIntent().getParcelableExtra("CONVERSATION");
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
+        recipientNickname = conversation.getRecipientNickname(userProfileParcel.getCurUserNickname());
+
+        // initialize socket
+        mSocket = new SocketIO(userProfileParcel.getCurUserNickname());
+        mSocket.registerListener(userProfileParcel.getCurUserNickname(), onNewMessageHandler);
 
         // setup home button on action bar
         ActionBar supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
             supportActionBar.setDisplayHomeAsUpEnabled(true);
-            String recipientNickname = conversation.getRecipientNickname(userProfileParcel.getCurUserNickname());
             if (recipientNickname != null)
                 supportActionBar.setTitle(recipientNickname);
         }
@@ -87,6 +100,13 @@ public class MessagingActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        mSocket.emitString("join_chat", userProfileParcel.getCurUserNickname());
+        mSocket.connect();
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
@@ -97,14 +117,54 @@ public class MessagingActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mSocket != null)
+            mSocket.disconnect();
+    }
+
     /***********************************************************************************************
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
     private void sendChatMessage() {
+        // send update notification to messaging server
+        JSONObject jsonData = new JSONObject();
+        try {
+            jsonData.put("receiver_nickname", recipientNickname);
+            jsonData.put("sender_nickname", userProfileParcel.getCurUserNickname());
+            jsonData.put("data", messageChatText.getText().toString().trim());
+            mSocket.emitString("send_message", jsonData.toString());
+        } catch (JSONException e) { e.printStackTrace(); }
+
+        // update UI
         messageArrayAdapter.add(new ChatMessage(conversation.getConversationID(),
                                                 userProfileParcel.getCurUserNickname(),
                                                 userProfileParcel.getFacebookID(),
                                                 messageChatText.getText().toString().trim()));
         messageChatText.setText("");
     }
+
+    private void refreshChatWindow() {
+        messageArrayAdapter.fetchNewMessages(conversation.getConversationID());
+    }
+
+    private Emitter.Listener onNewMessageHandler = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    String sender = (String) args[0];
+                    if (sender.equals(recipientNickname)) {
+                        Log.d("MessagingActivity: ", "Refreshing chat window");
+                        refreshChatWindow();
+                    }
+                    else {
+                        Log.d("MessagingActivity: ", sender);
+                    }
+                }
+            });
+        }
+    };
 }
