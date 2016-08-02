@@ -5,6 +5,7 @@
     <!-- To auto-complete the email text field in the login form with the user's emails -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:allowBackup="true"
@@ -70,8 +71,12 @@
             android:name=".activities.ViewFistbumpsActivity"
             android:label="@string/activity_label_view_fistbumps"
             android:screenOrientation="portrait" />
-        <activity android:name=".activities.MessagesActivity"
-            android:label="@string/activity_label_messages"
+        <activity
+            android:name=".activities.ConversationsActivity"
+            android:label="@string/activity_label_conversations"
+            android:screenOrientation="portrait" />
+        <activity android:name=".activities.MessagingActivity"
+            android:label="@string/activity_label_messaging"
             android:screenOrientation="portrait"/>
 
         <provider

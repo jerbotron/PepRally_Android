@@ -24,6 +24,7 @@ public class DBUserProfile {
     private String dateJoined;
     private String team;
     private String FMSInstanceID;
+    private Set<String> conversationIDs;
     private Set<String> usersDirectFistbumpSent;
     private Set<String> usersDirectFistbumpReceived;
     private int age;
@@ -279,6 +280,25 @@ public class DBUserProfile {
 
     public void setFMSInstanceID(String FMSInstanceID) {
         this.FMSInstanceID = FMSInstanceID;
+    }
+
+    @DynamoDBAttribute(attributeName = "ConversationIDs")
+    public Set<String> getConversationIDs() {
+        return conversationIDs;
+    }
+
+    public void setConversationIDs(Set<String> conversationIDs) {
+        this.conversationIDs = conversationIDs;
+    }
+
+    public void addConversationID(String id) {
+        if (conversationIDs != null)
+            conversationIDs.add(id);
+    }
+
+    public void removeConversationID(String id) {
+        if (conversationIDs != null)
+            conversationIDs.remove(id);
     }
 
     @DynamoDBAttribute(attributeName = "UsersDirectFistbumpSent")

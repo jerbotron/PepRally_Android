@@ -5,7 +5,7 @@ import android.support.annotation.NonNull;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 
 @DynamoDBTable(tableName = "UserNotifications")
-public class DBUserNotification implements Comparable<DBUserNotification>{
+public class DBUserNotification implements Comparable<DBUserNotification> {
     private String nickname;
     private String nicknameSender;
     private String facebookIDSender;

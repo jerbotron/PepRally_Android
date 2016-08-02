@@ -14,7 +14,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,8 +30,8 @@ import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
-import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
-import com.peprally.jeremy.peprally.utils.HTTPRequestsHelper;
+import com.peprally.jeremy.peprally.network.DynamoDBHelper;
+import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.NotificationEnum;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
@@ -115,7 +114,7 @@ public class NewCommentActivity extends AppCompatActivity {
                     mainPost.getFacebookID(),
                     3);
 
-            mainPostTimeStamp.setText(Helpers.getTimeStampString(mainPost.getTimeInSeconds()));
+            mainPostTimeStamp.setText(Helpers.getTimetampString(mainPost.getTimeInSeconds()));
 
             // Post Button onClick handler
             postCommentButton.setOnClickListener(new View.OnClickListener() {
@@ -324,6 +323,7 @@ public class NewCommentActivity extends AppCompatActivity {
                 public void onClick(View view) {
                     if (mainPost.getFistbumpsCount() > 0) {
                         Intent intent = new Intent(getApplicationContext(), ViewFistbumpsActivity.class);
+                        intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                         intent.putStringArrayListExtra("FISTBUMPED_USERS", new ArrayList<>(mainPost.getFistbumpedUsers()));
                         startActivity(intent);
                     }

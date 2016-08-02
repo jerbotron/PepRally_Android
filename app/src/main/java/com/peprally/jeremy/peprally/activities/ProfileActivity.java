@@ -17,7 +17,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -37,8 +36,8 @@ import com.peprally.jeremy.peprally.fragments.ProfileEditFragment;
 import com.peprally.jeremy.peprally.fragments.ProfilePostsFragment;
 import com.peprally.jeremy.peprally.fragments.ProfileInfoFragment;
 import com.peprally.jeremy.peprally.utils.ActivityEnum;
-import com.peprally.jeremy.peprally.utils.DynamoDBHelper;
-import com.peprally.jeremy.peprally.utils.HTTPRequestsHelper;
+import com.peprally.jeremy.peprally.network.DynamoDBHelper;
+import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.ProfileViewPager;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
@@ -151,6 +150,7 @@ public class ProfileActivity extends AppCompatActivity {
                 actionFAB.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+//                        launchNewFistbumpMatchDialog();
                         Intent intent = new Intent(getApplicationContext(), NewPostActivity.class);
                         startActivityForResult(intent, Helpers.NEW_POST_REQUEST_CODE);
                         overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
@@ -318,7 +318,7 @@ public class ProfileActivity extends AppCompatActivity {
             imageView_profilePicture.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    showProfileImageDialog(imageURL);
+                    launchProfileImageDialog(imageURL);
                 }
             });
 
@@ -408,7 +408,7 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
-    private void showProfileImageDialog(String imageURL) {
+    private void launchProfileImageDialog(String imageURL) {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         final View dialogView = View.inflate(this, R.layout.dialog_profile_image, null);
         dialogBuilder.setView(dialogView);
@@ -445,7 +445,7 @@ public class ProfileActivity extends AppCompatActivity {
         snackbar.show();
     }
 
-    private void showVerifySendDirectFistbumpDialog() {
+    private void launchVerifySendDirectFistbumpDialog() {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         final View dialogView = View.inflate(this, R.layout.dialog_verify_direct_fistbump, null);
         dialogBuilder.setView(dialogView);
@@ -466,7 +466,6 @@ public class ProfileActivity extends AppCompatActivity {
                 dbHelper.makeNewNotification(makeNotificationDirectFistbumpBundle());
                 httpRequestsHelper.makeHTTPPostRequest(makeNotificationDirectFistbumpBundle());
                 // update UI
-                final LinearLayout buttonEditProfile = (LinearLayout) findViewById(R.id.id_button_edit_profile_container);
                 final TextView buttonEditProfileContent = (TextView) findViewById(R.id.id_button_edit_profile_content);
                 final FloatingActionButton actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
                 buttonEditProfileContent.setText(getResources().getString(R.string.profile_fistbumped_text));
@@ -526,7 +525,7 @@ public class ProfileActivity extends AppCompatActivity {
                         showDirectFistbumpSnackbarConfirmation(false);
                     }
                     else {
-                        showVerifySendDirectFistbumpDialog();
+                        launchVerifySendDirectFistbumpDialog();
                     }
                 }
             });
@@ -542,7 +541,7 @@ public class ProfileActivity extends AppCompatActivity {
                         showDirectFistbumpSnackbarConfirmation(false);
                     }
                     else {
-                        showVerifySendDirectFistbumpDialog();
+                        launchVerifySendDirectFistbumpDialog();
                     }
                 }
             });
@@ -551,9 +550,66 @@ public class ProfileActivity extends AppCompatActivity {
         buttonEditProfileContent.setCompoundDrawablesWithIntrinsicBounds(0,0,0,0);
     }
 
+    private void launchNewFistbumpMatchDialog() {
+        Helpers.vibrateDeviceNotification(this);
+        AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
+        final View dialogView = View.inflate(this, R.layout.dialog_fistbump_match, null);
+        dialogBuilder.setView(dialogView);
+
+        final ImageView leftUserProfileImage = (ImageView) dialogView.findViewById(R.id.id_dialog_fistbumped_user_profile_left);
+        final ImageView rightUserProfileImage = (ImageView) dialogView.findViewById(R.id.id_dialog_fistbumped_user_profile_right);
+        final LinearLayout sendMessageButton = (LinearLayout) dialogView.findViewById(R.id.id_dialog_fistbumped_button_send_message);
+        final LinearLayout goBackButton = (LinearLayout) dialogView.findViewById(R.id.id_dialog_fistbumped_button_back_to_profile);
+
+        new SetFistbumpMatchedUsersProfileImagesAsyncTask().execute(leftUserProfileImage, rightUserProfileImage);
+
+        dialogBuilder.setTitle("It's a Fistbump!");
+        dialogBuilder.setMessage("You and " + userProfileParcel.getFirstname() + " have fistbumped each other.");
+        final AlertDialog b = dialogBuilder.create();
+
+        // button on click handlers
+        sendMessageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                b.dismiss();
+            }
+        });
+
+        goBackButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                b.dismiss();
+            }
+        });
+
+        b.show();
+    }
+
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
+    private class SetFistbumpMatchedUsersProfileImagesAsyncTask extends AsyncTask<ImageView, Void, String> {
+        ImageView leftUserProfileImage, rightUserProfileImage;
+        @Override
+        protected String doInBackground(ImageView... params) {
+            DBUserProfile curUserProfile = dbHelper.loadDBUserProfile(userProfileParcel.getCurUserNickname());
+            if (curUserProfile != null) {
+                leftUserProfileImage = params[0];
+                rightUserProfileImage = params[1];
+                return curUserProfile.getFacebookID();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(String curUserFacebookID) {
+            if (curUserFacebookID != null) {
+                Helpers.setFacebookProfileImage(getApplicationContext(), leftUserProfileImage, curUserFacebookID, 3);
+                Helpers.setFacebookProfileImage(getApplicationContext(), rightUserProfileImage, userProfileParcel.getFacebookID(), 3);
+            }
+        }
+    }
+
     private class FetchUserProfileFromDBTask extends AsyncTask<Void, Void, Void> {
         private DBUserProfile userProfile;
         private DBPlayerProfile playerProfile;
@@ -701,7 +757,7 @@ public class ProfileActivity extends AppCompatActivity {
                 profileUser.addUsersDirectFistbumpReceived(userProfileParcel.getCurUserNickname());
                 dbHelper.saveDBObject(curUser);
                 dbHelper.saveDBObject(profileUser);
-                // if the profile user has also sent a direct fistbump to current user
+                // if the profile user also sent a direct fistbump to current user
                 if (profileUser.getUsersDirectFistbumpSent().contains(userProfileParcel.getCurUserNickname())) {
                     return true;
                 }
@@ -711,10 +767,10 @@ public class ProfileActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Boolean launchChatWindow) {
-            if (launchChatWindow)
-                Log.d(TAG, "launch chat window");
-            else
-                Log.d(TAG, "profile user has not fistbumped cur user yet");
+            if (launchChatWindow) {
+                dbHelper.createNewConversation(userProfileParcel.getCurUserNickname(), userProfileParcel.getProfileNickname());
+                launchNewFistbumpMatchDialog();
+            }
         }
     }
 }
