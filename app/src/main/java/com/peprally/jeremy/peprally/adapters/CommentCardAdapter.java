@@ -197,7 +197,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                         dbHelper.incrementUserSentFistbumpsCount(curUserNickname);
                         // send push notification
                         dbHelper.makeNewNotification(makeNotificationCommentFistbumpBundle(curComment));
-                        httpRequestsHelper.makeHTTPPostRequest(makeHTTPPostRequestCommentFistbumpBundle(curComment));
+                        httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestCommentFistbumpBundle(curComment));
                     }
                     // add current user to fistbumped users
                     curComment.addFistbumpedUser(userProfileParcel.getCurUserNickname());
@@ -230,7 +230,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     private Bundle makeNotificationCommentFistbumpBundle(DBUserComment curComment) {
         Bundle bundle = new Bundle();
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
-        bundle.putInt("TYPE", 3);
+        bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.COMMENT_FISTBUMP.toInt());
         bundle.putString("RECEIVER_NICKNAME", curComment.getNickname());    // who the notification is going to
         bundle.putString("POST_ID", curComment.getPostID());
         bundle.putString("COMMENT_ID", curComment.getCommentID());
@@ -239,7 +239,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
 
     private Bundle makeHTTPPostRequestCommentFistbumpBundle(DBUserComment curComment) {
         Bundle bundle = new Bundle();
-        bundle.putInt("TYPE", 3);
+        bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.COMMENT_FISTBUMP.toInt());
         bundle.putString("RECEIVER_NICKNAME", curComment.getNickname());
         bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());
         return bundle;
@@ -279,7 +279,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         // send push notification (if not commenting on own post)
         if (!newComment.getNickname().equals(newComment.getPostNickname())) {
             dbHelper.makeNewNotification(makeNotificationPostCommentBundle(commentText, newComment.getCommentID()));
-            httpRequestsHelper.makeHTTPPostRequest(makeHTTPPostRequestPostCommentBundle(commentText));
+            httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestPostCommentBundle(commentText));
         }
     }
 
@@ -334,7 +334,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     private Bundle makeNotificationPostCommentBundle(String comment, String commentID) {
         Bundle bundle = new Bundle();
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
-        bundle.putInt("TYPE", 1);
+        bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_COMMENT.toInt());
         bundle.putString("RECEIVER_NICKNAME", mainPost.getNickname());
         bundle.putString("POST_ID", mainPost.getPostID());
         bundle.putString("COMMENT_ID", commentID);
@@ -344,7 +344,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
 
     private Bundle makeHTTPPostRequestPostCommentBundle(String comment) {
         Bundle bundle = new Bundle();
-        bundle.putInt("TYPE", 1);
+        bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_COMMENT.toInt());
         bundle.putString("RECEIVER_NICKNAME", mainPost.getNickname());
         bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());
         bundle.putString("COMMENT", comment);

@@ -247,7 +247,7 @@ public class NewCommentActivity extends AppCompatActivity {
     private Bundle makeNotificationPostFistbumpBundle(DBUserPost curPost) {
         Bundle bundle = new Bundle();
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
-        bundle.putInt("TYPE", 2);
+        bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
         bundle.putString("RECEIVER_NICKNAME", curPost.getNickname());    // who the notification is going to
         bundle.putString("POST_ID", curPost.getPostID());
         return bundle;
@@ -255,7 +255,7 @@ public class NewCommentActivity extends AppCompatActivity {
 
     private Bundle makeHTTPPostRequestPostFistbumpBundle(DBUserPost curPost) {
         Bundle bundle = new Bundle();
-        bundle.putInt("TYPE", 2);
+        bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
         bundle.putString("RECEIVER_NICKNAME", curPost.getNickname());
         bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());
         return bundle;
@@ -378,7 +378,7 @@ public class NewCommentActivity extends AppCompatActivity {
                             dbHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUserNickname());
                             // send push notification
                             dbHelper.makeNewNotification(makeNotificationPostFistbumpBundle(userPost));
-                            httpRequestsHelper.makeHTTPPostRequest(makeHTTPPostRequestPostFistbumpBundle(userPost));
+                            httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestPostFistbumpBundle(userPost));
                         }
                         // add current user to fistbumped users
                         userPost.addFistbumpedUser(userProfileParcel.getCurUserNickname());

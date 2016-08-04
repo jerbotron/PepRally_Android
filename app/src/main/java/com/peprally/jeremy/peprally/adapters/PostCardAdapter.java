@@ -197,7 +197,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                         // make new notification
                         dbHelper.makeNewNotification(makeNotificationPostFistbumpBundle(curPost));
                         // send push notification
-                        httpRequestsHelper.makeHTTPPostRequest(makeHTTPPostRequestPostFistbumpBundle(curPost));
+                        httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestPostFistbumpBundle(curPost));
                     }
                     // add current user to fistbumped users
                     curPost.addFistbumpedUser(userProfileParcel.getCurUserNickname());
@@ -249,7 +249,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
     private Bundle makeNotificationPostFistbumpBundle(DBUserPost curPost) {
         Bundle bundle = new Bundle();
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
-        bundle.putInt("TYPE", 2);
+        bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
         bundle.putString("RECEIVER_NICKNAME", curPost.getNickname());    // who the notification is going to
         bundle.putString("POST_ID", curPost.getPostID());
         return bundle;
@@ -257,7 +257,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
 
     private Bundle makeHTTPPostRequestPostFistbumpBundle(DBUserPost curPost) {
         Bundle bundle = new Bundle();
-        bundle.putInt("TYPE", 2);
+        bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
         bundle.putString("RECEIVER_NICKNAME", curPost.getNickname());
         bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());
         return bundle;

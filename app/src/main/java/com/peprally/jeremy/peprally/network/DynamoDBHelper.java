@@ -3,7 +3,6 @@ package com.peprally.jeremy.peprally.network;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
@@ -102,27 +101,8 @@ public class DynamoDBHelper {
         return mapper.load(DBUserConversation.class, conversationID);
     }
 
-    public DBUserProfile queryDBUserProfileWithCognitoID() {
-        DBUserProfile userProfile = new DBUserProfile();
-        userProfile.setCognitoId(credentialsProvider.getIdentityId());
-        DynamoDBQueryExpression<DBUserProfile> queryExpression = new DynamoDBQueryExpression<DBUserProfile>()
-                .withIndexName("CognitoID-index")
-                .withHashKeyValues(userProfile)
-                .withConsistentRead(false);
-        List<DBUserProfile> results = mapper.query(DBUserProfile.class, queryExpression);
-        if (results == null || results.size() == 0) {
-            return null;
-        }
-        else{
-            if (results.size() == 1) {
-                userProfile = results.get(0);
-                return userProfile;
-            }
-            else{
-                Log.d("DynamoDBHelper: ", "Query result should have only returned single user!");
-                return null;
-            }
-        }
+    public void updateFirebaseInstanceID(String newInstanceID) {
+        new UpdateFirebaseInstanceIDAsyncTask().execute(newInstanceID);
     }
 
     // Database save methods
@@ -152,7 +132,7 @@ public class DynamoDBHelper {
     }
 
     public void makeNewNotification(Bundle bundle) {
-        new MakeNewNotificationAsyncTask().execute(bundle);
+        new MakeNewDBUserNotificationAsyncTask().execute(bundle);
     }
 
     public void deleteCommentFistbumpNotification(NotificationEnum notificationEnum, String commentID, String senderNickname) {
@@ -160,7 +140,7 @@ public class DynamoDBHelper {
         bundle.putSerializable("NOTIFICATION_ENUM", notificationEnum);
         bundle.putString("COMMENT_ID", commentID);
         bundle.putString("SENDER_NICKNAME", senderNickname);
-        new DeleteNotificationAsyncTask().execute(bundle);
+        new DeleteDBUserNotificationAsyncTask().execute(bundle);
     }
 
     public void deletePostFistbumpNotification(NotificationEnum notificationEnum, String postID, String senderNickname) {
@@ -168,30 +148,30 @@ public class DynamoDBHelper {
         bundle.putSerializable("NOTIFICATION_ENUM", notificationEnum);
         bundle.putString("POST_ID", postID);
         bundle.putString("SENDER_NICKNAME", senderNickname);
-        new DeleteNotificationAsyncTask().execute(bundle);
+        new DeleteDBUserNotificationAsyncTask().execute(bundle);
     }
 
     public void deletePostCommentNotification(NotificationEnum notificationEnum, DBUserComment userComment) {
         Bundle bundle = new Bundle();
         bundle.putSerializable("NOTIFICATION_ENUM", notificationEnum);
         bundle.putParcelable("USER_COMMENT", userComment);
-        new DeleteNotificationAsyncTask().execute(bundle);
+        new DeleteDBUserNotificationAsyncTask().execute(bundle);
     }
 
     // Database create methods
 
     public void createNewConversation(String nickname1, String nickname2) {
-        new CreateNewConversationAsyncTask().execute(nickname1, nickname2);
+        new CreateNewDBUserConversationAsyncTask().execute(nickname1, nickname2);
     }
 
     // Database delete methods
 
     public void batchDeleteCommentNotifications(DBUserComment userComment) {
-        new BatchDeleteCommentNotifications().execute(userComment);
+        new BatchDeleteCommentDBUserNotificationsAsyncTask().execute(userComment);
     }
 
     public void batchDeletePostNotifications(DBUserPost userPost) {
-        new BatchDeletePostNotifications().execute(userPost);
+        new BatchDeletePostDBUserNotificationsAsyncTask().execute(userPost);
     }
 
     /***********************************************************************************************
@@ -269,7 +249,27 @@ public class DynamoDBHelper {
         }
     }
 
-    private class MakeNewNotificationAsyncTask extends AsyncTask<Bundle, Void, Void> {
+    private class UpdateFirebaseInstanceIDAsyncTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... strings) {
+            String newInstanceID = strings[0];
+            // Query for userProfile using cognitoID
+            DBUserProfile userProfile = new DBUserProfile();
+            userProfile.setCognitoId(credentialsProvider.getIdentityId());
+            DynamoDBQueryExpression<DBUserProfile> queryExpression = new DynamoDBQueryExpression<DBUserProfile>()
+                    .withIndexName("CognitoID-index")
+                    .withHashKeyValues(userProfile)
+                    .withConsistentRead(false);
+            List<DBUserProfile> results = mapper.query(DBUserProfile.class, queryExpression);
+            if (results != null && results.size() == 1) {
+                userProfile = results.get(0);
+                userProfile.setFCMInstanceId(newInstanceID);
+            }
+            return null;
+        }
+    }
+
+    private class MakeNewDBUserNotificationAsyncTask extends AsyncTask<Bundle, Void, Void> {
         @Override
         protected Void doInBackground(Bundle... params) {
             Bundle bundle = params[0];
@@ -285,31 +285,34 @@ public class DynamoDBHelper {
                 userNotification.setFacebookIDSender(userProfileParcel.getFacebookID());
             }
 
-            switch (bundle.getInt("TYPE")) {
-                case 0: // direct fistbump
-                    userNotification.setType(0);
-                    userNotification.setNicknameSender(bundle.getString("SENDER_NICKNAME"));
-                    DBUserProfile senderProfile = loadDBUserProfile(bundle.getString("SENDER_NICKNAME"));
-                    userNotification.setFacebookIDSender(senderProfile.getFacebookID());
-                    break;
-                case 1: // comment on post
-                    userNotification.setType(1);
-                    userNotification.setPostID(bundle.getString("POST_ID"));
-                    userNotification.setCommentID(bundle.getString("COMMENT_ID"));
-                    userNotification.setComment(bundle.getString("COMMENT"));
-                    break;
-                case 2: // fistbump on post
-                    userNotification.setType(2);
-                    userNotification.setPostID(bundle.getString("POST_ID"));
-                    break;
-                case 3: // fistbump on comment
-                    userNotification.setType(3);
-                    userNotification.setPostID(bundle.getString("POST_ID"));
-                    userNotification.setCommentID(bundle.getString("COMMENT_ID"));
-                    break;
-                default:
-                    userNotification.setType(-1);   // invalid notification type
-                    break;
+            NotificationEnum notificationType = NotificationEnum.fromInt(bundle.getInt("NOTIFICATION_TYPE"));
+            if (notificationType != null) {
+                switch (notificationType) {
+                    case DIRECT_FISTBUMP:
+                        userNotification.setType(notificationType.toInt());
+                        userNotification.setNicknameSender(bundle.getString("SENDER_NICKNAME"));
+                        DBUserProfile senderProfile = loadDBUserProfile(bundle.getString("SENDER_NICKNAME"));
+                        userNotification.setFacebookIDSender(senderProfile.getFacebookID());
+                        break;
+                    case POST_COMMENT:
+                        userNotification.setType(notificationType.toInt());
+                        userNotification.setPostID(bundle.getString("POST_ID"));
+                        userNotification.setCommentID(bundle.getString("COMMENT_ID"));
+                        userNotification.setComment(bundle.getString("COMMENT"));
+                        break;
+                    case POST_FISTBUMP:
+                        userNotification.setType(notificationType.toInt());
+                        userNotification.setPostID(bundle.getString("POST_ID"));
+                        break;
+                    case COMMENT_FISTBUMP:
+                        userNotification.setType(notificationType.toInt());
+                        userNotification.setPostID(bundle.getString("POST_ID"));
+                        userNotification.setCommentID(bundle.getString("COMMENT_ID"));
+                        break;
+                    default:
+                        userNotification.setType(-1);   // invalid notification type
+                        break;
+                }
             }
 
             mapper.save(userNotification);
@@ -317,7 +320,7 @@ public class DynamoDBHelper {
         }
     }
 
-    private class DeleteNotificationAsyncTask extends AsyncTask<Bundle, Void, Void> {
+    private class DeleteDBUserNotificationAsyncTask extends AsyncTask<Bundle, Void, Void> {
         @Override
         protected Void doInBackground(Bundle... params) {
             Bundle bundle = params[0];
@@ -381,7 +384,7 @@ public class DynamoDBHelper {
         }
     }
 
-    private class BatchDeletePostNotifications extends AsyncTask<DBUserPost, Void, Void> {
+    private class BatchDeletePostDBUserNotificationsAsyncTask extends AsyncTask<DBUserPost, Void, Void> {
         @Override
         protected Void doInBackground(DBUserPost... params) {
             DBUserPost post = params[0];
@@ -404,7 +407,7 @@ public class DynamoDBHelper {
         }
     }
 
-    private class BatchDeleteCommentNotifications extends AsyncTask<DBUserComment, Void, Void> {
+    private class BatchDeleteCommentDBUserNotificationsAsyncTask extends AsyncTask<DBUserComment, Void, Void> {
         @Override
         protected Void doInBackground(DBUserComment... params) {
             DBUserComment comment = params[0];
@@ -427,7 +430,7 @@ public class DynamoDBHelper {
         }
     }
 
-    private class CreateNewConversationAsyncTask extends AsyncTask<String, Void, Void> {
+    private class CreateNewDBUserConversationAsyncTask extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... nicknames) {
             DBUserProfile fistbumpedUserProfile1 = loadDBUserProfile(nicknames[0]);

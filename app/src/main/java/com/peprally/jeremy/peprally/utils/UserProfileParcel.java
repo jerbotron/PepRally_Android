@@ -56,7 +56,7 @@ public class UserProfileParcel implements Parcelable {
         this.profileNickname = userProfile.getNickname();
         this.cognitoID = userProfile.getCognitoId();
         this.facebookID = userProfile.getFacebookID();
-        this.FMSInstanceID = userProfile.getFMSInstanceID();
+        this.FMSInstanceID = userProfile.getFCMInstanceId();
         this.followersCount = userProfile.getFollowersCount();
         this.followingCount = userProfile.getFollowingCount();
         this.sentFistbumpsCount = userProfile.getSentFistbumpsCount();

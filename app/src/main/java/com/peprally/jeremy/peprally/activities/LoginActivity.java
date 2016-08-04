@@ -90,9 +90,9 @@ public class LoginActivity extends AppCompatActivity {
 
     // General Variables
     private static final String TAG = LoginActivity.class.getSimpleName();
-    private Bundle fbDataBundle;
     private boolean connectionSecured;
-    private String FMSInstanceID;
+    private Bundle fbDataBundle;
+    private String FCMInstanceId;
 
     /***********************************************************************************************
      *************************************** ACTIVITY METHODS **************************************
@@ -135,7 +135,7 @@ public class LoginActivity extends AppCompatActivity {
 
                 fbDataBundle = new Bundle();
 
-                FMSInstanceID = Helpers.getFMSInstanceID(this);
+                FCMInstanceId = Helpers.getFCMInstanceId(this);
 
                 accessTokenTracker = new AccessTokenTracker() {
                     @Override
@@ -424,21 +424,18 @@ public class LoginActivity extends AppCompatActivity {
                     .withConsistentRead(false);
 
             List<DBUserProfile> results = mapper.query(DBUserProfile.class, queryExpression);
-            if (results == null || results.size() == 0) {
-                return true;
-            }
-            else{
-                if (results.size() == 1) {
-                    userProfile = results.get(0);
-                    if (userProfile.getIsVarsityPlayer()) {
-                        playerProfile = mapper.load(DBPlayerProfile.class, userProfile.getTeam(), userProfile.getPlayerIndex());
-                    }
+            if (results != null && results.size() == 1) {
+                userProfile = results.get(0);
+                if (!userProfile.getFCMInstanceId().equals(FCMInstanceId)) {
+                    userProfile.setFCMInstanceId(FCMInstanceId);
+                    dbHelper.saveDBObject(userProfile);
                 }
-                else{
-                    Log.d(TAG, "Query result should have only returned single user!");
+                if (userProfile.getIsVarsityPlayer()) {
+                    playerProfile = mapper.load(DBPlayerProfile.class, userProfile.getTeam(), userProfile.getPlayerIndex());
                 }
                 return false;
             }
+            return true;
         }
 
         @Override
@@ -486,7 +483,7 @@ public class LoginActivity extends AppCompatActivity {
                 userProfile = new DBUserProfile();
                 userProfile.setNickname(userNickname);
                 userProfile.setCognitoId(dbHelper.getIdentityID());
-                userProfile.setFMSInstanceID(FMSInstanceID);
+                userProfile.setFCMInstanceId(FCMInstanceId);
                 userProfile.setFacebookID(fbDataBundle.getString("ID"));
                 userProfile.setFacebookLink(fbDataBundle.getString("LINK"));
                 userProfile.setEmail(fbDataBundle.getString("EMAIL"));

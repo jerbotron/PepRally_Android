@@ -24,45 +24,35 @@ public class HTTPRequestsHelper {
 
     private Context callingContext;
 
-    public HTTPRequestsHelper(Context callingContext) {
-        this.callingContext = callingContext;
+    public HTTPRequestsHelper(Context callingContext) { this.callingContext = callingContext;
     }
 
     /***********************************************************************************************
      ************************************** HTTP REQUEST METHODS ***********************************
      **********************************************************************************************/
-    public void makeHTTPPostRequest(Bundle bundle) {
-        new POSTRequestAsyncTask().execute(new AsyncTaskObjectHTTPBundle(callingContext, bundle));
+    public void makePushNotificationRequest(Bundle bundle) {
+        new MakePushNotificationHTTPPostRequestAsyncTask().execute(bundle);
     }
 
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
-    private static class AsyncTaskObjectHTTPBundle {
-        Context callingContext;
-        Bundle bundle;
-        AsyncTaskObjectHTTPBundle(Context callingContext,
-                                         Bundle bundle) {
-            this.callingContext = callingContext;
-            this.bundle = bundle;
-        }
-    }
 
-    private static class POSTRequestAsyncTask extends AsyncTask<AsyncTaskObjectHTTPBundle, Void, Void> {
+    private class MakePushNotificationHTTPPostRequestAsyncTask extends AsyncTask<Bundle, Void, Void> {
         @Override
-        protected Void doInBackground(AsyncTaskObjectHTTPBundle... params) {
+        protected Void doInBackground(Bundle... params) {
             try {
                 // Instantiate the RequestQueue.
-                RequestQueue queue = Volley.newRequestQueue(params[0].callingContext);
-                DynamoDBHelper dbHelper = new DynamoDBHelper(params[0].callingContext);
-                Bundle bundle = params[0].bundle;
-                String receiverFMSID = dbHelper.loadDBUserProfile(bundle.getString("RECEIVER_NICKNAME")).getFMSInstanceID();
+                RequestQueue queue = Volley.newRequestQueue(callingContext);
+                DynamoDBHelper dbHelper = new DynamoDBHelper(callingContext);
+                Bundle bundle = params[0];
+                String receiverFMSID = dbHelper.loadDBUserProfile(bundle.getString("RECEIVER_NICKNAME")).getFCMInstanceId();
 
                 HashMap<String, String> jsonData = new HashMap<>();
                 jsonData.put("receiver_id", receiverFMSID);
                 jsonData.put("receiver_nickname", bundle.getString("RECEIVER_NICKNAME"));
                 jsonData.put("sender_nickname", bundle.getString("SENDER_NICKNAME"));
-                jsonData.put("notification_type", String.valueOf(bundle.getInt("TYPE")));
+                jsonData.put("notification_type", String.valueOf(bundle.getInt("NOTIFICATION_TYPE")));
                 jsonData.put("comment_text", bundle.getString("COMMENT"));
 
                 JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST,

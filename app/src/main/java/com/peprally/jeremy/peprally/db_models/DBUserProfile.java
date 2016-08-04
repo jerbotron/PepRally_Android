@@ -1,7 +1,5 @@
 package com.peprally.jeremy.peprally.db_models;
 
-import android.util.Log;
-
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 
 import java.util.Set;
@@ -23,7 +21,7 @@ public class DBUserProfile {
     private String trashTalk;
     private String dateJoined;
     private String team;
-    private String FMSInstanceID;
+    private String FCMInstanceId;
     private Set<String> conversationIDs;
     private Set<String> usersDirectFistbumpSent;
     private Set<String> usersDirectFistbumpReceived;
@@ -35,8 +33,9 @@ public class DBUserProfile {
     private int postsCount;
     private int notificationsCount;         //TODO: implement when I need to buffer notifications
     private int playerIndex;
-    private boolean newNotification;
-    private boolean newUser;
+    private boolean hasNewNotification;
+    private boolean hasNewMessage;
+    private boolean isNewUser;
     private boolean isVarsityPlayer;
 
     @DynamoDBHashKey(attributeName = "Nickname")
@@ -274,12 +273,12 @@ public class DBUserProfile {
     }
 
     @DynamoDBAttribute(attributeName = "FMSInstanceID")
-    public String getFMSInstanceID() {
-        return FMSInstanceID;
+    public String getFCMInstanceId() {
+        return FCMInstanceId;
     }
 
-    public void setFMSInstanceID(String FMSInstanceID) {
-        this.FMSInstanceID = FMSInstanceID;
+    public void setFCMInstanceId(String FCMInstanceId) {
+        this.FCMInstanceId = FCMInstanceId;
     }
 
     @DynamoDBAttribute(attributeName = "ConversationIDs")
@@ -340,21 +339,30 @@ public class DBUserProfile {
     }
 
     @DynamoDBAttribute(attributeName = "NewNotification")
-    public boolean getNewNotification() {
-        return newNotification;
+    public boolean hasNewNotification() {
+        return hasNewNotification;
     }
 
-    public void setNewNotification(boolean newNotification) {
-        this.newNotification = newNotification;
+    public void setHasNewNotification(boolean hasNewNotification) {
+        this.hasNewNotification = hasNewNotification;
+    }
+
+    @DynamoDBAttribute(attributeName = "HasNewMessage")
+    public boolean hasNewMessage() {
+        return hasNewMessage;
+    }
+
+    public void setHasNewMessage(boolean hasNewMessage) {
+        this.hasNewMessage = hasNewMessage;
     }
 
     @DynamoDBAttribute(attributeName = "NewUser")
     public boolean getNewUser() {
-        return newUser;
+        return isNewUser;
     }
 
     public void setNewUser(boolean newUser) {
-        this.newUser = newUser;
+        this.isNewUser = newUser;
     }
 
     @DynamoDBAttribute(attributeName = "IsVarsityPlayer")

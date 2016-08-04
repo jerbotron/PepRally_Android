@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.cognito.CognitoSyncManager;
 import com.amazonaws.mobileconnectors.cognito.Dataset;
@@ -40,47 +41,55 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingC
 
         Log.d(TAG, "verifying credentials");
 
-        FacebookSdk.sdkInitialize(callingContext);
-        AccessToken currentToken = AccessToken.getCurrentAccessToken();
+        try {
+            FacebookSdk.sdkInitialize(callingContext);
+            AccessToken currentToken = AccessToken.getCurrentAccessToken();
 
-        CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                callingContext,     // Context
-                IDENTITY_POOL_ID,   // Identity Pool ID
-                COGNITO_REGION      // Region
-        );
-        credentialsProvider.clear();
-        credentialsProvider = new CognitoCachingCredentialsProvider(
-                callingContext,     // Context
-                IDENTITY_POOL_ID,   // Identity Pool ID
-                COGNITO_REGION      // Region
-        );
+            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+                    callingContext,     // Context
+                    IDENTITY_POOL_ID,   // Identity Pool ID
+                    COGNITO_REGION      // Region
+            );
+            credentialsProvider.clear();
+            credentialsProvider = new CognitoCachingCredentialsProvider(
+                    callingContext,     // Context
+                    IDENTITY_POOL_ID,   // Identity Pool ID
+                    COGNITO_REGION      // Region
+            );
 
-        Map<String, String> logins = new HashMap<>();
-        logins.put("graph.facebook.com", currentToken.getToken());
-        credentialsProvider.setLogins(logins);
-        credentialsProvider.refresh();
-        return credentialsProvider;
+            Map<String, String> logins = new HashMap<>();
+            logins.put("graph.facebook.com", currentToken.getToken());
+            credentialsProvider.setLogins(logins);
+            credentialsProvider.refresh();
+            return credentialsProvider;
+        } catch (AmazonClientException err) {
+            err.printStackTrace();
+            doInBackground();
+            return null;
+        }
     }
 
     @Override
     protected void onPostExecute(final CognitoCachingCredentialsProvider credentialsProvider) {
-        Log.d(TAG, "credentials verified");
-        Log.d(TAG, "credentials: " + credentialsProvider.getCredentials().toString());
-        Log.d(TAG, "identity pool id: " + credentialsProvider.getIdentityPoolId());
-        Log.d(TAG, "identity provider: " + credentialsProvider.getIdentityProvider());
-        CognitoSyncManager syncClient = new CognitoSyncManager(
-                callingContext,
-                Regions.US_EAST_1,
-                credentialsProvider);
-        Profile fbProfile = Profile.getCurrentProfile();
-        Dataset dataset = syncClient.openOrCreateDataset(credentialsProvider.getIdentityId());
-        dataset.put("UserFullName", fbProfile.getFirstName() + " " + fbProfile.getLastName());
-        dataset.synchronize(new DefaultSyncCallback() {
-            @Override
-            public void onSuccess(Dataset dataset, List<Record> updatedRecords) {
-                loginTaskCallback.onTaskDone(credentialsProvider);
-            }
-        });
+        if (credentialsProvider != null) {
+            Log.d(TAG, "credentials verified");
+            Log.d(TAG, "credentials: " + credentialsProvider.getCredentials().toString());
+            Log.d(TAG, "identity pool id: " + credentialsProvider.getIdentityPoolId());
+            Log.d(TAG, "identity provider: " + credentialsProvider.getIdentityProvider());
+            CognitoSyncManager syncClient = new CognitoSyncManager(
+                    callingContext,
+                    Regions.US_EAST_1,
+                    credentialsProvider);
+            Profile fbProfile = Profile.getCurrentProfile();
+            Dataset dataset = syncClient.openOrCreateDataset(credentialsProvider.getIdentityId());
+            dataset.put("UserFullName", fbProfile.getFirstName() + " " + fbProfile.getLastName());
+            dataset.synchronize(new DefaultSyncCallback() {
+                @Override
+                public void onSuccess(Dataset dataset, List<Record> updatedRecords) {
+                    loginTaskCallback.onTaskDone(credentialsProvider);
+                }
+            });
+        }
     }
 
 }

@@ -39,6 +39,7 @@ import com.peprally.jeremy.peprally.utils.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
+import com.peprally.jeremy.peprally.utils.NotificationEnum;
 import com.peprally.jeremy.peprally.utils.ProfileViewPager;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 import com.squareup.picasso.Picasso;
@@ -243,7 +244,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     private Bundle makeNotificationDirectFistbumpBundle() {
         Bundle bundle = new Bundle();
-        bundle.putInt("TYPE", 0);
+        bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_FISTBUMP.toInt());
         bundle.putString("RECEIVER_NICKNAME", userProfileParcel.getProfileNickname());  // who the notification is going to
         bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());    // who the notification is from
         return bundle;
@@ -464,7 +465,7 @@ public class ProfileActivity extends AppCompatActivity {
                 new HandleCurUserDirectFistbumpToProfileUserTask().execute();
                 // make push notifications
                 dbHelper.makeNewNotification(makeNotificationDirectFistbumpBundle());
-                httpRequestsHelper.makeHTTPPostRequest(makeNotificationDirectFistbumpBundle());
+                httpRequestsHelper.makePushNotificationRequest(makeNotificationDirectFistbumpBundle());
                 // update UI
                 final TextView buttonEditProfileContent = (TextView) findViewById(R.id.id_button_edit_profile_content);
                 final FloatingActionButton actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);

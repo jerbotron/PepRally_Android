@@ -83,8 +83,8 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
         ArrayList<ChatMessage> messages = conversation.getChatMessages();
         if (messages != null && messages.size() > 0) {
             String preview = messages.get(messages.size() - 1).getMessageContent();
-            if (preview.length() > 20) {
-                preview = preview.substring(0, 20) + "...";
+            if (preview.length() > 40) {
+                preview = preview.substring(0, 50) + "...";
             }
             MessageCardHolder.lastMessageContent.setText(preview);
         }

@@ -161,13 +161,7 @@ public class Helpers {
     {
         GoogleApiAvailability googleAPI = GoogleApiAvailability.getInstance();
         final int status = googleAPI.isGooglePlayServicesAvailable(callingActivity.getApplicationContext());
-        if (status == ConnectionResult.SUCCESS)
-        {
-            FirebaseInstanceId instanceId = FirebaseInstanceId.getInstance();
-            String token = instanceId.getToken();
-            Log.d("HELPERS: ", "FMS reg token = " + token);
-            return true;
-        }
+        if (status == ConnectionResult.SUCCESS) { return true; }
 
         Log.e("GOOGLE_PLAY_SERVICES:", "Google Play Services not available: " + googleAPI.getErrorString(status));
 
@@ -183,18 +177,18 @@ public class Helpers {
         return false;
     }
 
-    public static String getFMSInstanceID(Activity callingActivity)
+    public static String getFCMInstanceId(Activity callingActivity)
     {
         GoogleApiAvailability googleAPI = GoogleApiAvailability.getInstance();
         final int status = googleAPI.isGooglePlayServicesAvailable(callingActivity.getApplicationContext());
-        String token = null;
         if (status == ConnectionResult.SUCCESS)
         {
             FirebaseInstanceId instanceId = FirebaseInstanceId.getInstance();
-            token = instanceId.getToken();
-            Log.d("HELPERS: ", "FMS reg token = " + token);
+            String token = instanceId.getToken();
+            Log.d("HELPERS: ", "FCM reg token = " + token);
+            return token;
         }
-        return token;
+        return null;
     }
 
     // Physical Helpers

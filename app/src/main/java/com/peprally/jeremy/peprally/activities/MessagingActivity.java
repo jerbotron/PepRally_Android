@@ -17,7 +17,9 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.MessageArrayAdapter;
 import com.peprally.jeremy.peprally.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.messaging.Conversation;
+import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.network.SocketIO;
+import com.peprally.jeremy.peprally.utils.NotificationEnum;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import org.json.JSONException;
@@ -33,12 +35,16 @@ public class MessagingActivity extends AppCompatActivity {
     private ListView messageListView;
     private EditText messageChatText;
 
+    // HTTP Variable
+    private HTTPRequestsHelper httpRequestsHelper;
+
     // General Variables
     private Conversation conversation;
     private UserProfileParcel userProfileParcel;
-    private String recipientNickname;
+    private String receiverNickname;
+    private boolean receiverJoined = false;
 
-    private SocketIO mSocket;
+    private SocketIO socket;
 
     /***********************************************************************************************
      *************************************** ACTIVITY METHODS **************************************
@@ -48,21 +54,23 @@ public class MessagingActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_messaging);
 
+        // initialize httpRequestHelper
+        httpRequestsHelper = new HTTPRequestsHelper(this);
+
         // initialize parcels
         conversation = getIntent().getParcelableExtra("CONVERSATION");
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
-        recipientNickname = conversation.getRecipientNickname(userProfileParcel.getCurUserNickname());
+        receiverNickname = conversation.getRecipientNickname(userProfileParcel.getCurUserNickname());
 
         // initialize socket
-        mSocket = new SocketIO(userProfileParcel.getCurUserNickname());
-        mSocket.registerListener(userProfileParcel.getCurUserNickname(), onNewMessageHandler);
+        socket = new SocketIO(userProfileParcel.getCurUserNickname(), receiverNickname);
 
         // setup home button on action bar
         ActionBar supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
             supportActionBar.setDisplayHomeAsUpEnabled(true);
-            if (recipientNickname != null)
-                supportActionBar.setTitle(recipientNickname);
+            if (receiverNickname != null)
+                supportActionBar.setTitle(receiverNickname);
         }
 
         // initialize UI members
@@ -102,8 +110,9 @@ public class MessagingActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mSocket.emitString("join_chat", userProfileParcel.getCurUserNickname());
-        mSocket.connect();
+        refreshChatWindow();
+        socket.connect();
+        setupSocketListeners();
     }
 
     @Override
@@ -120,22 +129,32 @@ public class MessagingActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        if (mSocket != null)
-            mSocket.disconnect();
+        if (socket != null)
+            socket.disconnect();
     }
 
     /***********************************************************************************************
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
     private void sendChatMessage() {
+        Log.d("MessagingActivity: ", "receiverJoined = " + receiverJoined);
         // send update notification to messaging server
-        JSONObject jsonData = new JSONObject();
-        try {
-            jsonData.put("receiver_nickname", recipientNickname);
-            jsonData.put("sender_nickname", userProfileParcel.getCurUserNickname());
-            jsonData.put("data", messageChatText.getText().toString().trim());
-            mSocket.emitString("send_message", jsonData.toString());
-        } catch (JSONException e) { e.printStackTrace(); }
+        if (receiverJoined) {
+            JSONObject jsonData = new JSONObject();
+            try {
+                jsonData.put("receiver_nickname", receiverNickname);
+                jsonData.put("sender_nickname", userProfileParcel.getCurUserNickname());
+                jsonData.put("data", messageChatText.getText().toString().trim());
+            } catch (JSONException e) { e.printStackTrace(); }
+            socket.emitString("send_message", jsonData.toString());
+        }
+        else {
+            Bundle bundle = new Bundle();
+            bundle.putString("RECEIVER_NICKNAME", receiverNickname);
+            bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());
+            bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_MESSAGE.toInt());
+            httpRequestsHelper.makePushNotificationRequest(bundle);
+        }
 
         // update UI
         messageArrayAdapter.add(new ChatMessage(conversation.getConversationID(),
@@ -149,22 +168,63 @@ public class MessagingActivity extends AppCompatActivity {
         messageArrayAdapter.fetchNewMessages(conversation.getConversationID());
     }
 
+    private void setupSocketListeners() {
+        // on message received listener
+        socket.registerListener("new_message_" + userProfileParcel.getCurUserNickname(), onNewMessageHandler);
+        // on receiver join chat listener
+        socket.registerListener("on_join_" + receiverNickname, onReceiverJoinChatHandler);
+        // on receiver leave chat listener
+        socket.registerListener("on_leave_" + receiverNickname, onReceiverLeaveChatHandler);
+    }
+
+    /***********************************************************************************************
+     ************************************ Socket Emitter Listeners *********************************
+     **********************************************************************************************/
     private Emitter.Listener onNewMessageHandler = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    String sender = (String) args[0];
-                    if (sender.equals(recipientNickname)) {
-                        Log.d("MessagingActivity: ", "Refreshing chat window");
-                        refreshChatWindow();
-                    }
-                    else {
-                        Log.d("MessagingActivity: ", sender);
+                    if (args.length > 0) {
+                        String senderNickname = (String) args[0];
+                        if (senderNickname.equals(receiverNickname)) {
+//                            Log.d("MessagingActivity: ", "Refreshing chat window");
+                            refreshChatWindow();
+                        }
                     }
                 }
             });
+        }
+    };
+
+    private Emitter.Listener onReceiverJoinChatHandler = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            if (args.length > 0) {
+                String response = (String) args[0];
+                if (response.equals("callback_request")) {
+                    JSONObject jsonData = new JSONObject();
+                    try {
+                        jsonData.put("receiver_nickname", receiverNickname);
+                        jsonData.put("sender_nickname", userProfileParcel.getCurUserNickname());
+                    } catch (JSONException e) { e.printStackTrace(); }
+                    socket.emitString("callback_ack", jsonData.toString());
+                }
+//                Log.d("MessagingActivity: ", receiverNickname + " joined, " + response);
+            }
+//            else {
+//                Log.d("MessagingActivity: ", receiverNickname + " is already in the room");
+//            }
+            receiverJoined = true;
+        }
+    };
+
+    private Emitter.Listener onReceiverLeaveChatHandler = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            receiverJoined = false;
+//            Log.d("MessagingActivity: ", receiverNickname + " left");
         }
     };
 }
