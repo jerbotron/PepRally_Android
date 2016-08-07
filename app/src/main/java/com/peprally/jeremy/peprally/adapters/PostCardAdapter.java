@@ -94,7 +94,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         final DBUserPost curPost = posts.get(position);
         Helpers.setFacebookProfileImage(callingContext,
                                         postHolder.profileImage,
-                                        curPost.getFacebookID(),
+                                        curPost.getFacebookId(),
                                         3);
 
         final String curUserNickname = userProfileParcel.getCurUserNickname();
@@ -174,7 +174,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                         // update the sent fistbumps count of the current user
                         dbHelper.decrementUserSentFistbumpsCount(userProfileParcel.getCurUserNickname());
                         // remove notification
-                        dbHelper.deletePostFistbumpNotification(NotificationEnum.POST_FISTBUMP, curPost.getPostID(), userProfileParcel.getCurUserNickname());
+                        dbHelper.deletePostFistbumpNotification(NotificationEnum.POST_FISTBUMP, curPost.getPostId(), userProfileParcel.getCurUserNickname());
                     }
                     // remove current user from fistbumped users
                     curPost.removeFistbumpedUser(userProfileParcel.getCurUserNickname());
@@ -237,6 +237,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         posts.add(0, newPost);
         notifyItemInserted(0);
     }
+
     private void launchNewCommentActivity(DBUserPost curPost) {
         Intent intent = new Intent(callingContext, NewCommentActivity.class);
         userProfileParcel.setCurrentActivity(ActivityEnum.NEWCOMMENT);
@@ -251,7 +252,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
         bundle.putString("RECEIVER_NICKNAME", curPost.getNickname());    // who the notification is going to
-        bundle.putString("POST_ID", curPost.getPostID());
+        bundle.putString("POST_ID", curPost.getPostId());
         return bundle;
     }
 
@@ -271,9 +272,9 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         newPost.setNickname(bundle.getString("NICKNAME"));
         Long timeInSeconds = Helpers.getTimestampMiliseconds();
         newPost.setTimeInSeconds(timeInSeconds);
-        newPost.setPostID(bundle.getString("NICKNAME") + "_" + timeInSeconds.toString());
-        newPost.setCognitoID(dbHelper.getIdentityID());
-        newPost.setFacebookID(bundle.getString("FACEBOOK_ID"));
+        newPost.setPostId(bundle.getString("NICKNAME") + "_" + timeInSeconds.toString());
+        newPost.setCognitoId(dbHelper.getIdentityID());
+        newPost.setFacebookId(bundle.getString("FACEBOOK_ID"));
         newPost.setFirstname(bundle.getString("FIRST_NAME"));
         newPost.setTimeStamp(Helpers.getTimestampString());
         newPost.setTextContent(newPostText);

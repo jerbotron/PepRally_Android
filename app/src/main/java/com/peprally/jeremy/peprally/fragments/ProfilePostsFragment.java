@@ -9,6 +9,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
@@ -33,6 +34,7 @@ public class ProfilePostsFragment extends Fragment {
     private PostCardAdapter postCardAdapter;
     private RecyclerView recyclerView;
     private TextView noPostsText;
+    private RelativeLayout progressCircleContainer;
     private SwipeRefreshLayout profilePostsSwipeRefreshContainer;
 
     // General Variables
@@ -46,7 +48,11 @@ public class ProfilePostsFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile_posts, container, false);
+
         userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
+
+        // initialize UI components
+        progressCircleContainer = (RelativeLayout) view.findViewById(R.id.id_container_profile_posts_progress_circle);
 
         // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
         recyclerView = (RecyclerView) view.findViewById(R.id.recycler_view_profile_posts);
@@ -110,21 +116,19 @@ public class ProfilePostsFragment extends Fragment {
         @Override
         protected PaginatedQueryList<DBUserPost> doInBackground(String... params) {
             String nickname = params[0];
-            if (nickname == null) return null;
             DynamoDBHelper dynamoDBHelper = new DynamoDBHelper(getActivity().getApplicationContext());
             DBUserPost userPost = new DBUserPost();
             userPost.setNickname(nickname);
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withHashKeyValues(userPost)
-                    .withConsistentRead(false)
+                    .withConsistentRead(true)
                     .withScanIndexForward(false);
             return dynamoDBHelper.getMapper().query(DBUserPost.class, queryExpression);
         }
 
         @Override
         protected void onPostExecute(PaginatedQueryList<DBUserPost> result) {
-
-            if (result != null && result.size() != 0) {
+            if (result != null && result.size() > 0) {
                 userProfileParcel.setPostsCount(result.size());
                 initializeAdapter(result);
             }
@@ -142,6 +146,9 @@ public class ProfilePostsFragment extends Fragment {
             // stop refresh loading animation
             if (profilePostsSwipeRefreshContainer.isRefreshing())
                 profilePostsSwipeRefreshContainer.setRefreshing(false);
+
+            // stop on load progress circle animation
+            progressCircleContainer.setVisibility(View.GONE);
         }
     }
 }

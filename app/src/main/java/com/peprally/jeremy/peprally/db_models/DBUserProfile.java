@@ -6,23 +6,23 @@ import java.util.Set;
 
 @DynamoDBTable(tableName = "UserProfiles")
 public class DBUserProfile {
-    private String cognitoID;
-    private String facebookID;
+    private String nickname;
+    private String cognitoId;
+    private String facebookId;
     private String facebookLink;
+    private String FCMInstanceId;
     private String email;
     private String firstName;
     private String lastName;
     private String gender;
     private String birthday;
-    private String nickname;
     private String favoriteTeam;
     private String favoritePlayer;
     private String pepTalk;
     private String trashTalk;
     private String dateJoined;
     private String team;
-    private String FCMInstanceId;
-    private Set<String> conversationIDs;
+    private Set<String> conversationIds;
     private Set<String> usersDirectFistbumpSent;
     private Set<String> usersDirectFistbumpReceived;
     private int age;
@@ -33,8 +33,8 @@ public class DBUserProfile {
     private int postsCount;
     private int notificationsCount;         //TODO: implement when I need to buffer notifications
     private int playerIndex;
-    private boolean hasNewNotification;
     private boolean hasNewMessage;
+    private boolean hasNewNotification;
     private boolean isNewUser;
     private boolean isVarsityPlayer;
 
@@ -47,22 +47,31 @@ public class DBUserProfile {
         this.nickname = nickname;
     }
 
-    @DynamoDBIndexHashKey(globalSecondaryIndexName = "CognitoID-index", attributeName = "CognitoID")
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "CognitoId-index", attributeName = "CognitoId")
     public String getCognitoId() {
-        return cognitoID;
+        return cognitoId;
     }
 
     public void setCognitoId(String cognitoId) {
-        this.cognitoID = cognitoId;
+        this.cognitoId = cognitoId;
     }
 
-    @DynamoDBAttribute(attributeName = "FacebookID")
-    public String getFacebookID() {
-        return facebookID;
+    @DynamoDBAttribute(attributeName = "FacebookId")
+    public String getFacebookId() {
+        return facebookId;
     }
 
-    public void setFacebookID(String facebookID) {
-        this.facebookID = facebookID;
+    public void setFacebookId(String facebookId) {
+        this.facebookId = facebookId;
+    }
+
+    @DynamoDBAttribute(attributeName = "FCMInstanceId")
+    public String getFCMInstanceId() {
+        return FCMInstanceId;
+    }
+
+    public void setFCMInstanceId(String FCMInstanceId) {
+        this.FCMInstanceId = FCMInstanceId;
     }
 
     @DynamoDBAttribute(attributeName = "FacebookLink")
@@ -101,15 +110,6 @@ public class DBUserProfile {
         this.lastName = lastName;
     }
 
-    @DynamoDBAttribute(attributeName = "Age")
-    public int getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
-
     @DynamoDBAttribute(attributeName = "Gender")
     public String getGender() {
         return gender;
@@ -126,6 +126,65 @@ public class DBUserProfile {
 
     public void setBirthday(String birthday) {
         this.birthday = birthday;
+    }
+
+    @DynamoDBAttribute(attributeName = "FavoriteTeam")
+    public String getFavoriteTeam() {
+        return favoriteTeam;
+    }
+
+    public void setFavoriteTeam(String favoriteTeam) {
+        this.favoriteTeam = favoriteTeam;
+    }
+
+    @DynamoDBAttribute(attributeName = "FavoritePlayer")
+    public String getFavoritePlayer() {
+        return favoritePlayer;
+    }
+
+    public void setFavoritePlayer(String favoritePlayer) {
+        this.favoritePlayer = favoritePlayer;
+    }
+
+    @DynamoDBAttribute(attributeName = "PepTalk")
+    public String getPepTalk() {
+        return pepTalk;
+    }
+
+    public void setPepTalk(String pepTalk) {
+        this.pepTalk = pepTalk;
+    }
+
+    @DynamoDBAttribute(attributeName = "TrashTalk")
+    public String getTrashTalk() {
+        return trashTalk;
+    }
+
+    @DynamoDBAttribute(attributeName = "DateJoined")
+    public String getDateJoined() {
+        return dateJoined;
+    }
+
+    public void setDateJoined(String dateJoined) {
+        this.dateJoined = dateJoined;
+    }
+
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "Team-index", attributeName = "PlayerTeam")
+    public String getTeam() {
+        return team;
+    }
+
+    public void setTeam(String team) {
+        this.team = team;
+    }
+
+    @DynamoDBAttribute(attributeName = "Age")
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
     }
 
     @DynamoDBAttribute(attributeName = "FollowersCount")
@@ -209,58 +268,8 @@ public class DBUserProfile {
             postsCount -= 1;
     }
 
-    @DynamoDBAttribute(attributeName = "FavoriteTeam")
-    public String getFavoriteTeam() {
-        return favoriteTeam;
-    }
-
-    public void setFavoriteTeam(String favoriteTeam) {
-        this.favoriteTeam = favoriteTeam;
-    }
-
-    @DynamoDBAttribute(attributeName = "FavoritePlayer")
-    public String getFavoritePlayer() {
-        return favoritePlayer;
-    }
-
-    public void setFavoritePlayer(String favoritePlayer) {
-        this.favoritePlayer = favoritePlayer;
-    }
-
-    @DynamoDBAttribute(attributeName = "PepTalk")
-    public String getPepTalk() {
-        return pepTalk;
-    }
-
-    public void setPepTalk(String pepTalk) {
-        this.pepTalk = pepTalk;
-    }
-
-    @DynamoDBAttribute(attributeName = "TrashTalk")
-    public String getTrashTalk() {
-        return trashTalk;
-    }
-
     public void setTrashTalk(String trashTalk) {
         this.trashTalk = trashTalk;
-    }
-
-    @DynamoDBAttribute(attributeName = "DateJoined")
-    public String getDateJoined() {
-        return dateJoined;
-    }
-
-    public void setDateJoined(String dateJoined) {
-        this.dateJoined = dateJoined;
-    }
-
-    @DynamoDBIndexHashKey(globalSecondaryIndexName = "Team-index", attributeName = "PlayerTeam")
-    public String getTeam() {
-        return team;
-    }
-
-    public void setTeam(String team) {
-        this.team = team;
     }
 
     @DynamoDBAttribute(attributeName = "PlayerIndex")
@@ -272,32 +281,24 @@ public class DBUserProfile {
         this.playerIndex = index;
     }
 
-    @DynamoDBAttribute(attributeName = "FMSInstanceID")
-    public String getFCMInstanceId() {
-        return FCMInstanceId;
+
+    @DynamoDBAttribute(attributeName = "ConversationIds")
+    public Set<String> getConversationIds() {
+        return conversationIds;
     }
 
-    public void setFCMInstanceId(String FCMInstanceId) {
-        this.FCMInstanceId = FCMInstanceId;
+    public void setConversationIds(Set<String> conversationIds) {
+        this.conversationIds = conversationIds;
     }
 
-    @DynamoDBAttribute(attributeName = "ConversationIDs")
-    public Set<String> getConversationIDs() {
-        return conversationIDs;
+    public void addConversationId(String id) {
+        if (conversationIds != null)
+            conversationIds.add(id);
     }
 
-    public void setConversationIDs(Set<String> conversationIDs) {
-        this.conversationIDs = conversationIDs;
-    }
-
-    public void addConversationID(String id) {
-        if (conversationIDs != null)
-            conversationIDs.add(id);
-    }
-
-    public void removeConversationID(String id) {
-        if (conversationIDs != null)
-            conversationIDs.remove(id);
+    public void removeConversationId(String id) {
+        if (conversationIds != null)
+            conversationIds.remove(id);
     }
 
     @DynamoDBAttribute(attributeName = "UsersDirectFistbumpSent")
@@ -338,22 +339,22 @@ public class DBUserProfile {
             usersDirectFistbumpReceived.remove(user);
     }
 
-    @DynamoDBAttribute(attributeName = "NewNotification")
-    public boolean hasNewNotification() {
-        return hasNewNotification;
-    }
-
-    public void setHasNewNotification(boolean hasNewNotification) {
-        this.hasNewNotification = hasNewNotification;
-    }
-
     @DynamoDBAttribute(attributeName = "HasNewMessage")
-    public boolean hasNewMessage() {
+    public boolean getHasNewMessage() {
         return hasNewMessage;
     }
 
     public void setHasNewMessage(boolean hasNewMessage) {
         this.hasNewMessage = hasNewMessage;
+    }
+
+    @DynamoDBAttribute(attributeName = "HasNewNotification")
+    public boolean getHasNewNotification() {
+        return hasNewNotification;
+    }
+
+    public void setHasNewNotification(boolean hasNewNotification) {
+        this.hasNewNotification = hasNewNotification;
     }
 
     @DynamoDBAttribute(attributeName = "NewUser")

@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.RelativeLayout;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.peprally.jeremy.peprally.R;
@@ -67,6 +69,9 @@ public class ConversationsActivity extends AppCompatActivity {
                 refreshAdapter();
             }
         });
+
+        // remove user new message alert
+        new RemoveUserNewMessageAlertAsyncTask().execute(userProfileParcel.getCurUserNickname());
     }
 
     @Override
@@ -121,8 +126,8 @@ public class ConversationsActivity extends AppCompatActivity {
         protected List<DBUserConversation> doInBackground(String... nicknames) {
             DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(nicknames[0]);
             List<DBUserConversation> userConversations = new ArrayList<>();
-            if (userProfile != null && userProfile.getConversationIDs().size() > 1) {   // set has a default value of "_"
-                for (String conversationID : userProfile.getConversationIDs()) {
+            if (userProfile != null && userProfile.getConversationIds().size() > 1) {   // set has a default value of "_"
+                for (String conversationID : userProfile.getConversationIds()) {
                     if (!conversationID.equals("_")) {  // special case inside conversationID Set
                         DBUserConversation userConversation = new DBUserConversation();
                         userConversation.setConversationID(conversationID);
@@ -147,6 +152,23 @@ public class ConversationsActivity extends AppCompatActivity {
             // stop refresh loading animation
             if (conversationSwipeRefreshContainer.isRefreshing())
                 conversationSwipeRefreshContainer.setRefreshing(false);
+
+            // stop on load progress circle animation
+            RelativeLayout progressCircleContainer = (RelativeLayout) findViewById(R.id.id_container_conversation_progress_circle);
+            progressCircleContainer.setVisibility(View.GONE);
+        }
+    }
+
+    private class RemoveUserNewMessageAlertAsyncTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... strings) {
+            String nickname = strings[0];
+            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(nickname);
+            if (userProfile != null) {
+                userProfile.setHasNewMessage(false);
+                dynamoDBHelper.saveDBObject(userProfile);
+            }
+            return null;
         }
     }
 }

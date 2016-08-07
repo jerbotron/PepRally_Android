@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
+import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
@@ -33,6 +34,9 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
     private List<ChatMessage> messageHistoryList;
     private UserProfileParcel userProfileParcel;
 
+    /***********************************************************************************************
+     ********************************** ADAPTER CONSTRUCTOR/METHODS ********************************
+     **********************************************************************************************/
     public MessageArrayAdapter(Context callingContext,
                                ArrayList<ChatMessage> messageHistoryList,
                                UserProfileParcel userProfileParcel) {
@@ -80,6 +84,13 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
         return messageView;
     }
 
+    /***********************************************************************************************
+     *********************************** GENERAL METHODS/INTERFACES ********************************
+     **********************************************************************************************/
+    public void notifyReceiverNewMessage(String receiverNickname) {
+        new NotifyUserNewMessageAsyncTask().execute(receiverNickname);
+    }
+
     public void fetchNewMessages(String conversationID) {
         new FetchNewMessagesFromDBAsyncTask().execute(conversationID);
     }
@@ -92,10 +103,22 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
         protected Void doInBackground(ChatMessage... chatMessages) {
             ChatMessage chatMessage = chatMessages[0];
             DBUserConversation userConversation = dynamoDBHelper.loadDBUserConversation(chatMessage.getConversationID());
-
             userConversation.setTimeStampLatest(Helpers.getTimestampMiliseconds());
             userConversation.addConversationChatMessage(chatMessage);
             dynamoDBHelper.saveDBObject(userConversation);
+            return null;
+        }
+    }
+
+    private class NotifyUserNewMessageAsyncTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... strings) {
+            String nickname = strings[0];
+            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(nickname);
+            if (userProfile != null) {
+                userProfile.setHasNewMessage(true);
+                dynamoDBHelper.saveDBObject(userProfile);
+            }
             return null;
         }
     }

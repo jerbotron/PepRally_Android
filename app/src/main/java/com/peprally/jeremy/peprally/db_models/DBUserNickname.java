@@ -5,8 +5,8 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 @DynamoDBTable(tableName = "UserNicknames")
 public class DBUserNickname {
     private String nickname;
-    private String cognitoID;
-    private String facebookID;
+    private String cognitoId;
+    private String facebookId;
 
     @DynamoDBHashKey(attributeName = "Nickname")
     public String getNickname() {
@@ -17,21 +17,21 @@ public class DBUserNickname {
         this.nickname = nickname;
     }
 
-    @DynamoDBAttribute(attributeName = "CognitoID")
-    public String getCognitoID() {
-        return cognitoID;
+    @DynamoDBAttribute(attributeName = "CognitoId")
+    public String getCognitoId() {
+        return cognitoId;
     }
 
-    public void setCognitoID(String cognitoID) {
-        this.cognitoID = cognitoID;
+    public void setCognitoId(String cognitoId) {
+        this.cognitoId = cognitoId;
     }
 
-    @DynamoDBAttribute(attributeName = "FacebookID")
-    public String getFacebookID() {
-        return facebookID;
+    @DynamoDBAttribute(attributeName = "FacebookId")
+    public String getFacebookId() {
+        return facebookId;
     }
 
-    public void setFacebookID(String facebookID) {
-        this.facebookID = facebookID;
+    public void setFacebookId(String facebookId) {
+        this.facebookId = facebookId;
     }
 }

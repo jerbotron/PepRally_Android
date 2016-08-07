@@ -15,7 +15,7 @@ public class DBUserNotification implements Comparable<DBUserNotification> {
     private String timeStamp;
     private Long timeInSeconds;
     // 0 = direct fistbump, 1 = comment on post, 2 = fistbump on post, 3 = fistbump on comment
-    private int type;
+    private int notificationType;
 
     @Override
     public int compareTo(@NonNull DBUserNotification another) {
@@ -78,7 +78,7 @@ public class DBUserNotification implements Comparable<DBUserNotification> {
     }
 
     @DynamoDBIndexHashKey(globalSecondaryIndexNames = {"CommentID-index", "CommentID-SenderNickname-index"}, attributeName = "CommentID")
-    @DynamoDBIndexRangeKey(globalSecondaryIndexName = "PostID-CommentID-index", attributeName = "CommentID")
+    @DynamoDBIndexRangeKey(globalSecondaryIndexName = "PostID-CommentID-index", attributeName = "CommentId")
     public String getCommentID() {
         return commentID;
     }
@@ -97,11 +97,11 @@ public class DBUserNotification implements Comparable<DBUserNotification> {
     }
 
     @DynamoDBAttribute(attributeName = "NotificationType")
-    public int getType() {
-        return type;
+    public int getNotificationType() {
+        return notificationType;
     }
 
-    public void setType(int type) {
-        this.type = type;
+    public void setNotificationType(int notificationType) {
+        this.notificationType = notificationType;
     }
 }

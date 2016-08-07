@@ -1,10 +1,12 @@
 package com.peprally.jeremy.peprally.activities;
 
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -47,6 +49,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     // UI Variables
     private DrawerLayout drawer;
+    private MenuItem menuChatItem, menuNotificationItem;
     private ViewPager viewPagerHome;
 
     // Fragment Variables
@@ -85,7 +88,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
         // Setup UI components
         Toolbar toolbar = (Toolbar) findViewById(R.id.id_toolbar_home);
-        toolbar.setTitle("PepRally");
+        toolbar.setTitle("");
+        TextView toolbarTitle = (TextView) toolbar.findViewById(R.id.id_text_view_toolbar_title);
+        Typeface customTf = Typeface.createFromAsset(getAssets(), "fonts/HappyMonkey-Regular.ttf");
+        toolbarTitle.setTypeface(customTf, Typeface.BOLD);
         setSupportActionBar(toolbar);
 
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout_home);
@@ -115,6 +121,14 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main_toolbar, menu);
+        menuChatItem = menu.findItem(R.id.id_item_chat);
+        menuNotificationItem = menu.findItem(R.id.id_item_notifications);
+        if (userProfileParcel.hasNewMessage()) {
+            menuChatItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_chat_notify));
+        }
+        if (userProfileParcel.hasNewNotification()) {
+            menuNotificationItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_notifications_notify));
+        }
         return true;
     }
 
@@ -188,7 +202,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     protected void onResume() {
         super.onResume();
         Helpers.checkGooglePlayServicesAvailable(this);
-
+        new UpdateUserNotificationAlertsAsyncTask().execute();
     }
 
     @Override
@@ -244,7 +258,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         TabLayout tabLayout = (TabLayout) findViewById(R.id.id_tablayout_home);
         if (tabLayout != null) {
             tabLayout.setupWithViewPager(viewPagerHome);
-            tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
                 @Override
                 public void onTabSelected(TabLayout.Tab tab) {
                     viewPagerHome.setCurrentItem(tab.getPosition());
@@ -261,6 +275,20 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+    private void updateMenuItemsNotificationAlerts(boolean chatAlert, boolean notificationAlert) {
+        if (menuChatItem != null && menuNotificationItem != null) {
+            if (chatAlert)
+                menuChatItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_chat_notify));
+            else
+                menuChatItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_chat));
+
+            if (notificationAlert)
+                menuNotificationItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_notifications_notify));
+            else
+                menuNotificationItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_notifications));
+        }
+    }
+
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
@@ -271,7 +299,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             DBPlayerProfile playerProfile = new DBPlayerProfile();
             userProfile.setCognitoId(dbHelper.getIdentityID());
             DynamoDBQueryExpression<DBUserProfile> queryExpression = new DynamoDBQueryExpression<DBUserProfile>()
-                    .withIndexName("CognitoID-index")
+                    .withIndexName("CognitoId-index")
                     .withHashKeyValues(userProfile)
                     .withConsistentRead(false);
 
@@ -299,6 +327,24 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 viewPagerHome = (ViewPager) findViewById(R.id.id_viewpager_home);
                 setupViewPager(viewPagerHome);
             }
+        }
+    }
+
+    private class UpdateUserNotificationAlertsAsyncTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... voids) {
+            DBUserProfile userProfile = dbHelper.loadDBUserProfile(userProfileParcel.getCurUserNickname());
+            if (userProfile != null) {
+                userProfileParcel.setHasNewMessage(userProfile.getHasNewMessage());
+                userProfileParcel.setHasNewNotification(userProfile.getHasNewNotification());
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            updateMenuItemsNotificationAlerts(userProfileParcel.hasNewMessage(),
+                                              userProfileParcel.hasNewNotification());
         }
     }
 }

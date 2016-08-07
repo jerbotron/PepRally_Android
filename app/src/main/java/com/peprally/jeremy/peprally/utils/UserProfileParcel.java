@@ -29,7 +29,8 @@ public class UserProfileParcel implements Parcelable {
     private String favoritePlayer;
     private String pepTalk;
     private String trashTalk;
-    private Boolean newNotification;
+    private Boolean hasNewMessage;
+    private Boolean hasNewNotification;
     private Boolean isVarsityPlayer;
     private Boolean isSelfProfile;
 
@@ -55,7 +56,7 @@ public class UserProfileParcel implements Parcelable {
         this.lastname = userProfile.getLastName();
         this.profileNickname = userProfile.getNickname();
         this.cognitoID = userProfile.getCognitoId();
-        this.facebookID = userProfile.getFacebookID();
+        this.facebookID = userProfile.getFacebookId();
         this.FMSInstanceID = userProfile.getFCMInstanceId();
         this.followersCount = userProfile.getFollowersCount();
         this.followingCount = userProfile.getFollowingCount();
@@ -66,7 +67,8 @@ public class UserProfileParcel implements Parcelable {
         this.favoritePlayer = userProfile.getFavoritePlayer();
         this.pepTalk = userProfile.getPepTalk();
         this.trashTalk = userProfile.getTrashTalk();
-        this.newNotification = false;
+        this.hasNewMessage = userProfile.getHasNewMessage();
+        this.hasNewNotification = userProfile.getHasNewNotification();
         this.isVarsityPlayer = userProfile.getIsVarsityPlayer();
         this.isSelfProfile = true;
 
@@ -114,7 +116,8 @@ public class UserProfileParcel implements Parcelable {
         this.index = Helpers.INTEGER_INVALID;
         this.number = Helpers.INTEGER_INVALID;
         // Initialize un-used boolean members to temporary false value
-        this.newNotification = false;
+        this.hasNewMessage = false;
+        this.hasNewNotification = false;
         this.isVarsityPlayer = false;
         this.hasUserProfile = false;
     }
@@ -143,7 +146,8 @@ public class UserProfileParcel implements Parcelable {
         this.postsCount = Helpers.INTEGER_DEFAULT_COUNT;
         this.number = Helpers.INTEGER_INVALID;
         // Initialize un-used boolean members to temporary false value
-        this.newNotification = false;
+        this.hasNewMessage = false;
+        this.hasNewNotification = false;
         this.hasUserProfile = false;
     }
 
@@ -156,8 +160,8 @@ public class UserProfileParcel implements Parcelable {
         this.curUserNickname = curUserNickname;
         this.firstname = userPost.getFirstname();
         this.profileNickname = userPost.getNickname();
-        this.facebookID = userPost.getFacebookID();
-        this.cognitoID = userPost.getCognitoID();
+        this.facebookID = userPost.getFacebookId();
+        this.cognitoID = userPost.getCognitoId();
         this.isSelfProfile = false;
 
         // Initialize integer values to invalid value
@@ -169,7 +173,8 @@ public class UserProfileParcel implements Parcelable {
         this.index = Helpers.INTEGER_INVALID;
         this.number = Helpers.INTEGER_INVALID;
         // Initialize un-used boolean members to temporary false value
-        this.newNotification = false;
+        this.hasNewMessage = false;
+        this.hasNewNotification = false;
         this.hasUserProfile = false;
         this.isVarsityPlayer = false;
     }
@@ -183,8 +188,8 @@ public class UserProfileParcel implements Parcelable {
         this.curUserNickname = curUserNickname;
         this.firstname = userComment.getFirstname();
         this.profileNickname = userComment.getNickname();
-        this.facebookID = userComment.getFacebookID();
-        this.cognitoID = userComment.getCognitoID();
+        this.facebookID = userComment.getFacebookId();
+        this.cognitoID = userComment.getCognitoId();
         this.isSelfProfile = false;
 
         // Initialize integer values to invalid value
@@ -196,7 +201,8 @@ public class UserProfileParcel implements Parcelable {
         this.index = Helpers.INTEGER_INVALID;
         this.number = Helpers.INTEGER_INVALID;
         // Initialize un-used boolean members to temporary false value
-        this.newNotification = false;
+        this.hasNewMessage = false;
+        this.hasNewNotification = false;
         this.hasUserProfile = false;
         this.isVarsityPlayer = false;
     }
@@ -220,7 +226,8 @@ public class UserProfileParcel implements Parcelable {
         this.favoritePlayer = in.readString();
         this.pepTalk = in.readString();
         this.trashTalk = in.readString();
-        this.newNotification = in.readByte() != 0;
+        this.hasNewMessage = in.readByte() != 0;
+        this.hasNewNotification = in.readByte() != 0;
         this.isVarsityPlayer = in.readByte() != 0;
         this.isSelfProfile = in.readByte() != 0;
 
@@ -255,7 +262,8 @@ public class UserProfileParcel implements Parcelable {
         dest.writeString(favoritePlayer);
         dest.writeString(pepTalk);
         dest.writeString(trashTalk);
-        dest.writeByte((byte) (newNotification ? 1 : 0));
+        dest.writeByte((byte) (hasNewMessage ? 1 : 0));
+        dest.writeByte((byte) (hasNewNotification ? 1 : 0));
         dest.writeByte((byte) (isVarsityPlayer ? 1 : 0));
         dest.writeByte((byte) (isSelfProfile ? 1 : 0));
 
@@ -340,8 +348,11 @@ public class UserProfileParcel implements Parcelable {
     public String getTrashTalk() {
         return trashTalk;
     }
-    public Boolean getNewNotification() {
-        return newNotification;
+    public Boolean hasNewMessage() {
+        return hasNewMessage;
+    }
+    public Boolean hasNewNotification() {
+        return hasNewNotification;
     }
     public Boolean getIsVarsityPlayer() {
         return isVarsityPlayer;
@@ -433,8 +444,11 @@ public class UserProfileParcel implements Parcelable {
     public void setTrashTalk(String trashTalk) {
         this.trashTalk = trashTalk;
     }
-    public void setNewNotification(Boolean newNotification) {
-        this.newNotification = newNotification;
+    public void setHasNewMessage(Boolean hasNewMessage) {
+        this.hasNewMessage = hasNewMessage;
+    }
+    public void setHasNewNotification(Boolean hasNewNotification) {
+        this.hasNewNotification = hasNewNotification;
     }
     public void setIsVarsityPlayer(Boolean isVarsityPlayer) {
         this.isVarsityPlayer = isVarsityPlayer;

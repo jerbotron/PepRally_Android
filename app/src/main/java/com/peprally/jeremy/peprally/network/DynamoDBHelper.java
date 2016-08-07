@@ -185,6 +185,7 @@ public class DynamoDBHelper {
         }
     }
 
+    // Post/Comment Tasks
     private class IncrementUserSentFistbumpsCountAsyncTask extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... userNickname) {
@@ -249,26 +250,7 @@ public class DynamoDBHelper {
         }
     }
 
-    private class UpdateFirebaseInstanceIDAsyncTask extends AsyncTask<String, Void, Void> {
-        @Override
-        protected Void doInBackground(String... strings) {
-            String newInstanceID = strings[0];
-            // Query for userProfile using cognitoID
-            DBUserProfile userProfile = new DBUserProfile();
-            userProfile.setCognitoId(credentialsProvider.getIdentityId());
-            DynamoDBQueryExpression<DBUserProfile> queryExpression = new DynamoDBQueryExpression<DBUserProfile>()
-                    .withIndexName("CognitoID-index")
-                    .withHashKeyValues(userProfile)
-                    .withConsistentRead(false);
-            List<DBUserProfile> results = mapper.query(DBUserProfile.class, queryExpression);
-            if (results != null && results.size() == 1) {
-                userProfile = results.get(0);
-                userProfile.setFCMInstanceId(newInstanceID);
-            }
-            return null;
-        }
-    }
-
+    // Notification Tasks
     private class MakeNewDBUserNotificationAsyncTask extends AsyncTask<Bundle, Void, Void> {
         @Override
         protected Void doInBackground(Bundle... params) {
@@ -289,33 +271,40 @@ public class DynamoDBHelper {
             if (notificationType != null) {
                 switch (notificationType) {
                     case DIRECT_FISTBUMP:
-                        userNotification.setType(notificationType.toInt());
+                        userNotification.setNotificationType(notificationType.toInt());
                         userNotification.setNicknameSender(bundle.getString("SENDER_NICKNAME"));
                         DBUserProfile senderProfile = loadDBUserProfile(bundle.getString("SENDER_NICKNAME"));
-                        userNotification.setFacebookIDSender(senderProfile.getFacebookID());
+                        userNotification.setFacebookIDSender(senderProfile.getFacebookId());
                         break;
                     case POST_COMMENT:
-                        userNotification.setType(notificationType.toInt());
+                        userNotification.setNotificationType(notificationType.toInt());
                         userNotification.setPostID(bundle.getString("POST_ID"));
                         userNotification.setCommentID(bundle.getString("COMMENT_ID"));
                         userNotification.setComment(bundle.getString("COMMENT"));
                         break;
                     case POST_FISTBUMP:
-                        userNotification.setType(notificationType.toInt());
+                        userNotification.setNotificationType(notificationType.toInt());
                         userNotification.setPostID(bundle.getString("POST_ID"));
                         break;
                     case COMMENT_FISTBUMP:
-                        userNotification.setType(notificationType.toInt());
+                        userNotification.setNotificationType(notificationType.toInt());
                         userNotification.setPostID(bundle.getString("POST_ID"));
                         userNotification.setCommentID(bundle.getString("COMMENT_ID"));
                         break;
                     default:
-                        userNotification.setType(-1);   // invalid notification type
+                        userNotification.setNotificationType(-1);   // invalid notification type
                         break;
                 }
             }
 
-            mapper.save(userNotification);
+            // set receiver profile's newNotification flag to true
+            DBUserProfile receiverUserProfile = loadDBUserProfile(bundle.getString("RECEIVER_NICKNAME"));
+            if (receiverUserProfile != null) {
+                receiverUserProfile.setHasNewNotification(true);
+                saveDBObject(receiverUserProfile);
+            }
+
+            saveDBObject(userNotification);
             return null;
         }
     }
@@ -324,13 +313,13 @@ public class DynamoDBHelper {
         @Override
         protected Void doInBackground(Bundle... params) {
             Bundle bundle = params[0];
-            NotificationEnum notificationEnum = (NotificationEnum) bundle.get("NOTIFICATION_ENUM");
+            NotificationEnum notificationType = (NotificationEnum) bundle.get("NOTIFICATION_ENUM");
 
-            if (notificationEnum != null) {
+            if (notificationType != null) {
                 DBUserNotification userNotification = new DBUserNotification();
                 DynamoDBQueryExpression<DBUserNotification> queryExpression = null;
                 Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
-                switch (notificationEnum) {
+                switch (notificationType) {
                     case POST_COMMENT:
                         DBUserComment postComment = bundle.getParcelable("USER_COMMENT");
                         expressionAttributeValues.put(":type", new AttributeValue().withN("1"));
@@ -341,7 +330,7 @@ public class DynamoDBHelper {
                                     .withHashKeyValues(userNotification)
                                     .withRangeKeyCondition("CommentID", new Condition()
                                             .withComparisonOperator(ComparisonOperator.EQ)
-                                            .withAttributeValueList(new AttributeValue().withS(postComment.getCommentID())))
+                                            .withAttributeValueList(new AttributeValue().withS(postComment.getCommentId())))
                                     .withFilterExpression("NotificationType = :type")
                                     .withExpressionAttributeValues(expressionAttributeValues)
                                     .withConsistentRead(false);
@@ -390,7 +379,7 @@ public class DynamoDBHelper {
             DBUserPost post = params[0];
             if (post != null) {
                 DBUserNotification userNotification = new DBUserNotification();
-                userNotification.setPostID(post.getPostID());
+                userNotification.setPostID(post.getPostId());
                 DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression<DBUserNotification>()
                         .withIndexName("PostID-index")
                         .withHashKeyValues(userNotification)
@@ -413,7 +402,7 @@ public class DynamoDBHelper {
             DBUserComment comment = params[0];
             if (comment != null) {
                 DBUserNotification userNotification = new DBUserNotification();
-                userNotification.setCommentID(comment.getCommentID());
+                userNotification.setCommentID(comment.getCommentId());
                 DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression<DBUserNotification>()
                         .withIndexName("CommentID-index")
                         .withHashKeyValues(userNotification)
@@ -430,6 +419,7 @@ public class DynamoDBHelper {
         }
     }
 
+    // Messaging Tasks
     private class CreateNewDBUserConversationAsyncTask extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... nicknames) {
@@ -437,22 +427,43 @@ public class DynamoDBHelper {
             DBUserProfile fistbumpedUserProfile2 = loadDBUserProfile(nicknames[1]);
             if (fistbumpedUserProfile1 != null && fistbumpedUserProfile2 != null) {
                 DBUserConversation newConversation = new DBUserConversation();
-                String conversation_id = fistbumpedUserProfile1.getFacebookID() + "_" + fistbumpedUserProfile2.getFacebookID();
+                String conversation_id = fistbumpedUserProfile1.getFacebookId() + "_" + fistbumpedUserProfile2.getFacebookId();
                 newConversation.setConversationID(conversation_id);
                 Long timeInSeconds = Helpers.getTimestampMiliseconds();
                 newConversation.setTimeStampCreated(timeInSeconds);
                 newConversation.setTimeStampLatest(timeInSeconds);
                 Map<String, String> nicknameFacebookIDMap = new HashMap<>();
-                nicknameFacebookIDMap.put(fistbumpedUserProfile1.getNickname(), fistbumpedUserProfile1.getFacebookID());
-                nicknameFacebookIDMap.put(fistbumpedUserProfile2.getNickname(), fistbumpedUserProfile2.getFacebookID());
+                nicknameFacebookIDMap.put(fistbumpedUserProfile1.getNickname(), fistbumpedUserProfile1.getFacebookId());
+                nicknameFacebookIDMap.put(fistbumpedUserProfile2.getNickname(), fistbumpedUserProfile2.getFacebookId());
                 newConversation.setConversation(new Conversation(conversation_id, new ArrayList<ChatMessage>(), nicknameFacebookIDMap));
 
                 // append conversation_id to each user
                 mapper.save(newConversation);
-                fistbumpedUserProfile1.addConversationID(conversation_id);
-                fistbumpedUserProfile2.addConversationID(conversation_id);
+                fistbumpedUserProfile1.addConversationId(conversation_id);
+                fistbumpedUserProfile2.addConversationId(conversation_id);
                 mapper.save(fistbumpedUserProfile1);
                 mapper.save(fistbumpedUserProfile2);
+            }
+            return null;
+        }
+    }
+
+    // Other Tasks
+    private class UpdateFirebaseInstanceIDAsyncTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... strings) {
+            String newInstanceID = strings[0];
+            // Query for userProfile using cognitoID
+            DBUserProfile userProfile = new DBUserProfile();
+            userProfile.setCognitoId(credentialsProvider.getIdentityId());
+            DynamoDBQueryExpression<DBUserProfile> queryExpression = new DynamoDBQueryExpression<DBUserProfile>()
+                    .withIndexName("CognitoId-index")
+                    .withHashKeyValues(userProfile)
+                    .withConsistentRead(false);
+            List<DBUserProfile> results = mapper.query(DBUserProfile.class, queryExpression);
+            if (results != null && results.size() == 1) {
+                userProfile = results.get(0);
+                userProfile.setFCMInstanceId(newInstanceID);
             }
             return null;
         }

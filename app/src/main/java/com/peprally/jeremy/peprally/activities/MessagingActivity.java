@@ -1,6 +1,7 @@
 package com.peprally.jeremy.peprally.activities;
 
 import android.database.DataSetObserver;
+import android.os.AsyncTask;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -15,8 +16,10 @@ import android.widget.ListView;
 import com.github.nkzawa.emitter.Emitter;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.MessageArrayAdapter;
+import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.messaging.Conversation;
+import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.network.SocketIO;
 import com.peprally.jeremy.peprally.utils.NotificationEnum;
@@ -35,7 +38,8 @@ public class MessagingActivity extends AppCompatActivity {
     private ListView messageListView;
     private EditText messageChatText;
 
-    // HTTP Variable
+    // Network Variables
+    private DynamoDBHelper dynamoDBHelper;
     private HTTPRequestsHelper httpRequestsHelper;
 
     // General Variables
@@ -54,7 +58,8 @@ public class MessagingActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_messaging);
 
-        // initialize httpRequestHelper
+        // initialize network helpers
+        dynamoDBHelper = new DynamoDBHelper(this);
         httpRequestsHelper = new HTTPRequestsHelper(this);
 
         // initialize parcels
@@ -155,6 +160,9 @@ public class MessagingActivity extends AppCompatActivity {
             bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_MESSAGE.toInt());
             httpRequestsHelper.makePushNotificationRequest(bundle);
         }
+
+        // notify receiving user of new message alert next time they open the app
+        messageArrayAdapter.notifyReceiverNewMessage(receiverNickname);
 
         // update UI
         messageArrayAdapter.add(new ChatMessage(conversation.getConversationID(),

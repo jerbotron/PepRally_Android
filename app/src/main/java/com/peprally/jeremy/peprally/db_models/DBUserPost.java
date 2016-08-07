@@ -13,9 +13,9 @@ import java.util.Set;
 @DynamoDBTable(tableName = "UserPosts")
 public class DBUserPost implements Comparable<DBUserPost>, Parcelable{
     private String nickname;
-    private String postID;
-    private String cognitoID;
-    private String facebookID;
+    private String postId;
+    private String cognitoId;
+    private String facebookId;
     private String firstname;
     private String timeStamp;
     private String textContent;
@@ -51,31 +51,31 @@ public class DBUserPost implements Comparable<DBUserPost>, Parcelable{
         this.timeInSeconds = timeInSeconds;
     }
 
-    @DynamoDBAttribute(attributeName = "PostID")
-    public String getPostID() {
-        return postID;
+    @DynamoDBAttribute(attributeName = "PostId")
+    public String getPostId() {
+        return postId;
     }
 
-    public void setPostID(String postID) {
-        this.postID = postID;
+    public void setPostId(String postId) {
+        this.postId = postId;
     }
 
-    @DynamoDBAttribute(attributeName = "CognitoID")
-    public String getCognitoID() {
-        return cognitoID;
+    @DynamoDBAttribute(attributeName = "CognitoId")
+    public String getCognitoId() {
+        return cognitoId;
     }
 
-    public void setCognitoID(String cognitoID) {
-        this.cognitoID = cognitoID;
+    public void setCognitoId(String cognitoId) {
+        this.cognitoId = cognitoId;
     }
 
-    @DynamoDBAttribute(attributeName = "FacebookID")
-    public String getFacebookID() {
-        return facebookID;
+    @DynamoDBAttribute(attributeName = "FacebookId")
+    public String getFacebookId() {
+        return facebookId;
     }
 
-    public void setFacebookID(String facebookID) {
-        this.facebookID = facebookID;
+    public void setFacebookId(String facebookId) {
+        this.facebookId = facebookId;
     }
 
     @DynamoDBAttribute(attributeName = "Firstname")
@@ -161,9 +161,9 @@ public class DBUserPost implements Comparable<DBUserPost>, Parcelable{
     // Parcel Constructor
     private DBUserPost(Parcel in) {
         this.nickname = in.readString();
-        this.postID = in.readString();
-        this.cognitoID = in.readString();
-        this.facebookID = in.readString();
+        this.postId = in.readString();
+        this.cognitoId = in.readString();
+        this.facebookId = in.readString();
         this.firstname = in.readString();
         this.timeStamp = in.readString();
         this.textContent = in.readString();
@@ -176,9 +176,9 @@ public class DBUserPost implements Comparable<DBUserPost>, Parcelable{
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(nickname);
-        dest.writeString(postID);
-        dest.writeString(cognitoID);
-        dest.writeString(facebookID);
+        dest.writeString(postId);
+        dest.writeString(cognitoId);
+        dest.writeString(facebookId);
         dest.writeString(firstname);
         dest.writeString(timeStamp);
         dest.writeString(textContent);

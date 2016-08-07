@@ -2,6 +2,10 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
+http.listen(8080, function(){
+  console.log('Starting server - listening on port :8080');
+});
+
 app.get('/', function(req, res){
   res.sendfile('index.html');
 });
@@ -50,8 +54,4 @@ io.on('connection', function(socket){
     // emitting to receiver
     io.emit("new_message_" + receiverNickname, senderNickname);
   });
-});
-
-http.listen(8080, function(){
-  console.log('Starting server - listening on port :8080');
 });

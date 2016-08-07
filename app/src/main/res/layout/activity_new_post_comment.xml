@@ -130,6 +130,16 @@
         android:padding="@dimen/activity_vertical_margin"
         android:gravity="center"/>
 
+    <RelativeLayout
+        android:id="@+id/id_container_comments_progress_circle"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center">
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </RelativeLayout>
+
     <LinearLayout
         android:id="@+id/id_container_post_comments"
         android:layout_below="@+id/id_comments_main_post_divider"

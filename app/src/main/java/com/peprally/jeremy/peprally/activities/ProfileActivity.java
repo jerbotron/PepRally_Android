@@ -59,8 +59,6 @@ public class ProfileActivity extends AppCompatActivity {
     private ProfileInfoFragment infoFragment;
     private ProfilePostsFragment postsFragment;
     private ProfileEditFragment editFragment;
-    private MenuItem menuItemChat;
-    private MenuItem menuItemNotification;
     private TabLayout tabLayout;
     private ViewPager viewPagerProfile;
     private ProfileViewPagerAdapter adapter;
@@ -137,11 +135,6 @@ public class ProfileActivity extends AppCompatActivity {
                             // Change Actionbar title
                             supportActionBar.setTitle("Edit Profile");
 
-                            // Hide Toolbar Icons
-                            menuItemChat.setVisible(false);
-                            menuItemChat.setEnabled(false);
-                            menuItemNotification.setVisible(false);
-                            menuItemNotification.setEnabled(false);
                             editMode = true;
                         }
                     }
@@ -162,26 +155,10 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main_toolbar, menu);
-        menuItemChat = menu.findItem(R.id.id_item_chat);
-        menuItemNotification = menu.findItem(R.id.id_item_notifications);
-        if (!userProfileParcel.getIsSelfProfile()) {
-            menuItemChat.setVisible(false);
-            menuItemNotification.setVisible(false);
-        }
-        return true;
-    }
-
-    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
                 handleBackPressed();
-                return true;
-            case R.id.id_item_chat:
-                return true;
-            case R.id.id_item_notifications:
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -383,11 +360,6 @@ public class ProfileActivity extends AppCompatActivity {
             infoFragment.onResume();
             ((ProfileViewPager) viewPagerProfile).setAllowedSwipeDirection(ProfileViewPager.SwipeDirection.all);
 
-            // re-enable app bar menu icons
-            menuItemChat.setVisible(true);
-            menuItemChat.setEnabled(true);
-            menuItemNotification.setVisible(true);
-            menuItemNotification.setEnabled(true);
             editMode = false;
 
             // Change back Actionbar title
@@ -597,7 +569,7 @@ public class ProfileActivity extends AppCompatActivity {
             if (curUserProfile != null) {
                 leftUserProfileImage = params[0];
                 rightUserProfileImage = params[1];
-                return curUserProfile.getFacebookID();
+                return curUserProfile.getFacebookId();
             }
             return null;
         }

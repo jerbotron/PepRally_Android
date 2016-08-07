@@ -12,12 +12,12 @@ import java.util.Set;
 @DynamoDBTable(tableName = "UserComments")
 public class DBUserComment implements Parcelable {
     private String postID;
-    private String commentID;
+    private String commentId;
     private String nickname;
     private String postNickname;
     private String firstname;
-    private String cognitoID;
-    private String facebookID;
+    private String cognitoId;
+    private String facebookId;
     private String timeStamp;
     private String textContent;
     private long timeInSeconds;
@@ -45,13 +45,13 @@ public class DBUserComment implements Parcelable {
         this.timeInSeconds = timeInSeconds;
     }
 
-    @DynamoDBAttribute(attributeName = "CommentID")
-    public String getCommentID() {
-        return commentID;
+    @DynamoDBAttribute(attributeName = "CommentId")
+    public String getCommentId() {
+        return commentId;
     }
 
-    public void setCommentID(String commentID) {
-        this.commentID = commentID;
+    public void setCommentId(String commentId) {
+        this.commentId = commentId;
     }
 
     @DynamoDBAttribute(attributeName = "Nickname")
@@ -81,22 +81,22 @@ public class DBUserComment implements Parcelable {
         this.firstname = firstname;
     }
 
-    @DynamoDBAttribute(attributeName = "CognitoID")
-    public String getCognitoID() {
-        return cognitoID;
+    @DynamoDBAttribute(attributeName = "CognitoId")
+    public String getCognitoId() {
+        return cognitoId;
     }
 
-    public void setCognitoID(String cognitoID) {
-        this.cognitoID = cognitoID;
+    public void setCognitoId(String cognitoId) {
+        this.cognitoId = cognitoId;
     }
 
-    @DynamoDBAttribute(attributeName = "FacebookID")
-    public String getFacebookID() {
-        return facebookID;
+    @DynamoDBAttribute(attributeName = "FacebookId")
+    public String getFacebookId() {
+        return facebookId;
     }
 
-    public void setFacebookID(String facebookID) {
-        this.facebookID = facebookID;
+    public void setFacebookId(String facebookId) {
+        this.facebookId = facebookId;
     }
 
     @DynamoDBAttribute(attributeName = "TimeStamp")
@@ -148,12 +148,12 @@ public class DBUserComment implements Parcelable {
     // Parcel Constructor
     private DBUserComment(Parcel in) {
         this.postID = in.readString();
-        this.commentID = in.readString();
+        this.commentId = in.readString();
         this.nickname = in.readString();
         this.postNickname = in.readString();
         this.firstname = in.readString();
-        this.cognitoID = in.readString();
-        this.facebookID = in.readString();
+        this.cognitoId = in.readString();
+        this.facebookId = in.readString();
         this.timeStamp = in.readString();
         this.textContent = in.readString();
         this.timeInSeconds = in.readLong();
@@ -164,12 +164,12 @@ public class DBUserComment implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(postID);
-        dest.writeString(commentID);
+        dest.writeString(commentId);
         dest.writeString(nickname);
         dest.writeString(postNickname);
         dest.writeString(firstname);
-        dest.writeString(cognitoID);
-        dest.writeString(facebookID);
+        dest.writeString(cognitoId);
+        dest.writeString(facebookId);
         dest.writeString(timeStamp);
         dest.writeString(textContent);
         dest.writeLong(timeInSeconds);

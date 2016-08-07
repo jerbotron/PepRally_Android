@@ -18,8 +18,6 @@ public class SocketIO {
     private String senderNickname;
     private String receiverNickname;
 
-//    private JSONObject jsonNicknames;
-
     public SocketIO(String senderNickname, String receiverNickname) {
         try {
             this.senderNickname = senderNickname;

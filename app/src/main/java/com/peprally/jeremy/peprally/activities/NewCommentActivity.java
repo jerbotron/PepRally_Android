@@ -14,11 +14,13 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,6 +52,7 @@ public class NewCommentActivity extends AppCompatActivity {
     // UI Variables
     private RecyclerView recyclerView;
     private ProgressDialog progressDialogDeletePost;
+    private RelativeLayout progressCircleContainer;
     private SwipeRefreshLayout postCommentsSwipeRefreshContainer;
 
     // AWS/HTTP Variables
@@ -89,6 +92,7 @@ public class NewCommentActivity extends AppCompatActivity {
         final EditText newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
         final  TextView textViewCharCount = (TextView) findViewById(R.id.id_text_view_comment_char_count);
         final TextView postCommentButton = (TextView) findViewById(R.id.id_text_view_post_new_comment_button);
+        progressCircleContainer = (RelativeLayout) findViewById(R.id.id_container_comments_progress_circle);
 
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
         mainPost = getIntent().getParcelableExtra("MAIN_POST");
@@ -101,7 +105,10 @@ public class NewCommentActivity extends AppCompatActivity {
 
             // Load comments if applicable
             if (mainPost.getCommentsCount() > 0)
-                new FetchPostCommentsDBTask().execute(mainPost.getPostID());
+                new FetchPostCommentsDBTask().execute(mainPost.getPostId());
+            else {
+                progressCircleContainer.setVisibility(View.GONE);
+            }
 
             // Display Post Info Correctly
             refreshMainPostData(mainPost);
@@ -111,7 +118,7 @@ public class NewCommentActivity extends AppCompatActivity {
 
             Helpers.setFacebookProfileImage(this,
                     mainPostProfileImage,
-                    mainPost.getFacebookID(),
+                    mainPost.getFacebookId(),
                     3);
 
             mainPostTimeStamp.setText(Helpers.getTimetampString(mainPost.getTimeInSeconds()));
@@ -249,7 +256,7 @@ public class NewCommentActivity extends AppCompatActivity {
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
         bundle.putString("RECEIVER_NICKNAME", curPost.getNickname());    // who the notification is going to
-        bundle.putString("POST_ID", curPost.getPostID());
+        bundle.putString("POST_ID", curPost.getPostId());
         return bundle;
     }
 
@@ -288,7 +295,7 @@ public class NewCommentActivity extends AppCompatActivity {
 
     private void refreshAdapter() {
         new FetchUserPostDBTask().execute(mainPost);
-        new FetchPostCommentsDBTask().execute(mainPost.getPostID());
+        new FetchPostCommentsDBTask().execute(mainPost.getPostId());
     }
 
     private void toggleDeletingPostLoadingDialog(boolean show) {
@@ -354,7 +361,7 @@ public class NewCommentActivity extends AppCompatActivity {
                             // update the sent fistbumps count of the current user
                             dbHelper.decrementUserSentFistbumpsCount(userProfileParcel.getCurUserNickname());
                             // remove notification
-                            dbHelper.deletePostFistbumpNotification(NotificationEnum.POST_FISTBUMP, userPost.getPostID(), userProfileParcel.getCurUserNickname());
+                            dbHelper.deletePostFistbumpNotification(NotificationEnum.POST_FISTBUMP, userPost.getPostId(), userProfileParcel.getCurUserNickname());
                         }
                         // remove current user from fistbumped users
                         userPost.removeFistbumpedUser(userProfileParcel.getCurUserNickname());
@@ -431,6 +438,10 @@ public class NewCommentActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(PaginatedQueryList<DBUserComment> result) {
             initializeAdapter(result);
+
+            // stop on load progress circle animation
+            if (progressCircleContainer != null)
+                progressCircleContainer.setVisibility(View.GONE);
         }
     }
 
@@ -473,7 +484,7 @@ public class NewCommentActivity extends AppCompatActivity {
             if (userPost != null && userPost.getCommentsCount() > 0) {
                 // query for all the comments under this post
                 DBUserComment userComment = new DBUserComment();
-                userComment.setPostID(userPost.getPostID());
+                userComment.setPostID(userPost.getPostId());
                 DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                         .withHashKeyValues(userComment)
                         .withConsistentRead(true);

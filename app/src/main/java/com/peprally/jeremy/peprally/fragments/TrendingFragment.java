@@ -1,15 +1,21 @@
 package com.peprally.jeremy.peprally.fragments;
 
+import android.media.Image;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
+import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
@@ -33,19 +39,36 @@ public class TrendingFragment extends Fragment {
     // UI Variables
     private PostCardAdapter postCardAdapter;
     private RecyclerView recyclerView;
+    private RelativeLayout progressCircleContainer;
     private SwipeRefreshLayout trendingSwipeRefreshContainer;
 
     // General Variables
     private List<DBUserPost> posts;
     private UserProfileParcel userProfileParcel;
+    private TrendingModeEnum trendingMode;
+
+    private enum TrendingModeEnum {
+        HOTTEST,
+        LATEST
+    }
 
     /***********************************************************************************************
      *************************************** FRAGMENT METHODS **************************************
      **********************************************************************************************/
     @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        userProfileParcel = ((HomeActivity) getActivity()).getUserProfileParcel();
+        trendingMode = TrendingModeEnum.HOTTEST;
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_trending, container, false);
-        userProfileParcel = ((HomeActivity) getActivity()).getUserProfileParcel();
+
+        // initialize UI components
+        progressCircleContainer = (RelativeLayout) view.findViewById(R.id.id_container_trending_progress_circle);
 
         // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
         recyclerView = (RecyclerView) view.findViewById(R.id.id_recycler_view_trending_posts);
@@ -71,6 +94,33 @@ public class TrendingFragment extends Fragment {
                 ((HomeActivity) getActivity()).launchNewPostActivity();
             }
         });
+
+        final ImageButton imageButtonHottest = (ImageButton) view.findViewById(R.id.id_image_button_trending_hottest);
+        final ImageButton imageButtonLatest = (ImageButton) view.findViewById(R.id.id_image_button_trending_latest);
+
+        if (imageButtonHottest != null && imageButtonLatest != null) {
+            imageButtonHottest.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    trendingMode = TrendingModeEnum.HOTTEST;
+                    imageButtonHottest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_trending_on));
+                    imageButtonLatest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_clock));
+                    imageButtonHottest.setClickable(false);
+                    imageButtonLatest.setClickable(true);
+                }
+            });
+
+            imageButtonLatest.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    trendingMode = TrendingModeEnum.LATEST;
+                    imageButtonHottest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_trending));
+                    imageButtonLatest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_clock_on));
+                    imageButtonHottest.setClickable(true);
+                    imageButtonLatest.setClickable(false);
+                }
+            });
+        }
 
         return view;
     }
@@ -136,6 +186,9 @@ public class TrendingFragment extends Fragment {
             // stop refresh loading animation
             if (trendingSwipeRefreshContainer.isRefreshing())
                 trendingSwipeRefreshContainer.setRefreshing(false);
+
+            // stop on load progress circle animation
+            progressCircleContainer.setVisibility(View.GONE);
         }
     }
 }

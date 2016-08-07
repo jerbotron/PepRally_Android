@@ -103,7 +103,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         final DBUserComment curComment = comments.get(position);
         Helpers.setFacebookProfileImage(callingContext,
                                         commentHolder.profileImage,
-                                        curComment.getFacebookID(),
+                                        curComment.getFacebookId(),
                                         3);
 
         Set<String> fistbumpedUsers = curComment.getFistbumpedUsers();
@@ -176,7 +176,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                         // update the sent fistbumps count of the current user
                         dbHelper.decrementUserSentFistbumpsCount(curUserNickname);
                         // remove notification
-                        dbHelper.deleteCommentFistbumpNotification(NotificationEnum.COMMENT_FISTBUMP, curComment.getCommentID(), curComment.getNickname());
+                        dbHelper.deleteCommentFistbumpNotification(NotificationEnum.COMMENT_FISTBUMP, curComment.getCommentId(), curComment.getNickname());
                     }
                     // remove current user from fistbumped users
                     curComment.removeFistbumpedUser(userProfileParcel.getCurUserNickname());
@@ -233,7 +233,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.COMMENT_FISTBUMP.toInt());
         bundle.putString("RECEIVER_NICKNAME", curComment.getNickname());    // who the notification is going to
         bundle.putString("POST_ID", curComment.getPostID());
-        bundle.putString("COMMENT_ID", curComment.getCommentID());
+        bundle.putString("COMMENT_ID", curComment.getCommentId());
         return bundle;
     }
 
@@ -263,13 +263,13 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         Long timeInSeconds = Helpers.getTimestampMiliseconds();
         Long postTimeInSeconds = mainPost.getTimeInSeconds();
         newComment.setPostID(bundle.getString("POST_NICKNAME") + "_" + postTimeInSeconds.toString());
-        newComment.setCommentID(bundle.getString("CUR_USER_NICKNAME") + "_" + timeInSeconds.toString());
+        newComment.setCommentId(bundle.getString("CUR_USER_NICKNAME") + "_" + timeInSeconds.toString());
         newComment.setNickname(bundle.getString("CUR_USER_NICKNAME"));
         newComment.setPostNickname(bundle.getString("POST_NICKNAME"));
         newComment.setFirstname(bundle.getString("FIRST_NAME"));
         newComment.setTimeInSeconds(timeInSeconds);
-        newComment.setCognitoID(dbHelper.getIdentityID());
-        newComment.setFacebookID(bundle.getString("FACEBOOK_ID"));
+        newComment.setCognitoId(dbHelper.getIdentityID());
+        newComment.setFacebookId(bundle.getString("FACEBOOK_ID"));
         newComment.setTimeStamp(Helpers.getTimestampString());
         newComment.setTextContent(commentText);
         newComment.setFistbumpedUsers(new HashSet<>(Collections.singletonList("_")));
@@ -278,7 +278,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         dbHelper.incrementPostCommentsCount(mainPost);
         // send push notification (if not commenting on own post)
         if (!newComment.getNickname().equals(newComment.getPostNickname())) {
-            dbHelper.makeNewNotification(makeNotificationPostCommentBundle(commentText, newComment.getCommentID()));
+            dbHelper.makeNewNotification(makeNotificationPostCommentBundle(commentText, newComment.getCommentId()));
             httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestPostCommentBundle(commentText));
         }
     }
@@ -336,7 +336,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_COMMENT.toInt());
         bundle.putString("RECEIVER_NICKNAME", mainPost.getNickname());
-        bundle.putString("POST_ID", mainPost.getPostID());
+        bundle.putString("POST_ID", mainPost.getPostId());
         bundle.putString("COMMENT_ID", commentID);
         bundle.putString("COMMENT", comment);
         return bundle;

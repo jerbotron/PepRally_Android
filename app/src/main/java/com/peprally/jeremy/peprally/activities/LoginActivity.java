@@ -419,7 +419,7 @@ public class LoginActivity extends AppCompatActivity {
             userProfile = new DBUserProfile();
             userProfile.setCognitoId(credentialsProvider.getIdentityId());
             DynamoDBQueryExpression<DBUserProfile> queryExpression = new DynamoDBQueryExpression<DBUserProfile>()
-                    .withIndexName("CognitoID-index")
+                    .withIndexName("CognitoId-index")
                     .withHashKeyValues(userProfile)
                     .withConsistentRead(false);
 
@@ -458,7 +458,6 @@ public class LoginActivity extends AppCompatActivity {
     private class CheckUniqueNicknameDBTask extends AsyncTask<String, Void, Boolean> {
         @Override
         protected Boolean doInBackground(String... params) {
-            // params[0] = nickname
             DBUserNickname userNickname = dbHelper.loadDBNickname(params[0]);
             return userNickname != null;
         }
@@ -484,7 +483,7 @@ public class LoginActivity extends AppCompatActivity {
                 userProfile.setNickname(userNickname);
                 userProfile.setCognitoId(dbHelper.getIdentityID());
                 userProfile.setFCMInstanceId(FCMInstanceId);
-                userProfile.setFacebookID(fbDataBundle.getString("ID"));
+                userProfile.setFacebookId(fbDataBundle.getString("ID"));
                 userProfile.setFacebookLink(fbDataBundle.getString("LINK"));
                 userProfile.setEmail(fbDataBundle.getString("EMAIL"));
                 userProfile.setFirstName(fbDataBundle.getString("FIRSTNAME"));
@@ -492,7 +491,9 @@ public class LoginActivity extends AppCompatActivity {
                 userProfile.setGender(fbDataBundle.getString("GENDER"));
                 userProfile.setBirthday(fbDataBundle.getString("BIRTHDAY"));
                 userProfile.setNewUser(true);
-                userProfile.setConversationIDs(new HashSet<>(Collections.singletonList("_")));
+                userProfile.setHasNewMessage(false);
+                userProfile.setHasNewNotification(false);
+                userProfile.setConversationIds(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setUsersDirectFistbumpSent(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setUsersDirectFistbumpReceived(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setDateJoined(Helpers.getTimestampString());
@@ -566,8 +567,8 @@ public class LoginActivity extends AppCompatActivity {
         protected Void doInBackground(String... params) {
             DBUserNickname newUserNickname = new DBUserNickname();
             newUserNickname.setNickname(params[0]);
-            newUserNickname.setCognitoID(dbHelper.getIdentityID());
-            newUserNickname.setFacebookID(AccessToken.getCurrentAccessToken().getUserId());
+            newUserNickname.setCognitoId(dbHelper.getIdentityID());
+            newUserNickname.setFacebookId(AccessToken.getCurrentAccessToken().getUserId());
             dbHelper.saveDBObject(newUserNickname);
             return null;
         }
