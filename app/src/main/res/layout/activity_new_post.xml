@@ -19,8 +19,7 @@
             android:id="@+id/id_edit_text_new_post"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
+            android:layout_margin="8dp"
             android:maxLength="200"
             android:inputType="textMultiLine">
         </EditText>
@@ -37,46 +36,46 @@
             android:background="@color/colorAccentDark">
         </View>
 
-        <LinearLayout
+        <ImageButton
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true">
-            <ImageButton
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_margin="8dp"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
-                android:background="@color/colorBackground"
-                android:clickable="true"
-                app:srcCompat="@drawable/ic_photo"
-                android:contentDescription="@string/content_description_image_button"/>
-        </LinearLayout>
+            android:layout_margin="8dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:background="@color/colorBackground"
+            android:clickable="true"
+            app:srcCompat="@drawable/ic_photo"
+            android:contentDescription="@string/content_description_image_button"/>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:orientation="horizontal"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true">
             <TextView
                 android:id="@+id/new_post_char_count"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:text="@string/new_post_char_text"
                 android:gravity="center"
-                android:layout_margin="8dp">
+                android:text="@string/new_post_char_text"
+                android:textSize="12sp"
+                android:layout_margin="4dp">
             </TextView>
-            <Button
-                android:id="@+id/button_new_post"
+            <TextView
+                android:id="@+id/id_text_view_button_new_post"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
+                android:gravity="center"
                 android:text="@string/new_post_button_text"
-                android:background="@color/colorPrimaryDark"
+                android:textStyle="bold"
+                android:textColor="@color/colorWhite"
+                android:paddingLeft="24dp"
+                android:paddingRight="24dp"
+                android:background="@color/colorPrimary"
                 android:layout_margin="2dp"
                 android:clickable="true">
-            </Button>
+            </TextView>
         </LinearLayout>
     </RelativeLayout>
 

@@ -1,6 +1,5 @@
 package com.peprally.jeremy.peprally.fragments;
 
-import android.media.Image;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -15,7 +14,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
@@ -25,6 +23,7 @@ import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.PostCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
+import com.peprally.jeremy.peprally.utils.UserPostComparator;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.ArrayList;
@@ -43,7 +42,7 @@ public class TrendingFragment extends Fragment {
     private SwipeRefreshLayout trendingSwipeRefreshContainer;
 
     // General Variables
-    private List<DBUserPost> posts;
+    private ArrayList<DBUserPost> posts;
     private UserProfileParcel userProfileParcel;
     private TrendingModeEnum trendingMode;
 
@@ -102,7 +101,13 @@ public class TrendingFragment extends Fragment {
             imageButtonHottest.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    // start on load progress circle animation
+                    progressCircleContainer.setVisibility(View.VISIBLE);
                     trendingMode = TrendingModeEnum.HOTTEST;
+
+                    initializeAdapter(posts);
+
+                    // update UI buttons
                     imageButtonHottest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_trending_on));
                     imageButtonLatest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_clock));
                     imageButtonHottest.setClickable(false);
@@ -113,7 +118,13 @@ public class TrendingFragment extends Fragment {
             imageButtonLatest.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+                    // start on load progress circle animation
+                    progressCircleContainer.setVisibility(View.VISIBLE);
                     trendingMode = TrendingModeEnum.LATEST;
+
+                    initializeAdapter(posts);
+
+                    // update UI buttons
                     imageButtonHottest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_trending));
                     imageButtonLatest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_clock_on));
                     imageButtonHottest.setClickable(true);
@@ -132,18 +143,34 @@ public class TrendingFragment extends Fragment {
     }
 
     /***********************************************************************************************
+     *********************************** GENERAL METHODS/INTERFACES ********************************
+     **********************************************************************************************/
+    private void updateCachedPosts(List<DBUserPost> results) {
+        posts = new ArrayList<>(results);
+    }
+
+    private ArrayList<DBUserPost> sortPosts(TrendingModeEnum trendingMode, ArrayList<DBUserPost> posts) {
+        switch (trendingMode) {
+            case HOTTEST:
+                Collections.sort(posts, UserPostComparator.decending(UserPostComparator.getComparator(UserPostComparator.HOTTEST_SORT, UserPostComparator.LATEST_SORT)));
+                break;
+            case LATEST:
+                // Reverse Posts so they are shown in ascending order w.r.t time stamp
+                Collections.sort(posts, UserPostComparator.decending(UserPostComparator.getComparator(UserPostComparator.LATEST_SORT)));
+                break;
+        }
+        return posts;
+    }
+
+    /***********************************************************************************************
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
-    private void initializeAdapter(List<DBUserPost> result) {
-        if (result != null && result.size() > 0) {
-            posts = new ArrayList<>();
-            for (DBUserPost userPost : result) {
-                posts.add(userPost);
-            }
-            // Reverse Posts so they are shown in ascending order w.r.t time stamp
-            Collections.sort(posts);
-            Collections.reverse(posts);
-            postCardAdapter = new PostCardAdapter(getActivity(), posts, userProfileParcel);
+    private void initializeAdapter(ArrayList<DBUserPost> userPosts) {
+        if (userPosts != null && userPosts.size() > 0) {
+
+            userPosts = sortPosts(trendingMode, userPosts);
+
+            postCardAdapter = new PostCardAdapter(getActivity(), userPosts, userProfileParcel);
             recyclerView.setAdapter(postCardAdapter);
         }
         else {
@@ -180,8 +207,9 @@ public class TrendingFragment extends Fragment {
         }
 
         @Override
-        protected void onPostExecute(PaginatedScanList<DBUserPost> result) {
-            initializeAdapter(result);
+        protected void onPostExecute(PaginatedScanList<DBUserPost> results) {
+            updateCachedPosts(results);
+            initializeAdapter(posts);
 
             // stop refresh loading animation
             if (trendingSwipeRefreshContainer.isRefreshing())

@@ -1,50 +1,396 @@
 package com.peprally.jeremy.peprally.activities;
 
+
+import android.annotation.TargetApi;
 import android.content.Intent;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
+import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
+import android.preference.EditTextPreference;
+import android.preference.Preference;
+import android.preference.PreferenceActivity;
+import android.support.v7.app.ActionBar;
+import android.preference.PreferenceFragment;
+import android.preference.PreferenceManager;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.network.DynamoDBHelper;
+import com.peprally.jeremy.peprally.utils.Helpers;
+import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
-public class SettingsActivity extends AppCompatActivity {
+public class SettingsActivity extends AppCompatPreferenceActivity {
 
-    /***********************************************************************************************
-     *************************************** ACTIVITY METHODS **************************************
-     **********************************************************************************************/
+    // Network Variables
+    private DynamoDBHelper dynamoDBHelper;
+
+    // General Variables
+    private static String TAG = SettingsActivity.class.getSimpleName();
+    private UserProfileParcel userProfileParcel;
+
+    // Fragments
+    private static MainPreferencesFragment mainPreferencesFragment;
+    private static NotificationPreferenceFragment notificationPreferenceFragment;
+    private static FeedbackPreferenceFragment feedbackPreferenceFragment;
+
+    enum PreferenceFragmentEnum {
+        MAIN,
+        NOTIFICATION,
+        FAQ,
+        PRIVACY_POLICY,
+        DELETE_ACCOUNT,
+        FEEDBACK
+    }
+
+    private static PreferenceFragmentEnum curFragmentEnum;
+
+    /**
+     * A preference value change listener that updates the preference's summary
+     * to reflect its new value.
+     */
+    private Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
+        @Override
+        public boolean onPreferenceChange(Preference preference, Object value) {
+            String stringValue = value.toString();
+
+            if (preference instanceof EditTextPreference) {
+                if (preference.getKey().equals("pref_key_my_account_email")) {
+                    if (Helpers.isValidEmail(stringValue)) {
+                        dynamoDBHelper.updateUserEmailPreferences(userProfileParcel.getCurUserNickname(), stringValue);
+                        preference.setSummary(stringValue);
+                    } else if (Helpers.isValidEmail(userProfileParcel.getEmail())) {
+                        preference.setSummary(userProfileParcel.getEmail());
+                        return false;
+                    }
+                    else {
+                        preference.setSummary(getResources().getString(R.string.pref_my_account_email_summary));
+                        if (!stringValue.equals(getResources().getString(R.string.pref_my_account_email_summary)))
+                            makeToastNotification(getResources().getString(R.string.pref_my_account_email_invalid_msg));
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+    };
+
+    /**
+     * Binds a preference's summary to its value.
+     */
+    private void bindPreferenceSummaryToValue(Preference preference) {
+        // Set the listener to watch for value changes.
+        preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
+
+        // Trigger the listener immediately with the preference's
+        // current value.
+        sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
+                PreferenceManager
+                        .getDefaultSharedPreferences(preference.getContext())
+                        .getString(preference.getKey(), ""));
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_settings);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_settings);
-        setSupportActionBar(toolbar);
-        ActionBar supportActionBar = getSupportActionBar();
-        if (supportActionBar != null)
-            supportActionBar.setDisplayHomeAsUpEnabled(true);
+        setupActionBar();
+
+        // initialize member variables
+        userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
+        dynamoDBHelper = new DynamoDBHelper(this);
+
+        mainPreferencesFragment = new MainPreferencesFragment();
+        notificationPreferenceFragment = new NotificationPreferenceFragment();
+        feedbackPreferenceFragment = new FeedbackPreferenceFragment();
+
+        curFragmentEnum = PreferenceFragmentEnum.MAIN;
+        getFragmentManager().beginTransaction()
+                .replace(android.R.id.content, mainPreferencesFragment)
+                .commit();
     }
 
     @Override
     public void onBackPressed() {
-        finish();
-        Intent intent = new Intent(this, HomeActivity.class);
-        startActivity(intent);
-        overridePendingTransition(R.anim.left_in, R.anim.right_out);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                finish();
-                Intent intent = new Intent(this, HomeActivity.class);
-                startActivity(intent);
-                overridePendingTransition(R.anim.left_in, R.anim.right_out);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        if (curFragmentEnum == PreferenceFragmentEnum.MAIN) {
+            finish();
+            overridePendingTransition(R.anim.left_in, R.anim.right_out);
+        } else {
+            getFragmentManager().beginTransaction()
+                    .setCustomAnimations(R.animator.left_in, R.animator.right_out)
+                    .replace(android.R.id.content, mainPreferencesFragment)
+                    .commit();
         }
     }
 
+    private void setupActionBar() {
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            // Show the Up button in the action bar.
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            // Set action bar title
+            actionBar.setTitle("Settings");
+        }
+    }
+
+    protected boolean isValidFragment(String fragmentName) {
+        return PreferenceFragment.class.getName().equals(fragmentName)
+                || MainPreferencesFragment.class.getName().equals(fragmentName)
+                || PrivacyPolicyPreferenceFragment.class.getName().equals(fragmentName)
+                || NotificationPreferenceFragment.class.getName().equals(fragmentName);
+    }
+
+    private UserProfileParcel getUserProfileParcel() {
+        return userProfileParcel;
+    }
+
+    public void makeToastNotification(String text) {
+        Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
+    }
+
+    /**
+     * Main Preferences Fragment
+     */
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static class MainPreferencesFragment extends PreferenceFragment {
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            addPreferencesFromResource(R.xml.pref_main);
+            setHasOptionsMenu(true);
+
+            UserProfileParcel userProfileParcel = ((SettingsActivity) getActivity()).getUserProfileParcel();
+
+            // My Account Preferences
+            Preference namePref = findPreference("pref_key_my_account_name");
+            Preference nicknamePref = findPreference("pref_key_my_account_nickname");
+            Preference dateJoinedPref = findPreference("pref_key_my_account_date_joined");
+            EditTextPreference emailPref = (EditTextPreference) findPreference("pref_key_my_account_email");
+            Preference notificationPref = findPreference("pref_key_my_account_notifications");
+
+            namePref.setSummary(userProfileParcel.getFirstname());
+            nicknamePref.setSummary(userProfileParcel.getCurUserNickname());
+            dateJoinedPref.setSummary(userProfileParcel.getDateJoined().split("\\s+")[0]);
+            if (userProfileParcel.getEmail() != null && !userProfileParcel.getEmail().isEmpty())
+                emailPref.setSummary(userProfileParcel.getEmail());
+
+            // Bind the preference summary texts o their values
+            ((SettingsActivity) getActivity()).bindPreferenceSummaryToValue(emailPref);
+
+            // notification preferences onclick handler
+            notificationPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    getFragmentManager().beginTransaction()
+                            .setCustomAnimations(R.animator.right_in, R.animator.left_out)
+                            .replace(android.R.id.content, notificationPreferenceFragment)
+                            .commit();
+                    return true;
+                }
+            });
+
+            // Support Preferences
+
+            // Support Us Preferences
+            Preference feedbackPref = findPreference("pref_key_show_us_love_feedback");
+            Preference facebookPref = findPreference("pref_key_show_us_love_facebook");
+            Preference instaPref = findPreference("pref_key_show_us_love_instagram");
+            Preference twitterPref = findPreference("pref_key_show_us_love_twitter");
+
+            feedbackPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    getFragmentManager().beginTransaction()
+                            .setCustomAnimations(R.animator.right_in, R.animator.left_out)
+                            .replace(android.R.id.content, feedbackPreferenceFragment)
+                            .commit();
+                    return true;
+                }
+            });
+
+            facebookPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    Intent intent = Helpers.newFacebookProfileIntent(getActivity().getApplicationContext().getPackageManager(),
+                            getResources().getString(R.string.label_app_facebook_link));
+                    startActivity(intent);
+                    return false;
+                }
+            });
+
+            instaPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    Intent intent = Helpers.newInstagramProfileIntent(getActivity().getApplicationContext().getPackageManager(),
+                            getResources().getString(R.string.label_app_instagram_link));
+                    startActivity(intent);
+                    return true;
+                }
+            });
+
+            twitterPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+                @Override
+                public boolean onPreferenceClick(Preference preference) {
+                    Intent intent = Helpers.newTwitterProfileIntent(getActivity().getApplicationContext().getPackageManager(),
+                            getResources().getString(R.string.label_app_twitter_link));
+                    startActivity(intent);
+                    return false;
+                }
+            });
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            int id = item.getItemId();
+            if (id == android.R.id.home) {
+                getActivity().finish();
+                getActivity().overridePendingTransition(R.anim.left_in, R.anim.right_out);
+                return true;
+            }
+            return super.onOptionsItemSelected(item);
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            curFragmentEnum = PreferenceFragmentEnum.MAIN;
+        }
+    }
+
+    /**
+     * This fragment shows notification preferences only. It is used when the
+     * activity is showing a two-pane settings UI.
+     */
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static class NotificationPreferenceFragment extends PreferenceFragment {
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            addPreferencesFromResource(R.xml.pref_notification);
+            setHasOptionsMenu(true);
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            int id = item.getItemId();
+            if (id == android.R.id.home) {
+                getFragmentManager().beginTransaction()
+                        .setCustomAnimations(R.animator.left_in, R.animator.right_out)
+                        .replace(android.R.id.content, mainPreferencesFragment)
+                        .commit();
+                return true;
+            }
+            return super.onOptionsItemSelected(item);
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            curFragmentEnum = PreferenceFragmentEnum.NOTIFICATION;
+        }
+    }
+
+    /**
+     * This fragment shows the Privacy Policy of the app
+     */
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static class PrivacyPolicyPreferenceFragment extends PreferenceFragment {
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            addPreferencesFromResource(R.xml.pref_privacy_policy);
+            setHasOptionsMenu(true);
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            switch (item.getItemId()) {
+                case android.R.id.home:
+                    getFragmentManager().beginTransaction()
+                            .setCustomAnimations(R.animator.left_in, R.animator.right_out)
+                            .replace(android.R.id.content, mainPreferencesFragment)
+                            .commit();
+                    return true;
+                default:
+                    return super.onOptionsItemSelected(item);
+            }
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            curFragmentEnum = PreferenceFragmentEnum.PRIVACY_POLICY;
+        }
+    }
+
+    /**
+     * This fragment shows the feedback page
+     */
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public static class FeedbackPreferenceFragment extends PreferenceFragment {
+
+        // UI variables
+        EditText feedbackText;
+
+        // General variables
+        UserProfileParcel userProfileParcel;
+
+        @Override
+        public void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            addPreferencesFromResource(R.xml.pref_feedback);
+            setHasOptionsMenu(true);
+            userProfileParcel = ((SettingsActivity) getActivity()).getUserProfileParcel();
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            View view = super.onCreateView(inflater, container, savedInstanceState);
+
+            if (view != null)
+                feedbackText = (EditText) view.findViewById(R.id.id_edit_text_feedback);
+
+            return view;
+        }
+
+        @Override
+        public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+            super.onCreateOptionsMenu(menu, inflater);
+            inflater.inflate(R.menu.menu_send, menu);
+        }
+
+        @Override
+        public boolean onOptionsItemSelected(MenuItem item) {
+            switch (item.getItemId()) {
+                case android.R.id.home:
+                    getFragmentManager().beginTransaction()
+                            .setCustomAnimations(R.animator.left_in, R.animator.right_out)
+                            .replace(android.R.id.content, mainPreferencesFragment)
+                            .commit();
+                    return true;
+                case R.id.id_item_send:
+                    if (feedbackText != null) {
+                        Log.d(TAG, feedbackText.getText().toString().trim());
+                    }
+                    return true;
+                default:
+                    return super.onOptionsItemSelected(item);
+            }
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            curFragmentEnum = PreferenceFragmentEnum.FEEDBACK;
+        }
+
+        private void sendFeedback() {
+
+        }
+    }
 }

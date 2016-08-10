@@ -36,11 +36,6 @@
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".activities.SettingsActivity"
-            android:label="@string/title_activity_settings"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
             android:name="com.facebook.FacebookActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
             android:label="@string/label_app_name"
@@ -75,9 +70,10 @@
             android:name=".activities.ConversationsActivity"
             android:label="@string/activity_label_conversations"
             android:screenOrientation="portrait" />
-        <activity android:name=".activities.MessagingActivity"
+        <activity
+            android:name=".activities.MessagingActivity"
             android:label="@string/activity_label_messaging"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
 
         <provider
             android:name="com.facebook.FacebookContentProvider"
@@ -119,6 +115,9 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
+        <activity
+            android:name=".activities.SettingsActivity"
+            android:label="@string/activity_label_settings"></activity>
     </application>
 
 </manifest>

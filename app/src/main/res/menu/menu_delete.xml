@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".activities.NewCommentActivity">
     <item
-        android:id="@+id/id_item_delete_post"
+        android:id="@+id/id_item_delete"
         android:title="Edit Profile"
         android:icon="@drawable/ic_delete"
         app:showAsAction="always" />

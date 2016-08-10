@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @DynamoDBTable(tableName = "UserPosts")
-public class DBUserPost implements Comparable<DBUserPost>, Parcelable{
+public class DBUserPost implements Parcelable{
     private String nickname;
     private String postId;
     private String cognitoId;
@@ -27,11 +27,6 @@ public class DBUserPost implements Comparable<DBUserPost>, Parcelable{
     // Public Constructor
 
     public DBUserPost() {}
-
-    @Override
-    public int compareTo(@NonNull DBUserPost another) {
-        return timeInSeconds.compareTo(another.timeInSeconds);
-    }
 
     @DynamoDBHashKey(attributeName = "Nickname")
     public String getNickname() {

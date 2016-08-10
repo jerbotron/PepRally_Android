@@ -1,8 +1,10 @@
 package com.peprally.jeremy.peprally.network;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
@@ -13,6 +15,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.peprally.jeremy.peprally.utils.Constants;
+import com.peprally.jeremy.peprally.utils.NotificationEnum;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,7 +34,28 @@ public class HTTPRequestsHelper {
      ************************************** HTTP REQUEST METHODS ***********************************
      **********************************************************************************************/
     public void makePushNotificationRequest(Bundle bundle) {
-        new MakePushNotificationHTTPPostRequestAsyncTask().execute(bundle);
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(callingContext);
+        NotificationEnum notificationType = NotificationEnum.fromInt(bundle.getInt("NOTIFICATION_TYPE"));
+        boolean pushNotify = true;
+        if (notificationType != null) {
+            switch (notificationType) {
+                case DIRECT_FISTBUMP:
+                    pushNotify = sharedPref.getBoolean("pref_notifications_direct_fistbump", true);
+                    break;
+                case DIRECT_MESSAGE:
+                    pushNotify = sharedPref.getBoolean("pref_notifications_direct_message", true);
+                    break;
+                case POST_COMMENT:
+                    pushNotify = sharedPref.getBoolean("pref_notifications_new_comment", true);
+                    break;
+                case POST_FISTBUMP:
+                case COMMENT_FISTBUMP:
+                    pushNotify = sharedPref.getBoolean("pref_notifications_post_comment_fistbump", true);
+                    break;
+            }
+        }
+        if (pushNotify)
+            new MakePushNotificationHTTPPostRequestAsyncTask().execute(bundle);
     }
 
     /***********************************************************************************************

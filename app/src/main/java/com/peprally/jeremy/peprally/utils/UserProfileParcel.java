@@ -29,6 +29,8 @@ public class UserProfileParcel implements Parcelable {
     private String favoritePlayer;
     private String pepTalk;
     private String trashTalk;
+    private String dateJoined;
+    private String email;
     private Boolean hasNewMessage;
     private Boolean hasNewNotification;
     private Boolean isVarsityPlayer;
@@ -67,6 +69,8 @@ public class UserProfileParcel implements Parcelable {
         this.favoritePlayer = userProfile.getFavoritePlayer();
         this.pepTalk = userProfile.getPepTalk();
         this.trashTalk = userProfile.getTrashTalk();
+        this.dateJoined = userProfile.getDateJoined();
+        this.email = userProfile.getEmail();
         this.hasNewMessage = userProfile.getHasNewMessage();
         this.hasNewNotification = userProfile.getHasNewNotification();
         this.isVarsityPlayer = userProfile.getIsVarsityPlayer();
@@ -226,6 +230,8 @@ public class UserProfileParcel implements Parcelable {
         this.favoritePlayer = in.readString();
         this.pepTalk = in.readString();
         this.trashTalk = in.readString();
+        this.dateJoined = in.readString();
+        this.email = in.readString();
         this.hasNewMessage = in.readByte() != 0;
         this.hasNewNotification = in.readByte() != 0;
         this.isVarsityPlayer = in.readByte() != 0;
@@ -262,6 +268,8 @@ public class UserProfileParcel implements Parcelable {
         dest.writeString(favoritePlayer);
         dest.writeString(pepTalk);
         dest.writeString(trashTalk);
+        dest.writeString(dateJoined);
+        dest.writeString(email);
         dest.writeByte((byte) (hasNewMessage ? 1 : 0));
         dest.writeByte((byte) (hasNewNotification ? 1 : 0));
         dest.writeByte((byte) (isVarsityPlayer ? 1 : 0));
@@ -347,6 +355,12 @@ public class UserProfileParcel implements Parcelable {
     }
     public String getTrashTalk() {
         return trashTalk;
+    }
+    public String getDateJoined() {
+        return dateJoined;
+    }
+    public String getEmail() {
+        return email;
     }
     public Boolean hasNewMessage() {
         return hasNewMessage;
@@ -443,6 +457,12 @@ public class UserProfileParcel implements Parcelable {
     }
     public void setTrashTalk(String trashTalk) {
         this.trashTalk = trashTalk;
+    }
+    public void setDateJoined(String dateJoined) {
+        this.dateJoined = dateJoined;
+    }
+    public void setEmail(String email) {
+        this.email = email;
     }
     public void setHasNewMessage(Boolean hasNewMessage) {
         this.hasNewMessage = hasNewMessage;

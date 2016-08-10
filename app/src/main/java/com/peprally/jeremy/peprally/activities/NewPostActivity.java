@@ -71,7 +71,7 @@ public class NewPostActivity extends AppCompatActivity {
             }
         });
 
-        final Button newPostButton = (Button) findViewById(R.id.button_new_post);
+        final TextView newPostButton = (TextView) findViewById(R.id.id_text_view_button_new_post);
         assert newPostButton != null;
         newPostButton.setOnClickListener(new View.OnClickListener() {
             @Override

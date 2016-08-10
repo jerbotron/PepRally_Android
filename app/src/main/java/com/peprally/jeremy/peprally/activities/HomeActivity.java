@@ -1,9 +1,11 @@
 package com.peprally.jeremy.peprally.activities;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
@@ -161,6 +163,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         int id = item.getItemId();
         if (id == R.id.nav_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
+            intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
             startActivity(intent);
             overridePendingTransition(R.anim.right_in, R.anim.left_out);
         }
@@ -203,6 +206,11 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         super.onResume();
         Helpers.checkGooglePlayServicesAvailable(this);
         new UpdateUserNotificationAlertsAsyncTask().execute();
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        Log.d(TAG, "notification pref direct fistbump: " + sharedPref.getBoolean("pref_notifications_direct_fistbump", false));
+        Log.d(TAG, "notification pref post/comment fistbump: " + sharedPref.getBoolean("pref_notifications_post_comment_fistbump", false));
+        Log.d(TAG, "notification pref new comment: " + sharedPref.getBoolean("pref_notifications_new_comment", false));
+        Log.d(TAG, "notification pref direct message: " + sharedPref.getBoolean("pref_notifications_direct_message", false));
     }
 
     @Override

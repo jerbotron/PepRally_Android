@@ -14,7 +14,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -90,8 +89,8 @@ public class NewCommentActivity extends AppCompatActivity {
         final TextView mainPostNickname = (TextView) findViewById(R.id.id_text_view_comment_main_post_nickname);
         final TextView mainPostTextContent = (TextView) findViewById(R.id.id_text_view_comment_main_post_content);
         final EditText newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
-        final  TextView textViewCharCount = (TextView) findViewById(R.id.id_text_view_comment_char_count);
-        final TextView postCommentButton = (TextView) findViewById(R.id.id_text_view_post_new_comment_button);
+        final TextView textViewCharCount = (TextView) findViewById(R.id.id_text_view_comment_char_count);
+        final TextView postCommentButton = (TextView) findViewById(R.id.id_text_view_button_new_comment_post);
         progressCircleContainer = (RelativeLayout) findViewById(R.id.id_container_comments_progress_circle);
 
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
@@ -183,10 +182,10 @@ public class NewCommentActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_delete_post, menu);
+        getMenuInflater().inflate(R.menu.menu_delete, menu);
         // Hide delete post menu option if not own post
         if (!selfPost) {
-            menu.findItem(R.id.id_item_delete_post).setVisible(false);
+            menu.findItem(R.id.id_item_delete).setVisible(false);
         }
         return true;
     }
@@ -200,7 +199,7 @@ public class NewCommentActivity extends AppCompatActivity {
                 Helpers.hideSoftKeyboard(getApplicationContext(), newCommentText);
                 onBackPressed();
                 return true;
-            case R.id.id_item_delete_post:
+            case R.id.id_item_delete:
                 AlertDialog.Builder dialogBuilderConfirmDelete = new AlertDialog.Builder(this);
                 View dialogViewConfirmDelete = View.inflate(this, R.layout.dialog_confirm_delete, null);
                 dialogBuilderConfirmDelete.setView(dialogViewConfirmDelete);
@@ -217,7 +216,6 @@ public class NewCommentActivity extends AppCompatActivity {
                 });
                 dialogBuilderConfirmDelete.setNegativeButton("No", null);
                 dialogBuilderConfirmDelete.create().show();
-
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

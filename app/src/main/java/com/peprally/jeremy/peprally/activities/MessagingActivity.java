@@ -1,11 +1,16 @@
 package com.peprally.jeremy.peprally.activities;
 
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.database.DataSetObserver;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView;
@@ -121,10 +126,30 @@ public class MessagingActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_delete, menu);
+        return true;
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
                 onBackPressed();
+                return true;
+            case R.id.id_item_delete:
+                AlertDialog.Builder dialogBuilderConfirmDelete = new AlertDialog.Builder(this);
+                View dialogViewConfirmDelete = View.inflate(this, R.layout.dialog_confirm_delete, null);
+                dialogBuilderConfirmDelete.setView(dialogViewConfirmDelete);
+                dialogBuilderConfirmDelete.setTitle("Confirm Delete");
+                dialogBuilderConfirmDelete.setMessage("Are you sure you want to delete this conversation?");
+                dialogBuilderConfirmDelete.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        Log.d("MessagingActivity: ", "conversation deleted");
+                    }
+                });
+                dialogBuilderConfirmDelete.setNegativeButton("No", null);
+                dialogBuilderConfirmDelete.create().show();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -155,9 +180,9 @@ public class MessagingActivity extends AppCompatActivity {
         }
         else {
             Bundle bundle = new Bundle();
+            bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_MESSAGE.toInt());
             bundle.putString("RECEIVER_NICKNAME", receiverNickname);
             bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());
-            bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_MESSAGE.toInt());
             httpRequestsHelper.makePushNotificationRequest(bundle);
         }
 

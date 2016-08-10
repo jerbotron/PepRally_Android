@@ -107,20 +107,24 @@ public class DynamoDBHelper {
 
     // Database save methods
 
-    public void incrementUserSentFistbumpsCount(String userNickname) {
-        new IncrementUserSentFistbumpsCountAsyncTask().execute(userNickname);
+    public void updateUserEmailPreferences(String nickname, String email) {
+        new UpdateUserEmailAsyncTask().execute(nickname, email);
     }
 
-    public void decrementUserSentFistbumpsCount(String userNickname) {
-        new DecrementUserSentFistbumpsCountAsyncTask().execute(userNickname);
+    public void incrementUserSentFistbumpsCount(String nickname) {
+        new IncrementUserSentFistbumpsCountAsyncTask().execute(nickname);
     }
 
-    public void incrementUserReceivedFistbumpsCount(String userNickname) {
-        new IncrementUserReceivedFistbumpsCountAsyncTask().execute(userNickname);
+    public void decrementUserSentFistbumpsCount(String nickname) {
+        new DecrementUserSentFistbumpsCountAsyncTask().execute(nickname);
     }
 
-    public void decrementUserReceivedFistbumpsCount(String userNickname) {
-        new DecrementUserReceivedFistbumpsCountAsyncTask().execute(userNickname);
+    public void incrementUserReceivedFistbumpsCount(String nickname) {
+        new IncrementUserReceivedFistbumpsCountAsyncTask().execute(nickname);
+    }
+
+    public void decrementUserReceivedFistbumpsCount(String nickname) {
+        new DecrementUserReceivedFistbumpsCountAsyncTask().execute(nickname);
     }
 
     public void incrementPostCommentsCount(DBUserPost userPost) {
@@ -181,6 +185,22 @@ public class DynamoDBHelper {
         @Override
         protected Void doInBackground(Object... params) {
             mapper.save(params[0]);
+            return null;
+        }
+    }
+
+    // UserProfile Tasks
+
+    private class UpdateUserEmailAsyncTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... strings) {
+            String nickname = strings[0];
+            String email = strings[1];
+            DBUserProfile userProfile = loadDBUserProfile(nickname);
+            if (userProfile != null) {
+                userProfile.setEmail(email);
+                saveDBObject(userProfile);
+            }
             return null;
         }
     }
