@@ -349,16 +349,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         }
 
         @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-            View view = super.onCreateView(inflater, container, savedInstanceState);
-
-            if (view != null)
-                feedbackText = (EditText) view.findViewById(R.id.id_edit_text_feedback);
-
-            return view;
-        }
-
-        @Override
         public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
             super.onCreateOptionsMenu(menu, inflater);
             inflater.inflate(R.menu.menu_send, menu);
