@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally.utils;
+package com.peprally.jeremy.peprally.custom;
 
 import android.support.annotation.NonNull;
 

@@ -2,8 +2,9 @@
     <string name="label_app_name">PepRally</string>
     <string name="label_app_version">v1.0.0</string>
     <string name="label_app_name_version">PepRally v1.0.0</string>
+    <string name="label_app_full_version">Version 1.0.0 - UT BETA</string>
     <string name="label_app_location">Made in Austin, TX</string>
-    <string name="label_app_facebook_link">https://www.facebook.com/PepRally-1148236708571081/</string>
+    <string name="label_app_facebook_link">https://www.facebook.com/peprallyapp</string>
     <string name="label_app_instagram_link">http://instagram.com/peprallyapp</string>
     <string name="label_app_twitter_link">763241237243580416</string>
     <string name="activity_label_new_post">New Post</string>
@@ -98,7 +99,6 @@
     <string name="placeholder_edit_profile">EDIT PROFILE</string>
     <string name="placeholder_notifications">Notifications</string>
     <string name="placeholder_messages">Messages</string>
-    <string name="placeholder_app_version">Version 1.0 - UT BETA</string>
     <string name="placeholder_no_notifications">No new notifications.</string>
     <string name="placeholder_no_messages">No messages yet. Give someone a fistbump!</string>
     <string name="placeholder_nothing_trending">Make a post! :)</string>
@@ -132,6 +132,8 @@
     <string name="pref_support_faq">FAQ</string>
     <string name="pref_support_privacy_policy">Privacy Policy</string>
     <string name="pref_support_delete_account">Delete Account</string>
+    <string name="pref_delete_account_confirmation">Are you sure you want to delete your account?</string>
+    <string name="pref_delete_account_feedback_hint"><i>Tell us why you\'re leaving so we can get some closure? :\'(</i></string>
 
     <!-- Show us love Settings -->
     <string name="pref_show_love_feedback">Give us feedback or ask us a question!</string>
@@ -140,7 +142,7 @@
     <string name="pref_show_love_instagram">IG</string>
     <string name="pref_show_love_twitter">Twitter</string>
     <string name="pref_feedback">We want to hear your thoughts!</string>
-    <string name="pref_feedback_msg">Tell us your thoughts, comments or questions! We\'d love to know what things you like/dislike and how we can improve!</string>
+    <string name="pref_feedback_msg"><i>We\'d love to know what you like or dislike about PepRally and what we can improve on!</i></string>
 
 
 </resources>

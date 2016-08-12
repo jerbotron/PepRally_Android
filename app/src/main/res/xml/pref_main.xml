@@ -1,8 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory
         android:title="@string/pref_group_my_account"
-        android:textStyle="bold"
         android:key="pref_key_my_account_settings">
         <Preference
             android:key="pref_key_my_account_name"
@@ -35,17 +35,19 @@
         <Preference
             android:key="pref_key_support_privacy_policy"
             android:title="@string/pref_support_privacy_policy" />
-        <Preference
+        <com.peprally.jeremy.peprally.custom.DeleteAccountPreference
             android:key="pref_key_support_delete_account"
-            android:title="@string/pref_support_delete_account" />
+            android:title="@string/pref_support_delete_account"
+            android:positiveButtonText="DELETE"
+            android:dialogTitle="Delete Account?"/>
     </PreferenceCategory>
 
     <PreferenceCategory
         android:title="@string/pref_group_show_us_love"
         android:key="pref_key_show_us_love_settings">
-        <Preference
+        <com.peprally.jeremy.peprally.custom.FeedbackPreference
             android:key="pref_key_show_us_love_feedback"
-            android:title="@string/pref_show_love_feedback"/>
+            android:title="@string/pref_show_love_feedback" />
         <Preference
             android:key="pref_key_show_us_love_facebook"
             android:title="@string/pref_show_love_facebook"

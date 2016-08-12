@@ -21,7 +21,7 @@ import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.TeamsCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBSport;
 import com.peprally.jeremy.peprally.network.AWSCredentialProvider;
-import com.peprally.jeremy.peprally.utils.Team;
+import com.peprally.jeremy.peprally.custom.Team;
 
 import java.util.ArrayList;
 import java.util.Collections;

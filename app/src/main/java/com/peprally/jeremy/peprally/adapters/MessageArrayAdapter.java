@@ -103,7 +103,7 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
         protected Void doInBackground(ChatMessage... chatMessages) {
             ChatMessage chatMessage = chatMessages[0];
             DBUserConversation userConversation = dynamoDBHelper.loadDBUserConversation(chatMessage.getConversationID());
-            userConversation.setTimeStampLatest(Helpers.getTimestampMiliseconds());
+            userConversation.setTimeStampLatest(Helpers.getTimestampSeconds());
             userConversation.addConversationChatMessage(chatMessage);
             dynamoDBHelper.saveDBObject(userConversation);
             return null;

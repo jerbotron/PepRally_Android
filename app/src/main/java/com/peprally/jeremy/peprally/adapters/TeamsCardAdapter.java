@@ -9,7 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.utils.Team;
+import com.peprally.jeremy.peprally.custom.Team;
 
 import java.util.List;
 

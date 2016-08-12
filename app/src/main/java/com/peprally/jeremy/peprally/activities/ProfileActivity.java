@@ -18,7 +18,6 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.util.TypedValue;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
@@ -32,15 +31,16 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
+import com.peprally.jeremy.peprally.enums.IntentRequestEnum;
 import com.peprally.jeremy.peprally.fragments.ProfileEditFragment;
 import com.peprally.jeremy.peprally.fragments.ProfilePostsFragment;
 import com.peprally.jeremy.peprally.fragments.ProfileInfoFragment;
-import com.peprally.jeremy.peprally.utils.ActivityEnum;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.NotificationEnum;
-import com.peprally.jeremy.peprally.utils.ProfileViewPager;
+import com.peprally.jeremy.peprally.enums.NotificationEnum;
+import com.peprally.jeremy.peprally.custom.ProfileViewPager;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 import com.squareup.picasso.Picasso;
 
@@ -144,9 +144,8 @@ public class ProfileActivity extends AppCompatActivity {
                 actionFAB.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-//                        launchNewFistbumpMatchDialog();
                         Intent intent = new Intent(getApplicationContext(), NewPostActivity.class);
-                        startActivityForResult(intent, Helpers.NEW_POST_REQUEST_CODE);
+                        startActivityForResult(intent, IntentRequestEnum.NEW_POST_REQUEST.toInt());
                         overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
                     }
                 });
@@ -169,18 +168,18 @@ public class ProfileActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
-            switch (requestCode) {
-                case Helpers.FAV_TEAM_REQUEST_CODE:
+            switch (IntentRequestEnum.fromInt(requestCode)) {
+                case FAV_TEAM_REQUEST:
                     String favoriteTeam = data.getStringExtra("FAVORITE_TEAM");
                     userProfileParcel.setFavoriteTeam(favoriteTeam);
                     editFragment.setFavTeam(favoriteTeam);
                     break;
-                case Helpers.FAV_PLAYER_REQUEST_CODE:
+                case FAV_PLAYER_REQUEST:
                     String favoritePlayer = data.getStringExtra("FAVORITE_PLAYER");
                     userProfileParcel.setFavoritePlayer(favoritePlayer);
                     editFragment.setFavPlayer(favoritePlayer);
                     break;
-                case Helpers.NEW_POST_REQUEST_CODE:
+                case NEW_POST_REQUEST:
                     postsFragment.addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
                     break;
             }
@@ -201,7 +200,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     public void editFavoriteTeam() {
         Intent intent = new Intent(this, FavoriteTeamActivity.class);
-        startActivityForResult(intent, Helpers.FAV_TEAM_REQUEST_CODE);
+        startActivityForResult(intent, IntentRequestEnum.FAV_TEAM_REQUEST.toInt());
         overridePendingTransition(R.anim.right_in, R.anim.left_out);
     }
 
@@ -214,7 +213,7 @@ public class ProfileActivity extends AppCompatActivity {
             Intent intent = new Intent(this, FavoritePlayerActivity.class);
             intent.putExtra("CALLING_ACTIVITY", "ProfileActivity");
             intent.putExtra("TEAM", favTeam);
-            startActivityForResult(intent, Helpers.FAV_PLAYER_REQUEST_CODE);
+            startActivityForResult(intent, IntentRequestEnum.FAV_PLAYER_REQUEST.toInt());
             overridePendingTransition(R.anim.right_in, R.anim.left_out);
         }
     }

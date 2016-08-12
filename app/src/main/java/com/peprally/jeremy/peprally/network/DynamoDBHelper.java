@@ -12,6 +12,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
 import com.amazonaws.services.dynamodbv2.model.Condition;
+import com.peprally.jeremy.peprally.db_models.DBUserFeedback;
 import com.peprally.jeremy.peprally.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.messaging.Conversation;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
@@ -22,7 +23,7 @@ import com.peprally.jeremy.peprally.db_models.DBUserNotification;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.NotificationEnum;
+import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.ArrayList;
@@ -139,6 +140,10 @@ public class DynamoDBHelper {
         new MakeNewDBUserNotificationAsyncTask().execute(bundle);
     }
 
+    public void makeNewFeedback(Bundle bundle) {
+        new MakeNewDBUserFeedbackAsyncTask().execute(bundle);
+    }
+
     public void deleteCommentFistbumpNotification(NotificationEnum notificationEnum, String commentID, String senderNickname) {
         Bundle bundle = new Bundle();
         bundle.putSerializable("NOTIFICATION_ENUM", notificationEnum);
@@ -169,6 +174,13 @@ public class DynamoDBHelper {
     }
 
     // Database delete methods
+
+    public void deleteUserAccount(UserProfileParcel userProfileParcel) {
+        new DeleteDBUserProfileAsyncTask().execute(userProfileParcel);
+        new DeleteDBUserNicknameAsyncTask().execute(userProfileParcel.getCurUserNickname());
+        if (userProfileParcel.getPostsCount() > 0)
+            new BatchDeleteDBUserPostsAsyncTask().execute(userProfileParcel.getCurUserNickname());
+    }
 
     public void batchDeleteCommentNotifications(DBUserComment userComment) {
         new BatchDeleteCommentDBUserNotificationsAsyncTask().execute(userComment);
@@ -201,6 +213,27 @@ public class DynamoDBHelper {
                 userProfile.setEmail(email);
                 saveDBObject(userProfile);
             }
+            return null;
+        }
+    }
+
+    private class DeleteDBUserProfileAsyncTask extends AsyncTask<UserProfileParcel, Void, Void> {
+        @Override
+        protected Void doInBackground(UserProfileParcel... userProfileParcels) {
+            UserProfileParcel userProfileParcel = userProfileParcels[0];
+            DBUserProfile userProfile = loadDBUserProfile(userProfileParcel.getCurUserNickname());
+            mapper.delete(userProfile);
+            return null;
+        }
+    }
+
+    private class DeleteDBUserNicknameAsyncTask extends AsyncTask<String,  Void, Void> {
+        @Override
+        protected Void doInBackground(String... strings) {
+            String username = strings[0];
+            DBUserNickname dbUsername = mapper.load(DBUserNickname.class, username);
+            if (dbUsername != null)
+                mapper.delete(dbUsername);
             return null;
         }
     }
@@ -270,6 +303,27 @@ public class DynamoDBHelper {
         }
     }
 
+    private class BatchDeleteDBUserPostsAsyncTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... strings) {
+            String username = strings[0];
+            DBUserPost userPost = new DBUserPost();
+            userPost.setNickname(username);
+            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression<DBUserPost>()
+                    .withIndexName("Nickname-index")
+                    .withHashKeyValues(userPost)
+                    .withConsistentRead(false);
+
+            PaginatedQueryList<DBUserPost> queryResults = mapper.query(DBUserPost.class, queryExpression);
+            if (queryResults != null && queryResults.size() > 0) {
+                for (DBUserPost post : queryResults) {
+                    mapper.delete(post);
+                }
+            }
+            return null;
+        }
+    }
+
     // Notification Tasks
     private class MakeNewDBUserNotificationAsyncTask extends AsyncTask<Bundle, Void, Void> {
         @Override
@@ -278,7 +332,7 @@ public class DynamoDBHelper {
             UserProfileParcel userProfileParcel = bundle.getParcelable("USER_PROFILE_PARCEL");
             DBUserNotification userNotification = new DBUserNotification();
             // getting time stamp
-            userNotification.setTimeInSeconds(Helpers.getTimestampMiliseconds());
+            userNotification.setTimeInSeconds(Helpers.getTimestampSeconds());
             userNotification.setTimeStamp(Helpers.getTimestampString());
             // setting up new user notification
             userNotification.setNickname(bundle.getString("RECEIVER_NICKNAME")); // who the notification is going to
@@ -406,7 +460,7 @@ public class DynamoDBHelper {
                         .withConsistentRead(false);
 
                 PaginatedQueryList<DBUserNotification> queryResults = mapper.query(DBUserNotification.class, queryExpression);
-                if (queryResults != null) {
+                if (queryResults != null && queryResults.size() > 0) {
                     for (DBUserNotification notification : queryResults) {
                         mapper.delete(notification);
                     }
@@ -449,7 +503,7 @@ public class DynamoDBHelper {
                 DBUserConversation newConversation = new DBUserConversation();
                 String conversation_id = fistbumpedUserProfile1.getFacebookId() + "_" + fistbumpedUserProfile2.getFacebookId();
                 newConversation.setConversationID(conversation_id);
-                Long timeInSeconds = Helpers.getTimestampMiliseconds();
+                Long timeInSeconds = Helpers.getTimestampSeconds();
                 newConversation.setTimeStampCreated(timeInSeconds);
                 newConversation.setTimeStampLatest(timeInSeconds);
                 Map<String, String> nicknameFacebookIDMap = new HashMap<>();
@@ -464,6 +518,19 @@ public class DynamoDBHelper {
                 mapper.save(fistbumpedUserProfile1);
                 mapper.save(fistbumpedUserProfile2);
             }
+            return null;
+        }
+    }
+
+    private class MakeNewDBUserFeedbackAsyncTask extends AsyncTask<Bundle, Void, Void> {
+        @Override
+        protected Void doInBackground(Bundle... bundles) {
+            Bundle bundle = bundles[0];
+            DBUserFeedback userFeedback = new DBUserFeedback(bundle.getString("USERNAME"), bundle.getLong("TIMESTAMP"));
+            userFeedback.setFeedbackType(bundle.getInt("FEEDBACK_TYPE"));
+            userFeedback.setFeedback(bundle.getString("FEEDBACK"));
+            userFeedback.setPlatform("Android");
+            mapper.save(userFeedback);
             return null;
         }
     }

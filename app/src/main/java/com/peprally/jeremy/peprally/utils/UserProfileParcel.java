@@ -7,6 +7,7 @@ import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
 
 public class UserProfileParcel implements Parcelable {
     // Activity Data

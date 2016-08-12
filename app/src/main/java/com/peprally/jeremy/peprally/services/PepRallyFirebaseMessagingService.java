@@ -33,7 +33,7 @@ import com.google.firebase.messaging.RemoteMessage;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.LoginActivity;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.NotificationEnum;
+import com.peprally.jeremy.peprally.enums.NotificationEnum;
 
 import java.util.Map;
 

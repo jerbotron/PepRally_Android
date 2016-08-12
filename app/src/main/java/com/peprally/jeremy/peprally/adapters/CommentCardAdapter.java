@@ -23,11 +23,11 @@ import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
-import com.peprally.jeremy.peprally.utils.ActivityEnum;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.NotificationEnum;
+import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.ArrayList;
@@ -260,7 +260,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
      **********************************************************************************************/
     public void addComment(String commentText, Bundle bundle) {
         DBUserComment newComment = new DBUserComment();
-        Long timeInSeconds = Helpers.getTimestampMiliseconds();
+        Long timeInSeconds = Helpers.getTimestampSeconds();
         Long postTimeInSeconds = mainPost.getTimeInSeconds();
         newComment.setPostID(bundle.getString("POST_NICKNAME") + "_" + postTimeInSeconds.toString());
         newComment.setCommentId(bundle.getString("CUR_USER_NICKNAME") + "_" + timeInSeconds.toString());

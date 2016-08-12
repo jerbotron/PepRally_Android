@@ -64,18 +64,19 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingC
             return credentialsProvider;
         } catch (AmazonClientException err) {
             err.printStackTrace();
-            doInBackground();
             return null;
         }
     }
 
     @Override
     protected void onPostExecute(final CognitoCachingCredentialsProvider credentialsProvider) {
-        if (credentialsProvider != null) {
+        if (credentialsProvider == null) {
+            new AWSCredentialProvider(callingContext, loginTaskCallback).execute();
+        } else {
             Log.d(TAG, "credentials verified");
-            Log.d(TAG, "credentials: " + credentialsProvider.getCredentials().toString());
-            Log.d(TAG, "identity pool id: " + credentialsProvider.getIdentityPoolId());
-            Log.d(TAG, "identity provider: " + credentialsProvider.getIdentityProvider());
+//            Log.d(TAG, "credentials: " + credentialsProvider.getCredentials().toString());
+//            Log.d(TAG, "identity pool id: " + credentialsProvider.getIdentityPoolId());
+//            Log.d(TAG, "identity provider: " + credentialsProvider.getIdentityProvider());
             CognitoSyncManager syncClient = new CognitoSyncManager(
                     callingContext,
                     Regions.US_EAST_1,

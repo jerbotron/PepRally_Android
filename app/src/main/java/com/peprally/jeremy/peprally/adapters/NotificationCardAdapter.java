@@ -21,9 +21,9 @@ import com.peprally.jeremy.peprally.activities.NewCommentActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserNotification;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
-import com.peprally.jeremy.peprally.utils.ActivityEnum;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.NotificationEnum;
+import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.List;

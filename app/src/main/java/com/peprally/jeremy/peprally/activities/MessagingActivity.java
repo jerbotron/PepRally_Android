@@ -1,10 +1,7 @@
 package com.peprally.jeremy.peprally.activities;
 
 import android.content.DialogInterface;
-import android.content.SharedPreferences;
 import android.database.DataSetObserver;
-import android.os.AsyncTask;
-import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -21,13 +18,12 @@ import android.widget.ListView;
 import com.github.nkzawa.emitter.Emitter;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.MessageArrayAdapter;
-import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.messaging.Conversation;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.network.SocketIO;
-import com.peprally.jeremy.peprally.utils.NotificationEnum;
+import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import org.json.JSONException;

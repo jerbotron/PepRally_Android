@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally.utils;
+package com.peprally.jeremy.peprally.enums;
 
 public enum NotificationEnum {
     DIRECT_FISTBUMP(0),

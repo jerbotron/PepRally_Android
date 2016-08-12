@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally.utils;
+package com.peprally.jeremy.peprally.custom;
 
 import android.content.Context;
 import android.support.v4.view.ViewPager;

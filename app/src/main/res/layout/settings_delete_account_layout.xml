@@ -1,24 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:paddingTop="@dimen/activity_horizontal_margin"
     android:paddingLeft="24dp"
     android:paddingStart="24dp"
     android:paddingRight="24dp"
     android:paddingEnd="24dp"
     android:paddingBottom="@dimen/activity_horizontal_margin">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/pref_delete_account_confirmation" />
+
     <EditText
         android:id="@+id/id_edit_text_feedback"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/activity_horizontal_margin"
-        android:hint="@string/pref_feedback_msg"
+        android:hint="@string/pref_delete_account_feedback_hint"
         android:textSize="14sp"
         android:padding="8dp"
         android:gravity="top"
-        android:minLines="5"
-        android:maxLines="8"
+        android:minLines="2"
+        android:maxLines="5"
         android:background="@drawable/edit_text_feedback"
         android:inputType="textMultiLine">
     </EditText>

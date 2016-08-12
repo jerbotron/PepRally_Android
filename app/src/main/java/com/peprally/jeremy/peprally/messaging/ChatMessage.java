@@ -24,7 +24,7 @@ public class ChatMessage implements Comparable<ChatMessage>{
         this.nickname = nickname;
         this.facebookID = facebookID;
         this.messageContent = messageContent;
-        this.timestamp = Helpers.getTimestampMiliseconds();
+        this.timestamp = Helpers.getTimestampSeconds();
     }
 
     // JSON Constructor

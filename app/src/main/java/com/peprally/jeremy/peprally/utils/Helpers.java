@@ -35,11 +35,6 @@ public class Helpers {
     public final static Integer INTEGER_DEFAULT_COUNT = 0;
     public final static Integer INTEGER_INVALID = -1;
 
-    public final static int FAV_TEAM_REQUEST_CODE = 0;
-    public final static int FAV_PLAYER_REQUEST_CODE = 1;
-    public final static int NEW_POST_REQUEST_CODE = 2;
-    public final static int POST_COMMENT_REQUEST_CODE = 3;
-
     // UI Helpers
     public static boolean isKeyboardShown(View rootView) {
         // 128dp = 32dp * 4, minimum button height 32dp and generic 4 rows soft keyboard
@@ -104,7 +99,7 @@ public class Helpers {
         }
     }
 
-    public static Long getTimestampMiliseconds() {
+    public static Long getTimestampSeconds() {
         return System.currentTimeMillis() / 1000;
     }
 
@@ -115,7 +110,7 @@ public class Helpers {
     }
 
     public static String getTimetampString(Long timestampInSeconds) {
-        long tsLongNow = getTimestampMiliseconds();
+        long tsLongNow = getTimestampSeconds();
         long timeInSeconds = tsLongNow - timestampInSeconds;
         String timestampString;
         if (timeInSeconds < 60) {
@@ -137,7 +132,7 @@ public class Helpers {
     }
 
     public static int generateRandomInteger() {
-        Random random = new Random(getTimestampMiliseconds());
+        Random random = new Random(getTimestampSeconds());
 
         return random.nextInt(1000000000);
     }

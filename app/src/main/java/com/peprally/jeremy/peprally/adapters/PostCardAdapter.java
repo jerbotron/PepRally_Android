@@ -20,11 +20,11 @@ import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
-import com.peprally.jeremy.peprally.utils.ActivityEnum;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.NotificationEnum;
+import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.ArrayList;
@@ -270,7 +270,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
     public void addPost(String newPostText, Bundle bundle) {
         DBUserPost newPost = new DBUserPost();
         newPost.setNickname(bundle.getString("NICKNAME"));
-        Long timeInSeconds = Helpers.getTimestampMiliseconds();
+        Long timeInSeconds = Helpers.getTimestampSeconds();
         newPost.setTimeInSeconds(timeInSeconds);
         newPost.setPostId(bundle.getString("NICKNAME") + "_" + timeInSeconds.toString());
         newPost.setCognitoId(dbHelper.getIdentityID());

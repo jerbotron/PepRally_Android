@@ -43,7 +43,7 @@ import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserNickname;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.network.AWSCredentialProvider;
-import com.peprally.jeremy.peprally.utils.ActivityEnum;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
@@ -426,7 +426,7 @@ public class LoginActivity extends AppCompatActivity {
             List<DBUserProfile> results = mapper.query(DBUserProfile.class, queryExpression);
             if (results != null && results.size() == 1) {
                 userProfile = results.get(0);
-                if (!userProfile.getFCMInstanceId().equals(FCMInstanceId)) {
+                if (userProfile.getFCMInstanceId() == null || !userProfile.getFCMInstanceId().equals(FCMInstanceId)) {
                     userProfile.setFCMInstanceId(FCMInstanceId);
                     dbHelper.saveDBObject(userProfile);
                 }

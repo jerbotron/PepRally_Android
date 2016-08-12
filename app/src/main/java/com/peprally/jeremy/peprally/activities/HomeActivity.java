@@ -21,6 +21,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.facebook.AccessToken;
@@ -32,9 +33,10 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
+import com.peprally.jeremy.peprally.enums.IntentRequestEnum;
 import com.peprally.jeremy.peprally.fragments.BrowseTeamsFragment;
 import com.peprally.jeremy.peprally.fragments.TrendingFragment;
-import com.peprally.jeremy.peprally.utils.ActivityEnum;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
@@ -164,15 +166,11 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         if (id == R.id.nav_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
-            startActivity(intent);
+            startActivityForResult(intent, IntentRequestEnum.SETTINGS_REQUEST.toInt());
             overridePendingTransition(R.anim.right_in, R.anim.left_out);
         }
         else if (id == R.id.nav_logout) {
-            finish();
-            LoginManager.getInstance().logOut();
-            Intent intent = new Intent(this, LoginActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(intent);
+            logOutAccount();
         }
         drawer.closeDrawer(GravityCompat.START);
         return true;
@@ -193,9 +191,15 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
-            switch (requestCode) {
-                case Helpers.NEW_POST_REQUEST_CODE:
+            switch (IntentRequestEnum.fromInt(requestCode)) {
+                case NEW_POST_REQUEST:
                     trendingFragment.addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
+                    break;
+                case SETTINGS_REQUEST:
+                    if (data.getBooleanExtra("DELETE_PROFILE", false)) {
+                        logOutAccount();
+                        Toast.makeText(this, "Account deleted!", Toast.LENGTH_LONG).show();
+                    }
                     break;
             }
         }
@@ -230,6 +234,14 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
 
+    public void logOutAccount() {
+        finish();
+        LoginManager.getInstance().logOut();
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+    }
+
     public void launchBrowsePlayerActivity(String team) {
         Intent intent = new Intent(HomeActivity.this, FavoritePlayerActivity.class);
         intent.putExtra("CALLING_ACTIVITY", "HomeActivity");
@@ -241,7 +253,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     public void launchNewPostActivity() {
         Intent intent = new Intent(HomeActivity.this, NewPostActivity.class);
-        startActivityForResult(intent, Helpers.NEW_POST_REQUEST_CODE);
+        startActivityForResult(intent, IntentRequestEnum.NEW_POST_REQUEST.toInt());
         overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
     }
 

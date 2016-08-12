@@ -29,6 +29,7 @@ public class DBUserPost implements Parcelable{
     public DBUserPost() {}
 
     @DynamoDBHashKey(attributeName = "Nickname")
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "Nickname-index", attributeName = "Nickname")
     public String getNickname() {
         return nickname;
     }

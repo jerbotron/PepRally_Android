@@ -2,23 +2,16 @@ package com.peprally.jeremy.peprally.activities;
 
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
-import android.preference.PreferenceActivity;
 import android.support.v7.app.ActionBar;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.peprally.jeremy.peprally.R;
@@ -38,15 +31,13 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     // Fragments
     private static MainPreferencesFragment mainPreferencesFragment;
     private static NotificationPreferenceFragment notificationPreferenceFragment;
-    private static FeedbackPreferenceFragment feedbackPreferenceFragment;
 
     enum PreferenceFragmentEnum {
         MAIN,
         NOTIFICATION,
         FAQ,
         PRIVACY_POLICY,
-        DELETE_ACCOUNT,
-        FEEDBACK
+        DELETE_ACCOUNT
     }
 
     private static PreferenceFragmentEnum curFragmentEnum;
@@ -107,7 +98,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
         mainPreferencesFragment = new MainPreferencesFragment();
         notificationPreferenceFragment = new NotificationPreferenceFragment();
-        feedbackPreferenceFragment = new FeedbackPreferenceFragment();
 
         curFragmentEnum = PreferenceFragmentEnum.MAIN;
         getFragmentManager().beginTransaction()
@@ -145,12 +135,20 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 || NotificationPreferenceFragment.class.getName().equals(fragmentName);
     }
 
-    private UserProfileParcel getUserProfileParcel() {
+    public UserProfileParcel getUserProfileParcel() {
         return userProfileParcel;
     }
 
     public void makeToastNotification(String text) {
         Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
+    }
+
+    public void deleteUserAccount() {
+        dynamoDBHelper.deleteUserAccount(userProfileParcel);
+        Intent intent = new Intent();
+        intent.putExtra("DELETE_PROFILE", true);
+        setResult(Activity.RESULT_OK, intent);
+        finish();
     }
 
     /**
@@ -197,21 +195,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             // Support Preferences
 
             // Support Us Preferences
-            Preference feedbackPref = findPreference("pref_key_show_us_love_feedback");
             Preference facebookPref = findPreference("pref_key_show_us_love_facebook");
             Preference instaPref = findPreference("pref_key_show_us_love_instagram");
             Preference twitterPref = findPreference("pref_key_show_us_love_twitter");
-
-            feedbackPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-                @Override
-                public boolean onPreferenceClick(Preference preference) {
-                    getFragmentManager().beginTransaction()
-                            .setCustomAnimations(R.animator.right_in, R.animator.left_out)
-                            .replace(android.R.id.content, feedbackPreferenceFragment)
-                            .commit();
-                    return true;
-                }
-            });
 
             facebookPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
@@ -325,62 +311,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         public void onResume() {
             super.onResume();
             curFragmentEnum = PreferenceFragmentEnum.PRIVACY_POLICY;
-        }
-    }
-
-    /**
-     * This fragment shows the feedback page
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public static class FeedbackPreferenceFragment extends PreferenceFragment {
-
-        // UI variables
-        EditText feedbackText;
-
-        // General variables
-        UserProfileParcel userProfileParcel;
-
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            addPreferencesFromResource(R.xml.pref_feedback);
-            setHasOptionsMenu(true);
-            userProfileParcel = ((SettingsActivity) getActivity()).getUserProfileParcel();
-        }
-
-        @Override
-        public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-            super.onCreateOptionsMenu(menu, inflater);
-            inflater.inflate(R.menu.menu_send, menu);
-        }
-
-        @Override
-        public boolean onOptionsItemSelected(MenuItem item) {
-            switch (item.getItemId()) {
-                case android.R.id.home:
-                    getFragmentManager().beginTransaction()
-                            .setCustomAnimations(R.animator.left_in, R.animator.right_out)
-                            .replace(android.R.id.content, mainPreferencesFragment)
-                            .commit();
-                    return true;
-                case R.id.id_item_send:
-                    if (feedbackText != null) {
-                        Log.d(TAG, feedbackText.getText().toString().trim());
-                    }
-                    return true;
-                default:
-                    return super.onOptionsItemSelected(item);
-            }
-        }
-
-        @Override
-        public void onResume() {
-            super.onResume();
-            curFragmentEnum = PreferenceFragmentEnum.FEEDBACK;
-        }
-
-        private void sendFeedback() {
-
         }
     }
 }
