@@ -143,8 +143,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         Toast.makeText(getApplicationContext(), text, Toast.LENGTH_LONG).show();
     }
 
+    // just goes back to home activity which then calls the actual delete profile function
     public void deleteUserAccount() {
-        dynamoDBHelper.deleteUserAccount(userProfileParcel);
         Intent intent = new Intent();
         intent.putExtra("DELETE_PROFILE", true);
         setResult(Activity.RESULT_OK, intent);

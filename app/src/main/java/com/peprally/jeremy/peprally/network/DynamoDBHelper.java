@@ -3,6 +3,7 @@ package com.peprally.jeremy.peprally.network;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.widget.EditText;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
@@ -12,6 +13,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
 import com.amazonaws.services.dynamodbv2.model.Condition;
+import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.db_models.DBUserFeedback;
 import com.peprally.jeremy.peprally.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.messaging.Conversation;
@@ -59,6 +61,11 @@ public class DynamoDBHelper {
 
     public DynamoDBMapper getMapper() {
         return mapper;
+    }
+
+    // For AsyncTasks that need to have a callback function back in the activity once it finishes
+    public interface AsyncTaskCallback {
+        void onTaskDone();
     }
 
     /***********************************************************************************************
@@ -175,11 +182,14 @@ public class DynamoDBHelper {
 
     // Database delete methods
 
-    public void deleteUserAccount(UserProfileParcel userProfileParcel) {
+    public void deleteUserPost(DBUserPost userPost, AsyncTaskCallback taskCallback) {
+        new DeleteDBUserPostAsyncTask(taskCallback).execute(userPost);
+    }
+
+    public void deleteUserAccount(UserProfileParcel userProfileParcel, AsyncTaskCallback taskCallback) {
         new DeleteDBUserProfileAsyncTask().execute(userProfileParcel);
         new DeleteDBUserNicknameAsyncTask().execute(userProfileParcel.getCurUserNickname());
-        if (userProfileParcel.getPostsCount() > 0)
-            new BatchDeleteDBUserPostsAsyncTask().execute(userProfileParcel.getCurUserNickname());
+        new BatchDeleteDBUserPostsAsyncTask(taskCallback).execute(userProfileParcel);
     }
 
     public void batchDeleteCommentNotifications(DBUserComment userComment) {
@@ -221,8 +231,32 @@ public class DynamoDBHelper {
         @Override
         protected Void doInBackground(UserProfileParcel... userProfileParcels) {
             UserProfileParcel userProfileParcel = userProfileParcels[0];
+            // First delete user profile and username
             DBUserProfile userProfile = loadDBUserProfile(userProfileParcel.getCurUserNickname());
+            DBUserNickname userNickname = loadDBNickname(userProfileParcel.getCurUserNickname());
+            mapper.delete(userNickname);
             mapper.delete(userProfile);
+
+            // delete all posts
+            if (userProfileParcel.getPostsCount() != null && userProfileParcel.getPostsCount() > 0) {
+                DBUserPost userPost = new DBUserPost();
+                userPost.setNickname(userProfileParcel.getCurUserNickname());
+                DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression<DBUserPost>()
+                        .withIndexName("Nickname-index")
+                        .withHashKeyValues(userPost)
+                        .withConsistentRead(false);
+
+                PaginatedQueryList<DBUserPost> queryResults = mapper.query(DBUserPost.class, queryExpression);
+                if (queryResults != null && queryResults.size() > 0) {
+                    for (DBUserPost post : queryResults) {
+                        mapper.delete(post);
+                    }
+                }
+            }
+
+            // delete all comments
+
+            // delete all notification
             return null;
         }
     }
@@ -303,7 +337,79 @@ public class DynamoDBHelper {
         }
     }
 
-    private class BatchDeleteDBUserPostsAsyncTask extends AsyncTask<String, Void, Void> {
+    private class DeleteDBUserPostAsyncTask extends AsyncTask<DBUserPost, Void, Void> {
+
+        private AsyncTaskCallback taskCallback;
+
+        private DeleteDBUserPostAsyncTask(AsyncTaskCallback taskCallback) {
+            this.taskCallback = taskCallback;
+        }
+
+        @Override
+        protected Void doInBackground(DBUserPost... dbUserPosts) {
+            DBUserPost userPost = dbUserPosts[0];
+
+            if (userPost != null && userPost.getCommentsCount() > 0) {
+                // query for all the comments under this post
+                DBUserComment userComment = new DBUserComment();
+                userComment.setPostID(userPost.getPostId());
+                DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                        .withHashKeyValues(userComment)
+                        .withConsistentRead(true);
+                List<DBUserComment> results = mapper.query(DBUserComment.class, queryExpression);
+
+                // delete the comments under the post
+                for (DBUserComment comment : results) {
+                    mapper.delete(comment);
+                }
+            }
+            mapper.delete(userPost);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            taskCallback.onTaskDone();
+        }
+    }
+
+    private class BatchDeleteDBUserPostsAsyncTask extends AsyncTask<UserProfileParcel, Void, Void> {
+
+        private AsyncTaskCallback taskCallback;
+
+        private BatchDeleteDBUserPostsAsyncTask(AsyncTaskCallback taskCallback) {
+            this.taskCallback = taskCallback;
+        }
+
+        @Override
+        protected Void doInBackground(UserProfileParcel... userProfileParcels) {
+            UserProfileParcel userProfileParcel = userProfileParcels[0];
+            if (userProfileParcel.getPostsCount() != null && userProfileParcel.getPostsCount() > 0) {
+                String username = userProfileParcel.getCurUserNickname();
+                DBUserPost userPost = new DBUserPost();
+                userPost.setNickname(username);
+                DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression<DBUserPost>()
+                        .withIndexName("Nickname-index")
+                        .withHashKeyValues(userPost)
+                        .withConsistentRead(false);
+
+                PaginatedQueryList<DBUserPost> queryResults = mapper.query(DBUserPost.class, queryExpression);
+                if (queryResults != null && queryResults.size() > 0) {
+                    for (DBUserPost post : queryResults) {
+                        mapper.delete(post);
+                    }
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            taskCallback.onTaskDone();
+        }
+    }
+
+    private class BatchDeleteDBUserCommentsAsyncTask extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... strings) {
             String username = strings[0];

@@ -30,7 +30,6 @@ import com.peprally.jeremy.peprally.adapters.CommentCardAdapter;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
-import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
@@ -38,12 +37,10 @@ import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-public class NewCommentActivity extends AppCompatActivity {
+public class NewCommentActivity extends AppCompatActivity{
 
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
@@ -55,7 +52,7 @@ public class NewCommentActivity extends AppCompatActivity {
     private SwipeRefreshLayout postCommentsSwipeRefreshContainer;
 
     // AWS/HTTP Variables
-    private DynamoDBHelper dbHelper;
+    private DynamoDBHelper dynamoDBHelper;
     private HTTPRequestsHelper httpRequestsHelper;
 
     // General Variables
@@ -74,7 +71,7 @@ public class NewCommentActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_new_post_comment);
 
-        dbHelper = new DynamoDBHelper(this);
+        dynamoDBHelper = new DynamoDBHelper(this);
         httpRequestsHelper = new HTTPRequestsHelper(this);
 
         // Set up toolbar buttons
@@ -209,9 +206,14 @@ public class NewCommentActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int whichButton) {
                         toggleDeletingPostLoadingDialog(true);
                         // delete all notifications related to this post
-                        dbHelper.batchDeletePostNotifications(mainPost);
-                        // handle post deletion sequentially starting with updating post fistbumps
-                        new UpdateFistbumpsCountAfterPostDeleteDBTask().execute(mainPost);
+                        dynamoDBHelper.batchDeletePostNotifications(mainPost);
+                        // delete user post and all post comments
+                        dynamoDBHelper.deleteUserPost(mainPost, new DynamoDBHelper.AsyncTaskCallback() {
+                            @Override
+                            public void onTaskDone() {
+                                onPostDeletePostEventHandler();
+                            }
+                        });
                     }
                 });
                 dialogBuilderConfirmDelete.setNegativeButton("No", null);
@@ -274,6 +276,17 @@ public class NewCommentActivity extends AppCompatActivity {
         }
         commentCardAdapter = new CommentCardAdapter(this, comments, userProfileParcel, mainPost);
         recyclerView.setAdapter(commentCardAdapter);
+    }
+
+    public void onPostDeletePostEventHandler() {
+        // dismiss the progress dialog
+        toggleDeletingPostLoadingDialog(false);
+
+        // Hide soft keyboard if keyboard is up
+        EditText newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
+        Helpers.hideSoftKeyboard(getApplicationContext(), newCommentText);
+        finish();
+        overridePendingTransition(R.anim.left_in, R.anim.right_out);
     }
 
     /***********************************************************************************************
@@ -355,11 +368,11 @@ public class NewCommentActivity extends AppCompatActivity {
                         // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
                         if (!userPost.getNickname().equals(userProfileParcel.getCurUserNickname())) {
                             // update the received fistbumps count of the main post user
-                            dbHelper.decrementUserReceivedFistbumpsCount(userPost.getNickname());
+                            dynamoDBHelper.decrementUserReceivedFistbumpsCount(userPost.getNickname());
                             // update the sent fistbumps count of the current user
-                            dbHelper.decrementUserSentFistbumpsCount(userProfileParcel.getCurUserNickname());
+                            dynamoDBHelper.decrementUserSentFistbumpsCount(userProfileParcel.getCurUserNickname());
                             // remove notification
-                            dbHelper.deletePostFistbumpNotification(NotificationEnum.POST_FISTBUMP, userPost.getPostId(), userProfileParcel.getCurUserNickname());
+                            dynamoDBHelper.deletePostFistbumpNotification(NotificationEnum.POST_FISTBUMP, userPost.getPostId(), userProfileParcel.getCurUserNickname());
                         }
                         // remove current user from fistbumped users
                         userPost.removeFistbumpedUser(userProfileParcel.getCurUserNickname());
@@ -378,11 +391,11 @@ public class NewCommentActivity extends AppCompatActivity {
                         // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
                         if (!userPost.getNickname().equals(userProfileParcel.getCurUserNickname())) {
                             // update the received fistbumps count of the main post user
-                            dbHelper.incrementUserReceivedFistbumpsCount(userPost.getNickname());
+                            dynamoDBHelper.incrementUserReceivedFistbumpsCount(userPost.getNickname());
                             // update the sent fistbumps count of the current user
-                            dbHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUserNickname());
+                            dynamoDBHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUserNickname());
                             // send push notification
-                            dbHelper.makeNewNotification(makeNotificationPostFistbumpBundle(userPost));
+                            dynamoDBHelper.makeNewNotification(makeNotificationPostFistbumpBundle(userPost));
                             httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestPostFistbumpBundle(userPost));
                         }
                         // add current user to fistbumped users
@@ -390,7 +403,7 @@ public class NewCommentActivity extends AppCompatActivity {
                     }
                     // update post fistbumps count
                     userPost.setFistbumpsCount(fistbumpsCount);
-                    dbHelper.saveDBObjectAsync(userPost);
+                    dynamoDBHelper.saveDBObjectAsync(userPost);
                 }
             });
         }
@@ -406,7 +419,7 @@ public class NewCommentActivity extends AppCompatActivity {
         @Override
         protected DBUserPost doInBackground(DBUserPost... params) {
             DBUserPost userPost = params[0];
-            return dbHelper.loadDBUserPost(userPost.getNickname(), userPost.getTimeInSeconds());
+            return dynamoDBHelper.loadDBUserPost(userPost.getNickname(), userPost.getTimeInSeconds());
         }
 
         @Override
@@ -430,7 +443,7 @@ public class NewCommentActivity extends AppCompatActivity {
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withHashKeyValues(userComment)
                     .withConsistentRead(true);
-            return dbHelper.getMapper().query(DBUserComment.class, queryExpression);
+            return dynamoDBHelper.getMapper().query(DBUserComment.class, queryExpression);
         }
 
         @Override
@@ -440,124 +453,6 @@ public class NewCommentActivity extends AppCompatActivity {
             // stop on load progress circle animation
             if (progressCircleContainer != null)
                 progressCircleContainer.setVisibility(View.GONE);
-        }
-    }
-
-    private class UpdateFistbumpsCountAfterPostDeleteDBTask extends AsyncTask<DBUserPost, Void, DBUserPost> {
-        @Override
-        protected DBUserPost doInBackground(DBUserPost... params) {
-            DBUserPost userPost = params[0];
-            if (userPost != null && userPost.getFistbumpsCount() > 0) {
-                DBUserProfile postUserProfile = dbHelper.loadDBUserProfile(userPost.getNickname());
-
-                // decrement post user received fistbumps count
-                postUserProfile.setReceivedFistbumpsCount(postUserProfile.getReceivedFistbumpsCount() - userPost.getFistbumpsCount());
-                dbHelper.saveDBObject(postUserProfile);
-
-                // decrement fistbumped users' sent fistbumps count
-                for (String nickname : userPost.getFistbumpedUsers()) {
-                    DBUserProfile fistbumpedUser = dbHelper.loadDBUserProfile(nickname);
-                    if (fistbumpedUser != null && !nickname.equals(userPost.getNickname())) {
-                        fistbumpedUser.decrementSentFistbumpsCount();
-                        dbHelper.saveDBObject(fistbumpedUser);
-                    }
-                }
-            }
-            return userPost;
-        }
-
-        @Override
-        protected void onPostExecute(DBUserPost userPost) {
-            new DeletePostCommentsDBTask().execute(userPost);
-        }
-    }
-
-    // Deletion Tasks
-
-    private class DeletePostCommentsDBTask extends AsyncTask<DBUserPost, Void, DBUserPost> {
-        @Override
-        protected DBUserPost doInBackground(DBUserPost... params) {
-            DBUserPost userPost = params[0];
-
-            if (userPost != null && userPost.getCommentsCount() > 0) {
-                // query for all the comments under this post
-                DBUserComment userComment = new DBUserComment();
-                userComment.setPostID(userPost.getPostId());
-                DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
-                        .withHashKeyValues(userComment)
-                        .withConsistentRead(true);
-                List<DBUserComment> results = dbHelper.getMapper().query(DBUserComment.class, queryExpression);
-
-                // delete the comments under the post and update all corresponding user fistbumps
-                Map<String, Integer> fistbumpedUsersMap = new HashMap<>();
-                for (DBUserComment comment : results) {
-                    if (comment.getFistbumpsCount() > 0) {
-                        // decrement comment user's received fistbumps by fistbumpsCount on the comment
-                        DBUserProfile commentUserProfile = dbHelper.loadDBUserProfile(comment.getNickname());
-                        if (commentUserProfile != null) {
-                            commentUserProfile.setReceivedFistbumpsCount(commentUserProfile.getReceivedFistbumpsCount() - comment.getFistbumpsCount());
-                            dbHelper.saveDBObject(commentUserProfile);
-                        }
-                        // accumulate total sent fistbumps for each user who fistbumped comments under this post
-                        for (String nickname : comment.getFistbumpedUsers()) {
-                            if (fistbumpedUsersMap.containsKey(nickname))
-                                fistbumpedUsersMap.put(nickname, fistbumpedUsersMap.get(nickname) + 1);
-                            else
-                                fistbumpedUsersMap.put(nickname, 1);
-                        }
-                    }
-                    userPost.decrementCommentsCount();
-                    dbHelper.deleteDBObject(comment);
-                }
-
-                // update sentFistbumpsCount for all users who fistbumped comments under this post
-                if (fistbumpedUsersMap.size() != 0) {
-                    for (String nickname : fistbumpedUsersMap.keySet()) {
-                        DBUserProfile userProfile = dbHelper.loadDBUserProfile(nickname);
-                        if (userProfile != null) {
-                            userProfile.setSentFistbumpsCount(userProfile.getSentFistbumpsCount() - fistbumpedUsersMap.get(nickname));
-                            dbHelper.saveDBObject(userProfile);
-                        }
-                    }
-                }
-                dbHelper.saveDBObject(userPost);
-            }
-            return userPost;
-        }
-
-        @Override
-        protected void onPostExecute(DBUserPost userPost) {
-            new DeletePostFromDBTask().execute(userPost);
-        }
-    }
-
-    private class DeletePostFromDBTask extends AsyncTask<DBUserPost, Void, Void> {
-        @Override
-        protected Void doInBackground(DBUserPost... params) {
-            DBUserPost userPost = params[0];
-            if (userPost != null) {
-                DBUserProfile userProfile = dbHelper.loadDBUserProfile(userPost.getNickname());
-
-                // decrement userProfile post count
-                userProfile.decrementPostCount();
-                dbHelper.saveDBObject(userProfile);
-
-                // delete user post
-                dbHelper.deleteDBObject(userPost);
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            // dismiss the progress dialog
-            toggleDeletingPostLoadingDialog(false);
-
-            // Hide soft keyboard if keyboard is up
-            EditText newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
-            Helpers.hideSoftKeyboard(getApplicationContext(), newCommentText);
-            finish();
-            overridePendingTransition(R.anim.left_in, R.anim.right_out);
         }
     }
 }

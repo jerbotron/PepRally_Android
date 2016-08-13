@@ -1,5 +1,6 @@
 package com.peprally.jeremy.peprally.activities;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
@@ -49,11 +50,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // AWS Variables
-    private DynamoDBHelper dbHelper;
+    private DynamoDBHelper dynamoDBHelper;
 
     // UI Variables
     private DrawerLayout drawer;
     private MenuItem menuChatItem, menuNotificationItem;
+    private ProgressDialog progressDialogDeleteProfile;
     private ViewPager viewPagerHome;
 
     // Fragment Variables
@@ -78,7 +80,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         setContentView(R.layout.activity_home);
 
         // Initialize member variables
-        dbHelper = new DynamoDBHelper(this);
+        dynamoDBHelper = new DynamoDBHelper(this);
 
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
 
@@ -197,8 +199,15 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                     break;
                 case SETTINGS_REQUEST:
                     if (data.getBooleanExtra("DELETE_PROFILE", false)) {
-                        logOutAccount();
-                        Toast.makeText(this, "Account deleted!", Toast.LENGTH_LONG).show();
+                        toggleDeletingPostLoadingDialog(true);
+                        dynamoDBHelper.deleteUserAccount(userProfileParcel, new DynamoDBHelper.AsyncTaskCallback() {
+                            @Override
+                            public void onTaskDone() {
+                                toggleDeletingPostLoadingDialog(false);
+                                logOutAccount();
+                                Toast.makeText(HomeActivity.this, "Account deleted!", Toast.LENGTH_LONG).show();
+                            }
+                        });
                     }
                     break;
             }
@@ -233,6 +242,13 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     /***********************************************************************************************
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
+
+    private void toggleDeletingPostLoadingDialog(boolean show) {
+        if (show)
+            progressDialogDeleteProfile = ProgressDialog.show(HomeActivity.this, "Delete Profile", "Deleting ... ", true);
+        else
+            progressDialogDeleteProfile.dismiss();
+    }
 
     public void logOutAccount() {
         finish();
@@ -317,13 +333,13 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         protected Boolean doInBackground(Profile... params) {
             DBUserProfile userProfile = new DBUserProfile();
             DBPlayerProfile playerProfile = new DBPlayerProfile();
-            userProfile.setCognitoId(dbHelper.getIdentityID());
+            userProfile.setCognitoId(dynamoDBHelper.getIdentityID());
             DynamoDBQueryExpression<DBUserProfile> queryExpression = new DynamoDBQueryExpression<DBUserProfile>()
                     .withIndexName("CognitoId-index")
                     .withHashKeyValues(userProfile)
                     .withConsistentRead(false);
 
-            List<DBUserProfile> results = dbHelper.getMapper().query(DBUserProfile.class, queryExpression);
+            List<DBUserProfile> results = dynamoDBHelper.getMapper().query(DBUserProfile.class, queryExpression);
             if (results == null || results.size() == 0) {
                 Log.d(TAG, "CognitoID not found: current user does not exist in database.");
             }
@@ -331,7 +347,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 if (results.size() == 1) {
                     userProfile = results.get(0);
                     if (userProfile.getIsVarsityPlayer()) {
-                        playerProfile = dbHelper.loadDBPlayerProfile(userProfile.getTeam(), userProfile.getPlayerIndex());
+                        playerProfile = dynamoDBHelper.loadDBPlayerProfile(userProfile.getTeam(), userProfile.getPlayerIndex());
                     }
                     userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
                     return true;
@@ -353,7 +369,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private class UpdateUserNotificationAlertsAsyncTask extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... voids) {
-            DBUserProfile userProfile = dbHelper.loadDBUserProfile(userProfileParcel.getCurUserNickname());
+            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurUserNickname());
             if (userProfile != null) {
                 userProfileParcel.setHasNewMessage(userProfile.getHasNewMessage());
                 userProfileParcel.setHasNewNotification(userProfile.getHasNewNotification());
