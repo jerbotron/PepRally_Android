@@ -118,7 +118,8 @@ public class NewCommentActivity extends AppCompatActivity{
             Helpers.setFacebookProfileImage(this,
                     mainPostProfileImage,
                     mainPost.getFacebookId(),
-                    3);
+                    3,
+                    true);
 
             mainPostTimeStamp.setText(Helpers.getTimetampString(mainPost.getTimestampSeconds()));
 
@@ -273,7 +274,7 @@ public class NewCommentActivity extends AppCompatActivity{
                 comments.add(userComment);
         }
         commentCardAdapter = new CommentCardAdapter(this, comments, userProfileParcel, mainPost);
-        recyclerView.setAdapter(commentCardAdapter);
+        recyclerView.swapAdapter(commentCardAdapter, true);
     }
 
     public void onPostDeletePostEventHandler() {

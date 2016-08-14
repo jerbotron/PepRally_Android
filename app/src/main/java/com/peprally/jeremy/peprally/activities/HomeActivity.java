@@ -20,6 +20,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -112,8 +113,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         // Fetch FB img_default_profile photo and first name and display them in sidebar header
         View headerView = navigationView.getHeaderView(0);
         LinearLayout header = (LinearLayout) headerView.findViewById(R.id.id_sidebar_header);
-        ProfilePictureView profilePicture = (ProfilePictureView) headerView.findViewById(R.id.profile_image_header);
-        profilePicture.setProfileId(currentToken.getUserId());
+        ImageView profilePicture = (ImageView) headerView.findViewById(R.id.profile_image_header);
+        Helpers.setFacebookProfileImage(getApplicationContext(),
+                profilePicture,
+                fbProfile.getId(),
+                3,
+                true);
         TextView sidebar_name = (TextView) headerView.findViewById(R.id.sidebar_header_name);
         sidebar_name.setText(fbProfile.getFirstName());
         header.setOnClickListener(new View.OnClickListener() {

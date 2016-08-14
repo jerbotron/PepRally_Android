@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.v7.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/id_card_view_players"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:id="@+id/id_card_view_players"
-    android:layout_marginBottom="8dp"
-    android:clickable="true">
+    android:layout_marginBottom="1dp">
     <LinearLayout
         android:id="@+id/id_recycler_view_player_card_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:padding="8dp"
+        android:baselineAligned="false"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="@dimen/activity_horizontal_margin">
+        android:minHeight="80dp">
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -20,7 +21,7 @@
             android:src="@drawable/img_default_ut_placeholder"
             android:layout_marginRight="@dimen/activity_horizontal_margin"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:contentDescription="@string/content_description_image_view"/>
+            android:contentDescription="@string/content_description_image_view" />
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="match_parent"

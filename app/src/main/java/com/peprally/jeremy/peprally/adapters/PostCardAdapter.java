@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -58,7 +57,6 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
 
     static class PostHolder extends RecyclerView.ViewHolder {
         RelativeLayout postContainer;
-        CardView cardView;
         ImageView profileImage;
         TextView timeStamp;
         TextView username;
@@ -70,7 +68,6 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         private PostHolder(View itemView) {
             super(itemView);
             postContainer = (RelativeLayout) itemView.findViewById(R.id.id_container_post_clickable);
-            cardView = (CardView) itemView.findViewById(R.id.id_card_view_new_post);
             profileImage = (ImageView) itemView.findViewById(R.id.id_image_view_post_profile);
             username = (TextView) itemView.findViewById(R.id.id_text_view_post_username);
             timeStamp = (TextView) itemView.findViewById(R.id.id_text_view_post_card_time_stamp);
@@ -93,7 +90,8 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         Helpers.setFacebookProfileImage(callingContext,
                                         postHolder.profileImage,
                                         curPost.getFacebookId(),
-                                        3);
+                                        3,
+                                        true);
 
         final String curUsername = userProfileParcel.getCurUsername();
 

@@ -290,7 +290,8 @@ public class ProfileActivity extends AppCompatActivity {
                 Helpers.setFacebookProfileImage(this,
                         imageView_profilePicture,
                         userProfileParcel.getFacebookID(),
-                        3);
+                        3,
+                        true);
             }
 
             imageView_profilePicture.setOnClickListener(new View.OnClickListener() {
@@ -577,8 +578,8 @@ public class ProfileActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String curUserFacebookID) {
             if (curUserFacebookID != null) {
-                Helpers.setFacebookProfileImage(getApplicationContext(), leftUserProfileImage, curUserFacebookID, 3);
-                Helpers.setFacebookProfileImage(getApplicationContext(), rightUserProfileImage, userProfileParcel.getFacebookID(), 3);
+                Helpers.setFacebookProfileImage(getApplicationContext(), leftUserProfileImage, curUserFacebookID, 3, true);
+                Helpers.setFacebookProfileImage(getApplicationContext(), rightUserProfileImage, userProfileParcel.getFacebookID(), 3, true);
             }
         }
     }

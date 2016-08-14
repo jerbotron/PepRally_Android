@@ -116,10 +116,10 @@ public class NotificationsActivity extends AppCompatActivity {
             Collections.sort(notifications);
             Collections.reverse(notifications);
             NotificationCardAdapter notificationCardAdapter = new NotificationCardAdapter(this, notifications, userProfileParcel);
-            recyclerView.setAdapter(notificationCardAdapter);
+            recyclerView.swapAdapter(notificationCardAdapter, true);
         }
         else {
-            recyclerView.setAdapter(new EmptyAdapter());
+            recyclerView.swapAdapter(new EmptyAdapter(), true);
         }
     }
 

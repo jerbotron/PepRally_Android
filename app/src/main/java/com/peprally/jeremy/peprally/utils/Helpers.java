@@ -22,6 +22,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.custom.CircleImageTransformation;
 import com.squareup.picasso.Picasso;
 
 import java.text.SimpleDateFormat;
@@ -152,14 +153,24 @@ public class Helpers {
     }
 
     public static void setFacebookProfileImage(Context callingContext,
-                                        ImageView imageView,
-                                        String facebookID,
-                                        int size) {
-        Picasso.with(callingContext)
-                .load(getFacebookProfileImageURL(facebookID, size))
-                .placeholder(R.drawable.img_default_profile)
-                .error(R.drawable.img_default_profile)
-                .into(imageView);
+                                               ImageView imageView,
+                                               String facebookID,
+                                               int size,
+                                               boolean rounded) {
+        if (rounded) {
+            Picasso.with(callingContext)
+                    .load(getFacebookProfileImageURL(facebookID, size))
+                    .placeholder(R.drawable.img_default_profile)
+                    .error(R.drawable.img_default_profile)
+                    .transform(new CircleImageTransformation())
+                    .into(imageView);
+        } else {
+            Picasso.with(callingContext)
+                    .load(getFacebookProfileImageURL(facebookID, size))
+                    .placeholder(R.drawable.img_default_profile)
+                    .error(R.drawable.img_default_profile)
+                    .into(imageView);
+        }
     }
 
     public static boolean checkGooglePlayServicesAvailable(Activity callingActivity)

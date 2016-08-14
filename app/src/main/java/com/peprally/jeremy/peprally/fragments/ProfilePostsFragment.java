@@ -89,7 +89,7 @@ public class ProfilePostsFragment extends Fragment {
             posts.add(userPost);
         }
         postCardAdapter = new PostCardAdapter(getActivity(), posts, userProfileParcel);
-        recyclerView.setAdapter(postCardAdapter);
+        recyclerView.swapAdapter(postCardAdapter, true);
     }
 
     public void addPostToAdapter(String newPostText) {
@@ -100,7 +100,7 @@ public class ProfilePostsFragment extends Fragment {
         if (postCardAdapter == null) {
             posts = new ArrayList<>();
             postCardAdapter = new PostCardAdapter(getActivity(), posts, userProfileParcel);
-            recyclerView.setAdapter(postCardAdapter);
+            recyclerView.swapAdapter(postCardAdapter, true);
         }
         postCardAdapter.addPost(newPostText, bundle);
     }
@@ -137,7 +137,7 @@ public class ProfilePostsFragment extends Fragment {
                 initializeAdapter(result);
             }
             else {
-                recyclerView.setAdapter(new EmptyAdapter());
+                recyclerView.swapAdapter(new EmptyAdapter(), true);
                 if (userProfileParcel.getIsSelfProfile()) {
                     noPostsText.setText(getResources().getString(R.string.no_posts_message));
                 }

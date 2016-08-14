@@ -173,10 +173,10 @@ public class TrendingFragment extends Fragment {
             userPosts = sortPosts(trendingMode, userPosts);
 
             postCardAdapter = new PostCardAdapter(getActivity(), userPosts, userProfileParcel);
-            recyclerView.setAdapter(postCardAdapter);
+            recyclerView.swapAdapter(postCardAdapter, true);
         }
         else {
-            recyclerView.setAdapter(new EmptyAdapter());
+            recyclerView.swapAdapter(new EmptyAdapter(), true);
         }
     }
 

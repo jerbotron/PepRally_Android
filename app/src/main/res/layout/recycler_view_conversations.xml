@@ -10,7 +10,7 @@
         android:id="@+id/id_recycler_view_container_conversation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="64dp"
+        android:minHeight="60dp"
         android:orientation="horizontal"
         android:padding="8dp">
         <ImageView

@@ -107,7 +107,8 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         Helpers.setFacebookProfileImage(callingContext,
                                         commentHolder.profileImage,
                                         currentComment.getFacebookId(),
-                                        3);
+                                        3,
+                                        true);
 
         if (fistbumpedUsers.contains(currentUsername)) {
             commentHolder.fistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
