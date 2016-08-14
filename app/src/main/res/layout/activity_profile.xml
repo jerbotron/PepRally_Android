@@ -35,7 +35,7 @@
                     android:layout_width="128dp"
                     android:layout_height="128dp"
                     android:layout_gravity="start"
-                    android:background="@color/colorPrimaryDark"
+                    android:background="@color/colorAccentDark"
                     android:layout_marginEnd="@dimen/activity_horizontal_margin"
                     android:layout_marginRight="@dimen/activity_horizontal_margin"
                     android:contentDescription="@string/content_description_image_view"/>

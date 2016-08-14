@@ -93,23 +93,24 @@ public class ProfileActivity extends AppCompatActivity {
         supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
             supportActionBar.setDisplayHomeAsUpEnabled(true);
+            supportActionBar.setTitle(userProfileParcel.getProfileUsername());
         }
         fixProfileHeaderMarginTop();
 
-        appBarLayout = (AppBarLayout) findViewById(R.id.id_profile_appbar_layout);
-        appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
-            @Override
-            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-                if (!editMode) {
-                    if (verticalOffset == 0 && supportActionBar.getTitle() != null) {
-                        supportActionBar.setTitle(userProfileParcel.getProfileNickname());
-                    }
-                    else if(verticalOffset <= -375 && supportActionBar.getTitle() != null) {
-                        supportActionBar.setTitle(userProfileParcel.getFirstname());
-                    }
-                }
-            }
-        });
+//        appBarLayout = (AppBarLayout) findViewById(R.id.id_profile_appbar_layout);
+//        appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+//            @Override
+//            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+//                if (!editMode) {
+//                    if (verticalOffset == 0 && supportActionBar.getTitle() != null) {
+//                        supportActionBar.setTitle(userProfileParcel.getProfileUsername());
+//                    }
+//                    else if(verticalOffset <= -375 && supportActionBar.getTitle() != null) {
+//                        supportActionBar.setTitle(userProfileParcel.getFirstname());
+//                    }
+//                }
+//            }
+//        });
 
         // Follow Button and FAB
         final LinearLayout buttonEditProfile = (LinearLayout) findViewById(R.id.id_button_edit_profile_container);
@@ -221,8 +222,8 @@ public class ProfileActivity extends AppCompatActivity {
     private Bundle makeNotificationDirectFistbumpBundle() {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_FISTBUMP.toInt());
-        bundle.putString("RECEIVER_NICKNAME", userProfileParcel.getProfileNickname());  // who the notification is going to
-        bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());    // who the notification is from
+        bundle.putString("RECEIVER_USERNAME", userProfileParcel.getProfileUsername());  // who the notification is going to
+        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());    // who the notification is from
         return bundle;
     }
 
@@ -362,7 +363,7 @@ public class ProfileActivity extends AppCompatActivity {
             editMode = false;
 
             // Change back Actionbar title
-            supportActionBar.setTitle(userProfileParcel.getProfileNickname());
+            supportActionBar.setTitle(userProfileParcel.getProfileUsername());
         }
         else {
             if (userProfileParcel.getIsSelfProfile()) {
@@ -401,7 +402,7 @@ public class ProfileActivity extends AppCompatActivity {
         final Snackbar snackbar;
         if (fistbumpSent) {
             snackbar = Snackbar.make(findViewById(R.id.id_activity_profile),
-                        getResources().getString(R.string.profile_fistbump_sent) + " " + userProfileParcel.getProfileNickname(),
+                        getResources().getString(R.string.profile_fistbump_sent) + " " + userProfileParcel.getProfileUsername(),
                         Snackbar.LENGTH_LONG);
         }
         else {
@@ -430,12 +431,12 @@ public class ProfileActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 // increase appropriate fistbump counts
-                dbHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUserNickname());
-                dbHelper.incrementUserReceivedFistbumpsCount(userProfileParcel.getProfileNickname());
+                dbHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUsername());
+                dbHelper.incrementUserReceivedFistbumpsCount(userProfileParcel.getProfileUsername());
                 // add users to respective sent/received fistbump lists
                 new HandleCurUserDirectFistbumpToProfileUserTask().execute();
                 // make push notifications
-                dbHelper.makeNewNotification(makeNotificationDirectFistbumpBundle());
+                dbHelper.createNewNotification(makeNotificationDirectFistbumpBundle());
                 httpRequestsHelper.makePushNotificationRequest(makeNotificationDirectFistbumpBundle());
                 // update UI
                 final TextView buttonEditProfileContent = (TextView) findViewById(R.id.id_button_edit_profile_content);
@@ -453,7 +454,7 @@ public class ProfileActivity extends AppCompatActivity {
 
     private void showDirectFistbumpSnackbarFistbumpAlreadySentConfirmation() {
         final Snackbar snackbar = Snackbar.make(findViewById(R.id.id_activity_profile),
-                                    getResources().getString(R.string.profile_already_fistbumped) + " " + userProfileParcel.getProfileNickname(),
+                                    getResources().getString(R.string.profile_already_fistbumped) + " " + userProfileParcel.getProfileUsername(),
                                     Snackbar.LENGTH_LONG);
         snackbar.setAction("Okay", new View.OnClickListener() {
             @Override
@@ -564,7 +565,7 @@ public class ProfileActivity extends AppCompatActivity {
         ImageView leftUserProfileImage, rightUserProfileImage;
         @Override
         protected String doInBackground(ImageView... params) {
-            DBUserProfile curUserProfile = dbHelper.loadDBUserProfile(userProfileParcel.getCurUserNickname());
+            DBUserProfile curUserProfile = dbHelper.loadDBUserProfile(userProfileParcel.getCurUsername());
             if (curUserProfile != null) {
                 leftUserProfileImage = params[0];
                 rightUserProfileImage = params[1];
@@ -592,7 +593,7 @@ public class ProfileActivity extends AppCompatActivity {
             // 2) Load varsity player's profile
             // 3) Load varsity player's profile who also has a general profile
             try {
-                userProfile = dbHelper.loadDBUserProfile(userProfileParcel.getProfileNickname());
+                userProfile = dbHelper.loadDBUserProfile(userProfileParcel.getProfileUsername());
             }
             catch (DynamoDBMappingException e) {
                 userProfile = null;
@@ -622,8 +623,8 @@ public class ProfileActivity extends AppCompatActivity {
                     SetupNewUserProfile();
                 if (!userProfileParcel.getIsSelfProfile()) {
                     // check if current user has fistbumped profile user
-                    DBUserProfile curUser = dbHelper.loadDBUserProfile(userProfileParcel.getCurUserNickname());
-                    if (curUser.getUsersDirectFistbumpSent().contains(userProfileParcel.getProfileNickname())) {
+                    DBUserProfile curUser = dbHelper.loadDBUserProfile(userProfileParcel.getCurUsername());
+                    if (curUser.getUsersDirectFistbumpSent().contains(userProfileParcel.getProfileUsername())) {
                         setDidCurrentUserFistbumpProfileUserAlready(true);
                     }
                 }
@@ -665,9 +666,9 @@ public class ProfileActivity extends AppCompatActivity {
 
         private void UpdateUserProfileParcel() {
             if (userProfile != null) {
-                userProfileParcel.setFirstname(userProfile.getFirstName());
-                userProfileParcel.setLastname(userProfile.getLastName());
-                userProfileParcel.setProfileNickname(userProfile.getNickname());
+                userProfileParcel.setFirstname(userProfile.getFirstname());
+                userProfileParcel.setLastname(userProfile.getLastname());
+                userProfileParcel.setProfileUsername(userProfile.getUsername());
                 userProfileParcel.setFollowersCount(userProfile.getFollowersCount());
                 userProfileParcel.setFollowingCount(userProfile.getFollowingCount());
                 userProfileParcel.setSentFistbumpsCount(userProfile.getSentFistbumpsCount());
@@ -700,7 +701,7 @@ public class ProfileActivity extends AppCompatActivity {
         private DBUserProfile DBUserProfile;
         @Override
         protected Void doInBackground(Void... params) {
-            DBUserProfile = dbHelper.loadDBUserProfile(userProfileParcel.getProfileNickname());
+            DBUserProfile = dbHelper.loadDBUserProfile(userProfileParcel.getProfileUsername());
             pushUserProfileChanges();
             return null;
         }
@@ -722,15 +723,15 @@ public class ProfileActivity extends AppCompatActivity {
     private class HandleCurUserDirectFistbumpToProfileUserTask extends AsyncTask<Void, Void, Boolean> {
         @Override
         protected Boolean doInBackground(Void... voids) {
-            DBUserProfile profileUser = dbHelper.loadDBUserProfile(userProfileParcel.getProfileNickname());
-            DBUserProfile curUser = dbHelper.loadDBUserProfile(userProfileParcel.getCurUserNickname());
+            DBUserProfile profileUser = dbHelper.loadDBUserProfile(userProfileParcel.getProfileUsername());
+            DBUserProfile curUser = dbHelper.loadDBUserProfile(userProfileParcel.getCurUsername());
             if (profileUser != null && curUser != null) {
-                curUser.addUsersDirectFistbumpSent(userProfileParcel.getProfileNickname());
-                profileUser.addUsersDirectFistbumpReceived(userProfileParcel.getCurUserNickname());
+                curUser.addUsersDirectFistbumpSent(userProfileParcel.getProfileUsername());
+                profileUser.addUsersDirectFistbumpReceived(userProfileParcel.getCurUsername());
                 dbHelper.saveDBObject(curUser);
                 dbHelper.saveDBObject(profileUser);
                 // if the profile user also sent a direct fistbump to current user
-                if (profileUser.getUsersDirectFistbumpSent().contains(userProfileParcel.getCurUserNickname())) {
+                if (profileUser.getUsersDirectFistbumpSent().contains(userProfileParcel.getCurUsername())) {
                     return true;
                 }
             }
@@ -740,7 +741,7 @@ public class ProfileActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean launchChatWindow) {
             if (launchChatWindow) {
-                dbHelper.createNewConversation(userProfileParcel.getCurUserNickname(), userProfileParcel.getProfileNickname());
+                dbHelper.createNewConversation(userProfileParcel.getCurUsername(), userProfileParcel.getProfileUsername());
                 launchNewFistbumpMatchDialog();
             }
         }

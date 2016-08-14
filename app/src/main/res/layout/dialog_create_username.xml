@@ -5,7 +5,7 @@
     android:orientation="vertical">
 
     <EditText
-        android:id="@+id/id_edit_text_new_nickname_dialog"
+        android:id="@+id/id_edit_text_new_username_dialog"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/activity_horizontal_margin"

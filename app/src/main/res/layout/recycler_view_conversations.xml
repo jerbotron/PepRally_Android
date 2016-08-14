@@ -31,15 +31,15 @@
             android:layout_marginRight="8dp"
             android:gravity="center_vertical">
             <TextView
-                android:id="@+id/id_conversation_card_nickname"
+                android:id="@+id/id_conversation_card_username"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/placeholder_nickname"
+                android:text="@string/placeholder_username"
                 android:textStyle="bold"
                 android:textSize="12sp"/>
             <TextView
                 android:id="@+id/id_conversation_card_content"
-                android:layout_below="@+id/id_conversation_card_nickname"
+                android:layout_below="@+id/id_conversation_card_username"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/placeholder_sample_text"

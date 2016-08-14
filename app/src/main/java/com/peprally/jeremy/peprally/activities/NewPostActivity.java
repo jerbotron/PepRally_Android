@@ -83,7 +83,6 @@ public class NewPostActivity extends AppCompatActivity {
                     intent.putExtra("NEW_POST_TEXT", editTextNewPost.getText().toString());
                     setResult(Activity.RESULT_OK, intent);
                     finish();
-//                overridePendingTransition(R.anim.top_in, R.anim.bottom_out);
                 }
                 // Hide soft keyboard if keyboard is up
                 Helpers.hideSoftKeyboard(getApplicationContext(), editTextNewPost);

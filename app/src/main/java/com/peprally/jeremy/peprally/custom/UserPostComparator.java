@@ -11,7 +11,7 @@ public enum UserPostComparator implements Comparator<DBUserPost> {
         }},
     LATEST_SORT {
         public int compare(DBUserPost p1, DBUserPost p2) {
-            return Long.valueOf(p1.getTimeInSeconds()).compareTo(p2.getTimeInSeconds());
+            return Long.valueOf(p1.getTimestampSeconds()).compareTo(p2.getTimestampSeconds());
         }};
 
     public static Comparator<DBUserPost> decending(final Comparator<DBUserPost> other) {

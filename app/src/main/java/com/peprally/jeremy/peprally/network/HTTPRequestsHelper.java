@@ -37,22 +37,20 @@ public class HTTPRequestsHelper {
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(callingContext);
         NotificationEnum notificationType = NotificationEnum.fromInt(bundle.getInt("NOTIFICATION_TYPE"));
         boolean pushNotify = true;
-        if (notificationType != null) {
-            switch (notificationType) {
-                case DIRECT_FISTBUMP:
-                    pushNotify = sharedPref.getBoolean("pref_notifications_direct_fistbump", true);
-                    break;
-                case DIRECT_MESSAGE:
-                    pushNotify = sharedPref.getBoolean("pref_notifications_direct_message", true);
-                    break;
-                case POST_COMMENT:
-                    pushNotify = sharedPref.getBoolean("pref_notifications_new_comment", true);
-                    break;
-                case POST_FISTBUMP:
-                case COMMENT_FISTBUMP:
-                    pushNotify = sharedPref.getBoolean("pref_notifications_post_comment_fistbump", true);
-                    break;
-            }
+        switch (notificationType) {
+            case DIRECT_FISTBUMP:
+                pushNotify = sharedPref.getBoolean("pref_notifications_direct_fistbump", true);
+                break;
+            case DIRECT_MESSAGE:
+                pushNotify = sharedPref.getBoolean("pref_notifications_direct_message", true);
+                break;
+            case POST_COMMENT:
+                pushNotify = sharedPref.getBoolean("pref_notifications_new_comment", true);
+                break;
+            case POST_FISTBUMP:
+            case COMMENT_FISTBUMP:
+                pushNotify = sharedPref.getBoolean("pref_notifications_post_comment_fistbump", true);
+                break;
         }
         if (pushNotify)
             new MakePushNotificationHTTPPostRequestAsyncTask().execute(bundle);
@@ -70,12 +68,12 @@ public class HTTPRequestsHelper {
                 RequestQueue queue = Volley.newRequestQueue(callingContext);
                 DynamoDBHelper dbHelper = new DynamoDBHelper(callingContext);
                 Bundle bundle = params[0];
-                String receiverFMSID = dbHelper.loadDBUserProfile(bundle.getString("RECEIVER_NICKNAME")).getFCMInstanceId();
+                String receiverFMSID = dbHelper.loadDBUserProfile(bundle.getString("RECEIVER_USERNAME")).getFCMInstanceId();
 
                 HashMap<String, String> jsonData = new HashMap<>();
                 jsonData.put("receiver_id", receiverFMSID);
-                jsonData.put("receiver_nickname", bundle.getString("RECEIVER_NICKNAME"));
-                jsonData.put("sender_nickname", bundle.getString("SENDER_NICKNAME"));
+                jsonData.put("receiver_username", bundle.getString("RECEIVER_USERNAME"));
+                jsonData.put("sender_username", bundle.getString("SENDER_USERNAME"));
                 jsonData.put("notification_type", String.valueOf(bundle.getInt("NOTIFICATION_TYPE")));
                 jsonData.put("comment_text", bundle.getString("COMMENT"));
 

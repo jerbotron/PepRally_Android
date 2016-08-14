@@ -12,13 +12,14 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="16dp">
+        android:padding="@dimen/activity_horizontal_margin">
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/id_player_card_profile_photo"
-            android:layout_marginRight="16dp"
-            android:layout_marginEnd="16dp"
+            android:src="@drawable/img_default_ut_placeholder"
+            android:layout_marginRight="@dimen/activity_horizontal_margin"
+            android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:contentDescription="@string/content_description_image_view"/>
         <LinearLayout
             android:layout_width="wrap_content"
@@ -29,11 +30,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/id_notification_card_content"
+                android:text="@string/placeholder_first_name"
                 android:textSize="18sp"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/id_player_card_info"
+                android:text="@string/placeholder_content"
                 android:textSize="12sp"/>
         </LinearLayout>
     </LinearLayout>

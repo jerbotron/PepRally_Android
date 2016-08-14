@@ -4,7 +4,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -21,7 +20,7 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.NewCommentActivity;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
-import com.peprally.jeremy.peprally.db_models.DBUserComment;
+import com.peprally.jeremy.peprally.custom.Comment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
@@ -42,12 +41,12 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // AWS/HTTP Variables
-    private DynamoDBHelper dbHelper;
+    private DynamoDBHelper dynamoDBHelper;
     private HTTPRequestsHelper httpRequestsHelper;
 
     // General Variables
     private Context callingContext;
-    private List<DBUserComment> comments;
+    private ArrayList<Comment> comments;
     private UserProfileParcel userProfileParcel;
     private DBUserPost mainPost;
 
@@ -58,14 +57,14 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
      ********************************** ADAPTER CONSTRUCTOR/METHODS ********************************
      **********************************************************************************************/
     public CommentCardAdapter(Context callingContext,
-                              List<DBUserComment> comments,
+                              ArrayList<Comment> comments,
                               UserProfileParcel userProfileParcel,
                               DBUserPost mainPost) {
         this.comments = comments;
         this.callingContext = callingContext;
         this.userProfileParcel = userProfileParcel;
         this.mainPost = mainPost;
-        dbHelper = new DynamoDBHelper(callingContext);
+        dynamoDBHelper = new DynamoDBHelper(callingContext);
         httpRequestsHelper = new HTTPRequestsHelper(callingContext);
     }
 
@@ -73,9 +72,9 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         RelativeLayout commentContainer;
         CardView cardView;
         ImageView profileImage;
-        TextView timeStamp;
-        TextView nickname;
-        TextView postContent;
+        TextView timestamp;
+        TextView username;
+        TextView commentText;
         TextView fistbumpButton;
         TextView fistbumpsCount;
 
@@ -84,9 +83,9 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
             commentContainer = (RelativeLayout) itemView.findViewById(R.id.id_container_comment_clickable);
             cardView = (CardView) itemView.findViewById(R.id.id_card_view_new_comment);
             profileImage = (ImageView) itemView.findViewById(R.id.id_image_view_comment_profile);
-            nickname = (TextView) itemView.findViewById(R.id.id_text_view_comment_nickname);
-            timeStamp = (TextView) itemView.findViewById(R.id.id_text_view_comment_time_stamp);
-            postContent = (TextView) itemView.findViewById(R.id.id_text_view_comment_content);
+            username = (TextView) itemView.findViewById(R.id.id_text_view_comment_username);
+            timestamp = (TextView) itemView.findViewById(R.id.id_text_view_comment_time_stamp);
+            commentText = (TextView) itemView.findViewById(R.id.id_text_view_comment_content);
             fistbumpButton = (TextView) itemView.findViewById(R.id.id_button_comment_fistbump);
             fistbumpsCount = (TextView) itemView.findViewById(R.id.id_text_view_comment_fistbumps_count);
         }
@@ -100,24 +99,25 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
 
     @Override
     public void onBindViewHolder(final CommentHolder commentHolder, int position) {
-        final DBUserComment curComment = comments.get(position);
+        final Comment currentComment = comments.get(position);
+        final String currentUsername = userProfileParcel.getCurUsername();
+        final String commentUsername = currentComment.getCommentUsername();
+        Set<String> fistbumpedUsers = currentComment.getFistbumpedUsers();
+
         Helpers.setFacebookProfileImage(callingContext,
                                         commentHolder.profileImage,
-                                        curComment.getFacebookId(),
+                                        currentComment.getFacebookId(),
                                         3);
 
-        Set<String> fistbumpedUsers = curComment.getFistbumpedUsers();
-        final String curUserNickname = userProfileParcel.getCurUserNickname();
-        if (fistbumpedUsers.contains(curUserNickname)) {
+        if (fistbumpedUsers.contains(currentUsername)) {
             commentHolder.fistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
         }
 
-        commentHolder.nickname.setText(curComment.getNickname());
-        commentHolder.postContent.setText(curComment.getTextContent());
-        int fistbumpsCount = curComment.getFistbumpsCount();
-        commentHolder.fistbumpsCount.setText(String.valueOf(fistbumpsCount));
+        commentHolder.username.setText(commentUsername);
+        commentHolder.commentText.setText(currentComment.getCommentText());
+        commentHolder.fistbumpsCount.setText(String.valueOf(currentComment.getFistbumpsCount()));
 
-        commentHolder.timeStamp.setText(Helpers.getTimetampString(curComment.getTimeInSeconds()));
+        commentHolder.timestamp.setText(Helpers.getTimetampString(currentComment.getTimestampSeconds()));
 
         // profile picture onclick handler
         commentHolder.profileImage.setOnClickListener(new View.OnClickListener() {
@@ -125,15 +125,15 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
             public void onClick(View view) {
                 Intent intent = new Intent(callingContext, ProfileActivity.class);
                 // clicked on own profile
-                if (curComment.getNickname().equals(curUserNickname)) {
+                if (commentUsername.equals(currentUsername)) {
                     userProfileParcel.setCurrentActivity(ActivityEnum.PROFILE);
                     intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                 }
                 // clicked on another user's profile
                 else {
                     UserProfileParcel parcel = new UserProfileParcel(ActivityEnum.PROFILE,
-                            curUserNickname,
-                            curComment);
+                            currentUsername,
+                            currentComment);
                     intent.putExtra("USER_PROFILE_PARCEL", parcel);
                 }
                 callingContext.startActivity(intent);
@@ -145,10 +145,10 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         commentHolder.fistbumpsCount.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (curComment.getFistbumpsCount() > 0) {
+                if (currentComment.getFistbumpsCount() > 0) {
                     Intent intent = new Intent(callingContext, ViewFistbumpsActivity.class);
                     intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
-                    intent.putStringArrayListExtra("FISTBUMPED_USERS", new ArrayList<>(curComment.getFistbumpedUsers()));
+                    intent.putStringArrayListExtra("FISTBUMPED_USERS", new ArrayList<>(currentComment.getFistbumpedUsers()));
                     callingContext.startActivity(intent);
                 }
             }
@@ -158,54 +158,50 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         commentHolder.fistbumpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int fistbumpsCount = Integer.parseInt(commentHolder.fistbumpsCount.getText().toString());
-                Set<String> fistbumpedUsers = curComment.getFistbumpedUsers();
+                int fistbumpsCount = currentComment.getFistbumpsCount();
+                Set<String> fistbumpedUsers = currentComment.getFistbumpedUsers();
                 // If user already liked the comment
-                if (fistbumpedUsers.contains(curUserNickname)) {
+                if (fistbumpedUsers.contains(currentUsername)) {
                     fistbumpsCount--;
                     commentHolder.fistbumpsCount.setText(String.valueOf(fistbumpsCount));
                     commentHolder.fistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_50, 0);
-                    // remove user from fistbumpedUsers set
-                    curComment.removeFistbumpedUser(curUserNickname);
-                    dbHelper.saveDBObjectAsync(curComment);
                     // update fistbumps counts
                     // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
-                    if (!curComment.getNickname().equals(curUserNickname)) {
+                    if (!commentUsername.equals(currentUsername)) {
                         // update the received fistbumps count of the main post user
-                        dbHelper.decrementUserReceivedFistbumpsCount(curComment.getNickname());
+                        dynamoDBHelper.decrementUserReceivedFistbumpsCount(commentUsername);
                         // update the sent fistbumps count of the current user
-                        dbHelper.decrementUserSentFistbumpsCount(curUserNickname);
+                        dynamoDBHelper.decrementUserSentFistbumpsCount(currentUsername);
                         // remove notification
-                        dbHelper.deleteCommentFistbumpNotification(NotificationEnum.COMMENT_FISTBUMP, curComment.getCommentId(), curComment.getNickname());
+                        dynamoDBHelper.deleteCommentFistbumpNotification(NotificationEnum.COMMENT_FISTBUMP, currentComment.getCommentId(), commentUsername);
                     }
                     // remove current user from fistbumped users
-                    curComment.removeFistbumpedUser(userProfileParcel.getCurUserNickname());
+                    currentComment.removeFistbumpedUser(currentUsername);
                 }
                 // If user has not liked the comment yet
                 else {
                     fistbumpsCount++;
                     commentHolder.fistbumpsCount.setText(String.valueOf(fistbumpsCount));
                     commentHolder.fistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
-                    // add user to fistbumpedUsers set
-                    curComment.addFistbumpedUser(curUserNickname);
                     // update fistbumps counts:
                     // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
-                    if (!curComment.getNickname().equals(curUserNickname)) {
+                    if (!commentUsername.equals(currentUsername)) {
                         // update the received fistbumps count of the main post user
-                        dbHelper.incrementUserReceivedFistbumpsCount(curComment.getNickname());
+                        dynamoDBHelper.incrementUserReceivedFistbumpsCount(commentUsername);
                         // update the sent fistbumps count of the current user
-                        dbHelper.incrementUserSentFistbumpsCount(curUserNickname);
+                        dynamoDBHelper.incrementUserSentFistbumpsCount(currentUsername);
                         // send push notification
-                        dbHelper.makeNewNotification(makeNotificationCommentFistbumpBundle(curComment));
-                        httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestCommentFistbumpBundle(curComment));
+                        dynamoDBHelper.createNewNotification(makeNotificationCommentFistbumpBundle(currentComment));
+                        httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestCommentFistbumpBundle(currentComment));
                     }
                     // add current user to fistbumped users
-                    curComment.addFistbumpedUser(userProfileParcel.getCurUserNickname());
+                    currentComment.addFistbumpedUser(currentUsername);
 
                 }
-                // update comment fistbumps count
-                curComment.setFistbumpsCount(fistbumpsCount);
-                dbHelper.saveDBObjectAsync(curComment);
+                // update comment fistbumps count and save new comments to post and save post
+                currentComment.setFistbumpsCount(fistbumpsCount);
+                mainPost.setComments(comments);
+                dynamoDBHelper.saveDBObjectAsync(mainPost);
             }
         });
 
@@ -213,8 +209,8 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         commentHolder.commentContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (curComment.getNickname().equals(curUserNickname))
-                    launchDeleteCommentDialog(curComment, commentHolder.getAdapterPosition());
+                if (commentUsername.equals(currentUsername))
+                    launchDeleteCommentDialog(currentComment, commentHolder.getAdapterPosition());
             }
         });
     }
@@ -227,21 +223,21 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     /***********************************************************************************************
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
-    private Bundle makeNotificationCommentFistbumpBundle(DBUserComment curComment) {
+    private Bundle makeNotificationCommentFistbumpBundle(Comment comment) {
         Bundle bundle = new Bundle();
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.COMMENT_FISTBUMP.toInt());
-        bundle.putString("RECEIVER_NICKNAME", curComment.getNickname());    // who the notification is going to
-        bundle.putString("POST_ID", curComment.getPostID());
-        bundle.putString("COMMENT_ID", curComment.getCommentId());
+        bundle.putString("RECEIVER_USERNAME", comment.getCommentUsername());    // who the notification is going to
+        bundle.putString("POST_ID", comment.getPostId());
+        bundle.putString("COMMENT_ID", comment.getCommentId());
         return bundle;
     }
 
-    private Bundle makeHTTPPostRequestCommentFistbumpBundle(DBUserComment curComment) {
+    private Bundle makeHTTPPostRequestCommentFistbumpBundle(Comment comment) {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.COMMENT_FISTBUMP.toInt());
-        bundle.putString("RECEIVER_NICKNAME", curComment.getNickname());
-        bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());
+        bundle.putString("RECEIVER_USERNAME", comment.getCommentUsername());
+        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());
         return bundle;
     }
 
@@ -259,31 +255,38 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
     public void addComment(String commentText, Bundle bundle) {
-        DBUserComment newComment = new DBUserComment();
-        Long timeInSeconds = Helpers.getTimestampSeconds();
-        Long postTimeInSeconds = mainPost.getTimeInSeconds();
-        newComment.setPostID(bundle.getString("POST_NICKNAME") + "_" + postTimeInSeconds.toString());
-        newComment.setCommentId(bundle.getString("CUR_USER_NICKNAME") + "_" + timeInSeconds.toString());
-        newComment.setNickname(bundle.getString("CUR_USER_NICKNAME"));
-        newComment.setPostNickname(bundle.getString("POST_NICKNAME"));
-        newComment.setFirstname(bundle.getString("FIRST_NAME"));
-        newComment.setTimeInSeconds(timeInSeconds);
-        newComment.setCognitoId(dbHelper.getIdentityID());
-        newComment.setFacebookId(bundle.getString("FACEBOOK_ID"));
-        newComment.setTimeStamp(Helpers.getTimestampString());
-        newComment.setTextContent(commentText);
-        newComment.setFistbumpedUsers(new HashSet<>(Collections.singletonList("_")));
-        newComment.setFistbumpsCount(0);
-        new PushNewUserCommentToDBTask().execute(newComment);
-        dbHelper.incrementPostCommentsCount(mainPost);
+        Long timestampSeconds = Helpers.getTimestampSeconds();
+        Long postTimeInSeconds = mainPost.getTimestampSeconds();
+
+        Comment newComment = new Comment(
+                bundle.getString("POST_USERNAME") + "_" + postTimeInSeconds.toString(),
+                bundle.getString("COMMENT_USERNAME") + "_" + timestampSeconds.toString(),
+                bundle.getString("COMMENT_USERNAME"),
+                bundle.getString("COMMENT_FIRST_NAME"),
+                bundle.getString("POST_USERNAME"),
+                bundle.getString("FACEBOOK_ID"),
+                commentText,
+                timestampSeconds,
+                0,
+                new HashSet<>(Collections.singletonList("_"))
+        );
+
+        dynamoDBHelper.addNewPostComment(newComment, new DynamoDBHelper.AsyncTaskCallback() {
+            @Override
+            public void onTaskDone() {
+                adapterAddItemBottom();
+                ((NewCommentActivity) callingContext).postAddCommentCleanup();
+            }
+        });
+
         // send push notification (if not commenting on own post)
-        if (!newComment.getNickname().equals(newComment.getPostNickname())) {
-            dbHelper.makeNewNotification(makeNotificationPostCommentBundle(commentText, newComment.getCommentId()));
+        if (!newComment.getCommentUsername().equals(newComment.getPostUsername())) {
+            dynamoDBHelper.createNewNotification(makeNotificationPostCommentBundle(commentText, newComment.getCommentId()));
             httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestPostCommentBundle(commentText));
         }
     }
 
-    private void launchDeleteCommentDialog(final DBUserComment curComment, final int position) {
+    private void launchDeleteCommentDialog(final Comment comment, final int position) {
         // First "Delete comment" dialog
         AlertDialog.Builder dialogBuilderDelete = new AlertDialog.Builder(callingContext);
         final View dialogViewDelete = View.inflate(callingContext, R.layout.dialog_delete, null);
@@ -300,13 +303,19 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
             public void onClick(DialogInterface dialog, int whichButton) {
                 // launch delete comment progress dialog
                 toggleDeletingCommentLoadingDialog(true);
-                // delete the comment
-                new DeleteUserCommentDBTask().execute(position);
-                // decrement post comments count
-                dbHelper.decrementPostCommentsCount(mainPost);
+                // delete post comment
+                dynamoDBHelper.deletePostComment(position, mainPost, new DynamoDBHelper.AsyncTaskCallback() {
+                    @Override
+                    public void onTaskDone() {
+                        adapterRemoveItemAt(position);
+                        ((NewCommentActivity) callingContext).postDeleteCommentCleanup();
+                        // dismiss comment delete loading dialog
+                        toggleDeletingCommentLoadingDialog(false);
+                    }
+                });
                 // remove notification if comment is not by the same post user
-                if (!curComment.getNickname().equals(mainPost.getNickname()))
-                    dbHelper.deletePostCommentNotification(NotificationEnum.POST_COMMENT, curComment);
+                if (!comment.getCommentUsername().equals(mainPost.getUsername()))
+                    dynamoDBHelper.deletePostCommentNotification(NotificationEnum.POST_COMMENT, comment);
             }
         });
         dialogBuilderConfirmDelete.setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -335,7 +344,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         Bundle bundle = new Bundle();
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_COMMENT.toInt());
-        bundle.putString("RECEIVER_NICKNAME", mainPost.getNickname());
+        bundle.putString("RECEIVER_USERNAME", mainPost.getUsername());
         bundle.putString("POST_ID", mainPost.getPostId());
         bundle.putString("COMMENT_ID", commentID);
         bundle.putString("COMMENT", comment);
@@ -345,8 +354,8 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     private Bundle makeHTTPPostRequestPostCommentBundle(String comment) {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_COMMENT.toInt());
-        bundle.putString("RECEIVER_NICKNAME", mainPost.getNickname());
-        bundle.putString("SENDER_NICKNAME", userProfileParcel.getCurUserNickname());
+        bundle.putString("RECEIVER_USERNAME", mainPost.getUsername());
+        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());
         bundle.putString("COMMENT", comment);
         return bundle;
     }
@@ -356,42 +365,5 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
             progressDialogDeleteComment = ProgressDialog.show(callingContext, "Delete Comment", "Deleting ... ", true);
         else
             progressDialogDeleteComment.dismiss();
-    }
-
-    /***********************************************************************************************
-     ****************************************** ASYNC TASKS ****************************************
-     **********************************************************************************************/
-    private class PushNewUserCommentToDBTask extends AsyncTask<DBUserComment, Void, Void> {
-        @Override
-        protected Void doInBackground(DBUserComment... params) {
-            DBUserComment newComment = params[0];
-            dbHelper.saveDBObject(newComment);
-            comments.add(newComment);
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void v) {
-            adapterAddItemBottom();
-            ((NewCommentActivity) callingContext).postAddCommentCleanup();
-        }
-    }
-
-    private class DeleteUserCommentDBTask extends AsyncTask<Integer, Void, Integer> {
-        @Override
-        protected Integer doInBackground(Integer... params) {
-            Integer position = params[0];
-            DBUserComment comment = comments.get(position);
-            dbHelper.deleteDBObject(comment);
-            return position;
-        }
-
-        @Override
-        protected void onPostExecute(Integer position) {
-            adapterRemoveItemAt(position);
-            ((NewCommentActivity) callingContext).postDeleteCommentCleanup();
-            // dismiss comment delete loading dialog
-            toggleDeletingCommentLoadingDialog(false);
-        }
     }
 }

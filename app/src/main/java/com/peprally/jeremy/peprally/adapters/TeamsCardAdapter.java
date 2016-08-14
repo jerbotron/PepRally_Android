@@ -31,7 +31,7 @@ public class TeamsCardAdapter extends RecyclerView.Adapter<TeamsCardAdapter.Team
             super(itemView);
             cv = (CardView)itemView.findViewById(R.id.rv_browse_teams);
             teamPhoto = (ImageView)itemView.findViewById(R.id.id_notification_card_profile_photo);
-            teamName = (TextView)itemView.findViewById(R.id.id_notification_user_nickname);
+            teamName = (TextView)itemView.findViewById(R.id.id_team_card_team_name);
             itemView.setOnClickListener(this);
         }
 

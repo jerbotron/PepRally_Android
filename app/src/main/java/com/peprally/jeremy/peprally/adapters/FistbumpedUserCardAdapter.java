@@ -43,15 +43,15 @@ public class FistbumpedUserCardAdapter extends RecyclerView.Adapter<FistbumpedUs
     static class FistbumpedUserCardHolder extends RecyclerView.ViewHolder {
         ImageView userImage;
         LinearLayout clickableContainer;
-        TextView nicknameText;
-        TextView firstnameText;
+        TextView username;
+        TextView firstname;
 
         private FistbumpedUserCardHolder(View itemView) {
             super(itemView);
             userImage = (ImageView) itemView.findViewById(R.id.id_fistbumped_users_card_profile_photo);
             clickableContainer = (LinearLayout) itemView.findViewById(R.id.id_recycler_view_container_fistbumped_users);
-            nicknameText = (TextView) itemView.findViewById(R.id.id_fistbumped_users_nickname);
-            firstnameText = (TextView) itemView.findViewById(R.id.id_fistbumped_users_name);
+            username = (TextView) itemView.findViewById(R.id.id_fistbumped_users_username);
+            firstname = (TextView) itemView.findViewById(R.id.id_fistbumped_users_name);
         }
     }
 
@@ -69,8 +69,8 @@ public class FistbumpedUserCardAdapter extends RecyclerView.Adapter<FistbumpedUs
                 userProfile.getFacebookId(),
                 3);
 
-        fistbumpedUserCardHolder.nicknameText.setText(userProfile.getNickname());
-        fistbumpedUserCardHolder.firstnameText.setText(userProfile.getFirstName());
+        fistbumpedUserCardHolder.username.setText(userProfile.getUsername());
+        fistbumpedUserCardHolder.firstname.setText(userProfile.getFirstname());
 
         fistbumpedUserCardHolder.clickableContainer.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -108,7 +108,7 @@ public class FistbumpedUserCardAdapter extends RecyclerView.Adapter<FistbumpedUs
             UserProfileParcel parcel = new UserProfileParcel(ActivityEnum.PROFILE,
                                                              userProfile,
                                                              playerProfile);
-            if (!userProfile.getNickname().equals(userProfileParcel.getCurUserNickname()))
+            if (!userProfile.getUsername().equals(userProfileParcel.getCurUsername()))
                 parcel.setIsSelfProfile(false);
             intent.putExtra("USER_PROFILE_PARCEL", parcel);
             callingContext.startActivity(intent);

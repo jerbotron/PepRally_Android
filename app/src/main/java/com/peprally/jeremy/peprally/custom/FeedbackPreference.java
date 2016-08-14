@@ -61,8 +61,8 @@ public class FeedbackPreference extends DialogPreference {
         Bundle bundle = new Bundle();
         bundle.putInt("FEEDBACK_TYPE", FeedbackEnum.GENERAL.toInt());
         bundle.putString("FEEDBACK", feedbackText);
-        bundle.putString("USERNAME", userProfileParcel.getCurUserNickname());
+        bundle.putString("USERNAME", userProfileParcel.getCurUsername());
         bundle.putLong("TIMESTAMP", Helpers.getTimestampSeconds());
-        dynamoDBHelper.makeNewFeedback(bundle);
+        dynamoDBHelper.createNewFeedback(bundle);
     }
 }

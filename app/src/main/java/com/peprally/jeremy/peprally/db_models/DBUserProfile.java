@@ -6,14 +6,14 @@ import java.util.Set;
 
 @DynamoDBTable(tableName = "UserProfiles")
 public class DBUserProfile {
-    private String nickname;
+    private String username;
     private String cognitoId;
     private String facebookId;
     private String facebookLink;
     private String FCMInstanceId;
     private String email;
-    private String firstName;
-    private String lastName;
+    private String firstname;
+    private String lastname;
     private String gender;
     private String birthday;
     private String favoriteTeam;
@@ -38,20 +38,77 @@ public class DBUserProfile {
     private boolean isNewUser;
     private boolean isVarsityPlayer;
 
-    @DynamoDBHashKey(attributeName = "Nickname")
-    public String getNickname() {
-        return nickname;
+    // Helpers
+    public void incrementSentFistbumpsCount() {
+        sentFistbumpsCount += 1;
     }
 
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
+    public void decrementSentFistbumpsCount() {
+        if (sentFistbumpsCount > 0)
+            sentFistbumpsCount -= 1;
+    }
+
+    public void incrementReceivedFistbumpsCount() {
+        receivedFistbumpsCount += 1;
+    }
+
+    public void decrementReceivedFistbumpsCount() {
+        if (receivedFistbumpsCount > 0)
+            receivedFistbumpsCount -= 1;
+    }
+
+    public void incrementPostCount() {
+        postsCount += 1;
+    }
+
+    public void decrementPostCount() {
+        if (postsCount > 0)
+            postsCount -= 1;
+    }
+
+    public void addConversationId(String id) {
+        if (conversationIds != null)
+            conversationIds.add(id);
+    }
+
+    public void removeConversationId(String id) {
+        if (conversationIds != null)
+            conversationIds.remove(id);
+    }
+
+    public void addUsersDirectFistbumpSent(String user) {
+        if (usersDirectFistbumpSent != null)
+            usersDirectFistbumpSent.add(user);
+    }
+
+    public void removeUsersDirectFistbumpSent(String user) {
+        if (usersDirectFistbumpSent != null)
+            usersDirectFistbumpSent.remove(user);
+    }
+
+    public void addUsersDirectFistbumpReceived(String user) {
+        if (usersDirectFistbumpReceived != null)
+            usersDirectFistbumpReceived.add(user);
+    }
+
+    public void removeUsersDirectFistbumpReceived(String user) {
+        if (usersDirectFistbumpReceived != null)
+            usersDirectFistbumpReceived.remove(user);
+    }
+
+    // Setters/Getters
+    @DynamoDBHashKey(attributeName = "Username")
+    public String getUsername() {
+        return username;
+    }
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     @DynamoDBIndexHashKey(globalSecondaryIndexName = "CognitoId-index", attributeName = "CognitoId")
     public String getCognitoId() {
         return cognitoId;
     }
-
     public void setCognitoId(String cognitoId) {
         this.cognitoId = cognitoId;
     }
@@ -60,7 +117,6 @@ public class DBUserProfile {
     public String getFacebookId() {
         return facebookId;
     }
-
     public void setFacebookId(String facebookId) {
         this.facebookId = facebookId;
     }
@@ -69,7 +125,6 @@ public class DBUserProfile {
     public String getFCMInstanceId() {
         return FCMInstanceId;
     }
-
     public void setFCMInstanceId(String FCMInstanceId) {
         this.FCMInstanceId = FCMInstanceId;
     }
@@ -87,27 +142,24 @@ public class DBUserProfile {
     public String getEmail() {
         return email;
     }
-
     public void setEmail(String email) {
         this.email = email;
     }
 
-    @DynamoDBAttribute(attributeName = "FirstName")
-    public String getFirstName() {
-        return firstName;
+    @DynamoDBAttribute(attributeName = "Firstname")
+    public String getFirstname() {
+        return firstname;
+    }
+    public void setFirstname(String firstname) {
+        this.firstname = firstname;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
+    @DynamoDBAttribute(attributeName = "Lastname")
+    public String getLastname() {
+        return lastname;
     }
-
-    @DynamoDBAttribute(attributeName = "LastName")
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
+    public void setLastname(String lastname) {
+        this.lastname = lastname;
     }
 
     @DynamoDBAttribute(attributeName = "Gender")
@@ -123,7 +175,6 @@ public class DBUserProfile {
     public String getBirthday() {
         return birthday;
     }
-
     public void setBirthday(String birthday) {
         this.birthday = birthday;
     }
@@ -132,7 +183,6 @@ public class DBUserProfile {
     public String getFavoriteTeam() {
         return favoriteTeam;
     }
-
     public void setFavoriteTeam(String favoriteTeam) {
         this.favoriteTeam = favoriteTeam;
     }
@@ -141,7 +191,6 @@ public class DBUserProfile {
     public String getFavoritePlayer() {
         return favoritePlayer;
     }
-
     public void setFavoritePlayer(String favoritePlayer) {
         this.favoritePlayer = favoritePlayer;
     }
@@ -150,7 +199,6 @@ public class DBUserProfile {
     public String getPepTalk() {
         return pepTalk;
     }
-
     public void setPepTalk(String pepTalk) {
         this.pepTalk = pepTalk;
     }
@@ -159,12 +207,14 @@ public class DBUserProfile {
     public String getTrashTalk() {
         return trashTalk;
     }
+    public void setTrashTalk(String trashTalk) {
+        this.trashTalk = trashTalk;
+    }
 
     @DynamoDBAttribute(attributeName = "DateJoined")
     public String getDateJoined() {
         return dateJoined;
     }
-
     public void setDateJoined(String dateJoined) {
         this.dateJoined = dateJoined;
     }
@@ -173,7 +223,6 @@ public class DBUserProfile {
     public String getTeam() {
         return team;
     }
-
     public void setTeam(String team) {
         this.team = team;
     }
@@ -182,7 +231,6 @@ public class DBUserProfile {
     public int getAge() {
         return age;
     }
-
     public void setAge(int age) {
         this.age = age;
     }
@@ -191,7 +239,6 @@ public class DBUserProfile {
     public int getFollowersCount() {
         return followersCount;
     }
-
     public void setFollowersCount(int followersCount) {
         this.followersCount = followersCount;
     }
@@ -200,7 +247,6 @@ public class DBUserProfile {
     public int getFollowingCount() {
         return followingCount;
     }
-
     public void setFollowingCount(int followingCount) {
         this.followingCount = followingCount;
     }
@@ -209,7 +255,6 @@ public class DBUserProfile {
     public int getSentFistbumpsCount() {
         return sentFistbumpsCount;
     }
-
     public void setSentFistbumpsCount(int sentFistbumpsCount) {
         if (sentFistbumpsCount > 0)
             this.sentFistbumpsCount = sentFistbumpsCount;
@@ -217,20 +262,10 @@ public class DBUserProfile {
             this.sentFistbumpsCount = 0;
     }
 
-    public void incrementSentFistbumpsCount() {
-        sentFistbumpsCount += 1;
-    }
-
-    public void decrementSentFistbumpsCount() {
-        if (sentFistbumpsCount > 0)
-            sentFistbumpsCount -= 1;
-    }
-
     @DynamoDBAttribute(attributeName = "ReceivedFistbumpsCount")
     public int getReceivedFistbumpsCount() {
         return receivedFistbumpsCount;
     }
-
     public void setReceivedFistbumpsCount(int receivedFistbumpsCount) {
         if (receivedFistbumpsCount > 0)
             this.receivedFistbumpsCount = receivedFistbumpsCount;
@@ -238,20 +273,10 @@ public class DBUserProfile {
             this.receivedFistbumpsCount = 0;
     }
 
-    public void incrementReceivedFistbumpsCount() {
-        receivedFistbumpsCount += 1;
-    }
-
-    public void decrementReceivedFistbumpsCount() {
-        if (receivedFistbumpsCount > 0)
-            receivedFistbumpsCount -= 1;
-    }
-
     @DynamoDBAttribute(attributeName = "PostsCount")
     public int getPostsCount() {
         return postsCount;
     }
-
     public void setPostsCount(int postsCount) {
         if (postsCount > 0)
             this.postsCount = postsCount;
@@ -259,24 +284,10 @@ public class DBUserProfile {
             this.postsCount = 0;
     }
 
-    public void incrementPostCount() {
-        postsCount += 1;
-    }
-
-    public void decrementPostCount() {
-        if (postsCount > 0)
-            postsCount -= 1;
-    }
-
-    public void setTrashTalk(String trashTalk) {
-        this.trashTalk = trashTalk;
-    }
-
     @DynamoDBAttribute(attributeName = "PlayerIndex")
     public int getPlayerIndex() {
         return playerIndex;
     }
-
     public void setPlayerIndex(int index) {
         this.playerIndex = index;
     }
@@ -286,64 +297,30 @@ public class DBUserProfile {
     public Set<String> getConversationIds() {
         return conversationIds;
     }
-
     public void setConversationIds(Set<String> conversationIds) {
         this.conversationIds = conversationIds;
-    }
-
-    public void addConversationId(String id) {
-        if (conversationIds != null)
-            conversationIds.add(id);
-    }
-
-    public void removeConversationId(String id) {
-        if (conversationIds != null)
-            conversationIds.remove(id);
     }
 
     @DynamoDBAttribute(attributeName = "UsersDirectFistbumpSent")
     public Set<String> getUsersDirectFistbumpSent() {
         return usersDirectFistbumpSent;
     }
-
     public void setUsersDirectFistbumpSent(Set<String> usersDirectFistbumpSent) {
         this.usersDirectFistbumpSent = usersDirectFistbumpSent;
-    }
-
-    public void addUsersDirectFistbumpSent(String user) {
-        if (usersDirectFistbumpSent != null)
-            usersDirectFistbumpSent.add(user);
-    }
-
-    public void removeUsersDirectFistbumpSent(String user) {
-        if (usersDirectFistbumpSent != null)
-            usersDirectFistbumpSent.remove(user);
     }
 
     @DynamoDBAttribute(attributeName = "UsersDirectFistbumpReceived")
     public Set<String> getUsersDirectFistbumpReceived() {
         return usersDirectFistbumpReceived;
     }
-
     public void setUsersDirectFistbumpReceived(Set<String> usersDirectFistbumpReceived) {
         this.usersDirectFistbumpReceived = usersDirectFistbumpReceived;
-    }
-
-    public void addUsersDirectFistbumpReceived(String user) {
-        if (usersDirectFistbumpReceived != null)
-            usersDirectFistbumpReceived.add(user);
-    }
-
-    public void removeUsersDirectFistbumpReceived(String user) {
-        if (usersDirectFistbumpReceived != null)
-            usersDirectFistbumpReceived.remove(user);
     }
 
     @DynamoDBAttribute(attributeName = "HasNewMessage")
     public boolean getHasNewMessage() {
         return hasNewMessage;
     }
-
     public void setHasNewMessage(boolean hasNewMessage) {
         this.hasNewMessage = hasNewMessage;
     }
@@ -352,7 +329,6 @@ public class DBUserProfile {
     public boolean getHasNewNotification() {
         return hasNewNotification;
     }
-
     public void setHasNewNotification(boolean hasNewNotification) {
         this.hasNewNotification = hasNewNotification;
     }
@@ -361,7 +337,6 @@ public class DBUserProfile {
     public boolean getNewUser() {
         return isNewUser;
     }
-
     public void setNewUser(boolean newUser) {
         this.isNewUser = newUser;
     }
@@ -370,7 +345,6 @@ public class DBUserProfile {
     public boolean getIsVarsityPlayer() {
         return isVarsityPlayer;
     }
-
     public void setIsVarsityPlayer(boolean isVarsityPlayer) {
         this.isVarsityPlayer = isVarsityPlayer;
     }

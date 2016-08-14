@@ -2,19 +2,19 @@ package com.peprally.jeremy.peprally.db_models;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 
-@DynamoDBTable(tableName = "UserNicknames")
-public class DBUserNickname {
-    private String nickname;
+@DynamoDBTable(tableName = "Usernames")
+public class DBUsername {
+    private String username;
     private String cognitoId;
     private String facebookId;
 
-    @DynamoDBHashKey(attributeName = "Nickname")
-    public String getNickname() {
-        return nickname;
+    @DynamoDBHashKey(attributeName = "Username")
+    public String getUsername() {
+        return username;
     }
 
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     @DynamoDBAttribute(attributeName = "CognitoId")

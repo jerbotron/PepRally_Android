@@ -14,7 +14,7 @@ public class DBPlayerProfile {
     private String position;
     private String hometown;
     private String gender;
-    private String nickname;
+    private String username;
     private int index;
     private int number;
     private boolean hasUserProfile;
@@ -23,7 +23,6 @@ public class DBPlayerProfile {
     public String getTeam() {
         return team;
     }
-
     public void setTeam(String team) {
         this.team = team;
     }
@@ -32,7 +31,6 @@ public class DBPlayerProfile {
     public int getIndex() {
         return index;
     }
-
     public void setIndex(int index) {
         this.index = index;
     }
@@ -41,7 +39,6 @@ public class DBPlayerProfile {
     public int getNumber() {
         return number;
     }
-
     public void setNumber(int number) {
         this.number = number;
     }
@@ -50,7 +47,6 @@ public class DBPlayerProfile {
     public String getFirstName() {
         return firstName;
     }
-
     public void setFirstName(String firstName) {
         this.firstName = firstName;
     }
@@ -59,7 +55,6 @@ public class DBPlayerProfile {
     public String getLastName() {
         return lastName;
     }
-
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
@@ -68,7 +63,6 @@ public class DBPlayerProfile {
     public String getImageURL() {
         return imageURL;
     }
-
     public void setImageURL(String imageURL) {
         this.imageURL = imageURL;
     }
@@ -77,7 +71,6 @@ public class DBPlayerProfile {
     public String getYear() {
         return year;
     }
-
     public void setYear(String year) {
         this.year = year;
     }
@@ -86,7 +79,6 @@ public class DBPlayerProfile {
     public String getHeight() {
         return height;
     }
-
     public void setHeight(String height) {
         this.height = height;
     }
@@ -95,7 +87,6 @@ public class DBPlayerProfile {
     public String getWeight() {
         return weight;
     }
-
     public void setWeight(String weight) {
         this.weight = weight;
     }
@@ -104,7 +95,6 @@ public class DBPlayerProfile {
     public String getPosition() {
         return position;
     }
-
     public void setPosition(String position) {
         this.position = position;
     }
@@ -113,7 +103,6 @@ public class DBPlayerProfile {
     public String getHometown() {
         return hometown;
     }
-
     public void setHometown(String hometown) {
         this.hometown = hometown;
     }
@@ -122,25 +111,22 @@ public class DBPlayerProfile {
     public String getGender() {
         return gender;
     }
-
     public void setGender(String gender) {
         this.gender = gender;
     }
 
-    @DynamoDBAttribute(attributeName = "Nickname")
-    public String getNickname() {
-        return nickname;
+    @DynamoDBAttribute(attributeName = "Username")
+    public String getUsername() {
+        return username;
     }
-
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     @DynamoDBAttribute(attributeName = "HasUserProfile")
     public boolean getHasUserProfile() {
         return hasUserProfile;
     }
-
     public void setHasUserProfile(boolean hasUserProfile) {
         this.hasUserProfile = hasUserProfile;
     }

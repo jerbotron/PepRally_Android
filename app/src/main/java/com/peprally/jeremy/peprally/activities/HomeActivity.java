@@ -261,7 +261,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     public void launchBrowsePlayerActivity(String team) {
         Intent intent = new Intent(HomeActivity.this, FavoritePlayerActivity.class);
         intent.putExtra("CALLING_ACTIVITY", "HomeActivity");
-        intent.putExtra("CURRENT_USER_NICKNAME", userProfileParcel.getCurUserNickname());
+        intent.putExtra("CURRENT_USERNAME", userProfileParcel.getCurUsername());
         intent.putExtra("TEAM", team);
         startActivity(intent);
         overridePendingTransition(R.anim.right_in, R.anim.left_out);
@@ -369,7 +369,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private class UpdateUserNotificationAlertsAsyncTask extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... voids) {
-            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurUserNickname());
+            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurUsername());
             if (userProfile != null) {
                 userProfileParcel.setHasNewMessage(userProfile.getHasNewMessage());
                 userProfileParcel.setHasNewNotification(userProfile.getHasNewNotification());

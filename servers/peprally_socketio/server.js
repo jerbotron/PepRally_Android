@@ -20,38 +20,38 @@ io.on('connection', function(socket){
   // PepRally Socket Handlers
   socket.on('join_chat', function(jsonData){
     var jsonParsed = JSON.parse(jsonData.toString());
-    var senderNickname = jsonParsed.sender_nickname;
-    var receiverNickname = jsonParsed.receiver_nickname;
-    console.log(senderNickname + ' joined the chat with ' + receiverNickname);
+    var senderUsername = jsonParsed.sender_username;
+    var receiverUsername = jsonParsed.receiver_username;
+    console.log(senderUsername + ' joined the chat with ' + receiverUsername);
 
     // emitting to receiver
-    io.emit("on_join_" + senderNickname, "callback_request");
+    io.emit("on_join_" + senderUsername, "callback_request");
   });
 
   // requesting call back for sender
   socket.on("callback_ack", function(jsonData){
     var jsonParsed = JSON.parse(jsonData.toString());
-    var senderNickname = jsonParsed.sender_nickname;
-    var receiverNickname = jsonParsed.receiver_nickname;
-    console.log("got the callback from: " + senderNickname);
-    io.emit("on_join_" + senderNickname); // not requesting callback here
+    var senderUsername = jsonParsed.sender_username;
+    var receiverUsername = jsonParsed.receiver_username;
+    console.log("got the callback from: " + senderUsername);
+    io.emit("on_join_" + senderUsername); // not requesting callback here
   });
 
   socket.on('leave_chat', function(jsonData){
     var jsonParsed = JSON.parse(jsonData.toString());
-    var senderNickname = jsonParsed.sender_nickname;
-    var receiverNickname = jsonParsed.receiver_nickname;
-    console.log(senderNickname + ' left the chat with ' + receiverNickname);
+    var senderUsername = jsonParsed.sender_username;
+    var receiverUsername = jsonParsed.receiver_username;
+    console.log(senderUsername + ' left the chat with ' + receiverUsername);
 
     // emitting to receiver
-    io.emit("on_leave_" + senderNickname);
+    io.emit("on_leave_" + senderUsername);
   });
 
   socket.on('send_message', function(jsonData){
     var jsonParsed = JSON.parse(jsonData.toString());
-    var senderNickname = jsonParsed.sender_nickname;
-    var receiverNickname = jsonParsed.receiver_nickname;
+    var senderUsername = jsonParsed.sender_username;
+    var receiverUsername = jsonParsed.receiver_username;
     // emitting to receiver
-    io.emit("new_message_" + receiverNickname, senderNickname);
+    io.emit("new_message_" + receiverUsername, senderUsername);
   });
 });

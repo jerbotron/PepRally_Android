@@ -76,8 +76,8 @@ public class ProfilePostsFragment extends Fragment {
 
     @Override
     public void onResume() {
-        super.onResume();
         refreshAdapter();
+        super.onResume();
     }
 
     /***********************************************************************************************
@@ -94,7 +94,7 @@ public class ProfilePostsFragment extends Fragment {
 
     public void addPostToAdapter(String newPostText) {
         Bundle bundle = new Bundle();
-        bundle.putString("NICKNAME", userProfileParcel.getProfileNickname());
+        bundle.putString("USERNAME", userProfileParcel.getProfileUsername());
         bundle.putString("FACEBOOK_ID", userProfileParcel.getFacebookID());
         bundle.putString("FIRST_NAME", userProfileParcel.getFirstname());
         if (postCardAdapter == null) {
@@ -106,24 +106,28 @@ public class ProfilePostsFragment extends Fragment {
     }
 
     private void refreshAdapter() {
-        new FetchUserPostsTask().execute(userProfileParcel.getProfileNickname());
+        new FetchUserPostsTask().execute(userProfileParcel.getProfileUsername());
     }
 
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
+    @SuppressWarnings("unchecked")
     private class FetchUserPostsTask extends AsyncTask<String, Void, PaginatedQueryList<DBUserPost>> {
         @Override
         protected PaginatedQueryList<DBUserPost> doInBackground(String... params) {
-            String nickname = params[0];
-            DynamoDBHelper dynamoDBHelper = new DynamoDBHelper(getActivity().getApplicationContext());
-            DBUserPost userPost = new DBUserPost();
-            userPost.setNickname(nickname);
-            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
-                    .withHashKeyValues(userPost)
-                    .withConsistentRead(true)
-                    .withScanIndexForward(false);
-            return dynamoDBHelper.getMapper().query(DBUserPost.class, queryExpression);
+            String username = params[0];
+            if (username != null) {
+                DynamoDBHelper dynamoDBHelper = new DynamoDBHelper(getActivity().getApplicationContext());
+                DBUserPost userPost = new DBUserPost();
+                userPost.setUsername(username);
+                DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                        .withHashKeyValues(userPost)
+                        .withConsistentRead(true)
+                        .withScanIndexForward(false);
+                return dynamoDBHelper.getMapper().query(DBUserPost.class, queryExpression);
+            }
+            return null;
         }
 
         @Override

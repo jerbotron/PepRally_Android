@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally.messaging;
+package com.peprally.jeremy.peprally.custom.messaging;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMarshaller;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.JsonMarshaller;
@@ -24,7 +24,7 @@ public class ConversationJSONMarshaller extends JsonMarshaller<Conversation> imp
                 for (ChatMessage msg : messages) {
                     JSONObject jsonMessage = new JSONObject();
                     jsonMessage.put("conversation_id", msg.getConversationID());
-                    jsonMessage.put("nickname", msg.getNickname());
+                    jsonMessage.put("username", msg.getUsername());
                     jsonMessage.put("facebook_id", msg.getFacebookID());
                     jsonMessage.put("content", msg.getMessageContent());
                     jsonMessage.put("timestamp", msg.getTimestamp());
@@ -35,10 +35,10 @@ public class ConversationJSONMarshaller extends JsonMarshaller<Conversation> imp
             }
 
             JSONObject jsonUserFacebookIDs = new JSONObject();
-            Map<String, String> nicknameFacebookIDMap = conversation.getNicknameFacebookIDMap();
-            if (nicknameFacebookIDMap != null) {
-                for (String nickname : nicknameFacebookIDMap.keySet()) {
-                    jsonUserFacebookIDs.put(nickname, nicknameFacebookIDMap.get(nickname));
+            Map<String, String> usernameFacebookIDMap = conversation.getUsernameFacebookIDMap();
+            if (usernameFacebookIDMap != null) {
+                for (String username : usernameFacebookIDMap.keySet()) {
+                    jsonUserFacebookIDs.put(username, usernameFacebookIDMap.get(username));
                 }
                 jsonConversation.put("user_facebook_ids", jsonUserFacebookIDs);
             }
@@ -53,21 +53,19 @@ public class ConversationJSONMarshaller extends JsonMarshaller<Conversation> imp
             JSONObject jsonConversation = new JSONObject(json);
 
             ArrayList<ChatMessage> messages = new ArrayList<>();
-            Map<String, String> nicknameFacebookIDMap = new HashMap<>();
+            Map<String, String> usernameFacebookIDMap = new HashMap<>();
             String conversationID = jsonConversation.getString("conversation_id");
 
             JSONArray jsonMessages = jsonConversation.getJSONArray("conversation");
             for (int i = 0; i < jsonMessages.length(); i++) {
-                JSONObject jsonMsg = jsonMessages.getJSONObject(i);
-                ChatMessage msg = new ChatMessage(jsonMsg);
-                messages.add(msg);
+                messages.add(new ChatMessage(jsonMessages.getJSONObject(i)));
             }
             JSONObject jsonFacebookIDs = jsonConversation.getJSONObject("user_facebook_ids");
             for (int i = 0; i < jsonFacebookIDs.length(); i++) {
-                String nickname = jsonFacebookIDs.names().get(i).toString();
-                nicknameFacebookIDMap.put(nickname, jsonFacebookIDs.getString(nickname));
+                String username = jsonFacebookIDs.names().get(i).toString();
+                usernameFacebookIDMap.put(username, jsonFacebookIDs.getString(username));
             }
-            return new Conversation(conversationID, messages, nicknameFacebookIDMap);
+            return new Conversation(conversationID, messages, usernameFacebookIDMap);
         }
         catch (JSONException e) {
             e.printStackTrace();

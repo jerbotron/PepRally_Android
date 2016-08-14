@@ -1,7 +1,6 @@
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <com.peprally.jeremy.peprally.custom.FeedbackPreference
-        app:key="pref_key_custom_feedback"
+        android:key="pref_key_custom_feedback"
         android:title="Feedback"
         android:summary="feedback summary"/>
 </PreferenceScreen>

@@ -19,7 +19,7 @@
 
     <!-- Strings related to Login Activity -->
     <string name="facebook_app_id">1006674646058120</string>
-    <string name="dialog_nickname_text">Pick a unique nickname!</string>
+    <string name="dialog_username_text">Pick a unique username!</string>
 
     <!-- Strings related to Profile Activity -->
     <string name="profile_fist_bumps"> Fistbumps</string>
@@ -43,7 +43,7 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
-    <string name="invalid_characters_message">Nicknames cannot contain special characters or spaces. Letters, numbers and underscores only.</string>
+    <string name="invalid_characters_message">Username cannot contain special characters or spaces. Letters, numbers and underscores only.</string>
     <string name="no_peprally_account_message">has not made a PepRally profile yet. Tell your friends about PepRally!</string>
     <string name="no_posts_message">You have not created any posts yet!</string>
     <string name="no_comments_message">No comments.</string>
@@ -51,7 +51,7 @@
 
     <!-- Default Profile Content Strings -->
     <string name="default_firstname"><i>NAME, AGE</i></string>
-    <string name="default_nickname"><i>Must pick a nickname!</i></string>
+    <string name="default_username"><i>Must pick a username!</i></string>
     <string name="default_fav_team"><i>Pick your favorite team!</i></string>
     <string name="default_fav_player"><i>Pick your favorite player!</i></string>
     <string name="default_pep_talk"><i>Team needs you, let\'s hear it!</i></string>
@@ -84,7 +84,7 @@
     <!-- Place holders -->
     <string name="new_post_char_text">200</string>
     <string name="new_post_button_text">Post</string>
-    <string name="placeholder_nickname">nickname</string>
+    <string name="placeholder_username">username</string>
     <string name="placeholder_post_time">time</string>
     <string name="placeholder_post_fistbumps_count">0</string>
     <string name="placeholder_profile_text_age">NAME, AGE</string>
@@ -117,7 +117,7 @@
 
     <!-- My Account Settings -->
     <string name="pref_my_account_name">Name</string>
-    <string name="pref_my_account_nickname">Nickname</string>
+    <string name="pref_my_account_username">Username</string>
     <string name="pref_my_account_date_joined">Date Joined</string>
     <string name="pref_my_account_email">Email</string>
     <string name="pref_my_account_email_summary">Let us keep you updated!</string>

@@ -1,6 +1,7 @@
 package com.peprally.jeremy.peprally.enums;
 
 public enum NotificationEnum {
+    INVALID(-1),
     DIRECT_FISTBUMP(0),
     DIRECT_MESSAGE(1),
     POST_COMMENT(2),
@@ -29,7 +30,8 @@ public enum NotificationEnum {
                 return POST_FISTBUMP;
             case 4:
                 return COMMENT_FISTBUMP;
+            default:
+                return INVALID;
         }
-        return null;
     }
 };

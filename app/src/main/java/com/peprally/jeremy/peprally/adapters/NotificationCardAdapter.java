@@ -74,37 +74,35 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
         final DBUserNotification userNotification = notifications.get(position);
         Helpers.setFacebookProfileImage(callingContext,
                                         notificationCardHolder.userNotifyingImage,
-                                        userNotification.getFacebookIDSender(),
+                                        userNotification.getFacebookIdSender(),
                                         3);
 
         notificationCardHolder.timeStamp.setText(Helpers.getTimetampString(userNotification.getTimeInSeconds()));
 
         String content = "";
         NotificationEnum notificationType = NotificationEnum.fromInt(userNotification.getNotificationType());
-        if (notificationType != null) {
-            switch (notificationType) {
-                case DIRECT_FISTBUMP:
-                    content = callingContext.getResources().getString(R.string.notification_0_placeholder);
-                    break;
-                case POST_COMMENT:
-                    content = callingContext.getResources().getString(R.string.notification_2_placeholder);
-                    String comment = userNotification.getComment();
-                    if (comment.length() > 50)
-                        comment = comment.substring(0, 50) + "...\"";
-                    else
-                        comment = comment + "\"";
-                    content = content + comment;
-                    break;
-                case POST_FISTBUMP:
-                    content = callingContext.getResources().getString(R.string.notification_3_placeholder);
-                    break;
-                case COMMENT_FISTBUMP:
-                    content = callingContext.getResources().getString(R.string.notification_4_placeholder);
-                    break;
-            }
+        switch (notificationType) {
+            case DIRECT_FISTBUMP:
+                content = callingContext.getResources().getString(R.string.notification_0_placeholder);
+                break;
+            case POST_COMMENT:
+                content = callingContext.getResources().getString(R.string.notification_2_placeholder);
+                String comment = userNotification.getComment();
+                if (comment.length() > 50)
+                    comment = comment.substring(0, 50) + "...\"";
+                else
+                    comment = comment + "\"";
+                content = content + comment;
+                break;
+            case POST_FISTBUMP:
+                content = callingContext.getResources().getString(R.string.notification_3_placeholder);
+                break;
+            case COMMENT_FISTBUMP:
+                content = callingContext.getResources().getString(R.string.notification_4_placeholder);
+                break;
         }
 
-        notificationCardHolder.content.setText(Html.fromHtml("<b>"+userNotification.getNicknameSender()+"</b> " + content));
+        notificationCardHolder.content.setText(Html.fromHtml("<b>"+userNotification.getUsernameSender()+"</b> " + content));
 
         notificationCardHolder.clickableContainer.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -139,27 +137,7 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
         @Override
         protected DBUserPost doInBackground(DBUserNotification... dbUserNotifications) {
             DBUserNotification userNotification = dbUserNotifications[0];
-            String postId = userNotification.getPostID();
-            String postNickname = postId.split("_")[0];
-            Long postTimeStamp = Long.valueOf(postId.split("_")[1]);
-            Log.d("NotCardAdapter: ", "postNickname = " + postNickname);
-            Log.d("NotCardAdapter: ", "postTimeStamp = " + postTimeStamp);
-//            NotificationEnum notificationType = NotificationEnum.fromInt(userNotification.getNotificationType());
-//            if (notificationType != null) {
-//                switch (notificationType) {
-//                    case POST_COMMENT:
-//
-//                        break;
-//                    case POST_FISTBUMP:
-//
-//                        break;
-//                    case COMMENT_FISTBUMP:
-//
-//                        break;
-//                }
-//            }
-
-            return dynamoDBHelper.loadDBUserPost(postNickname, postTimeStamp);
+            return dynamoDBHelper.loadDBUserPost(userNotification.getPostId());
         }
 
         @Override

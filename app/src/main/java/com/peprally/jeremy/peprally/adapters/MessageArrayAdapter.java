@@ -3,6 +3,7 @@ package com.peprally.jeremy.peprally.adapters;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +14,7 @@ import android.widget.TextView;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
-import com.peprally.jeremy.peprally.messaging.ChatMessage;
+import com.peprally.jeremy.peprally.custom.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
@@ -67,28 +68,31 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
         return messageHistoryList.get(index);
     }
 
-    public View getView(int position, View messageView, ViewGroup parent) {
+    @NonNull
+    public View getView(int position, View messageView, @NonNull ViewGroup parent) {
         ChatMessage chatMessage = getItem(position);
-        LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        if (chatMessage.getNickname().equals(userProfileParcel.getCurUserNickname())) {
-            messageView = inflater.inflate(R.layout.message_right, parent, false);
+        if (chatMessage != null) {
+            LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            if (chatMessage.getUsername().equals(userProfileParcel.getCurUsername())) {
+                messageView = inflater.inflate(R.layout.message_right, parent, false);
+            }
+            else {
+                messageView = inflater.inflate(R.layout.message_left, parent, false);
+                ImageView leftImageView = (ImageView) messageView.findViewById(R.id.id_image_view_message_left);
+                if (leftImageView != null)
+                    Helpers.setFacebookProfileImage(callingContext, leftImageView, chatMessage.getFacebookID(), 3);
+            }
+            TextView textViewMessageText = (TextView) messageView.findViewById(R.id.id_text_view_message_content);
+            textViewMessageText.setText(chatMessage.getMessageContent());
         }
-        else {
-            messageView = inflater.inflate(R.layout.message_left, parent, false);
-            ImageView leftImageView = (ImageView) messageView.findViewById(R.id.id_image_view_message_left);
-            if (leftImageView != null)
-                Helpers.setFacebookProfileImage(callingContext, leftImageView, chatMessage.getFacebookID(), 3);
-        }
-        TextView textViewMessageText = (TextView) messageView.findViewById(R.id.id_text_view_message_content);
-        textViewMessageText.setText(chatMessage.getMessageContent());
         return messageView;
     }
 
     /***********************************************************************************************
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
-    public void notifyReceiverNewMessage(String receiverNickname) {
-        new NotifyUserNewMessageAsyncTask().execute(receiverNickname);
+    public void notifyReceiverNewMessage(String receiverUsername) {
+        new NotifyUserNewMessageAsyncTask().execute(receiverUsername);
     }
 
     public void fetchNewMessages(String conversationID) {
@@ -113,8 +117,8 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
     private class NotifyUserNewMessageAsyncTask extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... strings) {
-            String nickname = strings[0];
-            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(nickname);
+            String username = strings[0];
+            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(username);
             if (userProfile != null) {
                 userProfile.setHasNewMessage(true);
                 dynamoDBHelper.saveDBObject(userProfile);

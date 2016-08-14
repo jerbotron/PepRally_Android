@@ -6,9 +6,9 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBAttribut
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBHashKey;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMarshalling;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBTable;
-import com.peprally.jeremy.peprally.messaging.ChatMessage;
-import com.peprally.jeremy.peprally.messaging.Conversation;
-import com.peprally.jeremy.peprally.messaging.ConversationJSONMarshaller;
+import com.peprally.jeremy.peprally.custom.messaging.ChatMessage;
+import com.peprally.jeremy.peprally.custom.messaging.Conversation;
+import com.peprally.jeremy.peprally.custom.messaging.ConversationJSONMarshaller;
 
 @DynamoDBTable(tableName = "UserConversations")
 public class DBUserConversation implements Comparable<DBUserConversation> {

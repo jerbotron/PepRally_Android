@@ -1,4 +1,4 @@
-package com.peprally.jeremy.peprally.messaging;
+package com.peprally.jeremy.peprally.custom.messaging;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -15,19 +15,19 @@ import java.util.Map;
 public class Conversation implements Parcelable{
     private String conversationID;
     private ArrayList<ChatMessage> chatMessages;
-    private Map<String, String> nicknameFacebookIDMap;
+    private Map<String, String> usernameFacebookIDMap;
 
     public Conversation(String conversationID, ArrayList<ChatMessage> chatMessages, Map<String, String> facebookIDMap) {
         this.conversationID = conversationID;
         this.chatMessages = chatMessages;
-        this.nicknameFacebookIDMap = facebookIDMap;
+        this.usernameFacebookIDMap = facebookIDMap;
     }
 
     public String getConversationID() { return conversationID; }
     public void setConversationID(String conversationID) { this.conversationID = conversationID; }
 
-    public Map<String, String> getNicknameFacebookIDMap() { return nicknameFacebookIDMap; }
-    public void setNicknameFacebookIDMap(Map<String, String> facebookIDMap) { this.nicknameFacebookIDMap = facebookIDMap; }
+    public Map<String, String> getUsernameFacebookIDMap() { return usernameFacebookIDMap; }
+    public void setUsernameFacebookIDMap(Map<String, String> facebookIDMap) { this.usernameFacebookIDMap = facebookIDMap; }
 
     public ArrayList<ChatMessage> getChatMessages() {
         ArrayList<ChatMessage> chatMessagesSortedOut = null;
@@ -43,11 +43,11 @@ public class Conversation implements Parcelable{
         chatMessages.add(message);
     }
 
-    public String getRecipientNickname(String senderNickname) {
-        for (Map.Entry<String, String> entry : nicknameFacebookIDMap.entrySet()) {
-            String nickname = entry.getKey();
-            if (!nickname.equals(senderNickname)) {
-                return nickname;
+    public String getRecipientUsername(String senderUsername) {
+        for (Map.Entry<String, String> entry : usernameFacebookIDMap.entrySet()) {
+            String username = entry.getKey();
+            if (!username.equals(senderUsername)) {
+                return username;
             }
         }
         return null;
@@ -78,7 +78,7 @@ public class Conversation implements Parcelable{
                 try {
                     JSONObject jsonMessage = new JSONObject();
                     jsonMessage.put("conversation_id", chatMessage.getConversationID());
-                    jsonMessage.put("nickname", chatMessage.getNickname());
+                    jsonMessage.put("username", chatMessage.getUsername());
                     jsonMessage.put("facebook_id", chatMessage.getFacebookID());
                     jsonMessage.put("content", chatMessage.getMessageContent());
                     jsonMessage.put("timestamp", chatMessage.getTimestamp());
@@ -96,11 +96,11 @@ public class Conversation implements Parcelable{
         this.conversationID = in.readString();
         this.chatMessages = convertJSONToChatMessagesArrayList(in.readString());
         int mapSize = in.readInt();
-        this.nicknameFacebookIDMap = new HashMap<>();
+        this.usernameFacebookIDMap = new HashMap<>();
         for (int i = 0; i < mapSize; i++) {
             String key = in.readString();
             String value = in.readString();
-            this.nicknameFacebookIDMap.put(key, value);
+            this.usernameFacebookIDMap.put(key, value);
         }
     }
 
@@ -108,8 +108,8 @@ public class Conversation implements Parcelable{
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(conversationID);
         dest.writeString(convertChatMessagesArrayListToJSON());
-        dest.writeInt(nicknameFacebookIDMap.size());
-        for (Map.Entry<String, String> entry : nicknameFacebookIDMap.entrySet()) {
+        dest.writeInt(usernameFacebookIDMap.size());
+        for (Map.Entry<String, String> entry : usernameFacebookIDMap.entrySet()) {
             dest.writeString(entry.getKey());
             dest.writeString(entry.getValue());
         }

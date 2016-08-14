@@ -67,7 +67,7 @@ public class ProfileInfoFragment extends Fragment {
     private void setupUserProfile(View view) {
         final LinearLayout parent_container = (LinearLayout) view.findViewById(R.id.profile_view_container);
         final TextView textViewFirstName = (TextView) view.findViewById(R.id.profile_view_name_age);
-        final TextView textViewNickname = (TextView) view.findViewById(R.id.profile_view_nickname);
+        final TextView textViewUsername = (TextView) view.findViewById(R.id.profile_view_username);
         final TextView textViewFavTeam = (TextView) view.findViewById(R.id.profile_view_fav_team);
         final TextView textViewFavPlayer = (TextView) view.findViewById(R.id.profile_view_fav_player);
         final TextView textViewPepTalk = (TextView) view.findViewById(R.id.profile_view_pep_talk);
@@ -193,11 +193,11 @@ public class ProfileInfoFragment extends Fragment {
         if (textViewFirstName.getText().toString().isEmpty()) {
             textViewFirstName.setText(userProfileParcel.getFirstname());// + ", " + Integer.toString(23));
         }
-        if (userProfileParcel.getProfileNickname() == null) {
-            parent_container.removeView(textViewNickname);
+        if (userProfileParcel.getProfileUsername() == null) {
+            parent_container.removeView(textViewUsername);
         }
         else {
-            textViewNickname.setText("@" + userProfileParcel.getProfileNickname());
+            textViewUsername.setText("@" + userProfileParcel.getProfileUsername());
         }
 
         if (userProfileParcel.getFavoriteTeam() == null) {

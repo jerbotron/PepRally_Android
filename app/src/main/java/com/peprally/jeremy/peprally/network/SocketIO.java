@@ -1,7 +1,5 @@
 package com.peprally.jeremy.peprally.network;
 
-import android.util.Log;
-
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
@@ -15,13 +13,13 @@ import java.net.URISyntaxException;
 public class SocketIO {
 
     private Socket mSocket;
-    private String senderNickname;
-    private String receiverNickname;
+    private String senderUsername;
+    private String receiverUsername;
 
-    public SocketIO(String senderNickname, String receiverNickname) {
+    public SocketIO(String senderUsername, String receiverUsername) {
         try {
-            this.senderNickname = senderNickname;
-            this.receiverNickname = receiverNickname;
+            this.senderUsername = senderUsername;
+            this.receiverUsername = receiverUsername;
 
             mSocket = IO.socket(Constants.SOCKETIO_SERVER_URL);
         }
@@ -32,12 +30,12 @@ public class SocketIO {
 
     public void connect() {
         mSocket.connect();
-        JSONObject jsonNicknames = new JSONObject();
+        JSONObject jsonUsernames = new JSONObject();
         try {
-            jsonNicknames.put("sender_nickname", senderNickname);
-            jsonNicknames.put("receiver_nickname", receiverNickname);
+            jsonUsernames.put("sender_username", senderUsername);
+            jsonUsernames.put("receiver_username", receiverUsername);
         } catch (JSONException err) { err.printStackTrace(); }
-        emitString("join_chat", jsonNicknames.toString());
+        emitString("join_chat", jsonUsernames.toString());
     }
 
     public void emitString(String event, String message) {
@@ -49,12 +47,12 @@ public class SocketIO {
     }
 
     public void disconnect() {
-        JSONObject jsonNicknames = new JSONObject();
+        JSONObject jsonUsernames = new JSONObject();
         try {
-            jsonNicknames.put("sender_nickname", senderNickname);
-            jsonNicknames.put("receiver_nickname", receiverNickname);
+            jsonUsernames.put("sender_username", senderUsername);
+            jsonUsernames.put("receiver_username", receiverUsername);
         } catch (JSONException err) { err.printStackTrace(); }
-        emitString("leave_chat", jsonNicknames.toString());
+        emitString("leave_chat", jsonUsernames.toString());
         mSocket.disconnect();
     }
 }

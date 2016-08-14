@@ -70,30 +70,28 @@ public class PepRallyFirebaseMessagingService extends FirebaseMessagingService {
         Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         String contentText = "";
         NotificationEnum notificationType = NotificationEnum.fromInt(Integer.parseInt(jsonData.get("notification_type")));
-        if (notificationType != null) {
-            switch (notificationType) {
-                case DIRECT_FISTBUMP:
-                    contentText = getResources().getString(R.string.notification_0_placeholder);
-                    break;
-                case DIRECT_MESSAGE:
-                    contentText = getResources().getString(R.string.notification_1_placeholder);
-                    break;
-                case POST_COMMENT:
-                    contentText = getResources().getString(R.string.notification_2_placeholder);
-                    String comment = jsonData.get("comment_text");
-                    if (comment.length() > 50)
-                        comment = comment.substring(0, 50) + "...\"";
-                    else
-                        comment = comment + "\"";
-                    contentText = contentText + comment;
-                    break;
-                case POST_FISTBUMP:
-                    contentText = getResources().getString(R.string.notification_3_placeholder);
-                    break;
-                case COMMENT_FISTBUMP:
-                    contentText = getResources().getString(R.string.notification_4_placeholder);
-                    break;
-            }
+        switch (notificationType) {
+            case DIRECT_FISTBUMP:
+                contentText = getResources().getString(R.string.notification_0_placeholder);
+                break;
+            case DIRECT_MESSAGE:
+                contentText = getResources().getString(R.string.notification_1_placeholder);
+                break;
+            case POST_COMMENT:
+                contentText = getResources().getString(R.string.notification_2_placeholder);
+                String comment = jsonData.get("comment_text");
+                if (comment.length() > 50)
+                    comment = comment.substring(0, 50) + "...\"";
+                else
+                    comment = comment + "\"";
+                contentText = contentText + comment;
+                break;
+            case POST_FISTBUMP:
+                contentText = getResources().getString(R.string.notification_3_placeholder);
+                break;
+            case COMMENT_FISTBUMP:
+                contentText = getResources().getString(R.string.notification_4_placeholder);
+                break;
         }
 
         Drawable notificationDrawable = ResourcesCompat.getDrawable(getResources(), R.drawable.logo_push_ut, null);
@@ -102,7 +100,7 @@ public class PepRallyFirebaseMessagingService extends FirebaseMessagingService {
                     .setLargeIcon(((BitmapDrawable) notificationDrawable).getBitmap())
                     .setSmallIcon(R.drawable.logo_push)
                     .setContentTitle("PepRally")
-                    .setContentText(jsonData.get("sender_nickname") + " " + contentText)
+                    .setContentText(jsonData.get("sender_username") + " " + contentText)
                     .setAutoCancel(true)
                     .setSound(defaultSoundUri)
                     .setContentIntent(pendingIntent);

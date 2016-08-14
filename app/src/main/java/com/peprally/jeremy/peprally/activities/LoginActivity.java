@@ -40,7 +40,7 @@ import com.facebook.login.widget.LoginButton;
 import com.facebook.AccessToken;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
-import com.peprally.jeremy.peprally.db_models.DBUserNickname;
+import com.peprally.jeremy.peprally.db_models.DBUsername;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.network.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
@@ -64,15 +64,15 @@ public class LoginActivity extends AppCompatActivity {
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // AWS Variables
-    private DynamoDBHelper dbHelper;
+    private DynamoDBHelper dynamoDBHelper;
 
     // FB Variables
     private AccessTokenTracker accessTokenTracker;
     private CallbackManager callbackManager;
 
     // UI Variables
-    private EditText editTextNickname;
-    private InputFilter nicknameFilter = new InputFilter() {
+    private EditText editTextUsername;
+    private InputFilter usernameFilter = new InputFilter() {
         public CharSequence filter(CharSequence source, int start, int end,
                                    Spanned dest, int dstart, int dend) {
             for (int i = start; i < end; i++) {
@@ -131,7 +131,7 @@ public class LoginActivity extends AppCompatActivity {
 
                 callbackManager = CallbackManager.Factory.create();
 
-                dbHelper = new DynamoDBHelper(this);
+                dynamoDBHelper = new DynamoDBHelper(this);
 
                 fbDataBundle = new Bundle();
 
@@ -206,7 +206,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onTaskDone(CognitoCachingCredentialsProvider credentialsProvider) {
                 new CheckIfNewUserDBTask().execute(credentialsProvider);
-                dbHelper.refresh(getApplicationContext());
+                dynamoDBHelper.refresh(getApplicationContext());
             }
         });
         credentialProviderTask.execute();
@@ -273,34 +273,33 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onCancel() {
-                Toast.makeText(getApplicationContext(), "Login attempt canceled.", Toast.LENGTH_LONG).show();
                 setContentView(R.layout.activity_login);
+                Toast.makeText(LoginActivity.this, "Login attempt canceled.", Toast.LENGTH_LONG).show();
             }
 
             @Override
             public void onError(FacebookException error) {
-                Toast.makeText(getApplicationContext(), "Login attempt failed.", Toast.LENGTH_LONG).show();
                 setContentView(R.layout.activity_login);
+                Toast.makeText(LoginActivity.this, "Login attempt failed.", Toast.LENGTH_LONG).show();
             }
         });
     }
 
-    private void showNewNicknameDialog() {
+    private void showNewUsernameDialog() {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-        final View dialogView = View.inflate(this, R.layout.dialog_create_nickname, null);
+        final View dialogView = View.inflate(this, R.layout.dialog_create_username, null);
         dialogBuilder.setView(dialogView);
 
-        editTextNickname = (EditText) dialogView.findViewById(R.id.id_edit_text_new_nickname_dialog);
-        editTextNickname.setFilters(new InputFilter[] {nicknameFilter});
-        editTextNickname.setInputType(EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-        editTextNickname.addTextChangedListener(new TextWatcher() {
+        editTextUsername = (EditText) dialogView.findViewById(R.id.id_edit_text_new_username_dialog);
+        editTextUsername.setFilters(new InputFilter[] {usernameFilter});
+        editTextUsername.setInputType(EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        editTextUsername.addTextChangedListener(new TextWatcher() {
             public void afterTextChanged(Editable s) {
                 if (s.toString().trim().isEmpty() || s.length() < 2) {
-                    editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_error, 0);
-//                    editTextNickname.setCompoundDrawables(null, null, ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_error), null);
+                    editTextUsername.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_error, 0);
                 }
                 else {
-                    new CheckUniqueNicknameDBTask().execute(s.toString().trim().replace(" ", "_"));
+                    new CheckUniqueUsernameDBTask().execute(s.toString().trim().replace(" ", "_"));
                 }
             }
 
@@ -313,17 +312,17 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         dialogBuilder.setTitle("Welcome to PepRally!");
-        dialogBuilder.setMessage("Enter a unique nickname:");
+        dialogBuilder.setMessage("Pick a username:");
         dialogBuilder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
-                String nickname = editTextNickname.getText().toString().trim().replace(" ", "_");
-                if (nickname.trim().isEmpty() || nickname.length() < 2) {
-                    Toast.makeText(LoginActivity.this, "Nickname must be at least 2 characters long.", Toast.LENGTH_SHORT).show();
-                    showNewNicknameDialog();
+                String username = editTextUsername.getText().toString().trim().replace(" ", "_");
+                if (username.trim().isEmpty() || username.length() < 2) {
+                    Toast.makeText(LoginActivity.this, "Username must be at least 2 characters long.", Toast.LENGTH_SHORT).show();
+                    showNewUsernameDialog();
                 }
                 else {
-                    new CreateNewUserProfileDBEntryTask().execute(nickname);
-                    new PushNewNicknameToDBTask().execute(nickname);
+                    new CreateNewUserProfileDBEntryTask().execute(username);
+                    new PushNewUserToDBAsyncTask().execute(username);
                 }
             }
         });
@@ -362,12 +361,11 @@ public class LoginActivity extends AppCompatActivity {
         textViewVerifyVarsityLine2.setText(line2Text);
 
         dialogBuilder.setTitle("Are you a varsity player?");
-        dialogBuilder.setMessage("We detected that you might be a varsity player, please confirm if you are the person below. " +
-                "(False confirmations will be detected and your account may be banned.)");
+        dialogBuilder.setMessage("We detected that you might be a varsity player, please confirm if you are the player below. ");
         dialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
                 playerProfile.setHasUserProfile(true);
-                playerProfile.setNickname(userProfile.getNickname());
+                playerProfile.setUsername(userProfile.getUsername());
                 new PushPlayerProfileChangesToDBTask().execute(playerProfile);
                 UserProfileParcel userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
                 finish();
@@ -391,15 +389,15 @@ public class LoginActivity extends AppCompatActivity {
         b.show();
     }
 
-    private void showNicknameTaken() {
-        if (!editTextNickname.getText().toString().trim().isEmpty()) {
-            editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_error,0);
+    private void showUsernameTaken() {
+        if (!editTextUsername.getText().toString().trim().isEmpty()) {
+            editTextUsername.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_error,0);
         }
     }
 
-    private void showNicknameAvailable() {
-        if (!editTextNickname.getText().toString().trim().isEmpty()) {
-            editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_check,0);
+    private void showUsernameAvailable() {
+        if (!editTextUsername.getText().toString().trim().isEmpty()) {
+            editTextUsername.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_check,0);
         }
     }
 
@@ -428,7 +426,7 @@ public class LoginActivity extends AppCompatActivity {
                 userProfile = results.get(0);
                 if (userProfile.getFCMInstanceId() == null || !userProfile.getFCMInstanceId().equals(FCMInstanceId)) {
                     userProfile.setFCMInstanceId(FCMInstanceId);
-                    dbHelper.saveDBObject(userProfile);
+                    dynamoDBHelper.saveDBObject(userProfile);
                 }
                 if (userProfile.getIsVarsityPlayer()) {
                     playerProfile = mapper.load(DBPlayerProfile.class, userProfile.getTeam(), userProfile.getPlayerIndex());
@@ -442,7 +440,7 @@ public class LoginActivity extends AppCompatActivity {
         protected void onPostExecute(Boolean isNewUser) {
             if (isNewUser) {
                 bundleFacebookData();
-                showNewNicknameDialog();
+                showNewUsernameDialog();
             }
             else {
                 UserProfileParcel userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
@@ -455,20 +453,20 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private class CheckUniqueNicknameDBTask extends AsyncTask<String, Void, Boolean> {
+    private class CheckUniqueUsernameDBTask extends AsyncTask<String, Void, Boolean> {
         @Override
         protected Boolean doInBackground(String... params) {
-            DBUserNickname userNickname = dbHelper.loadDBNickname(params[0]);
-            return userNickname != null;
+            DBUsername username = dynamoDBHelper.loadDBUsername(params[0]);
+            return username != null;
         }
 
         @Override
-        protected void onPostExecute(Boolean nicknameTaken) {
-            if (nicknameTaken) {
-                showNicknameTaken();
+        protected void onPostExecute(Boolean usernameTaken) {
+            if (usernameTaken) {
+                showUsernameTaken();
             }
             else {
-                showNicknameAvailable();
+                showUsernameAvailable();
             }
         }
     }
@@ -476,18 +474,18 @@ public class LoginActivity extends AppCompatActivity {
     private class CreateNewUserProfileDBEntryTask extends AsyncTask<String, Void, DBUserProfile> {
         @Override
         protected DBUserProfile doInBackground(String... params) {
-            String userNickname = params[0];
-            DBUserProfile userProfile = dbHelper.loadDBUserProfile(userNickname);
+            String username = params[0];
+            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(username);
             if (userProfile == null) {
                 userProfile = new DBUserProfile();
-                userProfile.setNickname(userNickname);
-                userProfile.setCognitoId(dbHelper.getIdentityID());
+                userProfile.setUsername(username);
+                userProfile.setCognitoId(dynamoDBHelper.getIdentityID());
                 userProfile.setFCMInstanceId(FCMInstanceId);
                 userProfile.setFacebookId(fbDataBundle.getString("ID"));
                 userProfile.setFacebookLink(fbDataBundle.getString("LINK"));
                 userProfile.setEmail(fbDataBundle.getString("EMAIL"));
-                userProfile.setFirstName(fbDataBundle.getString("FIRSTNAME"));
-                userProfile.setLastName(fbDataBundle.getString("LASTNAME"));
+                userProfile.setFirstname(fbDataBundle.getString("FIRSTNAME"));
+                userProfile.setLastname(fbDataBundle.getString("LASTNAME"));
                 userProfile.setGender(fbDataBundle.getString("GENDER"));
                 userProfile.setBirthday(fbDataBundle.getString("BIRTHDAY"));
                 userProfile.setNewUser(true);
@@ -497,7 +495,7 @@ public class LoginActivity extends AppCompatActivity {
                 userProfile.setUsersDirectFistbumpSent(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setUsersDirectFistbumpReceived(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setDateJoined(Helpers.getTimestampString());
-                dbHelper.saveDBObject(userProfile);
+                dynamoDBHelper.saveDBObject(userProfile);
                 return userProfile;
             }
             return null;
@@ -512,13 +510,13 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private class CheckIfNewUserIsVarsityPlayerDBTask extends AsyncTask<DBUserProfile, Void, Boolean> {
-        String userNickname;
+        String username;
         DBUserProfile userProfile;
         DBPlayerProfile playerProfile;
         @Override
         protected Boolean doInBackground(DBUserProfile... params) {
             userProfile = params[0];
-            userNickname = userProfile.getNickname();
+            username = userProfile.getUsername();
             String gender = "M";
             if (userProfile.getGender().equals("female")) gender = "F";
 
@@ -528,17 +526,17 @@ public class LoginActivity extends AppCompatActivity {
                     .withHashKeyValues(playerProfile)
                     .withConsistentRead(false);
 
-            List<DBPlayerProfile> results = dbHelper.getMapper().query(DBPlayerProfile.class, queryExpression);
+            List<DBPlayerProfile> results = dynamoDBHelper.getMapper().query(DBPlayerProfile.class, queryExpression);
             for (DBPlayerProfile profile : results) {
-                if (profile.getFirstName().equals(userProfile.getFirstName()) &&
-                        profile.getLastName().equals(userProfile.getLastName())) {
+                if (profile.getFirstName().equals(userProfile.getFirstname()) &&
+                        profile.getLastName().equals(userProfile.getLastname())) {
                     playerProfile = profile;
                     userProfile.setIsVarsityPlayer(true);
                     userProfile.setTeam(profile.getTeam());
                     userProfile.setPlayerIndex(profile.getIndex());
                     playerProfile.setHasUserProfile(true);
-                    dbHelper.saveDBObject(userProfile);
-                    dbHelper.saveDBObject(playerProfile);
+                    dynamoDBHelper.saveDBObject(userProfile);
+                    dynamoDBHelper.saveDBObject(playerProfile);
                     Log.d(TAG, "VARSITY PLAYER HIT");
                     return true;
                 }
@@ -562,14 +560,14 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private class PushNewNicknameToDBTask extends AsyncTask<String, Void, Void> {
+    private class PushNewUserToDBAsyncTask extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... params) {
-            DBUserNickname newUserNickname = new DBUserNickname();
-            newUserNickname.setNickname(params[0]);
-            newUserNickname.setCognitoId(dbHelper.getIdentityID());
-            newUserNickname.setFacebookId(AccessToken.getCurrentAccessToken().getUserId());
-            dbHelper.saveDBObject(newUserNickname);
+            DBUsername newUsername = new DBUsername();
+            newUsername.setUsername(params[0]);
+            newUsername.setCognitoId(dynamoDBHelper.getIdentityID());
+            newUsername.setFacebookId(AccessToken.getCurrentAccessToken().getUserId());
+            dynamoDBHelper.saveDBObject(newUsername);
             return null;
         }
     }
@@ -577,7 +575,7 @@ public class LoginActivity extends AppCompatActivity {
     private class PushPlayerProfileChangesToDBTask extends AsyncTask<DBPlayerProfile, Void, Void> {
         @Override
         protected Void doInBackground(DBPlayerProfile... params) {
-            dbHelper.saveDBObject(params[0]);
+            dynamoDBHelper.saveDBObject(params[0]);
             return null;
         }
     }

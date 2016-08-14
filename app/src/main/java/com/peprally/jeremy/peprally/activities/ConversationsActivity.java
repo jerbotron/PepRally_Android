@@ -71,7 +71,7 @@ public class ConversationsActivity extends AppCompatActivity {
         });
 
         // remove user new message alert
-        new RemoveUserNewMessageAlertAsyncTask().execute(userProfileParcel.getCurUserNickname());
+        new RemoveUserNewMessageAlertAsyncTask().execute(userProfileParcel.getCurUsername());
     }
 
     @Override
@@ -115,7 +115,7 @@ public class ConversationsActivity extends AppCompatActivity {
     }
 
     private void refreshAdapter() {
-        new FetchUserConversationsAsyncTask().execute(userProfileParcel.getCurUserNickname());
+        new FetchUserConversationsAsyncTask().execute(userProfileParcel.getCurUsername());
     }
 
     /***********************************************************************************************
@@ -123,8 +123,8 @@ public class ConversationsActivity extends AppCompatActivity {
      **********************************************************************************************/
     private class FetchUserConversationsAsyncTask extends AsyncTask<String, Void, List<DBUserConversation>> {
         @Override
-        protected List<DBUserConversation> doInBackground(String... nicknames) {
-            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(nicknames[0]);
+        protected List<DBUserConversation> doInBackground(String... usernames) {
+            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(usernames[0]);
             List<DBUserConversation> userConversations = new ArrayList<>();
             if (userProfile != null && userProfile.getConversationIds().size() > 1) {   // set has a default value of "_"
                 for (String conversationID : userProfile.getConversationIds()) {
@@ -162,8 +162,8 @@ public class ConversationsActivity extends AppCompatActivity {
     private class RemoveUserNewMessageAlertAsyncTask extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... strings) {
-            String nickname = strings[0];
-            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(nickname);
+            String username = strings[0];
+            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(username);
             if (userProfile != null) {
                 userProfile.setHasNewMessage(false);
                 dynamoDBHelper.saveDBObject(userProfile);

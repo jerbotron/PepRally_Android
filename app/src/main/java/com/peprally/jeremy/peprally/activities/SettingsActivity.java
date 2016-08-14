@@ -54,7 +54,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             if (preference instanceof EditTextPreference) {
                 if (preference.getKey().equals("pref_key_my_account_email")) {
                     if (Helpers.isValidEmail(stringValue)) {
-                        dynamoDBHelper.updateUserEmailPreferences(userProfileParcel.getCurUserNickname(), stringValue);
+                        dynamoDBHelper.updateUserEmailPreferences(userProfileParcel.getCurUsername(), stringValue);
                         preference.setSummary(stringValue);
                     } else if (Helpers.isValidEmail(userProfileParcel.getEmail())) {
                         preference.setSummary(userProfileParcel.getEmail());
@@ -166,13 +166,13 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
             // My Account Preferences
             Preference namePref = findPreference("pref_key_my_account_name");
-            Preference nicknamePref = findPreference("pref_key_my_account_nickname");
+            Preference usernamePref = findPreference("pref_key_my_account_username");
             Preference dateJoinedPref = findPreference("pref_key_my_account_date_joined");
             EditTextPreference emailPref = (EditTextPreference) findPreference("pref_key_my_account_email");
             Preference notificationPref = findPreference("pref_key_my_account_notifications");
 
             namePref.setSummary(userProfileParcel.getFirstname());
-            nicknamePref.setSummary(userProfileParcel.getCurUserNickname());
+            usernamePref.setSummary(userProfileParcel.getCurUsername());
             dateJoinedPref.setSummary(userProfileParcel.getDateJoined().split("\\s+")[0]);
             if (userProfileParcel.getEmail() != null && !userProfileParcel.getEmail().isEmpty())
                 emailPref.setSummary(userProfileParcel.getEmail());

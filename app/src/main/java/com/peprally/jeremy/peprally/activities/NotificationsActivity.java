@@ -75,7 +75,7 @@ public class NotificationsActivity extends AppCompatActivity {
         });
 
         // remove user new notification alert
-        new RemoveUserNewNotificationAlertAsyncTask().execute(userProfileParcel.getCurUserNickname());
+        new RemoveUserNewNotificationAlertAsyncTask().execute(userProfileParcel.getCurUsername());
     }
 
     @Override
@@ -134,7 +134,7 @@ public class NotificationsActivity extends AppCompatActivity {
         @Override
         protected PaginatedQueryList<DBUserNotification> doInBackground(Void... params) {
             DBUserNotification userNotification = new DBUserNotification();
-            userNotification.setNickname(userProfileParcel.getCurUserNickname());
+            userNotification.setUsername(userProfileParcel.getCurUsername());
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withHashKeyValues(userNotification)
                     .withConsistentRead(true);
@@ -158,8 +158,8 @@ public class NotificationsActivity extends AppCompatActivity {
     private class RemoveUserNewNotificationAlertAsyncTask extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... strings) {
-            String nickname = strings[0];
-            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(nickname);
+            String username = strings[0];
+            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(username);
             if (userProfile != null) {
                 userProfile.setHasNewNotification(false);
                 dynamoDBHelper.saveDBObject(userProfile);
