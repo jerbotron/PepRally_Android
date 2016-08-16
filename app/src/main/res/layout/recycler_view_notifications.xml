@@ -4,7 +4,7 @@
     android:id="@+id/id_card_view_notifications"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="2dp"
+    android:layout_marginBottom="1dp"
     android:clickable="true">
     <LinearLayout
         android:id="@+id/id_recycler_view_container_notification"

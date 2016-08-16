@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.MenuItem;
-import android.view.View;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
@@ -103,18 +102,21 @@ public class FavoriteTeamActivity extends AppCompatActivity {
     }
 
     private void initializeAdapter() {
-        TeamsCardAdapter teamsCardAdapter = new TeamsCardAdapter(teams);
-        recyclerView.setAdapter(teamsCardAdapter);
-        teamsCardAdapter.setOnItemClickListener(new TeamsCardAdapter.TeamsAdapterClickListener() {
+        TeamsCardAdapter teamsCardAdapter = new TeamsCardAdapter(teams, new TeamsCardAdapter.AdapterOnClickCallback() {
             @Override
-            public void onItemClick(View v, int position) {
-                Intent intent = new Intent();
-                intent.putExtra("FAVORITE_TEAM", teams.get(position).name);
-                setResult(Activity.RESULT_OK, intent);
-                finish();
-                overridePendingTransition(R.anim.left_in, R.anim.right_out);
+            public void onClick(int position) {
+                teamCardOnClickHandler(position);
             }
         });
+        recyclerView.setAdapter(teamsCardAdapter);
+    }
+
+    public void teamCardOnClickHandler(int position) {
+        Intent intent = new Intent();
+        intent.putExtra("FAVORITE_TEAM", teams.get(position).name);
+        setResult(Activity.RESULT_OK, intent);
+        finish();
+        overridePendingTransition(R.anim.left_in, R.anim.right_out);
     }
 
     /***********************************************************************************************

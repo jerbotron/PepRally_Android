@@ -7,8 +7,13 @@
         android:defaultValue="true" />
 
     <CheckBoxPreference
-        android:title="@string/pref_notifications_post_comment_fistbump"
-        android:key="pref_notifications_post_comment_fistbump"
+        android:title="@string/pref_notifications_post_fistbump"
+        android:key="pref_notifications_post_fistbump"
+        android:defaultValue="true" />
+
+    <CheckBoxPreference
+        android:title="@string/pref_notifications_comment_fistbump"
+        android:key="pref_notifications_comment_fistbump"
         android:defaultValue="true" />
 
     <CheckBoxPreference

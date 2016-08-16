@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
@@ -16,37 +17,30 @@ import java.util.List;
 public class TeamsCardAdapter extends RecyclerView.Adapter<TeamsCardAdapter.TeamCardHolder>{
 
     private List<Team> teams;
-    private static TeamsAdapterClickListener myClickListener;
 
-    public interface TeamsAdapterClickListener {
-        void onItemClick(View v, int position);
+    public interface AdapterOnClickCallback {
+        void onClick(int position);
     }
 
-    static class TeamCardHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        CardView cv;
+    private AdapterOnClickCallback adapterOnClickCallback;
+
+    static class TeamCardHolder extends RecyclerView.ViewHolder {
+        LinearLayout clickableContainer;
         ImageView teamPhoto;
         TextView teamName;
 
         private TeamCardHolder(View itemView) {
             super(itemView);
-            cv = (CardView)itemView.findViewById(R.id.rv_browse_teams);
-            teamPhoto = (ImageView)itemView.findViewById(R.id.id_notification_card_profile_photo);
-            teamName = (TextView)itemView.findViewById(R.id.id_team_card_team_name);
-            itemView.setOnClickListener(this);
-        }
-
-        @Override
-        public void onClick(View v) {
-            myClickListener.onItemClick(v, getAdapterPosition());
+            clickableContainer = (LinearLayout) itemView.findViewById(R.id.id_container_browse_teams_card_clickable);
+            teamPhoto = (ImageView) itemView.findViewById(R.id.id_notification_card_profile_photo);
+            teamName = (TextView) itemView.findViewById(R.id.id_team_card_team_name);
         }
     }
 
-    public void setOnItemClickListener(TeamsAdapterClickListener myClickListener) {
-        TeamsCardAdapter.myClickListener = myClickListener;
-    }
-
-    public TeamsCardAdapter(List<Team> teams) {
+    public TeamsCardAdapter(List<Team> teams,
+                            AdapterOnClickCallback adapterOnClickCallback) {
         this.teams = teams;
+        this.adapterOnClickCallback = adapterOnClickCallback;
     }
 
     @Override
@@ -61,9 +55,15 @@ public class TeamsCardAdapter extends RecyclerView.Adapter<TeamsCardAdapter.Team
     }
 
     @Override
-    public void onBindViewHolder(TeamCardHolder teamCardHolder, int position) {
+    public void onBindViewHolder(final TeamCardHolder teamCardHolder, int position) {
         teamCardHolder.teamName.setText(teams.get(position).name);
         teamCardHolder.teamPhoto.setImageResource(teams.get(position).photoId);
+        teamCardHolder.clickableContainer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                adapterOnClickCallback.onClick(teamCardHolder.getAdapterPosition());
+            }
+        });
     }
 
     @Override

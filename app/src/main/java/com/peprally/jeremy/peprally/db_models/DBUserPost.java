@@ -5,7 +5,7 @@ import android.os.Parcelable;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 import com.peprally.jeremy.peprally.custom.Comment;
-import com.peprally.jeremy.peprally.custom.CommentsJSONMarshaller;
+import com.peprally.jeremy.peprally.db_models.json_marshallers.CommentsJSONMarshaller;
 
 import java.util.ArrayList;
 import java.util.Arrays;

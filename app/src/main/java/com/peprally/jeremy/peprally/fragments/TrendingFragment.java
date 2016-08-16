@@ -194,13 +194,13 @@ public class TrendingFragment extends Fragment {
     }
 
     private void refreshAdapter() {
-        new FetchTrendingPostsTask().execute();
+        new FetchUserPostsTask().execute();
     }
 
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
-    private class FetchTrendingPostsTask extends AsyncTask<Void, Void, PaginatedScanList<DBUserPost>> {
+    private class FetchUserPostsTask extends AsyncTask<Void, Void, PaginatedScanList<DBUserPost>> {
         @Override
         protected PaginatedScanList<DBUserPost> doInBackground(Void... params) {
             DynamoDBHelper dynamoDBHelper = new DynamoDBHelper(getActivity().getApplicationContext());

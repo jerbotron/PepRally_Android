@@ -19,6 +19,7 @@ import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
+import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
@@ -76,7 +77,7 @@ public class FistbumpedUserCardAdapter extends RecyclerView.Adapter<FistbumpedUs
         fistbumpedUserCardHolder.clickableContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                new LaunchUserProfileActivityAsyncTask().execute(userProfile);
+                AsyncHelpers.launchUserProfileActivity(callingContext, dynamoDBHelper, userProfile.getUsername(), userProfileParcel.getCurUsername());
             }
         });
     }
@@ -84,36 +85,5 @@ public class FistbumpedUserCardAdapter extends RecyclerView.Adapter<FistbumpedUs
     @Override
     public int getItemCount() {
         return fistbumpedUsers.size();
-    }
-
-    /***********************************************************************************************
-     ****************************************** ASYNC TASKS ****************************************
-     **********************************************************************************************/
-    private class LaunchUserProfileActivityAsyncTask extends AsyncTask<DBUserProfile, Void, DBPlayerProfile> {
-        DBUserProfile userProfile;
-        @Override
-        protected DBPlayerProfile doInBackground(DBUserProfile... dbUserProfiles) {
-            userProfile = dbUserProfiles[0];
-            if (userProfile.getIsVarsityPlayer()) {
-                DBPlayerProfile playerProfile = dynamoDBHelper.loadDBPlayerProfile(userProfile.getTeam(), userProfile.getPlayerIndex());
-                if (playerProfile != null) {
-                    return playerProfile;
-                }
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(DBPlayerProfile playerProfile) {
-            Intent intent = new Intent(callingContext, ProfileActivity.class);
-            UserProfileParcel parcel = new UserProfileParcel(ActivityEnum.PROFILE,
-                                                             userProfile,
-                                                             playerProfile);
-            if (!userProfile.getUsername().equals(userProfileParcel.getCurUsername()))
-                parcel.setIsSelfProfile(false);
-            intent.putExtra("USER_PROFILE_PARCEL", parcel);
-            callingContext.startActivity(intent);
-            ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
-        }
     }
 }

@@ -40,7 +40,7 @@ import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
-import com.peprally.jeremy.peprally.custom.ProfileViewPager;
+import com.peprally.jeremy.peprally.custom.ui.ProfileViewPager;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 import com.squareup.picasso.Picasso;
 
@@ -93,7 +93,7 @@ public class ProfileActivity extends AppCompatActivity {
         supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
             supportActionBar.setDisplayHomeAsUpEnabled(true);
-            supportActionBar.setTitle(userProfileParcel.getProfileUsername());
+            supportActionBar.setTitle(userProfileParcel.getFirstname());
         }
         fixProfileHeaderMarginTop();
 
@@ -124,7 +124,7 @@ public class ProfileActivity extends AppCompatActivity {
                     public void onClick(View v) {
                         if (!editMode) {
                             // Switch Fragment to editFragment
-                            appBarLayout.setExpanded(false, false);
+//                            appBarLayout.setExpanded(false, false);
                             tabLayout.setVisibility(View.GONE);
                             actionFAB.setVisibility(View.INVISIBLE);
                             adapter.addFrag(editFragment, "Edit Profile");
@@ -350,7 +350,7 @@ public class ProfileActivity extends AppCompatActivity {
             // Switch fragment back to infoFragment
             final FloatingActionButton actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
 
-            appBarLayout.setExpanded(true, false);
+//            appBarLayout.setExpanded(true, false);
             tabLayout.setVisibility(View.VISIBLE);
             actionFAB.setVisibility(View.VISIBLE);
             adapter.detachFrag(2);

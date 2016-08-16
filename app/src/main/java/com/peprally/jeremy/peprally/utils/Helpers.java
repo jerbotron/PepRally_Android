@@ -22,7 +22,7 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.custom.CircleImageTransformation;
+import com.peprally.jeremy.peprally.custom.ui.CircleImageTransformation;
 import com.squareup.picasso.Picasso;
 
 import java.text.SimpleDateFormat;

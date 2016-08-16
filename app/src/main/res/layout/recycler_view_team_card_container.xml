@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="1dp">
     <LinearLayout
-        android:id="@+id/id_recycler_view_container_notification"
+        android:id="@+id/id_container_browse_teams_card_clickable"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="@dimen/activity_horizontal_margin"

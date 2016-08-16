@@ -1,7 +1,9 @@
 package com.peprally.jeremy.peprally.activities;
 
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.database.DataSetObserver;
+import android.os.AsyncTask;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -13,17 +15,21 @@ import android.view.View;
 import android.widget.AbsListView;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.github.nkzawa.emitter.Emitter;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.MessageArrayAdapter;
 import com.peprally.jeremy.peprally.custom.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.custom.messaging.Conversation;
+import com.peprally.jeremy.peprally.db_models.DBUserConversation;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.network.SocketIO;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
+import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import org.json.JSONException;
@@ -35,9 +41,10 @@ public class MessagingActivity extends AppCompatActivity {
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // UI Variables
-    private MessageArrayAdapter messageArrayAdapter;
-    private ListView messageListView;
     private EditText messageChatText;
+    private ListView messageListView;
+    private MessageArrayAdapter messageArrayAdapter;
+    private ProgressDialog progressDialogDeleteConversation;
 
     // Network Variables
     private DynamoDBHelper dynamoDBHelper;
@@ -135,13 +142,28 @@ public class MessagingActivity extends AppCompatActivity {
                 return true;
             case R.id.id_item_delete:
                 AlertDialog.Builder dialogBuilderConfirmDelete = new AlertDialog.Builder(this);
-                View dialogViewConfirmDelete = View.inflate(this, R.layout.dialog_confirm_delete, null);
+                View dialogViewConfirmDelete = View.inflate(this, R.layout.dialog_confirm_delete_conversation, null);
+                TextView confirmDeleteMessage = (TextView) dialogViewConfirmDelete.findViewById(R.id.id_dialog_confirm_delete_conversation);
+                ImageView confirmDeleteImage = (ImageView) dialogViewConfirmDelete.findViewById(R.id.id_dialog_confirm_delete_conversation_image);
+                confirmDeleteMessage.setText("Are you sure you want to delete this conversation with " + receiverUsername + "?");
+                Helpers.setFacebookProfileImage(getApplicationContext(),
+                        confirmDeleteImage,
+                        conversation.getUsernameFacebookIDMap().get(receiverUsername),
+                        3,
+                        true);
                 dialogBuilderConfirmDelete.setView(dialogViewConfirmDelete);
                 dialogBuilderConfirmDelete.setTitle("Confirm Delete");
-                dialogBuilderConfirmDelete.setMessage("Are you sure you want to delete this conversation?");
                 dialogBuilderConfirmDelete.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int whichButton) {
-                        Log.d("MessagingActivity: ", "conversation deleted");
+                        toggleDeletingConversationLoadingDialog(true);
+                        dynamoDBHelper.deleteConversation(conversation, new DynamoDBHelper.AsyncTaskCallback() {
+                            @Override
+                            public void onTaskDone() {
+                                toggleDeletingConversationLoadingDialog(false);
+                                finish();
+                                overridePendingTransition(R.anim.left_in, R.anim.right_out);
+                            }
+                        });
                     }
                 });
                 dialogBuilderConfirmDelete.setNegativeButton("No", null);
@@ -164,32 +186,18 @@ public class MessagingActivity extends AppCompatActivity {
      **********************************************************************************************/
     private void sendChatMessage() {
         Log.d("MessagingActivity: ", "receiverJoined = " + receiverJoined);
-        // send update notification to messaging server
-        if (receiverJoined) {
-            JSONObject jsonData = new JSONObject();
-            try {
-                jsonData.put("receiver_username", receiverUsername);
-                jsonData.put("sender_username", userProfileParcel.getCurUsername());
-                jsonData.put("data", messageChatText.getText().toString().trim());
-            } catch (JSONException e) { e.printStackTrace(); }
-            socket.emitString("send_message", jsonData.toString());
-        }
-        else {
-            Bundle bundle = new Bundle();
-            bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_MESSAGE.toInt());
-            bundle.putString("RECEIVER_USERNAME", receiverUsername);
-            bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());
-            httpRequestsHelper.makePushNotificationRequest(bundle);
-        }
 
-        // notify receiving user of new message alert next time they open the app
-        messageArrayAdapter.notifyReceiverNewMessage(receiverUsername);
+        ChatMessage newMessage = new ChatMessage(conversation.getConversationID(),
+                                                 userProfileParcel.getCurUsername(),
+                                                 userProfileParcel.getFacebookID(),
+                                                 messageChatText.getText().toString().trim());
+
+        // save new message to DB
+        new PushChatMessageToDBAsyncTask().execute(newMessage);
 
         // update UI
-        messageArrayAdapter.add(new ChatMessage(conversation.getConversationID(),
-                                                userProfileParcel.getCurUsername(),
-                                                userProfileParcel.getFacebookID(),
-                                                messageChatText.getText().toString().trim()));
+        messageArrayAdapter.add(newMessage);
+
         messageChatText.setText("");
     }
 
@@ -204,6 +212,55 @@ public class MessagingActivity extends AppCompatActivity {
         socket.registerListener("on_join_" + receiverUsername, onReceiverJoinChatHandler);
         // on receiver leave chat listener
         socket.registerListener("on_leave_" + receiverUsername, onReceiverLeaveChatHandler);
+    }
+
+    /***********************************************************************************************
+     ****************************************** UI METHODS *****************************************
+     **********************************************************************************************/
+    private void toggleDeletingConversationLoadingDialog(boolean show) {
+        if (show)
+            progressDialogDeleteConversation = ProgressDialog.show(this, "Delete Conversation", "Deleting ... ", true);
+        else
+            progressDialogDeleteConversation.dismiss();
+    }
+
+    /***********************************************************************************************
+     ****************************************** ASYNC TASKS ****************************************
+     **********************************************************************************************/
+    private class PushChatMessageToDBAsyncTask extends AsyncTask<ChatMessage, Void, Void> {
+        @Override
+        protected Void doInBackground(ChatMessage... chatMessages) {
+            ChatMessage chatMessage = chatMessages[0];
+            DBUserConversation userConversation = dynamoDBHelper.loadDBUserConversation(chatMessage.getConversationID());
+            userConversation.setTimeStampLatest(Helpers.getTimestampSeconds());
+            userConversation.addConversationChatMessage(chatMessage);
+            dynamoDBHelper.saveDBObject(userConversation);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            // send update notification to messaging server
+            if (receiverJoined) {
+                JSONObject jsonData = new JSONObject();
+                try {
+                    jsonData.put("receiver_username", receiverUsername);
+                    jsonData.put("sender_username", userProfileParcel.getCurUsername());
+                    jsonData.put("data", messageChatText.getText().toString().trim());
+                } catch (JSONException e) { e.printStackTrace(); }
+                socket.emitString("send_message", jsonData.toString());
+            }
+            else {
+                Bundle bundle = new Bundle();
+                bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_MESSAGE.toInt());
+                bundle.putString("RECEIVER_USERNAME", receiverUsername);
+                bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());
+                httpRequestsHelper.makePushNotificationRequest(bundle);
+
+                // notify receiving user of new message alert next time they open the app
+                messageArrayAdapter.notifyReceiverNewMessage(receiverUsername);
+            }
+        }
     }
 
     /***********************************************************************************************

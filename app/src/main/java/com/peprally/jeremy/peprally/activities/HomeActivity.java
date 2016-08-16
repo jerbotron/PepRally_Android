@@ -74,7 +74,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext());
-        AccessToken currentToken = AccessToken.getCurrentAccessToken();
         Profile fbProfile = Profile.getCurrentProfile();
 
         // Set main activity content view
@@ -134,10 +133,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         getMenuInflater().inflate(R.menu.menu_main_toolbar, menu);
         menuChatItem = menu.findItem(R.id.id_item_chat);
         menuNotificationItem = menu.findItem(R.id.id_item_notifications);
-        if (userProfileParcel.hasNewMessage()) {
+        if (userProfileParcel != null && userProfileParcel.hasNewMessage()) {
             menuChatItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_chat_notify));
         }
-        if (userProfileParcel.hasNewNotification()) {
+        if (userProfileParcel != null && userProfileParcel.hasNewNotification()) {
             menuNotificationItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_notifications_notify));
         }
         return true;
@@ -226,7 +225,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         new UpdateUserNotificationAlertsAsyncTask().execute();
         SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         Log.d(TAG, "notification pref direct fistbump: " + sharedPref.getBoolean("pref_notifications_direct_fistbump", false));
-        Log.d(TAG, "notification pref post/comment fistbump: " + sharedPref.getBoolean("pref_notifications_post_comment_fistbump", false));
+        Log.d(TAG, "notification pref post fistbump: " + sharedPref.getBoolean("pref_notifications_post_fistbump", false));
+        Log.d(TAG, "notification pref comment fistbump: " + sharedPref.getBoolean("pref_notifications_comment_fistbump", false));
         Log.d(TAG, "notification pref new comment: " + sharedPref.getBoolean("pref_notifications_new_comment", false));
         Log.d(TAG, "notification pref direct message: " + sharedPref.getBoolean("pref_notifications_direct_message", false));
     }

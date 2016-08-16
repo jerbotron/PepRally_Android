@@ -370,7 +370,7 @@ public class LoginActivity extends AppCompatActivity {
                 UserProfileParcel userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
                 finish();
                 Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
-                intent.putExtra("PLAYER_PROFILE_PARCEL", userProfileParcel);
+                intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                 startActivity(intent);
                 overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
             }
@@ -380,7 +380,7 @@ public class LoginActivity extends AppCompatActivity {
                 UserProfileParcel userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
                 finish();
                 Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
-                intent.putExtra("PLAYER_PROFILE_PARCEL", userProfileParcel);
+                intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                 startActivity(intent);
                 overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
             }

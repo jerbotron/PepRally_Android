@@ -39,7 +39,6 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
     private HTTPRequestsHelper httpRequestsHelper;
 
     // General Variables
-//    private static final String TAG = "PostCardAdapter: ";
     private Context callingContext;
     private List<DBUserPost> posts;
     private UserProfileParcel userProfileParcel;
@@ -100,6 +99,9 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         if (fistbumpedUsers.contains(curUsername)) {
             postHolder.postFistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
             postHolder.postFistbumpsCount.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_fistbump_filled_20, 0, 0, 0);
+        } else {
+            postHolder.postFistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_50, 0);
+            postHolder.postFistbumpsCount.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_fistbump_20, 0, 0, 0);
         }
 
         postHolder.username.setText(curPost.getUsername());

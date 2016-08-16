@@ -139,7 +139,7 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <com.peprally.jeremy.peprally.custom.ProfileViewPager
+    <com.peprally.jeremy.peprally.custom.ui.ProfileViewPager
         android:id="@+id/id_viewpager_profile"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

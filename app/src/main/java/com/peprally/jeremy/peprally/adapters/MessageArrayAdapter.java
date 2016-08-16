@@ -4,6 +4,7 @@ package com.peprally.jeremy.peprally.adapters;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -55,7 +56,6 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
     @Override
     public void add(ChatMessage message) {
         messageHistoryList.add(message);
-        new PushChatMessageToDBAsyncTask().execute(message);
         super.add(message);
     }
 
@@ -102,18 +102,6 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
-    private class PushChatMessageToDBAsyncTask extends AsyncTask<ChatMessage, Void, Void> {
-        @Override
-        protected Void doInBackground(ChatMessage... chatMessages) {
-            ChatMessage chatMessage = chatMessages[0];
-            DBUserConversation userConversation = dynamoDBHelper.loadDBUserConversation(chatMessage.getConversationID());
-            userConversation.setTimeStampLatest(Helpers.getTimestampSeconds());
-            userConversation.addConversationChatMessage(chatMessage);
-            dynamoDBHelper.saveDBObject(userConversation);
-            return null;
-        }
-    }
-
     private class NotifyUserNewMessageAsyncTask extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... strings) {
@@ -143,6 +131,7 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
             if (chatMessages != null) {
                 messageHistoryList = chatMessages;
                 notifyDataSetChanged();
+                Log.d("MAA: ", "got to here");
             }
         }
     }

@@ -7,13 +7,13 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 @DynamoDBTable(tableName = "UserNotifications")
 public class DBUserNotification implements Comparable<DBUserNotification> {
     private String username;
-    private String usernameSender;
+    private String senderUsername;
     private String facebookIdSender;
     private String postId;
     private String commentId;
     private String comment;
     private Long timeInSeconds;
-    // 0 = direct fistbump, 1 = comment on post, 2 = fistbump on post, 3 = fistbump on comment
+    // 0 = direct fistbump, 1 = direct message, 2 = post comment, 3 = post fistbump, 4 = comment fistbump
     private int notificationType;
 
     @Override
@@ -37,12 +37,13 @@ public class DBUserNotification implements Comparable<DBUserNotification> {
         this.timeInSeconds = timeInSeconds;
     }
 
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "SenderUsername-index", attributeName = "SenderUsername")
     @DynamoDBIndexRangeKey(globalSecondaryIndexNames = {"PostId-SenderUsername-index", "CommentId-SenderUsername-index"}, attributeName = "SenderUsername")
-    public String getUsernameSender() {
-        return usernameSender;
+    public String getSenderUsername() {
+        return senderUsername;
     }
-    public void setUsernameSender(String usernameSender) {
-        this.usernameSender = usernameSender;
+    public void setSenderUsername(String senderUsername) {
+        this.senderUsername = senderUsername;
     }
 
     @DynamoDBAttribute(attributeName = "FacebookIdSender")
@@ -59,7 +60,7 @@ public class DBUserNotification implements Comparable<DBUserNotification> {
         this.postId = postId;
     }
 
-    @DynamoDBIndexHashKey(globalSecondaryIndexNames = {"CommentId-index", "CommentId-SenderUsername-index"}, attributeName = "CommentId")
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "CommentId-SenderUsername-index", attributeName = "CommentId")
     @DynamoDBIndexRangeKey(globalSecondaryIndexName = "PostId-CommentId-index", attributeName = "CommentId")
     public String getCommentId() {
         return commentId;

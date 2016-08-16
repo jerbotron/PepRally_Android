@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.support.v7.app.ActionBar;
@@ -22,7 +23,7 @@ import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 public class SettingsActivity extends AppCompatPreferenceActivity {
 
     // Network Variables
-    private DynamoDBHelper dynamoDBHelper;
+    private static DynamoDBHelper dynamoDBHelper;
 
     // General Variables
     private static String TAG = SettingsActivity.class.getSimpleName();
@@ -36,8 +37,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         MAIN,
         NOTIFICATION,
         FAQ,
-        PRIVACY_POLICY,
-        DELETE_ACCOUNT
+        PRIVACY_POLICY
     }
 
     private static PreferenceFragmentEnum curFragmentEnum;
@@ -46,7 +46,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
      * A preference value change listener that updates the preference's summary
      * to reflect its new value.
      */
-    private Preference.OnPreferenceChangeListener sBindPreferenceSummaryToValueListener = new Preference.OnPreferenceChangeListener() {
+    private Preference.OnPreferenceChangeListener preferenceOnChangeListener = new Preference.OnPreferenceChangeListener() {
         @Override
         public boolean onPreferenceChange(Preference preference, Object value) {
             String stringValue = value.toString();
@@ -77,11 +77,11 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
      */
     private void bindPreferenceSummaryToValue(Preference preference) {
         // Set the listener to watch for value changes.
-        preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
+        preference.setOnPreferenceChangeListener(preferenceOnChangeListener);
 
         // Trigger the listener immediately with the preference's
         // current value.
-        sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
+        preferenceOnChangeListener.onPreferenceChange(preference,
                 PreferenceManager
                         .getDefaultSharedPreferences(preference.getContext())
                         .getString(preference.getKey(), ""));
@@ -177,7 +177,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             if (userProfileParcel.getEmail() != null && !userProfileParcel.getEmail().isEmpty())
                 emailPref.setSummary(userProfileParcel.getEmail());
 
-            // Bind the preference summary texts o their values
+            // Bind the preference summary texts to their values
             ((SettingsActivity) getActivity()).bindPreferenceSummaryToValue(emailPref);
 
             // notification preferences onclick handler
@@ -254,11 +254,28 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class NotificationPreferenceFragment extends PreferenceFragment {
+
+        private CheckBoxPreference notifyDirectFistbumpPref;
+        private CheckBoxPreference notifyPostFistbumpPref;
+        private CheckBoxPreference notifyCommentFistbumpPref;
+        private CheckBoxPreference notifyNewCommentPref;
+        private CheckBoxPreference notifyDirectMessagePref;
+
+        private UserProfileParcel userProfileParcel;
+
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.pref_notification);
             setHasOptionsMenu(true);
+
+            notifyDirectFistbumpPref = (CheckBoxPreference) findPreference("pref_notifications_direct_fistbump");
+            notifyPostFistbumpPref = (CheckBoxPreference) findPreference("pref_notifications_post_fistbump");
+            notifyCommentFistbumpPref = (CheckBoxPreference) findPreference("pref_notifications_comment_fistbump");
+            notifyNewCommentPref = (CheckBoxPreference) findPreference("pref_notifications_new_comment");
+            notifyDirectMessagePref = (CheckBoxPreference) findPreference("pref_notifications_direct_message");
+
+            userProfileParcel = ((SettingsActivity) getActivity()).getUserProfileParcel();
         }
 
         @Override
@@ -278,6 +295,24 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         public void onResume() {
             super.onResume();
             curFragmentEnum = PreferenceFragmentEnum.NOTIFICATION;
+        }
+
+        @Override
+        public void onPause() {
+            super.onPause();
+            dynamoDBHelper.updateUserNotificationPreferences(
+                    userProfileParcel.getCurUsername(),
+                    notifyDirectFistbumpPref.isChecked(),
+                    notifyPostFistbumpPref.isChecked(),
+                    notifyCommentFistbumpPref.isChecked(),
+                    notifyNewCommentPref.isChecked(),
+                    notifyDirectMessagePref.isChecked());
+        }
+
+        @Override
+        public void onDestroy() {
+            super.onDestroy();
+            ((SettingsActivity) getActivity()).makeToastNotification(getResources().getString(R.string.pref_notifications_pref_saved));
         }
     }
 

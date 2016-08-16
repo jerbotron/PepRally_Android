@@ -8,7 +8,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +21,7 @@ import com.peprally.jeremy.peprally.db_models.DBUserNotification;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
+import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
@@ -103,13 +103,22 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
                 break;
         }
 
-        notificationCardHolder.content.setText(Html.fromHtml("<b>"+userNotification.getUsernameSender()+"</b> " + content));
+        notificationCardHolder.content.setText(Html.fromHtml("<b>"+userNotification.getSenderUsername()+"</b> " + content));
 
         notificationCardHolder.clickableContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                notificationCardHolder.clickableContainer.setClickable(false);
-                new FetchUserPostAsyncTask().execute(userNotification);
+                switch (NotificationEnum.fromInt(userNotification.getNotificationType())) {
+                    case DIRECT_FISTBUMP:
+                        AsyncHelpers.launchUserProfileActivity(callingContext, dynamoDBHelper, userNotification.getSenderUsername(), userNotification.getUsername());
+                        break;
+                    case POST_COMMENT:
+                    case POST_FISTBUMP:
+                    case COMMENT_FISTBUMP:
+                        notificationCardHolder.clickableContainer.setClickable(false);
+                        new FetchUserPostAsyncTask().execute(userNotification);
+                        break;
+                }
             }
         });
     }
@@ -129,6 +138,10 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
         intent.putExtra("MAIN_POST", curPost);
         callingContext.startActivity(intent);
         ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
+    }
+
+    private void launchProfileActivity() {
+
     }
 
     /***********************************************************************************************

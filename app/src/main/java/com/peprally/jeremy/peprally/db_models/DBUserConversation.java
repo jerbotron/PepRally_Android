@@ -8,7 +8,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMarshall
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBTable;
 import com.peprally.jeremy.peprally.custom.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.custom.messaging.Conversation;
-import com.peprally.jeremy.peprally.custom.messaging.ConversationJSONMarshaller;
+import com.peprally.jeremy.peprally.db_models.json_marshallers.ConversationJSONMarshaller;
 
 @DynamoDBTable(tableName = "UserConversations")
 public class DBUserConversation implements Comparable<DBUserConversation> {
@@ -39,6 +39,7 @@ public class DBUserConversation implements Comparable<DBUserConversation> {
     public Conversation getConversation() { return conversation; }
     public void setConversation(Conversation conversation) { this.conversation = conversation; }
 
+    // Helpers
     public void addConversationChatMessage(ChatMessage message) {
         conversation.addChatMessage(message);
     }

@@ -63,6 +63,14 @@ public class BrowseTeamsFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (dataFetched) {
+            initializeAdapter();
+        }
+    }
+
     private void initializeData(PaginatedScanList<DBSport> result){
         teams = new ArrayList<>();
         for (DBSport DBSport : result) {
@@ -74,35 +82,17 @@ public class BrowseTeamsFragment extends Fragment {
     }
 
     private void initializeAdapter() {
-        TeamsCardAdapter teamsCardAdapter = new TeamsCardAdapter(teams);
-        recyclerView.setAdapter(teamsCardAdapter);
-        teamsCardAdapter.setOnItemClickListener(new TeamsCardAdapter.TeamsAdapterClickListener() {
+        TeamsCardAdapter teamsCardAdapter = new TeamsCardAdapter(teams, new TeamsCardAdapter.AdapterOnClickCallback() {
             @Override
-            public void onItemClick(View v, int position) {
-                ((HomeActivity) getActivity()).launchBrowsePlayerActivity(teams.get(position).name);
+            public void onClick(int position) {
+                teamsCardOnClickHandler(position);
             }
         });
+        recyclerView.setAdapter(teamsCardAdapter);
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        Log.d(TAG, "browse fragment resumed");
-        if (dataFetched) {
-            initializeAdapter();
-        }
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        Log.d(TAG, "browse fragment paused");
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        Log.d(TAG, "browse fragment destroyed");
+    public void teamsCardOnClickHandler(int position) {
+        ((HomeActivity) getActivity()).launchBrowsePlayerActivity(teams.get(position).name);
     }
 
     private class FetchSportsTableTask extends AsyncTask<Void, Void, PaginatedScanList<DBSport>> {

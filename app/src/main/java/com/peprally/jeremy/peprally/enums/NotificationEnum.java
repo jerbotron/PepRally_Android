@@ -10,7 +10,7 @@ public enum NotificationEnum {
 
     private int value;
 
-    private NotificationEnum(int value) {
+    NotificationEnum(int value) {
         this.value = value;
     }
 

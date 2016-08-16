@@ -1,6 +1,8 @@
 package com.peprally.jeremy.peprally.db_models;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
+import com.peprally.jeremy.peprally.custom.preferences.NotificationsPref;
+import com.peprally.jeremy.peprally.db_models.json_marshallers.NotificationsPrefJSONMarshaller;
 
 import java.util.Set;
 
@@ -37,35 +39,9 @@ public class DBUserProfile {
     private boolean hasNewNotification;
     private boolean isNewUser;
     private boolean isVarsityPlayer;
+    private NotificationsPref notificationsPref;
 
     // Helpers
-    public void incrementSentFistbumpsCount() {
-        sentFistbumpsCount += 1;
-    }
-
-    public void decrementSentFistbumpsCount() {
-        if (sentFistbumpsCount > 0)
-            sentFistbumpsCount -= 1;
-    }
-
-    public void incrementReceivedFistbumpsCount() {
-        receivedFistbumpsCount += 1;
-    }
-
-    public void decrementReceivedFistbumpsCount() {
-        if (receivedFistbumpsCount > 0)
-            receivedFistbumpsCount -= 1;
-    }
-
-    public void incrementPostCount() {
-        postsCount += 1;
-    }
-
-    public void decrementPostCount() {
-        if (postsCount > 0)
-            postsCount -= 1;
-    }
-
     public void addConversationId(String id) {
         if (conversationIds != null)
             conversationIds.add(id);
@@ -348,4 +324,9 @@ public class DBUserProfile {
     public void setIsVarsityPlayer(boolean isVarsityPlayer) {
         this.isVarsityPlayer = isVarsityPlayer;
     }
+
+    @DynamoDBAttribute(attributeName = "NotificationsPref")
+    @DynamoDBMarshalling(marshallerClass = NotificationsPrefJSONMarshaller.class)
+    public NotificationsPref getNotificationsPref() { return notificationsPref; }
+    public void setNotificationsPref(NotificationsPref notificationsPref) { this.notificationsPref = notificationsPref; }
 }

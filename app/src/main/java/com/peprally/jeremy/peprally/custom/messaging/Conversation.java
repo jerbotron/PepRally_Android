@@ -53,7 +53,7 @@ public class Conversation implements Parcelable{
         return null;
     }
 
-    // Parcelable Functions
+    // Parcelable Methods
     private ArrayList<ChatMessage> convertJSONToChatMessagesArrayList(String jsonChatMessages) {
         if (jsonChatMessages != null && !jsonChatMessages.isEmpty()) {
             ArrayList<ChatMessage> chatMessagesOut = new ArrayList<>();
