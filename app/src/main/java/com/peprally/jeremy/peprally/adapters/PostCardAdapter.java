@@ -193,7 +193,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                         // update the sent fistbumps count of the current user
                         dbHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUsername());
                         // make new notification
-                        dbHelper.createNewNotification(makeNotificationPostFistbumpBundle(curPost));
+                        dbHelper.createNewNotification(makeNotificationPostFistbumpBundle(curPost), null);
                         // send push notification
                         httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestPostFistbumpBundle(curPost));
                     }
@@ -259,6 +259,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
         bundle.putString("RECEIVER_USERNAME", curPost.getUsername());
         bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());
+        bundle.putString("SENDER_FACEBOOK_ID", userProfileParcel.getFacebookID());
         return bundle;
     }
 

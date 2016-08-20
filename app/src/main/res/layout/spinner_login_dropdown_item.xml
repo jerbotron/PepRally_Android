@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/id_container_spinner_login_dropdown"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@color/colorBackground"
+    android:weightSum="1">
+    <ImageView android:id="@+id/id_image_view_spinner_login_dropdown"
+        android:layout_width="0dp"
+        android:layout_weight="0.25"
+        android:layout_height="match_parent"
+        android:src="@drawable/logo_ut"
+        android:scaleX="0.5"
+        android:scaleY="0.5"
+        android:adjustViewBounds="true"
+        android:contentDescription="@string/content_description_image_view"/>
+    <TextView android:id="@+id/id_text_view_spinner_login_dropdown"
+        android:layout_width="0dp"
+        android:layout_weight="0.75"
+        android:layout_height="match_parent"
+        android:text="@string/spinner_prompt_text"
+        android:textSize="16sp"
+        android:textColor="@color/colorAccentDark"
+        android:gravity="center_vertical" />
+</LinearLayout>

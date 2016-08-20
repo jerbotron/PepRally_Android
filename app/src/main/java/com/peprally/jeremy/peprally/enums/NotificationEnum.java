@@ -6,7 +6,8 @@ public enum NotificationEnum {
     DIRECT_MESSAGE(1),
     POST_COMMENT(2),
     POST_FISTBUMP(3),
-    COMMENT_FISTBUMP(4);
+    COMMENT_FISTBUMP(4),
+    DIRECT_FISTBUMP_MATCH(5);
 
     private int value;
 
@@ -30,8 +31,10 @@ public enum NotificationEnum {
                 return POST_FISTBUMP;
             case 4:
                 return COMMENT_FISTBUMP;
+            case 5:
+                return DIRECT_FISTBUMP_MATCH;
             default:
                 return INVALID;
         }
     }
-};
+}

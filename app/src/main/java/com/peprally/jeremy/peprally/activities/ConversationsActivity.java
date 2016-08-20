@@ -121,6 +121,7 @@ public class ConversationsActivity extends AppCompatActivity {
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
+    @SuppressWarnings("unchecked")
     private class FetchUserConversationsAsyncTask extends AsyncTask<String, Void, List<DBUserConversation>> {
         @Override
         protected List<DBUserConversation> doInBackground(String... usernames) {

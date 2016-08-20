@@ -73,6 +73,11 @@
         <activity
             android:name=".activities.MessagingActivity"
             android:label="@string/activity_label_messaging"
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
+        <activity
+            android:name=".activities.SettingsActivity"
+            android:label="@string/activity_label_settings"
             android:screenOrientation="portrait" />
 
         <provider
@@ -114,10 +119,6 @@
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
-
-        <activity
-            android:name=".activities.SettingsActivity"
-            android:label="@string/activity_label_settings"></activity>
     </application>
 
 </manifest>

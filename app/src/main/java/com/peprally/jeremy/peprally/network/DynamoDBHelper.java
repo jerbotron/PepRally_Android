@@ -67,6 +67,10 @@ public class DynamoDBHelper {
         void onTaskDone();
     }
 
+    public interface AsyncTaskCallbackWithReturnObject {
+        void onTaskDone(Object object);
+    }
+
     /***********************************************************************************************
      *************************************** DATABASE METHODS **************************************
      **********************************************************************************************/
@@ -154,22 +158,34 @@ public class DynamoDBHelper {
         new AddNewPostCommentAsyncTask(taskCallback).execute(comment);
     }
 
-    public void createNewNotification(Bundle bundle) {
-        new CreateNewDBUserNotificationAsyncTask().execute(bundle);
+    public void createNewNotification(Bundle bundle, AsyncTaskCallbackWithReturnObject asyncTaskCallbackWithReturnObject) {
+        // if sending a direct fistbump notification, we need to query to find the facebook id of the sender
+        // and make the correct push notification call
+        if (NotificationEnum.fromInt(bundle.getInt("NOTIFICATION_TYPE")) == NotificationEnum.DIRECT_FISTBUMP ) {
+            new CreateNewDBUserNotificationAsyncTask(asyncTaskCallbackWithReturnObject).execute(bundle);
+        } else {
+            new CreateNewDBUserNotificationAsyncTask().execute(bundle);
+        }
     }
 
     public void createNewFeedback(Bundle bundle) {
         new CreateNewDBUserFeedbackAsyncTask().execute(bundle);
     }
 
-    public void createNewConversation(String username1, String username2) {
-        new CreateNewDBUserConversationAsyncTask().execute(username1, username2);
+    public void createNewConversation(UserProfileParcel userProfileParcel, AsyncTaskCallbackWithReturnObject callbackWithReturnObject) {
+        new CreateNewDBUserConversationAsyncTask(callbackWithReturnObject).execute(userProfileParcel.getCurUsername(), userProfileParcel.getProfileUsername());
     }
 
     // Database delete methods
     public void deletePostComment(int position, DBUserPost userPost, AsyncTaskCallback taskCallback) {
         userPost.deleteCommentAt(position);
         new DeletePostCommentAsyncTask(taskCallback).execute(userPost);
+    }
+
+    public void deleteDirectFistbumpNotification(NotificationEnum notificationType, String senderUsername) {
+        Bundle bundle = new Bundle();
+        bundle.putString("SENDER_USERNAME", senderUsername);
+        new DeleteDBUserNotificationAsyncTask(notificationType).execute(bundle);
     }
 
     public void deletePostFistbumpNotification(NotificationEnum notificationType, String PostId, String senderUsername) {
@@ -207,6 +223,11 @@ public class DynamoDBHelper {
     }
 
     public void deleteConversation(Conversation conversation, AsyncTaskCallback taskCallback) {
+        for (String username : conversation.getUsernameFacebookIdMap().keySet()) {
+            Bundle bundle = new Bundle();
+            bundle.putString("SENDER_USERNAME", username);
+            new DeleteDBUserNotificationAsyncTask(NotificationEnum.DIRECT_FISTBUMP).execute(bundle);
+        }
         new DeleteDBUserConversationAsyncTask(taskCallback).execute(conversation);
     }
 
@@ -485,27 +506,47 @@ public class DynamoDBHelper {
 
     // Notification Tasks
     private class CreateNewDBUserNotificationAsyncTask extends AsyncTask<Bundle, Void, Void> {
+
+        private AsyncTaskCallbackWithReturnObject asyncTaskCallbackWithReturnObject;
+
+        private CreateNewDBUserNotificationAsyncTask() {
+            this.asyncTaskCallbackWithReturnObject = null;
+        }
+
+        private CreateNewDBUserNotificationAsyncTask(AsyncTaskCallbackWithReturnObject taskCallbackWithReturnObject) {
+            this.asyncTaskCallbackWithReturnObject = taskCallbackWithReturnObject;
+        }
+
         @Override
         protected Void doInBackground(Bundle... params) {
             Bundle bundle = params[0];
             UserProfileParcel userProfileParcel = bundle.getParcelable("USER_PROFILE_PARCEL");
             DBUserNotification userNotification = new DBUserNotification();
+            DBUserProfile senderProfile;
+            // get the notification type
+            NotificationEnum notificationType = NotificationEnum.fromInt(bundle.getInt("NOTIFICATION_TYPE"));
             // getting time stamp
-            userNotification.setTimeInSeconds(Helpers.getTimestampSeconds());
+            userNotification.setTimestampSeconds(Helpers.getTimestampSeconds());
             // setting up new user notification
             userNotification.setUsername(bundle.getString("RECEIVER_USERNAME")); // who the notification is going to
             if (userProfileParcel != null) {
                 userNotification.setSenderUsername(userProfileParcel.getCurUsername());
-                userNotification.setFacebookIdSender(userProfileParcel.getFacebookID());
+                if (notificationType == NotificationEnum.DIRECT_FISTBUMP) {
+                    senderProfile = loadDBUserProfile(userProfileParcel.getCurUsername());
+                    userNotification.setFacebookIdSender(senderProfile.getFacebookId());
+                } else {
+                    userNotification.setFacebookIdSender(userProfileParcel.getFacebookID());
+                }
             }
 
-            NotificationEnum notificationType = NotificationEnum.fromInt(bundle.getInt("NOTIFICATION_TYPE"));
             switch (notificationType) {
                 case DIRECT_FISTBUMP:
                     userNotification.setNotificationType(notificationType.toInt());
-                    userNotification.setSenderUsername(bundle.getString("SENDER_USERNAME"));
-                    DBUserProfile senderProfile = loadDBUserProfile(bundle.getString("SENDER_USERNAME"));
-                    userNotification.setFacebookIdSender(senderProfile.getFacebookId());
+                    // special case for direct_fistbump notification, we need to manually query for
+                    // the sender facebook id since the notification is made on their user profile
+//                    if (senderProfile != null) {
+//                        asyncTaskCallbackWithReturnObject.onTaskDone(senderProfile.getFacebookId());
+//                    }
                     break;
                 case POST_COMMENT:
                     userNotification.setNotificationType(notificationType.toInt());
@@ -551,15 +592,25 @@ public class DynamoDBHelper {
             DynamoDBQueryExpression<DBUserNotification> queryExpression = null;
             Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
             switch (notificationType) {
+                case DIRECT_FISTBUMP: {
+                    expressionAttributeValues.put(":type", new AttributeValue().withN(String.valueOf(notificationType.toInt())));
+                    userNotification.setUsername(bundle.getString("SENDER_USERNAME"));
+                    queryExpression = new DynamoDBQueryExpression<DBUserNotification>()
+                            .withHashKeyValues(userNotification)
+                            .withFilterExpression("NotificationType = :type")
+                            .withExpressionAttributeValues(expressionAttributeValues)
+                            .withConsistentRead(false);
+                    break;
+                }
                 case POST_COMMENT: {
                     Comment postComment = bundle.getParcelable("COMMENT");
                     expressionAttributeValues.put(":type", new AttributeValue().withN(String.valueOf(notificationType.toInt())));
                     if (postComment != null) {
                         userNotification.setPostId(postComment.getPostId());
                         queryExpression = new DynamoDBQueryExpression<DBUserNotification>()
-                                .withIndexName("PostId-CommentID-index")
+                                .withIndexName("PostId-CommentId-index")
                                 .withHashKeyValues(userNotification)
-                                .withRangeKeyCondition("CommentID", new Condition()
+                                .withRangeKeyCondition("CommentId", new Condition()
                                         .withComparisonOperator(ComparisonOperator.EQ)
                                         .withAttributeValueList(new AttributeValue().withS(postComment.getCommentId())))
                                 .withFilterExpression("NotificationType = :type")
@@ -570,7 +621,7 @@ public class DynamoDBHelper {
                 }
                 case POST_FISTBUMP: {
                     userNotification.setPostId(bundle.getString("POST_ID"));
-                    expressionAttributeValues.put(":type", new AttributeValue().withN("2"));
+                    expressionAttributeValues.put(":type", new AttributeValue().withN(String.valueOf(notificationType.toInt())));
                     queryExpression = new DynamoDBQueryExpression<DBUserNotification>()
                             .withIndexName("PostId-SenderUsername-index")
                             .withHashKeyValues(userNotification)
@@ -631,9 +682,13 @@ public class DynamoDBHelper {
     }
 
     // Messaging Tasks
-    private class CreateNewDBUserConversationAsyncTask extends AsyncTask<String, Void, Void> {
+    private class CreateNewDBUserConversationAsyncTask extends AsyncTask<String, Void, Conversation> {
+        private AsyncTaskCallbackWithReturnObject callbackWithReturnObject;
+        private CreateNewDBUserConversationAsyncTask(AsyncTaskCallbackWithReturnObject callbackWithReturnObject) {
+            this.callbackWithReturnObject = callbackWithReturnObject;
+        }
         @Override
-        protected Void doInBackground(String... usernames) {
+        protected Conversation doInBackground(String... usernames) {
             DBUserProfile fistbumpedUserProfile1 = loadDBUserProfile(usernames[0]);
             DBUserProfile fistbumpedUserProfile2 = loadDBUserProfile(usernames[1]);
             if (fistbumpedUserProfile1 != null && fistbumpedUserProfile2 != null) {
@@ -646,7 +701,10 @@ public class DynamoDBHelper {
                 Map<String, String> usernameFacebookIDMap = new HashMap<>();
                 usernameFacebookIDMap.put(fistbumpedUserProfile1.getUsername(), fistbumpedUserProfile1.getFacebookId());
                 usernameFacebookIDMap.put(fistbumpedUserProfile2.getUsername(), fistbumpedUserProfile2.getFacebookId());
-                newConversation.setConversation(new Conversation(conversation_id, new ArrayList<ChatMessage>(), usernameFacebookIDMap));
+                newConversation.setConversation(new Conversation(conversation_id,
+                                                                 timeInSeconds,
+                                                                 new ArrayList<ChatMessage>(),
+                                                                 usernameFacebookIDMap));
 
                 // append conversation_id to each user
                 mapper.save(newConversation);
@@ -654,8 +712,16 @@ public class DynamoDBHelper {
                 fistbumpedUserProfile2.addConversationId(conversation_id);
                 mapper.save(fistbumpedUserProfile1);
                 mapper.save(fistbumpedUserProfile2);
+                return newConversation.getConversation();
             }
             return null;
+        }
+
+        @Override
+        protected void onPostExecute(Conversation conversation) {
+            if (conversation != null) {
+                callbackWithReturnObject.onTaskDone(conversation);
+            }
         }
     }
 
@@ -682,7 +748,7 @@ public class DynamoDBHelper {
             Conversation conversation = conversations[0];
             DBUserConversation userConversation = loadDBUserConversation(conversation.getConversationID());
             if (userConversation != null) {
-                for (String username : conversation.getUsernameFacebookIDMap().keySet()) {
+                for (String username : conversation.getUsernameFacebookIdMap().keySet()) {
                     DBUserProfile userProfile = loadDBUserProfile(username);
                     if (userProfile != null) {
                         userProfile.removeConversationId(conversation.getConversationID());

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/id_text_view_spinner_login"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textColor="@color/colorAccentDark"
+    android:text="@string/spinner_prompt_text"
+    android:textSize="16sp"
+    android:drawableEnd="@drawable/ic_arrow_drop_down"
+    android:drawableRight="@drawable/ic_arrow_drop_down"
+    android:minLines="1"
+    android:maxLines="1" />

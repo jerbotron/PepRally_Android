@@ -34,7 +34,6 @@ public class ProfilePostsFragment extends Fragment {
     private PostCardAdapter postCardAdapter;
     private RecyclerView recyclerView;
     private TextView noPostsText;
-    private RelativeLayout progressCircleContainer;
     private SwipeRefreshLayout profilePostsSwipeRefreshContainer;
 
     // General Variables
@@ -51,9 +50,6 @@ public class ProfilePostsFragment extends Fragment {
 
         userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
 
-        // initialize UI components
-        progressCircleContainer = (RelativeLayout) view.findViewById(R.id.id_container_profile_posts_progress_circle);
-
         // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
         recyclerView = (RecyclerView) view.findViewById(R.id.recycler_view_profile_posts);
         LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getActivity());
@@ -63,6 +59,7 @@ public class ProfilePostsFragment extends Fragment {
 
         // setup swipe refresh container
         profilePostsSwipeRefreshContainer = (SwipeRefreshLayout) view.findViewById(R.id.container_swipe_refresh_profile_posts);
+        profilePostsSwipeRefreshContainer.setRefreshing(true);
         profilePostsSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -150,9 +147,6 @@ public class ProfilePostsFragment extends Fragment {
             // stop refresh loading animation
             if (profilePostsSwipeRefreshContainer.isRefreshing())
                 profilePostsSwipeRefreshContainer.setRefreshing(false);
-
-            // stop on load progress circle animation
-            progressCircleContainer.setVisibility(View.GONE);
         }
     }
 }

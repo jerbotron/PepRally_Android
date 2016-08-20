@@ -1,11 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center">
 
+    <TextView
+        android:id="@+id/id_dialog_fistbumped_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_margin="@dimen/activity_horizontal_margin"
+        android:textSize="40sp" />
+    <TextView
+        android:id="@+id/id_dialog_fistbumped_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:textSize="16sp" />
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -43,7 +58,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:background="@color/colorPrimary"
+        android:background="@drawable/button_send_message"
         android:padding="16dp"
         android:clickable="true"
         android:layout_margin="@dimen/activity_horizontal_margin">
@@ -52,8 +67,7 @@
             android:layout_height="wrap_content"
             android:text="@string/placeholder_fistbump_match_send_message"
             android:textSize="16sp"
-            android:textColor="@color/colorWhite"
-            android:gravity="center" />
+            android:textColor="@color/colorWhite" />
     </LinearLayout>
 
     <LinearLayout
@@ -62,7 +76,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:background="@color/colorAccent"
+        android:background="@drawable/button_go_back"
         android:padding="16dp"
         android:clickable="true"
         android:layout_marginLeft="@dimen/activity_horizontal_margin"
@@ -75,8 +89,7 @@
             android:layout_height="wrap_content"
             android:text="@string/placeholder_fistbump_match_go_back"
             android:textSize="16sp"
-            android:textColor="@color/colorWhite"
-            android:gravity="center" />
+            android:textColor="@color/colorWhite" />
     </LinearLayout>
 
 </LinearLayout>

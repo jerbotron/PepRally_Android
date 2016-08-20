@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:baselineAligned="false"
         android:orientation="horizontal"
-        android:minHeight="90dp"
+        android:minHeight="80dp"
         android:layout_margin="8dp">
         <RelativeLayout
             android:id="@+id/id_container_comment_profile_pic_time_stamp"
@@ -77,8 +77,9 @@
                 android:clickable="true" />
             <TextView
                 android:id="@+id/id_text_view_comment_fistbumps_count"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:gravity="center"
                 android:text="@string/placeholder_post_fistbumps_count"
                 android:clickable="true"/>
         </LinearLayout>

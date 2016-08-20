@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:gravity="center"
+    android:baselineAligned="false"
+    android:padding="@dimen/activity_horizontal_margin"
+    android:layout_weight="1">
+    <TextView
+        android:id="@+id/id_dialog_confirm_send_fistbump_title"
+        android:layout_width="0dp"
+        android:layout_weight="0.75"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:maxLines="3"
+        android:textSize="28sp" />
+    <ImageButton
+        android:id="@+id/id_dialog_confirm_send_fistbump_button_fistbump"
+        android:layout_width="0dp"
+        android:layout_weight="0.25"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_fistbump_filled_50"
+        android:background="@color/colorWhite"
+        android:contentDescription="@string/content_description_image_button"/>
+
+</LinearLayout>

@@ -12,13 +12,13 @@ public class DBUserNotification implements Comparable<DBUserNotification> {
     private String postId;
     private String commentId;
     private String comment;
-    private Long timeInSeconds;
+    private Long timestampSeconds;
     // 0 = direct fistbump, 1 = direct message, 2 = post comment, 3 = post fistbump, 4 = comment fistbump
     private int notificationType;
 
     @Override
     public int compareTo(@NonNull DBUserNotification another) {
-        return timeInSeconds.compareTo(another.timeInSeconds);
+        return timestampSeconds.compareTo(another.timestampSeconds);
     }
 
     @DynamoDBHashKey(attributeName = "Username")
@@ -30,11 +30,11 @@ public class DBUserNotification implements Comparable<DBUserNotification> {
     }
 
     @DynamoDBRangeKey(attributeName = "TimestampSeconds")
-    public long getTimeInSeconds() {
-        return timeInSeconds;
+    public long getTimestampSeconds() {
+        return timestampSeconds;
     }
-    public void setTimeInSeconds(long timeInSeconds) {
-        this.timeInSeconds = timeInSeconds;
+    public void setTimestampSeconds(long timestampSeconds) {
+        this.timestampSeconds = timestampSeconds;
     }
 
     @DynamoDBIndexHashKey(globalSecondaryIndexName = "SenderUsername-index", attributeName = "SenderUsername")

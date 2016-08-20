@@ -34,17 +34,17 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
     // General Variables
     private Context callingContext;
     private List<ChatMessage> messageHistoryList;
-    private UserProfileParcel userProfileParcel;
+    private String currentUsername;
 
     /***********************************************************************************************
      ********************************** ADAPTER CONSTRUCTOR/METHODS ********************************
      **********************************************************************************************/
     public MessageArrayAdapter(Context callingContext,
                                ArrayList<ChatMessage> messageHistoryList,
-                               UserProfileParcel userProfileParcel) {
+                               String currentUsername) {
         super(callingContext, R.layout.message_right);  // default text view resource id
         this.callingContext = callingContext;
-        this.userProfileParcel = userProfileParcel;
+        this.currentUsername = currentUsername;
         if (messageHistoryList == null)
             this.messageHistoryList = new ArrayList<>();
         else
@@ -73,7 +73,7 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
         ChatMessage chatMessage = getItem(position);
         if (chatMessage != null) {
             LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            if (chatMessage.getUsername().equals(userProfileParcel.getCurUsername())) {
+            if (chatMessage.getUsername().equals(currentUsername)) {
                 messageView = inflater.inflate(R.layout.message_right, parent, false);
             }
             else {
@@ -131,7 +131,6 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
             if (chatMessages != null) {
                 messageHistoryList = chatMessages;
                 notifyDataSetChanged();
-                Log.d("MAA: ", "got to here");
             }
         }
     }

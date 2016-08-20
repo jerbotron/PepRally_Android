@@ -20,6 +20,7 @@ public class ConversationJSONMarshaller extends JsonMarshaller<Conversation> imp
         JSONObject jsonConversation = new JSONObject();
         try {
             jsonConversation.put("conversation_id", conversation.getConversationID());
+            jsonConversation.put("timestamp_created", conversation.getTimestampCreated());
             ArrayList<ChatMessage> messages = conversation.getChatMessages();
             if (messages != null) {
                 JSONArray jsonMessagesArray = new JSONArray();
@@ -37,7 +38,7 @@ public class ConversationJSONMarshaller extends JsonMarshaller<Conversation> imp
             }
 
             JSONObject jsonUserFacebookIDs = new JSONObject();
-            Map<String, String> usernameFacebookIDMap = conversation.getUsernameFacebookIDMap();
+            Map<String, String> usernameFacebookIDMap = conversation.getUsernameFacebookIdMap();
             if (usernameFacebookIDMap != null) {
                 for (String username : usernameFacebookIDMap.keySet()) {
                     jsonUserFacebookIDs.put(username, usernameFacebookIDMap.get(username));
@@ -57,7 +58,7 @@ public class ConversationJSONMarshaller extends JsonMarshaller<Conversation> imp
             ArrayList<ChatMessage> messages = new ArrayList<>();
             Map<String, String> usernameFacebookIDMap = new HashMap<>();
             String conversationID = jsonConversation.getString("conversation_id");
-
+            Long timestampCreated = jsonConversation.getLong("timestamp_created");
             JSONArray jsonMessages = jsonConversation.getJSONArray("conversation");
             for (int i = 0; i < jsonMessages.length(); i++) {
                 messages.add(new ChatMessage(jsonMessages.getJSONObject(i)));
@@ -67,7 +68,10 @@ public class ConversationJSONMarshaller extends JsonMarshaller<Conversation> imp
                 String username = jsonFacebookIDs.names().get(i).toString();
                 usernameFacebookIDMap.put(username, jsonFacebookIDs.getString(username));
             }
-            return new Conversation(conversationID, messages, usernameFacebookIDMap);
+            return new Conversation(conversationID,
+                                    timestampCreated,
+                                    messages,
+                                    usernameFacebookIDMap);
         }
         catch (JSONException e) {
             e.printStackTrace();

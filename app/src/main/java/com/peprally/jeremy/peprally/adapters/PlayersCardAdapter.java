@@ -2,7 +2,6 @@ package com.peprally.jeremy.peprally.adapters;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +14,7 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.FavoritePlayerActivity;
 import com.peprally.jeremy.peprally.custom.ui.CircleImageTransformation;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
+import com.peprally.jeremy.peprally.utils.Helpers;
 import com.squareup.picasso.Picasso;
 
 public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.PlayerCardHolder>{
@@ -80,11 +80,10 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
             case "Swimming and Diving":
             case "Tennis":
             case "Track and Field":
-                playerCardHolder.playerName.setText(Html.fromHtml("<b>"
-                        + playerNameText + "</b>"));
+                playerCardHolder.playerName.setText(Helpers.getTextHtml("<b>" + playerNameText + "</b>"));
                 break;
             default:
-                playerCardHolder.playerName.setText(Html.fromHtml("<b>#"
+                playerCardHolder.playerName.setText(Helpers.getTextHtml("<b>#"
                         + String.valueOf(curPlayer.getNumber()) + " "
                         + playerNameText + "</b>"));
                 break;

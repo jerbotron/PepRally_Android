@@ -2,6 +2,7 @@ package com.peprally.jeremy.peprally.activities;
 
 import android.content.Intent;
 import android.content.res.TypedArray;
+import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
@@ -16,7 +17,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.text.Html;
 import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.View;
@@ -29,6 +29,7 @@ import android.widget.Toast;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMappingException;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
+import com.peprally.jeremy.peprally.custom.messaging.Conversation;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.enums.IntentRequestEnum;
@@ -44,13 +45,15 @@ import com.peprally.jeremy.peprally.custom.ui.ProfileViewPager;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 import com.squareup.picasso.Picasso;
 
+import org.w3c.dom.Text;
+
 public class ProfileActivity extends AppCompatActivity {
 
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // AWS/HTTP Variables
-    private DynamoDBHelper dbHelper;
+    private DynamoDBHelper dynamoDBHelper;
     private HTTPRequestsHelper httpRequestsHelper;
 
     // UI Variables
@@ -76,7 +79,7 @@ public class ProfileActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        dbHelper = new DynamoDBHelper(this);
+        dynamoDBHelper = new DynamoDBHelper(this);
         httpRequestsHelper = new HTTPRequestsHelper(this);
 
         userProfileParcel = getIntent().getExtras().getParcelable("USER_PROFILE_PARCEL");
@@ -219,11 +222,20 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
-    private Bundle makeNotificationDirectFistbumpBundle() {
+    private Bundle makeDBUserNotificationDirectFistbumpBundle() {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_FISTBUMP.toInt());
         bundle.putString("RECEIVER_USERNAME", userProfileParcel.getProfileUsername());  // who the notification is going to
+        bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
+        return bundle;
+    }
+
+    private Bundle makePushNotificationDirectFistbumpBundle(String senderFacebookId, NotificationEnum notificationType) {
+        Bundle bundle = new Bundle();
+        bundle.putInt("NOTIFICATION_TYPE", notificationType.toInt());
+        bundle.putString("RECEIVER_USERNAME", userProfileParcel.getProfileUsername());  // who the notification is going to
         bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());    // who the notification is from
+        bundle.putString("SENDER_FACEBOOK_ID", senderFacebookId);    // who the notification is from
         return bundle;
     }
 
@@ -301,13 +313,13 @@ public class ProfileActivity extends AppCompatActivity {
                 }
             });
 
-            textView_sentFistbumpsCount.setText(Html.fromHtml("<b>"
+            textView_sentFistbumpsCount.setText(Helpers.getTextHtml("<b>"
                     + Integer.toString(userProfileParcel.getSentFistbumpsCount())
                     + "</b> " + getString(R.string.fistbumps_sent)));
-            textView_receivedFistbumpsCount.setText(Html.fromHtml("<b>"
+            textView_receivedFistbumpsCount.setText(Helpers.getTextHtml("<b>"
                     + Integer.toString(userProfileParcel.getReceivedFistbumpsCount())
                     + "</b> " + getString(R.string.fistbumps_received)));
-            textView_postsCount.setText(Html.fromHtml("<b>"
+            textView_postsCount.setText(Helpers.getTextHtml("<b>"
                     + Integer.toString(userProfileParcel.getPostsCount())
                     + "</b> " + getString(R.string.profile_posts)));
         }
@@ -403,12 +415,12 @@ public class ProfileActivity extends AppCompatActivity {
         final Snackbar snackbar;
         if (fistbumpSent) {
             snackbar = Snackbar.make(findViewById(R.id.id_activity_profile),
-                        getResources().getString(R.string.profile_fistbump_sent) + " " + userProfileParcel.getProfileUsername(),
+                        getResources().getString(R.string.profile_fistbump_sent) + " " + userProfileParcel.getProfileUsername() + "!",
                         Snackbar.LENGTH_LONG);
         }
         else {
             snackbar = Snackbar.make(findViewById(R.id.id_activity_profile),
-                        userProfileParcel.getFirstname() + " has not made a profile yet, fistbump not sent.",
+                        userProfileParcel.getFirstname() + " has not made a profile yet :(",
                         Snackbar.LENGTH_LONG);
         }
         snackbar.setAction("OKAY", new View.OnClickListener() {
@@ -419,26 +431,26 @@ public class ProfileActivity extends AppCompatActivity {
         snackbar.show();
     }
 
-    private void launchVerifySendDirectFistbumpDialog() {
+    private void launchConfirmSendDirectFistbumpDialog() {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-        final View dialogView = View.inflate(this, R.layout.dialog_verify_direct_fistbump, null);
+        final View dialogView = View.inflate(this, R.layout.dialog_confirm_direct_fistbump, null);
         dialogBuilder.setView(dialogView);
 
-        final ImageButton fistbumpButton = (ImageButton) dialogView.findViewById(R.id.id_dialog_button_fistbump);
+        final TextView dialogTitle = (TextView) dialogView.findViewById(R.id.id_dialog_confirm_send_fistbump_title);
+        final ImageButton fistbumpButton = (ImageButton) dialogView.findViewById(R.id.id_dialog_confirm_send_fistbump_button_fistbump);
 
-        dialogBuilder.setTitle("Send fistbump to " + userProfileParcel.getFirstname() + " ?");
+        Typeface customTf = Typeface.createFromAsset(getAssets(), "fonts/Sketch 3D.otf");
+        dialogTitle.setTypeface(customTf);
+        dialogTitle.setText("Send fistbump to " + userProfileParcel.getFirstname() + " ?");
         final AlertDialog b = dialogBuilder.create();
         fistbumpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // increase appropriate fistbump counts
-                dbHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUsername());
-                dbHelper.incrementUserReceivedFistbumpsCount(userProfileParcel.getProfileUsername());
+                dynamoDBHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUsername());
+                dynamoDBHelper.incrementUserReceivedFistbumpsCount(userProfileParcel.getProfileUsername());
                 // add users to respective sent/received fistbump lists
                 new HandleCurUserDirectFistbumpToProfileUserTask().execute();
-                // make push notifications
-                dbHelper.createNewNotification(makeNotificationDirectFistbumpBundle());
-                httpRequestsHelper.makePushNotificationRequest(makeNotificationDirectFistbumpBundle());
                 // update UI
                 final TextView buttonEditProfileContent = (TextView) findViewById(R.id.id_button_edit_profile_content);
                 final FloatingActionButton actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
@@ -447,6 +459,9 @@ public class ProfileActivity extends AppCompatActivity {
                 actionFAB.setBackgroundTintList(ContextCompat.getColorStateList(getApplicationContext(), R.color.colorPrimaryLight));
                 // show confirmation snackbar msg
                 showDirectFistbumpSnackbarConfirmation(true);
+                // update new UI button behaviors
+                setDidCurrentUserFistbumpProfileUserAlready(true);
+                updateDirectFistbumpButtons(true);
                 b.dismiss();
             }
         });
@@ -466,13 +481,15 @@ public class ProfileActivity extends AppCompatActivity {
         snackbar.show();
     }
 
-    private void updateDirectFistbumpButtons(boolean fistbumped) {
+    private void updateDirectFistbumpButtons(boolean alreadyFistbumped) {
         final LinearLayout buttonEditProfile = (LinearLayout) findViewById(R.id.id_button_edit_profile_container);
         final TextView buttonEditProfileContent = (TextView) findViewById(R.id.id_button_edit_profile_content);
         final FloatingActionButton actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
         // if current user already fistbumped profile user
-        if (fistbumped) {
+        if (alreadyFistbumped) {
             buttonEditProfileContent.setText(getResources().getString(R.string.profile_fistbumped_text));
+            buttonEditProfileContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorWhite));
+            buttonEditProfile.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_default_clicked));
             buttonEditProfile.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -491,6 +508,8 @@ public class ProfileActivity extends AppCompatActivity {
         // if current user has not fistbumped profile user
         else {
             buttonEditProfileContent.setText(getResources().getString(R.string.profile_send_fistbump_text));
+            buttonEditProfileContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorPrimary));
+            buttonEditProfile.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_default));
             buttonEditProfile.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -499,7 +518,7 @@ public class ProfileActivity extends AppCompatActivity {
                         showDirectFistbumpSnackbarConfirmation(false);
                     }
                     else {
-                        launchVerifySendDirectFistbumpDialog();
+                        launchConfirmSendDirectFistbumpDialog();
                     }
                 }
             });
@@ -515,7 +534,7 @@ public class ProfileActivity extends AppCompatActivity {
                         showDirectFistbumpSnackbarConfirmation(false);
                     }
                     else {
-                        launchVerifySendDirectFistbumpDialog();
+                        launchConfirmSendDirectFistbumpDialog();
                     }
                 }
             });
@@ -524,12 +543,14 @@ public class ProfileActivity extends AppCompatActivity {
         buttonEditProfileContent.setCompoundDrawablesWithIntrinsicBounds(0,0,0,0);
     }
 
-    private void launchNewFistbumpMatchDialog() {
+    private void launchFistbumpMatchDialog(final Conversation conversation, final String currentUserFacebookId) {
         Helpers.vibrateDeviceNotification(this);
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
         final View dialogView = View.inflate(this, R.layout.dialog_fistbump_match, null);
         dialogBuilder.setView(dialogView);
 
+        final TextView dialogTitle = (TextView) dialogView.findViewById(R.id.id_dialog_fistbumped_title);
+        final TextView dialogMessage = (TextView) dialogView.findViewById(R.id.id_dialog_fistbumped_message);
         final ImageView leftUserProfileImage = (ImageView) dialogView.findViewById(R.id.id_dialog_fistbumped_user_profile_left);
         final ImageView rightUserProfileImage = (ImageView) dialogView.findViewById(R.id.id_dialog_fistbumped_user_profile_right);
         final LinearLayout sendMessageButton = (LinearLayout) dialogView.findViewById(R.id.id_dialog_fistbumped_button_send_message);
@@ -537,15 +558,24 @@ public class ProfileActivity extends AppCompatActivity {
 
         new SetFistbumpMatchedUsersProfileImagesAsyncTask().execute(leftUserProfileImage, rightUserProfileImage);
 
-        dialogBuilder.setTitle("It's a Fistbump!");
-        dialogBuilder.setMessage("You and " + userProfileParcel.getFirstname() + " have fistbumped each other.");
-        final AlertDialog b = dialogBuilder.create();
+        Typeface customTf = Typeface.createFromAsset(getAssets(), "fonts/Sketch 3D.otf");
+        dialogTitle.setTypeface(customTf);
+        dialogTitle.setText(getResources().getString(R.string.placeholder_fistbump_match_title));
+        dialogMessage.setText("You and " + userProfileParcel.getFirstname() + " have fistbumped each other.");
 
+        final AlertDialog b = dialogBuilder.create();
         // button on click handlers
         sendMessageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 b.dismiss();
+                finish();
+                Intent intent = new Intent(ProfileActivity.this, MessagingActivity.class);
+                intent.putExtra("CONVERSATION", conversation);
+                intent.putExtra("CURRENT_USERNAME", userProfileParcel.getCurUsername());
+                intent.putExtra("CURRENT_USER_FACEBOOK_ID", currentUserFacebookId);
+                startActivity(intent);
+                overridePendingTransition(R.anim.right_in, R.anim.left_out);
             }
         });
 
@@ -566,7 +596,7 @@ public class ProfileActivity extends AppCompatActivity {
         ImageView leftUserProfileImage, rightUserProfileImage;
         @Override
         protected String doInBackground(ImageView... params) {
-            DBUserProfile curUserProfile = dbHelper.loadDBUserProfile(userProfileParcel.getCurUsername());
+            DBUserProfile curUserProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurUsername());
             if (curUserProfile != null) {
                 leftUserProfileImage = params[0];
                 rightUserProfileImage = params[1];
@@ -594,7 +624,7 @@ public class ProfileActivity extends AppCompatActivity {
             // 2) Load varsity player's profile
             // 3) Load varsity player's profile who also has a general profile
             try {
-                userProfile = dbHelper.loadDBUserProfile(userProfileParcel.getProfileUsername());
+                userProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getProfileUsername());
             }
             catch (DynamoDBMappingException e) {
                 userProfile = null;
@@ -613,7 +643,7 @@ public class ProfileActivity extends AppCompatActivity {
             }
 
             try {
-                playerProfile = dbHelper.loadDBPlayerProfile(playerTeam, playerIndex);
+                playerProfile = dynamoDBHelper.loadDBPlayerProfile(playerTeam, playerIndex);
             }
             catch (DynamoDBMappingException e) {
                 playerProfile = null;
@@ -624,7 +654,7 @@ public class ProfileActivity extends AppCompatActivity {
                     SetupNewUserProfile();
                 if (!userProfileParcel.getIsSelfProfile()) {
                     // check if current user has fistbumped profile user
-                    DBUserProfile curUser = dbHelper.loadDBUserProfile(userProfileParcel.getCurUsername());
+                    DBUserProfile curUser = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurUsername());
                     if (curUser.getUsersDirectFistbumpSent().contains(userProfileParcel.getProfileUsername())) {
                         setDidCurrentUserFistbumpProfileUserAlready(true);
                     }
@@ -656,13 +686,13 @@ public class ProfileActivity extends AppCompatActivity {
                 userProfile.setIsVarsityPlayer(true);
                 userProfile.setTeam(playerProfile.getTeam());
                 userProfile.setPlayerIndex(playerProfile.getIndex());
-                dbHelper.saveDBObject(playerProfile);
+                dynamoDBHelper.saveDBObject(playerProfile);
             }
             else {
                 userProfile.setIsVarsityPlayer(false);
                 userProfile.setPlayerIndex(Helpers.INTEGER_INVALID);
             }
-            dbHelper.saveDBObject(userProfile);
+            dynamoDBHelper.saveDBObject(userProfile);
         }
 
         private void UpdateUserProfileParcel() {
@@ -702,7 +732,7 @@ public class ProfileActivity extends AppCompatActivity {
         private DBUserProfile DBUserProfile;
         @Override
         protected Void doInBackground(Void... params) {
-            DBUserProfile = dbHelper.loadDBUserProfile(userProfileParcel.getProfileUsername());
+            DBUserProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getProfileUsername());
             pushUserProfileChanges();
             return null;
         }
@@ -717,34 +747,48 @@ public class ProfileActivity extends AppCompatActivity {
             DBUserProfile.setFavoritePlayer(userProfileParcel.getFavoritePlayer());
             DBUserProfile.setPepTalk(userProfileParcel.getPepTalk());
             DBUserProfile.setTrashTalk(userProfileParcel.getTrashTalk());
-            dbHelper.saveDBObject(DBUserProfile);
+            dynamoDBHelper.saveDBObject(DBUserProfile);
         }
     }
 
     private class HandleCurUserDirectFistbumpToProfileUserTask extends AsyncTask<Void, Void, Boolean> {
+        DBUserProfile profileUser;
+        DBUserProfile currentUser;
         @Override
         protected Boolean doInBackground(Void... voids) {
-            DBUserProfile profileUser = dbHelper.loadDBUserProfile(userProfileParcel.getProfileUsername());
-            DBUserProfile curUser = dbHelper.loadDBUserProfile(userProfileParcel.getCurUsername());
-            if (profileUser != null && curUser != null) {
-                curUser.addUsersDirectFistbumpSent(userProfileParcel.getProfileUsername());
+            boolean isFistbumpMatch = false;
+            profileUser = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getProfileUsername());
+            currentUser = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurUsername());
+            if (profileUser != null && currentUser != null) {
+                currentUser.addUsersDirectFistbumpSent(userProfileParcel.getProfileUsername());
                 profileUser.addUsersDirectFistbumpReceived(userProfileParcel.getCurUsername());
-                dbHelper.saveDBObject(curUser);
-                dbHelper.saveDBObject(profileUser);
-                // if the profile user also sent a direct fistbump to current user
+                // check if fistbump match
                 if (profileUser.getUsersDirectFistbumpSent().contains(userProfileParcel.getCurUsername())) {
-                    return true;
+                    // create new conversation if it is a match
+                    dynamoDBHelper.createNewConversation(userProfileParcel, new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
+                        @Override
+                        public void onTaskDone(Object object) {
+                            launchFistbumpMatchDialog((Conversation) object, currentUser.getFacebookId());
+                        }
+                    });
+
+                    currentUser.setHasNewMessage(true);
+                    profileUser.setHasNewMessage(true);
+                    isFistbumpMatch = true;
                 }
+                dynamoDBHelper.saveDBObject(currentUser);
+                dynamoDBHelper.saveDBObject(profileUser);
             }
-            return false;
+            return isFistbumpMatch;
         }
 
         @Override
-        protected void onPostExecute(Boolean launchChatWindow) {
-            if (launchChatWindow) {
-                dbHelper.createNewConversation(userProfileParcel.getCurUsername(), userProfileParcel.getProfileUsername());
-                launchNewFistbumpMatchDialog();
-            }
+        protected void onPostExecute(Boolean isFistbumpMatch) {
+            final NotificationEnum notificationType = isFistbumpMatch ? NotificationEnum.DIRECT_FISTBUMP_MATCH : NotificationEnum.DIRECT_FISTBUMP;
+            // create new db user notification
+            dynamoDBHelper.createNewNotification(makeDBUserNotificationDirectFistbumpBundle(), null);
+            // send push notification to receiving user that they got a direct fistbump/direct fistbump match
+            httpRequestsHelper.makePushNotificationRequest(makePushNotificationDirectFistbumpBundle(currentUser.getFacebookId(), notificationType));
         }
     }
 }

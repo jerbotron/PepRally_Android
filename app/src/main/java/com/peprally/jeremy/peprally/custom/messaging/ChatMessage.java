@@ -1,5 +1,7 @@
 package com.peprally.jeremy.peprally.custom.messaging;
 
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 
 import com.peprally.jeremy.peprally.utils.Helpers;
@@ -7,7 +9,7 @@ import com.peprally.jeremy.peprally.utils.Helpers;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class ChatMessage implements Comparable<ChatMessage>{
+public class ChatMessage implements Comparable<ChatMessage>, Parcelable{
     private String conversationID;
     private String username;
     private String facebookID;
@@ -39,12 +41,47 @@ public class ChatMessage implements Comparable<ChatMessage>{
     }
 
     // Comparator
-
     @Override
     public int compareTo(@NonNull ChatMessage message) {
         return this.timestamp.compareTo(message.timestamp);
     }
 
+    // Parcelable Constructor
+    private ChatMessage(Parcel in) {
+        this.conversationID = in.readString();
+        this.username = in.readString();
+        this.facebookID = in.readString();
+        this.messageContent = in.readString();
+        this.timestamp = in.readLong();
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeString(conversationID);
+        parcel.writeString(username);
+        parcel.writeString(facebookID);
+        parcel.writeString(messageContent);
+        parcel.writeLong(timestamp);
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    public static final Parcelable.Creator<ChatMessage> CREATOR = new Parcelable.Creator<ChatMessage>() {
+        @Override
+        public ChatMessage createFromParcel(Parcel source) {
+            return new ChatMessage(source);
+        }
+
+        @Override
+        public ChatMessage[] newArray(int size) {
+            return new ChatMessage[size];
+        }
+    };
+
+    // Getters/Setters
     public String getConversationID() {return conversationID; }
     public void setConversationID(String conversationID) { this.conversationID = conversationID; }
 

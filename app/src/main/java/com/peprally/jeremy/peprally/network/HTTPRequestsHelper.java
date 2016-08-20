@@ -70,6 +70,9 @@ public class HTTPRequestsHelper {
                         case COMMENT_FISTBUMP:
                             pushNotify = receiverNotificationPref.isNotifyCommentFistbump();
                             break;
+                        case DIRECT_FISTBUMP_MATCH:
+                            pushNotify = receiverNotificationPref.isNotifyDirectFistbump();
+                            break;
                     }
 
                     if (pushNotify) {
@@ -82,6 +85,7 @@ public class HTTPRequestsHelper {
                         jsonData.put("receiver_id", receiverFMSID);
                         jsonData.put("receiver_username", bundle.getString("RECEIVER_USERNAME"));
                         jsonData.put("sender_username", bundle.getString("SENDER_USERNAME"));
+                        jsonData.put("sender_facebook_id", bundle.getString("SENDER_FACEBOOK_ID"));
                         jsonData.put("notification_type", String.valueOf(bundle.getInt("NOTIFICATION_TYPE")));
                         jsonData.put("comment_text", bundle.getString("COMMENT"));
 

@@ -30,8 +30,7 @@ public class NotificationsPrefJSONMarshaller extends JsonMarshaller<Notification
                                          jsonNotificationPref.getBoolean("notify_post_fistbump"),
                                          jsonNotificationPref.getBoolean("notify_comment_fistbump"),
                                          jsonNotificationPref.getBoolean("notify_post_comment"),
-                                         jsonNotificationPref.getBoolean("notify_direct_message")
-            );
+                                         jsonNotificationPref.getBoolean("notify_direct_message"));
         } catch (JSONException e) {
             e.printStackTrace();
             return null;

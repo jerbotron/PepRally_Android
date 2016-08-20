@@ -7,16 +7,14 @@
     android:background="#efefef"
     android:orientation="vertical"
     tools:context=".activities.MessagingActivity">
-    <ListView
-        android:id="@+id/id_list_view_container_messaging"
-        android:layout_width="match_parent"
+
+    <FrameLayout
+        android:id="@+id/id_container_messaging_fragment"
+        android:layout_width="wrap_content"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="8dp"
-        android:divider="@null"
-        android:stackFromBottom="true"
-        android:transcriptMode="alwaysScroll">
-    </ListView>
+        android:layout_gravity="center">
+    </FrameLayout>
 
     <View android:layout_height="1dp"
         android:layout_width="match_parent"

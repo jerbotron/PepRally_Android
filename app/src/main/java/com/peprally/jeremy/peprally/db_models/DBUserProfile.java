@@ -23,6 +23,7 @@ public class DBUserProfile {
     private String pepTalk;
     private String trashTalk;
     private String dateJoined;
+    private String schoolName;
     private String team;
     private Set<String> conversationIds;
     private Set<String> usersDirectFistbumpSent;
@@ -193,6 +194,14 @@ public class DBUserProfile {
     }
     public void setDateJoined(String dateJoined) {
         this.dateJoined = dateJoined;
+    }
+
+    @DynamoDBAttribute(attributeName = "SchoolName")
+    public String getSchoolName() {
+        return schoolName;
+    }
+    public void setSchoolName(String schoolName) {
+        this.schoolName = schoolName;
     }
 
     @DynamoDBIndexHashKey(globalSecondaryIndexName = "Team-index", attributeName = "PlayerTeam")

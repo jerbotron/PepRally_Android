@@ -27,11 +27,11 @@
                 <TextView
                     android:id="@+id/id_text_view_toolbar_title"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
                     android:text="@string/label_app_name"
                     android:textColor="@color/colorWhite"
-                    android:textStyle="bold"
-                    android:textSize="24sp"/>
+                    android:textSize="32sp" />
             </android.support.v7.widget.Toolbar>
             <android.support.design.widget.TabLayout
                 android:id="@+id/id_tablayout_home"

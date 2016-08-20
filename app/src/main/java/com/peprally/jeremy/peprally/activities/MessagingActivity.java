@@ -4,14 +4,19 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.database.DataSetObserver;
 import android.os.AsyncTask;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -42,19 +47,21 @@ public class MessagingActivity extends AppCompatActivity {
      **********************************************************************************************/
     // UI Variables
     private EditText messageChatText;
-    private ListView messageListView;
-    private MessageArrayAdapter messageArrayAdapter;
     private ProgressDialog progressDialogDeleteConversation;
 
     // Network Variables
-    private DynamoDBHelper dynamoDBHelper;
+    private static DynamoDBHelper dynamoDBHelper;
     private HTTPRequestsHelper httpRequestsHelper;
 
     // General Variables
-    private Conversation conversation;
-    private UserProfileParcel userProfileParcel;
-    private String receiverUsername;
     private boolean receiverJoined = false;
+    private boolean conversationEmpty;
+    private static Conversation conversation;
+    private FragmentManager fragmentManager;
+    private MessagesFragment messagesFragment;
+    private static String currentUsername;
+    private static String currentUserFacebookId;
+    private static String receiverUsername;
 
     private SocketIO socket;
 
@@ -72,11 +79,36 @@ public class MessagingActivity extends AppCompatActivity {
 
         // initialize parcels
         conversation = getIntent().getParcelableExtra("CONVERSATION");
-        userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
-        receiverUsername = conversation.getRecipientUsername(userProfileParcel.getCurUsername());
+        currentUsername = getIntent().getStringExtra("CURRENT_USERNAME");
+        currentUserFacebookId = getIntent().getStringExtra("CURRENT_USER_FACEBOOK_ID");
+        receiverUsername = conversation.getRecipientUsername(currentUsername);
 
         // initialize socket
-        socket = new SocketIO(userProfileParcel.getCurUsername(), receiverUsername);
+        socket = new SocketIO(currentUsername, receiverUsername);
+
+        // setup fragments
+        fragmentManager = getSupportFragmentManager();
+        if (conversation.getChatMessages() == null || conversation.getChatMessages().isEmpty()) {
+            conversationEmpty = true;
+            NoMessageFragment noMessageFragment = new NoMessageFragment();
+            fragmentManager.beginTransaction().add(R.id.id_container_messaging_fragment, noMessageFragment).commit();
+        } else {
+            conversationEmpty = false;
+            messagesFragment = new MessagesFragment();
+            fragmentManager.beginTransaction().add(R.id.id_container_messaging_fragment, messagesFragment).commit();
+        }
+
+        // initialize UI variables
+        messageChatText = (EditText) findViewById(R.id.id_edit_text_messaging_container);
+        ImageButton messageSendButton = (ImageButton) findViewById(R.id.id_image_button_messaging_send);
+        messageSendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String msg = messageChatText.getText().toString().trim();
+                if (!msg.isEmpty())
+                    sendChatMessage(msg);
+            }
+        });
 
         // setup home button on action bar
         ActionBar supportActionBar = getSupportActionBar();
@@ -85,32 +117,6 @@ public class MessagingActivity extends AppCompatActivity {
             if (receiverUsername != null)
                 supportActionBar.setTitle(receiverUsername);
         }
-
-        // initialize UI members
-        messageListView = (ListView) findViewById(R.id.id_list_view_container_messaging);
-        messageChatText = (EditText) findViewById(R.id.id_edit_text_messaging_container);
-        ImageButton messageSendButton = (ImageButton) findViewById(R.id.id_image_button_messaging_send);
-
-        messageArrayAdapter = new MessageArrayAdapter(getApplicationContext(),
-                                                      conversation.getChatMessages(),
-                                                      userProfileParcel);
-        messageListView.setAdapter(messageArrayAdapter);
-        messageListView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
-
-        messageSendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sendChatMessage();
-            }
-        });
-
-        messageArrayAdapter.registerDataSetObserver(new DataSetObserver() {
-            @Override
-            public void onChanged() {
-                super.onChanged();
-                messageListView.setSelection(messageArrayAdapter.getCount() - 1);
-            }
-        });
     }
 
     @Override
@@ -123,7 +129,6 @@ public class MessagingActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        refreshChatWindow();
         socket.connect();
         setupSocketListeners();
     }
@@ -148,7 +153,7 @@ public class MessagingActivity extends AppCompatActivity {
                 confirmDeleteMessage.setText("Are you sure you want to delete this conversation with " + receiverUsername + "?");
                 Helpers.setFacebookProfileImage(getApplicationContext(),
                         confirmDeleteImage,
-                        conversation.getUsernameFacebookIDMap().get(receiverUsername),
+                        conversation.getUsernameFacebookIdMap().get(receiverUsername),
                         3,
                         true);
                 dialogBuilderConfirmDelete.setView(dialogViewConfirmDelete);
@@ -184,30 +189,34 @@ public class MessagingActivity extends AppCompatActivity {
     /***********************************************************************************************
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
-    private void sendChatMessage() {
-        Log.d("MessagingActivity: ", "receiverJoined = " + receiverJoined);
-
+    private void sendChatMessage(String message) {
         ChatMessage newMessage = new ChatMessage(conversation.getConversationID(),
-                                                 userProfileParcel.getCurUsername(),
-                                                 userProfileParcel.getFacebookID(),
-                                                 messageChatText.getText().toString().trim());
+                currentUsername,
+                currentUserFacebookId,
+                message);
 
         // save new message to DB
         new PushChatMessageToDBAsyncTask().execute(newMessage);
 
-        // update UI
-        messageArrayAdapter.add(newMessage);
-
+        // switch fragments on first message
+        if (conversationEmpty) {
+            conversationEmpty = false;
+            messagesFragment = new MessagesFragment();
+            Bundle bundle = new Bundle();
+            bundle.putBoolean("HAS_FIRST_MESSAGE", true);
+            bundle.putParcelable("FIRST_MESSAGE", newMessage);
+            messagesFragment.setArguments(bundle);
+            fragmentManager.beginTransaction().replace(R.id.id_container_messaging_fragment, messagesFragment).commit();
+        } else {
+            // update UI
+            messagesFragment.addMessage(newMessage);
+        }
         messageChatText.setText("");
-    }
-
-    private void refreshChatWindow() {
-        messageArrayAdapter.fetchNewMessages(conversation.getConversationID());
     }
 
     private void setupSocketListeners() {
         // on message received listener
-        socket.registerListener("new_message_" + userProfileParcel.getCurUsername(), onNewMessageHandler);
+        socket.registerListener("new_message_" + currentUsername, onNewMessageHandler);
         // on receiver join chat listener
         socket.registerListener("on_join_" + receiverUsername, onReceiverJoinChatHandler);
         // on receiver leave chat listener
@@ -245,7 +254,7 @@ public class MessagingActivity extends AppCompatActivity {
                 JSONObject jsonData = new JSONObject();
                 try {
                     jsonData.put("receiver_username", receiverUsername);
-                    jsonData.put("sender_username", userProfileParcel.getCurUsername());
+                    jsonData.put("sender_username", currentUsername);
                     jsonData.put("data", messageChatText.getText().toString().trim());
                 } catch (JSONException e) { e.printStackTrace(); }
                 socket.emitString("send_message", jsonData.toString());
@@ -254,11 +263,12 @@ public class MessagingActivity extends AppCompatActivity {
                 Bundle bundle = new Bundle();
                 bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_MESSAGE.toInt());
                 bundle.putString("RECEIVER_USERNAME", receiverUsername);
-                bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());
+                bundle.putString("SENDER_USERNAME", currentUsername);
+                bundle.putString("SENDER_FACEBOOK_ID", currentUserFacebookId);
                 httpRequestsHelper.makePushNotificationRequest(bundle);
 
                 // notify receiving user of new message alert next time they open the app
-                messageArrayAdapter.notifyReceiverNewMessage(receiverUsername);
+                messagesFragment.notifyReceiverNewMessageAlert();
             }
         }
     }
@@ -275,8 +285,13 @@ public class MessagingActivity extends AppCompatActivity {
                     if (args.length > 0) {
                         String senderUsername = (String) args[0];
                         if (senderUsername.equals(receiverUsername)) {
-//                            Log.d("MessagingActivity: ", "Refreshing chat window");
-                            refreshChatWindow();
+                            if (conversationEmpty) {
+                                conversationEmpty = false;
+                                messagesFragment = new MessagesFragment();
+                                fragmentManager.beginTransaction().replace(R.id.id_container_messaging_fragment, messagesFragment).commit();
+                            } else {
+                                messagesFragment.refreshChatWindow();
+                            }
                         }
                     }
                 }
@@ -293,15 +308,11 @@ public class MessagingActivity extends AppCompatActivity {
                     JSONObject jsonData = new JSONObject();
                     try {
                         jsonData.put("receiver_username", receiverUsername);
-                        jsonData.put("sender_username", userProfileParcel.getCurUsername());
+                        jsonData.put("sender_username", currentUsername);
                     } catch (JSONException e) { e.printStackTrace(); }
                     socket.emitString("callback_ack", jsonData.toString());
                 }
-//                Log.d("MessagingActivity: ", receiverUsername + " joined, " + response);
             }
-//            else {
-//                Log.d("MessagingActivity: ", receiverUsername + " is already in the room");
-//            }
             receiverJoined = true;
         }
     };
@@ -310,7 +321,96 @@ public class MessagingActivity extends AppCompatActivity {
         @Override
         public void call(final Object... args) {
             receiverJoined = false;
-//            Log.d("MessagingActivity: ", receiverUsername + " left");
         }
     };
+
+    /***********************************************************************************************
+     **************************************** Fragment Classes *************************************
+     **********************************************************************************************/
+    public static class NoMessageFragment extends Fragment {
+        @Nullable
+        @Override
+        public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+            View view = inflater.inflate(R.layout.fragment_messaging_no_message, container, false);
+            final TextView titleText = (TextView) view.findViewById(R.id.id_messaging_default_title);
+            final TextView messageText = (TextView) view.findViewById(R.id.id_messaging_default_message);
+            final ImageView profileImage = (ImageView) view.findViewById(R.id.id_messaging_default_image);
+
+            String title = "You fistbumped with " + receiverUsername;
+            String message = Helpers.getTimetampString(conversation.getTimestampCreated()) + " ago";
+            String facebookId = conversation.getUserFacebookId(receiverUsername);
+            titleText.setText(title);
+            messageText.setText(message);
+            Helpers.setFacebookProfileImage(getContext().getApplicationContext(),
+                    profileImage,
+                    facebookId,
+                    3,
+                    true);
+            return view;
+        }
+    }
+
+    public static class MessagesFragment extends Fragment {
+
+        // UI Variables
+        private ListView messageListView;
+        private MessageArrayAdapter messageArrayAdapter;
+
+        @Override
+        public void onCreate(@Nullable Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            messageArrayAdapter = new MessageArrayAdapter(getContext().getApplicationContext(),
+                    conversation.getChatMessages(),
+                    currentUsername);
+
+            // see if it's the first time someone sent a message in this conversation
+            Bundle bundle = getArguments();
+            if (bundle != null && bundle.getBoolean("HAS_FIRST_MESSAGE")) {
+                ChatMessage newMessage = bundle.getParcelable("FIRST_MESSAGE");
+                if (newMessage != null)
+                    addMessage(newMessage);
+            }
+
+        }
+
+        @Nullable
+        @Override
+        public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+            View view = inflater.inflate(R.layout.fragment_messaging_messages, container, false);
+
+            // initialize UI members
+            messageListView = (ListView) view.findViewById(R.id.id_list_view_container_messaging);
+            messageListView.setAdapter(messageArrayAdapter);
+            messageListView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+
+            messageArrayAdapter.registerDataSetObserver(new DataSetObserver() {
+                @Override
+                public void onChanged() {
+                    super.onChanged();
+                    messageListView.setSelection(messageArrayAdapter.getCount() - 1);
+                }
+            });
+
+            return view;
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            refreshChatWindow();
+        }
+
+        private void refreshChatWindow() {
+            messageArrayAdapter.fetchNewMessages(conversation.getConversationID());
+        }
+
+        private void notifyReceiverNewMessageAlert() {
+            messageArrayAdapter.notifyReceiverNewMessage(receiverUsername);
+        }
+
+        private void addMessage(ChatMessage newMessage) {
+            messageArrayAdapter.add(newMessage);
+        }
+    }
 }

@@ -192,7 +192,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                         // update the sent fistbumps count of the current user
                         dynamoDBHelper.incrementUserSentFistbumpsCount(currentUsername);
                         // send push notification
-                        dynamoDBHelper.createNewNotification(makeNotificationCommentFistbumpBundle(currentComment));
+                        dynamoDBHelper.createNewNotification(makeNotificationCommentFistbumpBundle(currentComment), null);
                         httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestCommentFistbumpBundle(currentComment));
                     }
                     // add current user to fistbumped users
@@ -234,16 +234,41 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         return bundle;
     }
 
+    private Bundle makeNotificationPostCommentBundle(String comment, String commentID) {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
+        bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_COMMENT.toInt());
+        bundle.putString("RECEIVER_USERNAME", mainPost.getUsername());
+        bundle.putString("POST_ID", mainPost.getPostId());
+        bundle.putString("COMMENT_ID", commentID);
+        bundle.putString("COMMENT", comment);
+        return bundle;
+    }
+
     private Bundle makeHTTPPostRequestCommentFistbumpBundle(Comment comment) {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.COMMENT_FISTBUMP.toInt());
         bundle.putString("RECEIVER_USERNAME", comment.getCommentUsername());
         bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());
+        bundle.putString("SENDER_FACEBOOK_ID", userProfileParcel.getFacebookID());
         return bundle;
     }
 
-    private void adapterAddItemBottom() {
-        notifyItemInserted(getItemCount() - 1);
+    private Bundle makeHTTPPostRequestPostCommentBundle(String comment) {
+        Bundle bundle = new Bundle();
+        bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_COMMENT.toInt());
+        bundle.putString("RECEIVER_USERNAME", mainPost.getUsername());
+        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());
+        bundle.putString("SENDER_FACEBOOK_ID", userProfileParcel.getFacebookID());
+        bundle.putString("COMMENT", comment);
+        return bundle;
+    }
+
+    private void toggleDeletingCommentLoadingDialog(boolean show) {
+        if (show)
+            progressDialogDeleteComment = ProgressDialog.show(callingContext, "Delete Comment", "Deleting ... ", true);
+        else
+            progressDialogDeleteComment.dismiss();
     }
 
     private void adapterRemoveItemAt(int position) {
@@ -275,14 +300,13 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         dynamoDBHelper.addNewPostComment(newComment, new DynamoDBHelper.AsyncTaskCallback() {
             @Override
             public void onTaskDone() {
-                adapterAddItemBottom();
                 ((NewCommentActivity) callingContext).postAddCommentCleanup();
             }
         });
 
         // send push notification (if not commenting on own post)
         if (!newComment.getCommentUsername().equals(newComment.getPostUsername())) {
-            dynamoDBHelper.createNewNotification(makeNotificationPostCommentBundle(commentText, newComment.getCommentId()));
+            dynamoDBHelper.createNewNotification(makeNotificationPostCommentBundle(commentText, newComment.getCommentId()), null);
             httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestPostCommentBundle(commentText));
         }
     }
@@ -336,35 +360,5 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         });
 
         deleteDialog.show();
-    }
-
-    /***********************************************************************************************
-     *********************************** GENERAL METHODS/INTERFACES ********************************
-     **********************************************************************************************/
-    private Bundle makeNotificationPostCommentBundle(String comment, String commentID) {
-        Bundle bundle = new Bundle();
-        bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
-        bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_COMMENT.toInt());
-        bundle.putString("RECEIVER_USERNAME", mainPost.getUsername());
-        bundle.putString("POST_ID", mainPost.getPostId());
-        bundle.putString("COMMENT_ID", commentID);
-        bundle.putString("COMMENT", comment);
-        return bundle;
-    }
-
-    private Bundle makeHTTPPostRequestPostCommentBundle(String comment) {
-        Bundle bundle = new Bundle();
-        bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_COMMENT.toInt());
-        bundle.putString("RECEIVER_USERNAME", mainPost.getUsername());
-        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());
-        bundle.putString("COMMENT", comment);
-        return bundle;
-    }
-
-    private void toggleDeletingCommentLoadingDialog(boolean show) {
-        if (show)
-            progressDialogDeleteComment = ProgressDialog.show(callingContext, "Delete Comment", "Deleting ... ", true);
-        else
-            progressDialogDeleteComment.dismiss();
     }
 }

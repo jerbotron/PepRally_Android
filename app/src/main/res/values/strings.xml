@@ -20,6 +20,16 @@
     <!-- Strings related to Login Activity -->
     <string name="facebook_app_id">1006674646058120</string>
     <string name="dialog_username_text">Pick a unique username!</string>
+    <string name="spinner_prompt_text">Choose your school and campus:</string>
+    <string name="school_name_prompt_text">Choose your school and campus</string>
+    <string name="school_name_ut_austin">University of Texas - Austin</string>
+    <string name="school_name_texas_state">Texas State University</string>
+    <string-array name="schools_array">
+        <item>@string/school_name_prompt_text</item>
+        <item>@string/school_name_ut_austin</item>
+        <item>@string/school_name_texas_state</item>
+    </string-array>
+
 
     <!-- Strings related to Profile Activity -->
     <string name="profile_fist_bumps"> Fistbumps</string>
@@ -67,11 +77,12 @@
         look like on a card. This sentence has no meaning, it\'s a waste of time to read it. Okay thanks bye.</string>
 
     <!-- Notification content placeholders -->
-    <string name="notification_0_placeholder">"sent you a direct fistbump.</string>
-    <string name="notification_1_placeholder">"sent you a message.</string>
-    <string name="notification_2_placeholder">"commented: \""</string>
-    <string name="notification_3_placeholder">"fistbumped your post.</string>
-    <string name="notification_4_placeholder">"fistbumped your comment.</string>
+    <string name="notification_0_placeholder">direct fistbumped you.</string>
+    <string name="notification_1_placeholder">sent you a message.</string>
+    <string name="notification_2_placeholder">commented: \""</string>
+    <string name="notification_3_placeholder">fistbumped your post.</string>
+    <string name="notification_4_placeholder">fistbumped your comment.</string>
+    <string name="notification_5_placeholder">fistbumped you back. It\'s a match!</string>
 
     <!-- Error Message Strings -->
     <string name="no_connection_text">Oops! Looks like you\'ve lost internet connection. Please check your
@@ -104,11 +115,17 @@
     <string name="placeholder_nothing_trending">Make a post! :)</string>
     <string name="placeholder_logout">Logout</string>
     <string name="placeholder_delete_profile">Delete Profile</string>
-    <string name="placeholder_fistbump_match_send_message">SEND A MESSAGE</string>
-    <string name="placeholder_fistbump_match_go_back">GO BACK</string>
+    <string name="placeholder_fistbump_match_send_message">Send a message</string>
+    <string name="placeholder_fistbump_match_go_back">Go back</string>
     <string name="placeholder_messaging_hint">Send a message&#8230;</string>
+    <string name="placeholder_comment_hint">Leave a comment&#8230;</string>
+    <string name="placeholder_school">School</string>
+    <string name="placeholder_fistbump_match_title">It\'s a fistbump!</string>
 
-    <!-- Strings related to Settings -->
+    <!-- Strings related to Settings/Preferences -->
+
+    <!-- Non-setting preferences -->
+    <string name="pref_key_school_network">pref_key_school_network</string>
 
     <!-- Main setting groups-->
     <string name="pref_group_my_account">MY ACCOUNT</string>
@@ -118,6 +135,7 @@
     <!-- My Account Settings -->
     <string name="pref_my_account_name">Name</string>
     <string name="pref_my_account_username">Username</string>
+    <string name="pref_my_account_school">School Network</string>
     <string name="pref_my_account_date_joined">Date Joined</string>
     <string name="pref_my_account_email">Email</string>
     <string name="pref_my_account_email_summary">Let us keep you updated!</string>
@@ -128,6 +146,7 @@
     <string name="pref_notifications_comment_fistbump">Comment fistbump notification</string>
     <string name="pref_notifications_new_comment">New comment notification</string>
     <string name="pref_notifications_direct_message">New message notification</string>
+    <string name="pref_notifications_fistbump_match">Fistbump match notification</string>
     <string name="pref_notifications_pref_saved">Notification preferences saved!</string>
 
     <!-- Support Settings -->

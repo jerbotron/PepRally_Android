@@ -96,8 +96,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         Toolbar toolbar = (Toolbar) findViewById(R.id.id_toolbar_home);
         toolbar.setTitle("");
         TextView toolbarTitle = (TextView) toolbar.findViewById(R.id.id_text_view_toolbar_title);
-        Typeface customTf = Typeface.createFromAsset(getAssets(), "fonts/HappyMonkey-Regular.ttf");
-        toolbarTitle.setTypeface(customTf, Typeface.BOLD);
+        Typeface customTf = Typeface.createFromAsset(getAssets(), "fonts/Sketch 3D.otf");
+        toolbarTitle.setTypeface(customTf);
         setSupportActionBar(toolbar);
 
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout_home);
@@ -223,12 +223,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         super.onResume();
         Helpers.checkGooglePlayServicesAvailable(this);
         new UpdateUserNotificationAlertsAsyncTask().execute();
-        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        Log.d(TAG, "notification pref direct fistbump: " + sharedPref.getBoolean("pref_notifications_direct_fistbump", false));
-        Log.d(TAG, "notification pref post fistbump: " + sharedPref.getBoolean("pref_notifications_post_fistbump", false));
-        Log.d(TAG, "notification pref comment fistbump: " + sharedPref.getBoolean("pref_notifications_comment_fistbump", false));
-        Log.d(TAG, "notification pref new comment: " + sharedPref.getBoolean("pref_notifications_new_comment", false));
-        Log.d(TAG, "notification pref direct message: " + sharedPref.getBoolean("pref_notifications_direct_message", false));
     }
 
     @Override
@@ -290,7 +284,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         trendingFragment = new TrendingFragment();
         BrowseTeamsFragment browseTeamsFragment = new BrowseTeamsFragment();
         ProfileViewPagerAdapter adapter = new ProfileViewPagerAdapter(getSupportFragmentManager());
-//        adapter.addFrag(new EventsFragment(), "Events");
         adapter.addFrag(trendingFragment, "Trending");
         adapter.addFrag(browseTeamsFragment, "Teams");
         viewPager.setAdapter(adapter);

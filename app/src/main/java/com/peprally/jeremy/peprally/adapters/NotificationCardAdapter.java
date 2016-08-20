@@ -7,7 +7,6 @@ import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -78,7 +77,7 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
                                         3,
                                         true);
 
-        notificationCardHolder.timeStamp.setText(Helpers.getTimetampString(userNotification.getTimeInSeconds()));
+        notificationCardHolder.timeStamp.setText(Helpers.getTimetampString(userNotification.getTimestampSeconds()));
 
         String content = "";
         NotificationEnum notificationType = NotificationEnum.fromInt(userNotification.getNotificationType());
@@ -103,7 +102,7 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
                 break;
         }
 
-        notificationCardHolder.content.setText(Html.fromHtml("<b>"+userNotification.getSenderUsername()+"</b> " + content));
+        notificationCardHolder.content.setText(Helpers.getTextHtml("<b>"+userNotification.getSenderUsername()+"</b> " + content));
 
         notificationCardHolder.clickableContainer.setOnClickListener(new View.OnClickListener() {
             @Override

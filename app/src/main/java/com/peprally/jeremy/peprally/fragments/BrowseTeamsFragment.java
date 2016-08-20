@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,7 +33,7 @@ public class BrowseTeamsFragment extends Fragment {
     private RecyclerView recyclerView;
 
     // AWS Variables
-    private DynamoDBHelper dbHelper;
+    private DynamoDBHelper dynamoDBHelper;
 
     // General Variables
     private static final String TAG = HomeActivity.class.getSimpleName();
@@ -47,7 +46,7 @@ public class BrowseTeamsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        dbHelper = new DynamoDBHelper(getActivity());
+        dynamoDBHelper = new DynamoDBHelper(getActivity());
 
         new FetchSportsTableTask().execute();
     }
@@ -98,7 +97,7 @@ public class BrowseTeamsFragment extends Fragment {
     private class FetchSportsTableTask extends AsyncTask<Void, Void, PaginatedScanList<DBSport>> {
         @Override
         protected PaginatedScanList<DBSport> doInBackground(Void... params) {
-            return dbHelper.getMapper().scan(DBSport.class, new DynamoDBScanExpression());
+            return dynamoDBHelper.getMapper().scan(DBSport.class, new DynamoDBScanExpression());
         }
 
         @Override

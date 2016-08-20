@@ -13,6 +13,10 @@
             android:title="@string/pref_my_account_username"
             android:summary="@string/placeholder_username" />
         <Preference
+            android:key="pref_key_my_account_school"
+            android:title="@string/pref_my_account_school"
+            android:summary="@string/placeholder_school" />
+        <Preference
             android:key="pref_key_my_account_date_joined"
             android:title="@string/pref_my_account_date_joined"
             android:summary="date joined" />

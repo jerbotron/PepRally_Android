@@ -4,6 +4,7 @@ package com.peprally.jeremy.peprally.activities;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
@@ -162,17 +163,20 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             addPreferencesFromResource(R.xml.pref_main);
             setHasOptionsMenu(true);
 
+            SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(getActivity().getApplicationContext());
             UserProfileParcel userProfileParcel = ((SettingsActivity) getActivity()).getUserProfileParcel();
 
             // My Account Preferences
             Preference namePref = findPreference("pref_key_my_account_name");
             Preference usernamePref = findPreference("pref_key_my_account_username");
+            Preference schoolPref = findPreference("pref_key_my_account_school");
             Preference dateJoinedPref = findPreference("pref_key_my_account_date_joined");
             EditTextPreference emailPref = (EditTextPreference) findPreference("pref_key_my_account_email");
             Preference notificationPref = findPreference("pref_key_my_account_notifications");
 
             namePref.setSummary(userProfileParcel.getFirstname());
             usernamePref.setSummary(userProfileParcel.getCurUsername());
+            schoolPref.setSummary(sharedPref.getString("pref_key_school_network", ""));
             dateJoinedPref.setSummary(userProfileParcel.getDateJoined().split("\\s+")[0]);
             if (userProfileParcel.getEmail() != null && !userProfileParcel.getEmail().isEmpty())
                 emailPref.setSummary(userProfileParcel.getEmail());

@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android"
     android:color="?attr/colorControlHighlight">
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="3dp"/>
             <solid android:color="@color/colorFollowing"/>
-            <!--<stroke android:width="3dp" android:color="@color/colorAccent"></stroke>-->
         </shape>
     </item>
-</ripple>
+</layer-list>

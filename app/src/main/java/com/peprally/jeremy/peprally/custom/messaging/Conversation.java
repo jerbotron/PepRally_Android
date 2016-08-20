@@ -14,37 +14,27 @@ import java.util.Map;
 
 public class Conversation implements Parcelable{
     private String conversationID;
+    private Long timestampCreated;
     private ArrayList<ChatMessage> chatMessages;
-    private Map<String, String> usernameFacebookIDMap;
+    private Map<String, String> usernameFacebookIdMap;
 
-    public Conversation(String conversationID, ArrayList<ChatMessage> chatMessages, Map<String, String> facebookIDMap) {
+    public Conversation(String conversationID,
+                        Long timestampCreated,
+                        ArrayList<ChatMessage> chatMessages,
+                        Map<String, String> facebookIDMap) {
         this.conversationID = conversationID;
+        this.timestampCreated = timestampCreated;
         this.chatMessages = chatMessages;
-        this.usernameFacebookIDMap = facebookIDMap;
+        this.usernameFacebookIdMap = facebookIDMap;
     }
 
-    public String getConversationID() { return conversationID; }
-    public void setConversationID(String conversationID) { this.conversationID = conversationID; }
-
-    public Map<String, String> getUsernameFacebookIDMap() { return usernameFacebookIDMap; }
-    public void setUsernameFacebookIDMap(Map<String, String> facebookIDMap) { this.usernameFacebookIDMap = facebookIDMap; }
-
-    public ArrayList<ChatMessage> getChatMessages() {
-        ArrayList<ChatMessage> chatMessagesSortedOut = null;
-        if (chatMessages != null) {
-            chatMessagesSortedOut = chatMessages;
-            Collections.sort(chatMessagesSortedOut);
-        }
-        return chatMessagesSortedOut;
-    }
-    public void setChatMessages(ArrayList<ChatMessage> chatMessages) { this.chatMessages = chatMessages; }
-
+    // Helpers
     public void addChatMessage(ChatMessage message) {
         chatMessages.add(message);
     }
 
     public String getRecipientUsername(String senderUsername) {
-        for (Map.Entry<String, String> entry : usernameFacebookIDMap.entrySet()) {
+        for (Map.Entry<String, String> entry : usernameFacebookIdMap.entrySet()) {
             String username = entry.getKey();
             if (!username.equals(senderUsername)) {
                 return username;
@@ -53,7 +43,17 @@ public class Conversation implements Parcelable{
         return null;
     }
 
-    // Parcelable Methods
+    public String getUserFacebookId(String senderUsername) {
+        for (Map.Entry<String, String> entry : usernameFacebookIdMap.entrySet()) {
+            String username = entry.getKey();
+            if (username.equals(senderUsername)) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    // JSON Methods
     private ArrayList<ChatMessage> convertJSONToChatMessagesArrayList(String jsonChatMessages) {
         if (jsonChatMessages != null && !jsonChatMessages.isEmpty()) {
             ArrayList<ChatMessage> chatMessagesOut = new ArrayList<>();
@@ -94,22 +94,24 @@ public class Conversation implements Parcelable{
     // Parcel Constructor
     private Conversation(Parcel in) {
         this.conversationID = in.readString();
+        this.timestampCreated = in.readLong();
         this.chatMessages = convertJSONToChatMessagesArrayList(in.readString());
         int mapSize = in.readInt();
-        this.usernameFacebookIDMap = new HashMap<>();
+        this.usernameFacebookIdMap = new HashMap<>();
         for (int i = 0; i < mapSize; i++) {
             String key = in.readString();
             String value = in.readString();
-            this.usernameFacebookIDMap.put(key, value);
+            this.usernameFacebookIdMap.put(key, value);
         }
     }
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(conversationID);
+        dest.writeLong(timestampCreated);
         dest.writeString(convertChatMessagesArrayListToJSON());
-        dest.writeInt(usernameFacebookIDMap.size());
-        for (Map.Entry<String, String> entry : usernameFacebookIDMap.entrySet()) {
+        dest.writeInt(usernameFacebookIdMap.size());
+        for (Map.Entry<String, String> entry : usernameFacebookIdMap.entrySet()) {
             dest.writeString(entry.getKey());
             dest.writeString(entry.getValue());
         }
@@ -131,4 +133,24 @@ public class Conversation implements Parcelable{
             return new Conversation[size];
         }
     };
+
+    // Getters/Setters
+    public String getConversationID() { return conversationID; }
+    public void setConversationID(String conversationID) { this.conversationID = conversationID; }
+
+    public Long getTimestampCreated() { return timestampCreated; }
+    public void setTimestampCreated(Long timestampCreated) { this.timestampCreated = timestampCreated; }
+
+    public Map<String, String> getUsernameFacebookIdMap() { return usernameFacebookIdMap; }
+    public void setUsernameFacebookIdMap(Map<String, String> facebookIDMap) { this.usernameFacebookIdMap = facebookIDMap; }
+
+    public ArrayList<ChatMessage> getChatMessages() {
+        ArrayList<ChatMessage> chatMessagesSortedOut = null;
+        if (chatMessages != null) {
+            chatMessagesSortedOut = chatMessages;
+            Collections.sort(chatMessagesSortedOut);
+        }
+        return chatMessagesSortedOut;
+    }
+    public void setChatMessages(ArrayList<ChatMessage> chatMessages) { this.chatMessages = chatMessages; }
 }

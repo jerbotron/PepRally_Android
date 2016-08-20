@@ -11,6 +11,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Vibrator;
+import android.text.Html;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -63,8 +65,16 @@ public class Helpers {
         }
     }
 
+    public static Spanned getTextHtml(String htmlText) {
+        if (android.os.Build.VERSION.SDK_INT >= 24) {
+            return Html.fromHtml(htmlText, Html.FROM_HTML_MODE_LEGACY);
+        } else {
+            return Html.fromHtml(htmlText);
+        }
+    }
+
     // General Helpers
-    private static String getFacebookProfileImageURL(String facebookID, int size) {
+    public static String getFacebookProfileImageURL(String facebookId, int size) {
         String type;
         switch (size) {
             case 0:
@@ -84,7 +94,7 @@ public class Helpers {
                 type = "large";
                 break;
         }
-        return "https://graph.facebook.com/" + facebookID + "/picture?type=" + type;
+        return "https://graph.facebook.com/" + facebookId + "/picture?type=" + type;
     }
 
     public static String getFavPlayerText(String firstName, String lastName, int number, String team) {
@@ -154,19 +164,19 @@ public class Helpers {
 
     public static void setFacebookProfileImage(Context callingContext,
                                                ImageView imageView,
-                                               String facebookID,
+                                               String facebookId,
                                                int size,
                                                boolean rounded) {
         if (rounded) {
             Picasso.with(callingContext)
-                    .load(getFacebookProfileImageURL(facebookID, size))
+                    .load(getFacebookProfileImageURL(facebookId, size))
                     .placeholder(R.drawable.img_default_profile)
                     .error(R.drawable.img_default_profile)
                     .transform(new CircleImageTransformation())
                     .into(imageView);
         } else {
             Picasso.with(callingContext)
-                    .load(getFacebookProfileImageURL(facebookID, size))
+                    .load(getFacebookProfileImageURL(facebookId, size))
                     .placeholder(R.drawable.img_default_profile)
                     .error(R.drawable.img_default_profile)
                     .into(imageView);

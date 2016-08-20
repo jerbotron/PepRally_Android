@@ -6,14 +6,6 @@
         <item name="android:statusBarColor">?android:attr/colorForeground</item>
     </style>
 
-    <style name="AppTheme.ButtonFollow" parent="android:Widget.Material.Button">
-        <item name="android:background">@drawable/button_follow</item>
-    </style>
-
-    <style name="AppTheme.ButtonFollowing" parent="android:Widget.Material.Button">
-        <item name="android:background">@drawable/button_following</item>
-    </style>
-
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center">
+    <TextView
+        android:id="@+id/id_messaging_default_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/placeholder_first_name"
+        android:textSize="20sp"
+        android:gravity="center" />
+    <TextView
+        android:id="@+id/id_messaging_default_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/placeholder_post_time"
+        android:textColor="@color/colorAccent"
+        android:gravity="center"/>
+    <ImageView
+        android:id="@+id/id_messaging_default_image"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/activity_horizontal_margin"
+        android:paddingBottom="80dp"
+        android:src="@drawable/img_default_profile"
+        android:contentDescription="@string/content_description_image_view"/>
+</LinearLayout>

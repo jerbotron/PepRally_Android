@@ -1,20 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#D26B20</color>
+    <color name="colorPrimary">#d26b20</color>
     <color name="colorPrimaryLight">#d77d3c</color>
-    <color name="colorPrimaryDark">#CC5D00</color>
-    <color name="colorAccent">#A5A5A5</color>
-    <color name="colorAccentLight">#DEDEDE</color>
+    <color name="colorPrimaryDark">#cc5d00</color>
+    <color name="colorAccent">#a5a5a5</color>
+    <color name="colorAccentLight">#dedede</color>
     <color name="colorAccentDark">#343434</color>
 
-    <color name="colorBackground">#F9F9F9</color>
-    <color name="colorFollowing">#66BD2B</color>
+    <color name="colorBackground">#f9f9f9</color>
+    <color name="colorFollowing">#66bd2b</color>
 
-    <color name="colorFABFistbump">#CC5D00</color>
-    <color name="colorFABPost">#FF4444</color>
+    <color name="colorFABFistbump">#cc5d00</color>
+    <color name="colorFABPost">#ff4444</color>
 
-    <color name="colorWhite">#FFF</color>
+    <color name="colorWhite">#fff</color>
     <color name="colorBlack">#000</color>
-    <color name="colorRed">#FF4422</color>
-    <color name="colorGreen">#66CD2B</color>
+    <color name="colorRed">#ff4422</color>
+    <color name="colorGreen">#66cd2b</color>
+
+    <color name="colorNotificationComment">#e92754</color>
+    <color name="colorNotificationFistbump">#D26B20</color>
+    <color name="colorNotificationMessage">#3cb2e2</color>
 </resources>

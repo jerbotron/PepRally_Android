@@ -46,7 +46,6 @@ public class NewCommentActivity extends AppCompatActivity{
     // UI Variables
     private RecyclerView recyclerView;
     private ProgressDialog progressDialogDeletePost;
-    private RelativeLayout progressCircleContainer;
     private SwipeRefreshLayout postCommentsSwipeRefreshContainer;
 
     // AWS/HTTP Variables
@@ -94,10 +93,19 @@ public class NewCommentActivity extends AppCompatActivity{
         final EditText newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
         final TextView textViewCharCount = (TextView) findViewById(R.id.id_text_view_comment_char_count);
         final TextView postCommentButton = (TextView) findViewById(R.id.id_text_view_button_new_comment_post);
-        progressCircleContainer = (RelativeLayout) findViewById(R.id.id_container_comments_progress_circle);
 
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
         mainPost = getIntent().getParcelableExtra("MAIN_POST");
+
+        // setup swipe refresh container
+        postCommentsSwipeRefreshContainer = (SwipeRefreshLayout) findViewById(R.id.container_swipe_refresh_post_comments);
+        postCommentsSwipeRefreshContainer.setRefreshing(true);
+        postCommentsSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refreshAdapter();
+            }
+        });
 
         if (mainPostUsername != null && mainPostTextContent != null && postCommentButton != null
                 && mainPost != null && userProfileParcel != null) {
@@ -109,7 +117,7 @@ public class NewCommentActivity extends AppCompatActivity{
             refreshMainPostData(mainPost);
             // stop on load progress circle animation
             if (mainPost.getCommentsCount() > 0) {
-                initializeAdapter(mainPost.getComments());
+                initializeAdapter(mainPost.getComments(), false);
             }
 
             mainPostUsername.setText(mainPost.getUsername());
@@ -162,18 +170,6 @@ public class NewCommentActivity extends AppCompatActivity{
                 }
             });
         }
-
-        // setup swipe refresh container
-        postCommentsSwipeRefreshContainer = (SwipeRefreshLayout) findViewById(R.id.container_swipe_refresh_post_comments);
-        postCommentsSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                refreshAdapter();
-            }
-        });
-
-        // stop on load progress circle animation
-        progressCircleContainer.setVisibility(View.GONE);
     }
 
     @Override
@@ -245,7 +241,7 @@ public class NewCommentActivity extends AppCompatActivity{
             bundle.putString("FACEBOOK_ID", userProfileParcel.getFacebookID());
             // when adding the first comment, initialize commentCardAdapter with null list
             if (commentCardAdapter == null)
-                initializeAdapter(null);
+                initializeAdapter(null, false);
             commentCardAdapter.addComment(newCommentText, bundle);
         }
     }
@@ -264,10 +260,11 @@ public class NewCommentActivity extends AppCompatActivity{
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
         bundle.putString("RECEIVER_USERNAME", curPost.getUsername());
         bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());
+        bundle.putString("SENDER_FACEBOOK_ID", userProfileParcel.getFacebookID());
         return bundle;
     }
 
-    private void initializeAdapter(List<Comment> results) {
+    private void initializeAdapter(List<Comment> results, boolean scrollToBottom) {
         ArrayList<Comment> comments = new ArrayList<>();
         if (results != null && results.size() > 0) {
             for (Comment userComment : results)
@@ -275,6 +272,13 @@ public class NewCommentActivity extends AppCompatActivity{
         }
         commentCardAdapter = new CommentCardAdapter(this, comments, userProfileParcel, mainPost);
         recyclerView.swapAdapter(commentCardAdapter, true);
+
+        // stop refresh loading animation
+        if (postCommentsSwipeRefreshContainer.isRefreshing())
+            postCommentsSwipeRefreshContainer.setRefreshing(false);
+
+        if (scrollToBottom)
+            recyclerView.scrollToPosition(comments.size() - 1);
     }
 
     public void onPostDeletePostEventHandler() {
@@ -292,7 +296,8 @@ public class NewCommentActivity extends AppCompatActivity{
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
     public void postAddCommentCleanup() {
-        new FetchUserPostDBTask().execute(mainPost);
+        postCommentsSwipeRefreshContainer.setRefreshing(true);
+        new FetchUserPostDBTask(true).execute();
         EditText newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
         newCommentText.setText("");
         newCommentText.clearFocus();
@@ -300,11 +305,11 @@ public class NewCommentActivity extends AppCompatActivity{
     }
 
     public void postDeleteCommentCleanup() {
-        new FetchUserPostDBTask().execute(mainPost);
+        new FetchUserPostDBTask(false).execute();
     }
 
     private void refreshAdapter() {
-        new FetchUserPostDBTask().execute(mainPost);
+        new FetchUserPostDBTask(false).execute();
     }
 
     private void toggleDeletingPostLoadingDialog(boolean show) {
@@ -393,7 +398,7 @@ public class NewCommentActivity extends AppCompatActivity{
                             // update the sent fistbumps count of the current user
                             dynamoDBHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUsername());
                             // send push notification
-                            dynamoDBHelper.createNewNotification(makeNotificationPostFistbumpBundle(userPost));
+                            dynamoDBHelper.createNewNotification(makeNotificationPostFistbumpBundle(userPost), null);
                             httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestPostFistbumpBundle(userPost));
                         }
                         // add current user to fistbumped users
@@ -410,11 +415,17 @@ public class NewCommentActivity extends AppCompatActivity{
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
-    private class FetchUserPostDBTask extends AsyncTask<DBUserPost, Void, DBUserPost> {
+    private class FetchUserPostDBTask extends AsyncTask<Void, Void, DBUserPost> {
+
+        private boolean scrollToBottom;
+
+        private FetchUserPostDBTask(boolean scrollToBottom) {
+            this.scrollToBottom = scrollToBottom;
+        }
+
         @Override
-        protected DBUserPost doInBackground(DBUserPost... params) {
-            DBUserPost userPost = params[0];
-            return dynamoDBHelper.loadDBUserPost(userPost.getUsername(), userPost.getTimestampSeconds());
+        protected DBUserPost doInBackground(Void... params) {
+            return dynamoDBHelper.loadDBUserPost(mainPost.getUsername(), mainPost.getTimestampSeconds());
         }
 
         @Override
@@ -423,16 +434,7 @@ public class NewCommentActivity extends AppCompatActivity{
             // update cached copy of mainPost
             mainPost = userPost;
 
-            if (userPost.getCommentsCount() > 0)
-                initializeAdapter(userPost.getComments());
-
-            // stop refresh loading animation
-            if (postCommentsSwipeRefreshContainer.isRefreshing())
-                postCommentsSwipeRefreshContainer.setRefreshing(false);
-
-            // stop on load progress circle animation
-            if (progressCircleContainer != null)
-                progressCircleContainer.setVisibility(View.GONE);
+            initializeAdapter(userPost.getComments(), scrollToBottom);
         }
     }
 }

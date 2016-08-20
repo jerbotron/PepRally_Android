@@ -67,7 +67,7 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
     public void onBindViewHolder(MessageCardHolder MessageCardHolder, int position) {
         final DBUserConversation userConversation = conversations.get(position);
         final Conversation conversation = userConversation.getConversation();
-        Map<String, String> usernameFacebookIDMap = conversation.getUsernameFacebookIDMap();
+        Map<String, String> usernameFacebookIDMap = conversation.getUsernameFacebookIdMap();
         for (String username : usernameFacebookIDMap.keySet()) {
             if (!username.equals(userProfileParcel.getCurUsername())) {
                 Helpers.setFacebookProfileImage(callingContext,
@@ -100,7 +100,8 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
             public void onClick(View view) {
                 Intent intent = new Intent(callingContext, MessagingActivity.class);
                 intent.putExtra("CONVERSATION", conversation);
-                intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
+                intent.putExtra("CURRENT_USERNAME", userProfileParcel.getCurUsername());
+                intent.putExtra("CURRENT_USER_FACEBOOK_ID", userProfileParcel.getFacebookID());
                 callingContext.startActivity(intent);
                 ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
             }
