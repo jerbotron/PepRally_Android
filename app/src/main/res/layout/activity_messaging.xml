@@ -8,16 +8,13 @@
     android:orientation="vertical"
     tools:context=".activities.MessagingActivity">
 
-    <ListView
-        android:id="@+id/id_list_view_container_messaging"
-        android:layout_width="match_parent"
+    <FrameLayout
+        android:id="@+id/id_container_messaging_fragment"
+        android:layout_width="wrap_content"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="8dp"
-        android:divider="@null"
-        android:stackFromBottom="true"
-        android:transcriptMode="alwaysScroll">
-    </ListView>
+        android:layout_gravity="center">
+    </FrameLayout>
 
     <View android:layout_height="1dp"
         android:layout_width="match_parent"
@@ -28,7 +25,6 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:weightSum="1">
-
         <ImageButton
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
@@ -39,7 +35,6 @@
             android:clickable="true"
             app:srcCompat="@drawable/ic_photo"
             android:contentDescription="@string/content_description_image_button"/>
-
         <EditText
             android:id="@+id/id_edit_text_messaging_container"
             android:layout_width="0dp"
@@ -47,7 +42,6 @@
             android:layout_weight="1"
             android:inputType="textMultiLine"
             android:hint="@string/placeholder_messaging_hint"/>
-
         <ImageButton
             android:id="@+id/id_image_button_messaging_send"
             android:layout_width="wrap_content"

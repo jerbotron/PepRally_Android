@@ -10,7 +10,7 @@
         android:id="@+id/id_recycler_view_container_fistbumped_users"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="64dp"
+        android:minHeight="60dp"
         android:orientation="horizontal"
         android:padding="8dp">
         <ImageView
@@ -31,10 +31,10 @@
             android:layout_marginRight="8dp"
             android:gravity="center_vertical">
             <TextView
-                android:id="@+id/id_fistbumped_users_nickname"
+                android:id="@+id/id_fistbumped_users_username"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/placeholder_nickname"
+                android:text="@string/placeholder_username"
                 android:textSize="12sp"
                 android:textStyle="bold"/>
             <TextView

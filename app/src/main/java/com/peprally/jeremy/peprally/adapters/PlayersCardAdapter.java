@@ -1,18 +1,20 @@
 package com.peprally.jeremy.peprally.adapters;
 
 import android.content.Context;
-import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.activities.FavoritePlayerActivity;
+import com.peprally.jeremy.peprally.custom.ui.CircleImageTransformation;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
+import com.peprally.jeremy.peprally.utils.Helpers;
 import com.squareup.picasso.Picasso;
 
 public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.PlayerCardHolder>{
@@ -21,40 +23,26 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
 
-    // UI Variables
-    private static PlayersAdapterClickListener myClickListener;
-
     // General Variables
-//    private static final String TAG = ProfileActivity.class.getSimpleName();
     private Context callingContext;
     private PaginatedQueryList<DBPlayerProfile> roster;
 
     /***********************************************************************************************
      **************************************** ADAPTER METHODS **************************************
      **********************************************************************************************/
-    static class PlayerCardHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        CardView cv;
+    static class PlayerCardHolder extends RecyclerView.ViewHolder {
+        LinearLayout cardContainer;
         ImageView playerPhoto;
         TextView playerName;
         TextView playerInfo;
 
         private PlayerCardHolder(View itemView) {
             super(itemView);
-            cv = (CardView) itemView.findViewById(R.id.rv_browse_players);
+            cardContainer = (LinearLayout) itemView.findViewById(R.id.id_recycler_view_player_card_container);
             playerPhoto = (ImageView) itemView.findViewById(R.id.id_player_card_profile_photo);
             playerName = (TextView) itemView.findViewById(R.id.id_notification_card_content);
             playerInfo = (TextView) itemView.findViewById(R.id.id_player_card_info);
-            itemView.setOnClickListener(this);
         }
-
-        @Override
-        public void onClick(View view) {
-            myClickListener.onItemClick(view, getAdapterPosition());
-        }
-    }
-
-    public void setOnItemClickListener(PlayersAdapterClickListener myClickListener) {
-        PlayersCardAdapter.myClickListener = myClickListener;
     }
 
     public PlayersCardAdapter(Context callingContext, PaginatedQueryList<DBPlayerProfile> roster) {
@@ -74,8 +62,8 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
     }
 
     @Override
-    public void onBindViewHolder(PlayerCardHolder playerCardHolder, int position) {
-        DBPlayerProfile curPlayer = roster.get(position);
+    public void onBindViewHolder(final PlayerCardHolder playerCardHolder, int position) {
+        final DBPlayerProfile curPlayer = roster.get(position);
         String extension = curPlayer.getTeam().replace(" ","+") + "/" + curPlayer.getImageURL();
         String rootImageURL = "https://s3.amazonaws.com/rosterphotos/";
         final String url = rootImageURL + extension;
@@ -83,6 +71,7 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
                 .load(url)
                 .placeholder(R.drawable.img_default_ut_placeholder)
                 .error(R.drawable.img_default_ut_placeholder)
+                .transform(new CircleImageTransformation())
                 .into(playerCardHolder.playerPhoto);
         String playerNameText = curPlayer.getFirstName() + " " + curPlayer.getLastName();
         switch (curPlayer.getTeam()) {
@@ -91,11 +80,10 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
             case "Swimming and Diving":
             case "Tennis":
             case "Track and Field":
-                playerCardHolder.playerName.setText(Html.fromHtml("<b>"
-                        + playerNameText + "</b>"));
+                playerCardHolder.playerName.setText(Helpers.getTextHtml("<b>" + playerNameText + "</b>"));
                 break;
             default:
-                playerCardHolder.playerName.setText(Html.fromHtml("<b>#"
+                playerCardHolder.playerName.setText(Helpers.getTextHtml("<b>#"
                         + String.valueOf(curPlayer.getNumber()) + " "
                         + playerNameText + "</b>"));
                 break;
@@ -111,24 +99,16 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
         }
         playerCardHolder.playerInfo.setText(playerInfoText);
 
-//        playerCardHolder.playerPhoto.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                showProfileImageDialog(url);
-//            }
-//        });
+        playerCardHolder.cardContainer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ((FavoritePlayerActivity) callingContext).playerCardOnClickHandler(playerCardHolder.getAdapterPosition());
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
         return roster.size();
-    }
-
-    /***********************************************************************************************
-     *********************************** GENERAL METHODS/INTERFACES ********************************
-     **********************************************************************************************/
-
-    public interface PlayersAdapterClickListener {
-        void onItemClick(View v, int position);
     }
 }

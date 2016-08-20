@@ -21,7 +21,7 @@ public class ProfileEditFragment extends Fragment {
      **********************************************************************************************/
     // UI Variables
     private EditText editTextPepTalk, editTextTrashTalk;
-    private TextView textViewNickname, textViewFirstName, textViewFavTeam, textViewFavPlayer;
+    private TextView textViewUsername, textViewFirstName, textViewFavTeam, textViewFavPlayer;
 
     // General Variables
     private static final String TAG = ProfileEditFragment.class.getSimpleName();
@@ -42,7 +42,7 @@ public class ProfileEditFragment extends Fragment {
         Log.d(TAG, "edit fragment view created");
         View view = inflater.inflate(R.layout.fragment_profile_edit, container, false);
 
-        textViewNickname = (TextView) view.findViewById(R.id.id_text_view_profile_edit_nickname);
+        textViewUsername = (TextView) view.findViewById(R.id.id_text_view_profile_edit_username);
         textViewFirstName = (TextView) view.findViewById(R.id.id_text_view_profile_edit_name_age);
         textViewFavTeam = (TextView) view.findViewById(R.id.id_text_view_profile_edit_fav_team);
         textViewFavPlayer = (TextView) view.findViewById(R.id.id_text_view_profile_edit_fav_player);
@@ -112,8 +112,8 @@ public class ProfileEditFragment extends Fragment {
     private void setupUserProfile() {
         // TODO: CALCULATE USER AGE FROM FB DATA
         textViewFirstName.setText(userProfileParcel.getFirstname()); // + ", " + Integer.toString(23));
-        textViewNickname.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
-        textViewNickname.setText("@"+userProfileParcel.getProfileNickname());
+        textViewUsername.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
+        textViewUsername.setText("@"+userProfileParcel.getProfileUsername());
         textViewFavTeam.setText(userProfileParcel.getFavoriteTeam());
         textViewFavPlayer.setText(userProfileParcel.getFavoritePlayer());
         editTextPepTalk.setText(userProfileParcel.getPepTalk());

@@ -1,23 +1,40 @@
 package com.peprally.jeremy.peprally.activities;
 
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.database.DataSetObserver;
+import android.os.AsyncTask;
+import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.github.nkzawa.emitter.Emitter;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.MessageArrayAdapter;
-import com.peprally.jeremy.peprally.messaging.ChatMessage;
-import com.peprally.jeremy.peprally.messaging.Conversation;
+import com.peprally.jeremy.peprally.custom.messaging.ChatMessage;
+import com.peprally.jeremy.peprally.custom.messaging.Conversation;
+import com.peprally.jeremy.peprally.db_models.DBUserConversation;
+import com.peprally.jeremy.peprally.network.DynamoDBHelper;
+import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.network.SocketIO;
+import com.peprally.jeremy.peprally.enums.NotificationEnum;
+import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import org.json.JSONException;
@@ -29,16 +46,24 @@ public class MessagingActivity extends AppCompatActivity {
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // UI Variables
-    private MessageArrayAdapter messageArrayAdapter;
-    private ListView messageListView;
     private EditText messageChatText;
+    private ProgressDialog progressDialogDeleteConversation;
+
+    // Network Variables
+    private static DynamoDBHelper dynamoDBHelper;
+    private HTTPRequestsHelper httpRequestsHelper;
 
     // General Variables
-    private Conversation conversation;
-    private UserProfileParcel userProfileParcel;
-    private String recipientNickname;
+    private boolean receiverJoined = false;
+    private boolean conversationEmpty;
+    private static Conversation conversation;
+    private FragmentManager fragmentManager;
+    private MessagesFragment messagesFragment;
+    private static String currentUsername;
+    private static String currentUserFacebookId;
+    private static String receiverUsername;
 
-    private SocketIO mSocket;
+    private SocketIO socket;
 
     /***********************************************************************************************
      *************************************** ACTIVITY METHODS **************************************
@@ -48,48 +73,50 @@ public class MessagingActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_messaging);
 
+        // initialize network helpers
+        dynamoDBHelper = new DynamoDBHelper(this);
+        httpRequestsHelper = new HTTPRequestsHelper(this);
+
         // initialize parcels
         conversation = getIntent().getParcelableExtra("CONVERSATION");
-        userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
-        recipientNickname = conversation.getRecipientNickname(userProfileParcel.getCurUserNickname());
+        currentUsername = getIntent().getStringExtra("CURRENT_USERNAME");
+        currentUserFacebookId = getIntent().getStringExtra("CURRENT_USER_FACEBOOK_ID");
+        receiverUsername = conversation.getRecipientUsername(currentUsername);
 
         // initialize socket
-        mSocket = new SocketIO(userProfileParcel.getCurUserNickname());
-        mSocket.registerListener(userProfileParcel.getCurUserNickname(), onNewMessageHandler);
+        socket = new SocketIO(currentUsername, receiverUsername);
+
+        // setup fragments
+        fragmentManager = getSupportFragmentManager();
+        if (conversation.getChatMessages() == null || conversation.getChatMessages().isEmpty()) {
+            conversationEmpty = true;
+            NoMessageFragment noMessageFragment = new NoMessageFragment();
+            fragmentManager.beginTransaction().add(R.id.id_container_messaging_fragment, noMessageFragment).commit();
+        } else {
+            conversationEmpty = false;
+            messagesFragment = new MessagesFragment();
+            fragmentManager.beginTransaction().add(R.id.id_container_messaging_fragment, messagesFragment).commit();
+        }
+
+        // initialize UI variables
+        messageChatText = (EditText) findViewById(R.id.id_edit_text_messaging_container);
+        ImageButton messageSendButton = (ImageButton) findViewById(R.id.id_image_button_messaging_send);
+        messageSendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String msg = messageChatText.getText().toString().trim();
+                if (!msg.isEmpty())
+                    sendChatMessage(msg);
+            }
+        });
 
         // setup home button on action bar
         ActionBar supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
             supportActionBar.setDisplayHomeAsUpEnabled(true);
-            if (recipientNickname != null)
-                supportActionBar.setTitle(recipientNickname);
+            if (receiverUsername != null)
+                supportActionBar.setTitle(receiverUsername);
         }
-
-        // initialize UI members
-        messageListView = (ListView) findViewById(R.id.id_list_view_container_messaging);
-        messageChatText = (EditText) findViewById(R.id.id_edit_text_messaging_container);
-        ImageButton messageSendButton = (ImageButton) findViewById(R.id.id_image_button_messaging_send);
-
-        messageArrayAdapter = new MessageArrayAdapter(getApplicationContext(),
-                                                      conversation.getChatMessages(),
-                                                      userProfileParcel);
-        messageListView.setAdapter(messageArrayAdapter);
-        messageListView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
-
-        messageSendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sendChatMessage();
-            }
-        });
-
-        messageArrayAdapter.registerDataSetObserver(new DataSetObserver() {
-            @Override
-            public void onChanged() {
-                super.onChanged();
-                messageListView.setSelection(messageArrayAdapter.getCount() - 1);
-            }
-        });
     }
 
     @Override
@@ -102,8 +129,14 @@ public class MessagingActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mSocket.emitString("join_chat", userProfileParcel.getCurUserNickname());
-        mSocket.connect();
+        socket.connect();
+        setupSocketListeners();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_delete, menu);
+        return true;
     }
 
     @Override
@@ -111,6 +144,35 @@ public class MessagingActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case android.R.id.home:
                 onBackPressed();
+                return true;
+            case R.id.id_item_delete:
+                AlertDialog.Builder dialogBuilderConfirmDelete = new AlertDialog.Builder(this);
+                View dialogViewConfirmDelete = View.inflate(this, R.layout.dialog_confirm_delete_conversation, null);
+                TextView confirmDeleteMessage = (TextView) dialogViewConfirmDelete.findViewById(R.id.id_dialog_confirm_delete_conversation);
+                ImageView confirmDeleteImage = (ImageView) dialogViewConfirmDelete.findViewById(R.id.id_dialog_confirm_delete_conversation_image);
+                confirmDeleteMessage.setText("Are you sure you want to delete this conversation with " + receiverUsername + "?");
+                Helpers.setFacebookProfileImage(getApplicationContext(),
+                        confirmDeleteImage,
+                        conversation.getUsernameFacebookIdMap().get(receiverUsername),
+                        3,
+                        true);
+                dialogBuilderConfirmDelete.setView(dialogViewConfirmDelete);
+                dialogBuilderConfirmDelete.setTitle("Confirm Delete");
+                dialogBuilderConfirmDelete.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        toggleDeletingConversationLoadingDialog(true);
+                        dynamoDBHelper.deleteConversation(conversation, new DynamoDBHelper.AsyncTaskCallback() {
+                            @Override
+                            public void onTaskDone() {
+                                toggleDeletingConversationLoadingDialog(false);
+                                finish();
+                                overridePendingTransition(R.anim.left_in, R.anim.right_out);
+                            }
+                        });
+                    }
+                });
+                dialogBuilderConfirmDelete.setNegativeButton("No", null);
+                dialogBuilderConfirmDelete.create().show();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -120,51 +182,235 @@ public class MessagingActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        if (mSocket != null)
-            mSocket.disconnect();
+        if (socket != null)
+            socket.disconnect();
     }
 
     /***********************************************************************************************
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
-    private void sendChatMessage() {
-        // send update notification to messaging server
-        JSONObject jsonData = new JSONObject();
-        try {
-            jsonData.put("receiver_nickname", recipientNickname);
-            jsonData.put("sender_nickname", userProfileParcel.getCurUserNickname());
-            jsonData.put("data", messageChatText.getText().toString().trim());
-            mSocket.emitString("send_message", jsonData.toString());
-        } catch (JSONException e) { e.printStackTrace(); }
+    private void sendChatMessage(String message) {
+        ChatMessage newMessage = new ChatMessage(conversation.getConversationID(),
+                currentUsername,
+                currentUserFacebookId,
+                message);
 
-        // update UI
-        messageArrayAdapter.add(new ChatMessage(conversation.getConversationID(),
-                                                userProfileParcel.getCurUserNickname(),
-                                                userProfileParcel.getFacebookID(),
-                                                messageChatText.getText().toString().trim()));
+        // save new message to DB
+        new PushChatMessageToDBAsyncTask().execute(newMessage);
+
+        // switch fragments on first message
+        if (conversationEmpty) {
+            conversationEmpty = false;
+            messagesFragment = new MessagesFragment();
+            Bundle bundle = new Bundle();
+            bundle.putBoolean("HAS_FIRST_MESSAGE", true);
+            bundle.putParcelable("FIRST_MESSAGE", newMessage);
+            messagesFragment.setArguments(bundle);
+            fragmentManager.beginTransaction().replace(R.id.id_container_messaging_fragment, messagesFragment).commit();
+        } else {
+            // update UI
+            messagesFragment.addMessage(newMessage);
+        }
         messageChatText.setText("");
     }
 
-    private void refreshChatWindow() {
-        messageArrayAdapter.fetchNewMessages(conversation.getConversationID());
+    private void setupSocketListeners() {
+        // on message received listener
+        socket.registerListener("new_message_" + currentUsername, onNewMessageHandler);
+        // on receiver join chat listener
+        socket.registerListener("on_join_" + receiverUsername, onReceiverJoinChatHandler);
+        // on receiver leave chat listener
+        socket.registerListener("on_leave_" + receiverUsername, onReceiverLeaveChatHandler);
     }
 
+    /***********************************************************************************************
+     ****************************************** UI METHODS *****************************************
+     **********************************************************************************************/
+    private void toggleDeletingConversationLoadingDialog(boolean show) {
+        if (show)
+            progressDialogDeleteConversation = ProgressDialog.show(this, "Delete Conversation", "Deleting ... ", true);
+        else
+            progressDialogDeleteConversation.dismiss();
+    }
+
+    /***********************************************************************************************
+     ****************************************** ASYNC TASKS ****************************************
+     **********************************************************************************************/
+    private class PushChatMessageToDBAsyncTask extends AsyncTask<ChatMessage, Void, Void> {
+        @Override
+        protected Void doInBackground(ChatMessage... chatMessages) {
+            ChatMessage chatMessage = chatMessages[0];
+            DBUserConversation userConversation = dynamoDBHelper.loadDBUserConversation(chatMessage.getConversationID());
+            userConversation.setTimeStampLatest(Helpers.getTimestampSeconds());
+            userConversation.addConversationChatMessage(chatMessage);
+            dynamoDBHelper.saveDBObject(userConversation);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            // send update notification to messaging server
+            if (receiverJoined) {
+                JSONObject jsonData = new JSONObject();
+                try {
+                    jsonData.put("receiver_username", receiverUsername);
+                    jsonData.put("sender_username", currentUsername);
+                    jsonData.put("data", messageChatText.getText().toString().trim());
+                } catch (JSONException e) { e.printStackTrace(); }
+                socket.emitString("send_message", jsonData.toString());
+            }
+            else {
+                Bundle bundle = new Bundle();
+                bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_MESSAGE.toInt());
+                bundle.putString("RECEIVER_USERNAME", receiverUsername);
+                bundle.putString("SENDER_USERNAME", currentUsername);
+                bundle.putString("SENDER_FACEBOOK_ID", currentUserFacebookId);
+                httpRequestsHelper.makePushNotificationRequest(bundle);
+
+                // notify receiving user of new message alert next time they open the app
+                messagesFragment.notifyReceiverNewMessageAlert();
+            }
+        }
+    }
+
+    /***********************************************************************************************
+     ************************************ Socket Emitter Listeners *********************************
+     **********************************************************************************************/
     private Emitter.Listener onNewMessageHandler = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    String sender = (String) args[0];
-                    if (sender.equals(recipientNickname)) {
-                        Log.d("MessagingActivity: ", "Refreshing chat window");
-                        refreshChatWindow();
-                    }
-                    else {
-                        Log.d("MessagingActivity: ", sender);
+                    if (args.length > 0) {
+                        String senderUsername = (String) args[0];
+                        if (senderUsername.equals(receiverUsername)) {
+                            if (conversationEmpty) {
+                                conversationEmpty = false;
+                                messagesFragment = new MessagesFragment();
+                                fragmentManager.beginTransaction().replace(R.id.id_container_messaging_fragment, messagesFragment).commit();
+                            } else {
+                                messagesFragment.refreshChatWindow();
+                            }
+                        }
                     }
                 }
             });
         }
     };
+
+    private Emitter.Listener onReceiverJoinChatHandler = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            if (args.length > 0) {
+                String response = (String) args[0];
+                if (response.equals("callback_request")) {
+                    JSONObject jsonData = new JSONObject();
+                    try {
+                        jsonData.put("receiver_username", receiverUsername);
+                        jsonData.put("sender_username", currentUsername);
+                    } catch (JSONException e) { e.printStackTrace(); }
+                    socket.emitString("callback_ack", jsonData.toString());
+                }
+            }
+            receiverJoined = true;
+        }
+    };
+
+    private Emitter.Listener onReceiverLeaveChatHandler = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            receiverJoined = false;
+        }
+    };
+
+    /***********************************************************************************************
+     **************************************** Fragment Classes *************************************
+     **********************************************************************************************/
+    public static class NoMessageFragment extends Fragment {
+        @Nullable
+        @Override
+        public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+            View view = inflater.inflate(R.layout.fragment_messaging_no_message, container, false);
+            final TextView titleText = (TextView) view.findViewById(R.id.id_messaging_default_title);
+            final TextView messageText = (TextView) view.findViewById(R.id.id_messaging_default_message);
+            final ImageView profileImage = (ImageView) view.findViewById(R.id.id_messaging_default_image);
+
+            String title = "You fistbumped with " + receiverUsername;
+            String message = Helpers.getTimetampString(conversation.getTimestampCreated()) + " ago";
+            String facebookId = conversation.getUserFacebookId(receiverUsername);
+            titleText.setText(title);
+            messageText.setText(message);
+            Helpers.setFacebookProfileImage(getContext().getApplicationContext(),
+                    profileImage,
+                    facebookId,
+                    3,
+                    true);
+            return view;
+        }
+    }
+
+    public static class MessagesFragment extends Fragment {
+
+        // UI Variables
+        private ListView messageListView;
+        private MessageArrayAdapter messageArrayAdapter;
+
+        @Override
+        public void onCreate(@Nullable Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+
+            messageArrayAdapter = new MessageArrayAdapter(getContext().getApplicationContext(),
+                    conversation.getChatMessages(),
+                    currentUsername);
+
+            // see if it's the first time someone sent a message in this conversation
+            Bundle bundle = getArguments();
+            if (bundle != null && bundle.getBoolean("HAS_FIRST_MESSAGE")) {
+                ChatMessage newMessage = bundle.getParcelable("FIRST_MESSAGE");
+                if (newMessage != null)
+                    addMessage(newMessage);
+            }
+
+        }
+
+        @Nullable
+        @Override
+        public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+            View view = inflater.inflate(R.layout.fragment_messaging_messages, container, false);
+
+            // initialize UI members
+            messageListView = (ListView) view.findViewById(R.id.id_list_view_container_messaging);
+            messageListView.setAdapter(messageArrayAdapter);
+            messageListView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
+
+            messageArrayAdapter.registerDataSetObserver(new DataSetObserver() {
+                @Override
+                public void onChanged() {
+                    super.onChanged();
+                    messageListView.setSelection(messageArrayAdapter.getCount() - 1);
+                }
+            });
+
+            return view;
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            refreshChatWindow();
+        }
+
+        private void refreshChatWindow() {
+            messageArrayAdapter.fetchNewMessages(conversation.getConversationID());
+        }
+
+        private void notifyReceiverNewMessageAlert() {
+            messageArrayAdapter.notifyReceiverNewMessage(receiverUsername);
+        }
+
+        private void addMessage(ChatMessage newMessage) {
+            messageArrayAdapter.add(newMessage);
+        }
+    }
 }

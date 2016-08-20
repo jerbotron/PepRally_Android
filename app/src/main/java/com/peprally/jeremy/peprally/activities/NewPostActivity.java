@@ -71,7 +71,7 @@ public class NewPostActivity extends AppCompatActivity {
             }
         });
 
-        final Button newPostButton = (Button) findViewById(R.id.button_new_post);
+        final TextView newPostButton = (TextView) findViewById(R.id.id_text_view_button_new_post);
         assert newPostButton != null;
         newPostButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -83,7 +83,6 @@ public class NewPostActivity extends AppCompatActivity {
                     intent.putExtra("NEW_POST_TEXT", editTextNewPost.getText().toString());
                     setResult(Activity.RESULT_OK, intent);
                     finish();
-//                overridePendingTransition(R.anim.top_in, R.anim.bottom_out);
                 }
                 // Hide soft keyboard if keyboard is up
                 Helpers.hideSoftKeyboard(getApplicationContext(), editTextNewPost);

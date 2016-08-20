@@ -2,10 +2,11 @@ package com.peprally.jeremy.peprally.adapters;
 
 
 import android.content.Context;
+import android.content.Intent;
+import android.os.AsyncTask;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.text.Html;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,21 +15,34 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.activities.NewCommentActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserNotification;
+import com.peprally.jeremy.peprally.db_models.DBUserPost;
+import com.peprally.jeremy.peprally.network.DynamoDBHelper;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
+import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.Helpers;
+import com.peprally.jeremy.peprally.enums.NotificationEnum;
+import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.List;
 
 public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCardAdapter.NotificationCardHolder>{
 
-    private Context callingContext;
+    private DynamoDBHelper dynamoDBHelper;
 
+    private Context callingContext;
     private List<DBUserNotification> notifications;
+    private UserProfileParcel userProfileParcel;
 
     public NotificationCardAdapter(Context callingContext,
-                                   List<DBUserNotification> notifications) {
+                                   List<DBUserNotification> notifications,
+                                   UserProfileParcel userProfileParcel) {
         this.callingContext = callingContext;
         this.notifications = notifications;
+        this.userProfileParcel = userProfileParcel;
+
+        dynamoDBHelper = new DynamoDBHelper(callingContext);
     }
 
     static class NotificationCardHolder extends RecyclerView.ViewHolder {
@@ -41,7 +55,7 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
         private NotificationCardHolder(View itemView) {
             super(itemView);
             cardView = (CardView) itemView.findViewById(R.id.id_card_view_notifications);
-            clickableContainer = (LinearLayout) itemView.findViewById(R.id.id_notification_card_container_clickable);
+            clickableContainer = (LinearLayout) itemView.findViewById(R.id.id_recycler_view_container_notification);
             userNotifyingImage = (ImageView) itemView.findViewById(R.id.id_notification_card_profile_photo);
             content = (TextView) itemView.findViewById(R.id.id_notification_card_content);
             timeStamp = (TextView) itemView.findViewById(R.id.id_notification_card_time_stamp);
@@ -55,22 +69,24 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
     }
 
     @Override
-    public void onBindViewHolder(NotificationCardHolder notificationCardHolder, int position) {
-        DBUserNotification userNotification = notifications.get(position);
+    public void onBindViewHolder(final NotificationCardHolder notificationCardHolder, int position) {
+        final DBUserNotification userNotification = notifications.get(position);
         Helpers.setFacebookProfileImage(callingContext,
                                         notificationCardHolder.userNotifyingImage,
-                                        userNotification.getFacebookIDSender(),
-                                        3);
+                                        userNotification.getFacebookIdSender(),
+                                        3,
+                                        true);
 
-        notificationCardHolder.timeStamp.setText(Helpers.getTimetampString(userNotification.getTimeInSeconds()));
+        notificationCardHolder.timeStamp.setText(Helpers.getTimetampString(userNotification.getTimestampSeconds()));
 
-        String content;
-        switch (userNotification.getType()) {
-            case 0: // direct fistbump
+        String content = "";
+        NotificationEnum notificationType = NotificationEnum.fromInt(userNotification.getNotificationType());
+        switch (notificationType) {
+            case DIRECT_FISTBUMP:
                 content = callingContext.getResources().getString(R.string.notification_0_placeholder);
                 break;
-            case 1: // commented on post
-                content = callingContext.getResources().getString(R.string.notification_1_placeholder);
+            case POST_COMMENT:
+                content = callingContext.getResources().getString(R.string.notification_2_placeholder);
                 String comment = userNotification.getComment();
                 if (comment.length() > 50)
                     comment = comment.substring(0, 50) + "...\"";
@@ -78,24 +94,30 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
                     comment = comment + "\"";
                 content = content + comment;
                 break;
-            case 2: // fistbumped post
-                content = callingContext.getResources().getString(R.string.notification_2_placeholder);
-                break;
-            case 3: // fistbumped comment
+            case POST_FISTBUMP:
                 content = callingContext.getResources().getString(R.string.notification_3_placeholder);
                 break;
-            default:
-                //TODO: better error handling on invalid notification type
-                content = "";
+            case COMMENT_FISTBUMP:
+                content = callingContext.getResources().getString(R.string.notification_4_placeholder);
                 break;
         }
 
-        notificationCardHolder.content.setText(Html.fromHtml("<b>"+userNotification.getNicknameSender()+"</b> " + content));
+        notificationCardHolder.content.setText(Helpers.getTextHtml("<b>"+userNotification.getSenderUsername()+"</b> " + content));
 
         notificationCardHolder.clickableContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d("NOTIFICATIONS ADAPTER", "NOTIFICATION RECEIVED");
+                switch (NotificationEnum.fromInt(userNotification.getNotificationType())) {
+                    case DIRECT_FISTBUMP:
+                        AsyncHelpers.launchUserProfileActivity(callingContext, dynamoDBHelper, userNotification.getSenderUsername(), userNotification.getUsername());
+                        break;
+                    case POST_COMMENT:
+                    case POST_FISTBUMP:
+                    case COMMENT_FISTBUMP:
+                        notificationCardHolder.clickableContainer.setClickable(false);
+                        new FetchUserPostAsyncTask().execute(userNotification);
+                        break;
+                }
             }
         });
     }
@@ -105,4 +127,37 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
         return notifications.size();
     }
 
+    /***********************************************************************************************
+     *********************************** GENERAL METHODS/INTERFACES ********************************
+     **********************************************************************************************/
+    private void launchNewCommentActivity(DBUserPost curPost) {
+        Intent intent = new Intent(callingContext, NewCommentActivity.class);
+        userProfileParcel.setCurrentActivity(ActivityEnum.NEWCOMMENT);
+        intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
+        intent.putExtra("MAIN_POST", curPost);
+        callingContext.startActivity(intent);
+        ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
+    }
+
+    private void launchProfileActivity() {
+
+    }
+
+    /***********************************************************************************************
+     ****************************************** ASYNC TASKS ****************************************
+     **********************************************************************************************/
+    private class FetchUserPostAsyncTask extends AsyncTask<DBUserNotification, Void, DBUserPost> {
+        @Override
+        protected DBUserPost doInBackground(DBUserNotification... dbUserNotifications) {
+            DBUserNotification userNotification = dbUserNotifications[0];
+            return dynamoDBHelper.loadDBUserPost(userNotification.getPostId());
+        }
+
+        @Override
+        protected void onPostExecute(DBUserPost userPost) {
+            if (userPost != null) {
+                launchNewCommentActivity(userPost);
+            }
+        }
+    }
 }

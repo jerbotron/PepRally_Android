@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <CheckBoxPreference
+        android:title="@string/pref_notifications_direct_fistbump"
+        android:key="pref_notifications_direct_fistbump"
+        android:defaultValue="true" />
+
+    <CheckBoxPreference
+        android:title="@string/pref_notifications_post_fistbump"
+        android:key="pref_notifications_post_fistbump"
+        android:defaultValue="true" />
+
+    <CheckBoxPreference
+        android:title="@string/pref_notifications_comment_fistbump"
+        android:key="pref_notifications_comment_fistbump"
+        android:defaultValue="true" />
+
+    <CheckBoxPreference
+        android:title="@string/pref_notifications_new_comment"
+        android:key="pref_notifications_new_comment"
+        android:defaultValue="true" />
+
+    <CheckBoxPreference
+        android:title="@string/pref_notifications_direct_message"
+        android:key="pref_notifications_direct_message"
+        android:defaultValue="true" />
+
+</PreferenceScreen>

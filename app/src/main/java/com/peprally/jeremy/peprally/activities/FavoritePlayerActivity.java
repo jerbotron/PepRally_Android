@@ -25,7 +25,7 @@ import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.PlayersCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.network.AWSCredentialProvider;
-import com.peprally.jeremy.peprally.utils.ActivityEnum;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
@@ -43,7 +43,7 @@ public class FavoritePlayerActivity extends AppCompatActivity {
 //    private static final String TAG = FavoriteTeamActivity.class.getSimpleName();
     private PaginatedQueryList<DBPlayerProfile> roster;
     private String callingActivity;
-    private String curUserNickname;
+    private String curUsername;
     private boolean dataFetched = false;
 
     /***********************************************************************************************
@@ -55,7 +55,7 @@ public class FavoritePlayerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_favorite_player);
 
         callingActivity = getIntent().getStringExtra("CALLING_ACTIVITY");
-        curUserNickname = getIntent().getStringExtra("CURRENT_USER_NICKNAME");
+        curUsername = getIntent().getStringExtra("CURRENT_USERNAME");
         String team = getIntent().getStringExtra("TEAM");
         ActionBar supportActionBar = getSupportActionBar();
         assert supportActionBar != null;
@@ -103,44 +103,41 @@ public class FavoritePlayerActivity extends AppCompatActivity {
     /***********************************************************************************************
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
+    public void playerCardOnClickHandler(int position) {
+        DBPlayerProfile playerProfile = roster.get(position);
+        if (callingActivity.equals("ProfileActivity")) {
+            Intent intent = new Intent();
+            intent.putExtra("FAVORITE_PLAYER", Helpers.getFavPlayerText(playerProfile.getFirstName(),
+                    playerProfile.getLastName(),
+                    playerProfile.getNumber(),
+                    playerProfile.getTeam()));
+            setResult(Activity.RESULT_OK, intent);
+            finish();
+            overridePendingTransition(R.anim.left_in, R.anim.right_out);
+        } else if (callingActivity.equals("HomeActivity")) {
+            UserProfileParcel parcel = new UserProfileParcel(ActivityEnum.PROFILE,
+                    curUsername,
+                    playerProfile.getFirstName(),
+                    playerProfile.getTeam(),
+                    playerProfile.getIndex(),
+                    false); // assume user not viewing self profile
+            // Check if current user is a varsity player viewing his/her own profile
+            if (playerProfile.getHasUserProfile() &&
+                    playerProfile.getUsername().equals(curUsername)) {
+                parcel.setIsSelfProfile(true);
+            }
+            Intent intent = new Intent(FavoritePlayerActivity.this, ProfileActivity.class);
+            intent.putExtra("USER_PROFILE_PARCEL", parcel);
+            startActivity(intent);
+            overridePendingTransition(R.anim.right_in, R.anim.left_out);
+        }
+    }
+
     private void initializeAdapter(PaginatedQueryList<DBPlayerProfile> result) {
         this.roster = result;
         PlayersCardAdapter playersCardAdapter = new PlayersCardAdapter(FavoritePlayerActivity.this, roster);
         recyclerView.setAdapter(playersCardAdapter);
-        playersCardAdapter.setOnItemClickListener(new PlayersCardAdapter.PlayersAdapterClickListener() {
-            @Override
-            public void onItemClick(View v, int position) {
-                DBPlayerProfile playerProfile = roster.get(position);
-                if (callingActivity.equals("ProfileActivity")) {
-                    Intent intent = new Intent();
-                    intent.putExtra("FAVORITE_PLAYER", Helpers.getFavPlayerText(playerProfile.getFirstName(),
-                                                                                playerProfile.getLastName(),
-                                                                                playerProfile.getNumber(),
-                                                                                playerProfile.getTeam()));
-                    setResult(Activity.RESULT_OK, intent);
-                    finish();
-                    overridePendingTransition(R.anim.left_in, R.anim.right_out);
-                } else if (callingActivity.equals("HomeActivity")) {
-                    UserProfileParcel parcel = new UserProfileParcel(ActivityEnum.PROFILE,
-                                                                     curUserNickname,
-                                                                     playerProfile.getFirstName(),
-                                                                     playerProfile.getTeam(),
-                                                                     playerProfile.getIndex(),
-                                                                     false); // assume user not viewing self profile
-                    // Check if current user is a varsity player viewing his/her own profile
-                    if (playerProfile.getHasUserProfile() &&
-                            playerProfile.getNickname().equals(curUserNickname)) {
-                        parcel.setIsSelfProfile(true);
-                    }
-                    Intent intent = new Intent(FavoritePlayerActivity.this, ProfileActivity.class);
-                    intent.putExtra("USER_PROFILE_PARCEL", parcel);
-                    startActivity(intent);
-                    overridePendingTransition(R.anim.right_in, R.anim.left_out);
-                }
-            }
-        });
     }
-
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/

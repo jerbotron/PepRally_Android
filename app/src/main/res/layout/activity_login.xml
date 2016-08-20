@@ -1,38 +1,59 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/id_activity_login_container"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:fitsSystemWindows="true"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:background="@color/colorPrimary">
 
-    <LinearLayout
-        android:orientation="vertical"
+    <ImageView android:id="@+id/id_image_view_login_logo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingLeft="25dp"
-        android:paddingRight="25dp">
+        android:layout_marginTop="@dimen/activity_vertical_margin"
+        android:src="@drawable/logo_peprally_white"
+        android:scaleX="0.6"
+        android:scaleY="0.6"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:layout_alignParentTop="true"
+        android:contentDescription="@string/label_app_name"/>
 
-        <ImageView android:src="@drawable/logo_peprally_white"
-            android:layout_width="wrap_content"
-            android:layout_height="175dp"
-            android:layout_marginTop="100dp"
-            android:layout_marginBottom="25dp"
-            android:layout_gravity="center_horizontal"
-            android:contentDescription="@string/label_app_name"/>
+    <Spinner
+        android:id="@+id/id_spinner_school_picker"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/id_image_view_login_logo"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:layout_margin="@dimen/activity_horizontal_margin"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingStart="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingEnd="@dimen/activity_horizontal_margin"
+        android:spinnerMode="dialog"
+        android:background="@drawable/bg_spinner_login"
+        android:popupBackground="@color/colorBackground"/>
 
-        <com.facebook.login.widget.LoginButton
-            android:id="@+id/login_button"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="30dp"
-            android:layout_marginBottom="30dp" />
+    <com.facebook.login.widget.LoginButton
+        android:id="@+id/login_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/id_spinner_school_picker"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginLeft="@dimen/activity_horizontal_margin"
+        android:layout_marginStart="@dimen/activity_horizontal_margin"
+        android:layout_marginRight="@dimen/activity_horizontal_margin"
+        android:layout_marginEnd="@dimen/activity_horizontal_margin"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp" />
 
-        <TextView android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:text="@string/placeholder_app_version"
-            android:gravity="center"
-            android:textSize="16sp"/>
-    </LinearLayout>
-</LinearLayout>
+    <TextView android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="@dimen/activity_horizontal_margin"
+        android:paddingBottom="8dp"
+        android:text="@string/label_app_full_version"
+        android:textSize="12sp"
+        android:textColor="@color/colorWhite"
+        android:gravity="center" />
+</RelativeLayout>

@@ -2,152 +2,59 @@ package com.peprally.jeremy.peprally.db_models;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.annotation.NonNull;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
+import com.peprally.jeremy.peprally.custom.Comment;
+import com.peprally.jeremy.peprally.db_models.json_marshallers.CommentsJSONMarshaller;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 @DynamoDBTable(tableName = "UserPosts")
-public class DBUserPost implements Comparable<DBUserPost>, Parcelable{
-    private String nickname;
-    private String postID;
-    private String cognitoID;
-    private String facebookID;
+public class DBUserPost implements Parcelable{
+    private String username;
+    private String postId;
+    private String cognitoId;
+    private String facebookId;
     private String firstname;
-    private String timeStamp;
-    private String textContent;
-    private Long timeInSeconds;
+    private String postText;
+    private Long timestampSeconds;
     private int fistbumpsCount;
     private int commentsCount;
     private Set<String> fistbumpedUsers;
+    private ArrayList<Comment> comments;
 
-    // Public Constructor
+    // Default Constructors
 
+    // Empty Constructor for queries
     public DBUserPost() {}
 
-    @Override
-    public int compareTo(@NonNull DBUserPost another) {
-        return timeInSeconds.compareTo(another.timeInSeconds);
-    }
-
-    @DynamoDBHashKey(attributeName = "Nickname")
-    public String getNickname() {
-        return nickname;
-    }
-
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
-    }
-
-    @DynamoDBRangeKey(attributeName = "TimeInSeconds")
-    public long getTimeInSeconds() {
-        return timeInSeconds;
-    }
-
-    public void setTimeInSeconds(long timeInSeconds) {
-        this.timeInSeconds = timeInSeconds;
-    }
-
-    @DynamoDBAttribute(attributeName = "PostID")
-    public String getPostID() {
-        return postID;
-    }
-
-    public void setPostID(String postID) {
-        this.postID = postID;
-    }
-
-    @DynamoDBAttribute(attributeName = "CognitoID")
-    public String getCognitoID() {
-        return cognitoID;
-    }
-
-    public void setCognitoID(String cognitoID) {
-        this.cognitoID = cognitoID;
-    }
-
-    @DynamoDBAttribute(attributeName = "FacebookID")
-    public String getFacebookID() {
-        return facebookID;
-    }
-
-    public void setFacebookID(String facebookID) {
-        this.facebookID = facebookID;
-    }
-
-    @DynamoDBAttribute(attributeName = "Firstname")
-    public String getFirstname() {
-        return firstname;
-    }
-
-    public void setFirstname(String firstname) {
+    // New Post Constructor
+    public DBUserPost(String username,
+                      String postId,
+                      String cognitoId,
+                      String facebookId,
+                      String firstname,
+                      String postText,
+                      long timestampSeconds)
+    {
+        this.username = username;
+        this.postId = postId;
+        this.cognitoId = cognitoId;
+        this.facebookId = facebookId;
         this.firstname = firstname;
+        this.postText = postText;
+        this.timestampSeconds = timestampSeconds;
+        this.fistbumpsCount = 0;
+        this.commentsCount = 0;
+        this.fistbumpedUsers = new HashSet<>(Collections.singletonList("_"));
+        this.comments = new ArrayList<>();
     }
 
-    @DynamoDBAttribute(attributeName = "TimeStamp")
-    public String getTimeStamp() {
-        return timeStamp;
-    }
-
-    public void setTimeStamp(String timeStamp) {
-        this.timeStamp = timeStamp;
-    }
-
-    @DynamoDBAttribute(attributeName = "TextContent")
-    public String getTextContent() {
-        return textContent;
-    }
-
-    public void setTextContent(String textContent) {
-        this.textContent = textContent;
-    }
-
-    @DynamoDBAttribute(attributeName = "FistbumpsCount")
-    public int getFistbumpsCount() {
-        return fistbumpsCount;
-    }
-
-    public void incrementFistbumpsCount() {
-        fistbumpsCount += 1;
-    }
-
-    public void decrementFistbumpsCount() {
-        fistbumpsCount -= 1;
-    }
-
-    public void setFistbumpsCount(int fistbumpsCount) {
-        this.fistbumpsCount = fistbumpsCount;
-    }
-
-    @DynamoDBAttribute(attributeName = "CommentsCount")
-    public int getCommentsCount() {
-        return commentsCount;
-    }
-
-    public void setCommentsCount(int commentsCount) {
-        this.commentsCount = commentsCount;
-    }
-
-    public void incrementCommentsCount() {
-        commentsCount += 1;
-    }
-
-    public void decrementCommentsCount() {
-        commentsCount -= 1;
-    }
-
-    @DynamoDBAttribute(attributeName = "FistbumpedUsers")
-    public Set<String> getFistbumpedUsers() {
-        return fistbumpedUsers;
-    }
-
-    public void setFistbumpedUsers(Set<String> fistbumpedUsers) {
-        this.fistbumpedUsers = fistbumpedUsers;
-    }
-
+    // Helpers
     public void addFistbumpedUser(String user) {
         fistbumpedUsers.add(user);
     }
@@ -156,36 +63,44 @@ public class DBUserPost implements Comparable<DBUserPost>, Parcelable{
         fistbumpedUsers.remove(user);
     }
 
-    // Parcelable Methods
+    public void addComment(Comment comment) {
+        comments.add(comment);
+        commentsCount++;
+    }
 
-    // Parcel Constructor
+    public void deleteCommentAt(int index) {
+        comments.remove(index);
+        commentsCount--;
+    }
+
+    // Parcelable Methods
     private DBUserPost(Parcel in) {
-        this.nickname = in.readString();
-        this.postID = in.readString();
-        this.cognitoID = in.readString();
-        this.facebookID = in.readString();
+        this.username = in.readString();
+        this.postId = in.readString();
+        this.cognitoId = in.readString();
+        this.facebookId = in.readString();
         this.firstname = in.readString();
-        this.timeStamp = in.readString();
-        this.textContent = in.readString();
-        this.timeInSeconds = in.readLong();
+        this.postText = in.readString();
+        this.timestampSeconds = in.readLong();
         this.fistbumpsCount = in.readInt();
         this.commentsCount = in.readInt();
         this.fistbumpedUsers = new HashSet<>(Arrays.asList(in.createStringArray()));
+        this.comments = CommentsJSONMarshaller.decodeJSONComments(in.readString());
     }
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(nickname);
-        dest.writeString(postID);
-        dest.writeString(cognitoID);
-        dest.writeString(facebookID);
+        dest.writeString(username);
+        dest.writeString(postId);
+        dest.writeString(cognitoId);
+        dest.writeString(facebookId);
         dest.writeString(firstname);
-        dest.writeString(timeStamp);
-        dest.writeString(textContent);
-        dest.writeLong(timeInSeconds);
+        dest.writeString(postText);
+        dest.writeLong(timestampSeconds);
         dest.writeInt(fistbumpsCount);
         dest.writeInt(commentsCount);
         dest.writeStringArray(fistbumpedUsers.toArray(new String[fistbumpedUsers.size()]));
+        dest.writeString(CommentsJSONMarshaller.convertCommentsToJSON(comments));
     }
 
     @Override
@@ -204,4 +119,95 @@ public class DBUserPost implements Comparable<DBUserPost>, Parcelable{
             return new DBUserPost[size];
         }
     };
+
+    // Getters/Setters
+    @DynamoDBHashKey(attributeName = "Username")
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "Username-index", attributeName = "Username")
+    public String getUsername() {
+        return username;
+    }
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    @DynamoDBAttribute(attributeName = "PostId")
+    public String getPostId() {
+        return postId;
+    }
+    public void setPostId(String postId) {
+        this.postId = postId;
+    }
+
+    @DynamoDBAttribute(attributeName = "CognitoId")
+    public String getCognitoId() {
+        return cognitoId;
+    }
+    public void setCognitoId(String cognitoId) {
+        this.cognitoId = cognitoId;
+    }
+
+    @DynamoDBAttribute(attributeName = "FacebookId")
+    public String getFacebookId() {
+        return facebookId;
+    }
+    public void setFacebookId(String facebookId) {
+        this.facebookId = facebookId;
+    }
+
+    @DynamoDBAttribute(attributeName = "Firstname")
+    public String getFirstname() {
+        return firstname;
+    }
+    public void setFirstname(String firstname) {
+        this.firstname = firstname;
+    }
+
+    @DynamoDBAttribute(attributeName = "TextContent")
+    public String getPostText() {
+        return postText;
+    }
+    public void setPostText(String postText) {
+        this.postText = postText;
+    }
+
+    @DynamoDBRangeKey(attributeName = "TimestampSeconds")
+    public long getTimestampSeconds() {
+        return timestampSeconds;
+    }
+    public void setTimestampSeconds(long timestampSeconds) {
+        this.timestampSeconds = timestampSeconds;
+    }
+
+    @DynamoDBAttribute(attributeName = "FistbumpsCount")
+    public int getFistbumpsCount() {
+        return fistbumpsCount;
+    }
+    public void setFistbumpsCount(int fistbumpsCount) {
+        this.fistbumpsCount = fistbumpsCount;
+    }
+
+    @DynamoDBAttribute(attributeName = "CommentsCount")
+    public int getCommentsCount() {
+        return commentsCount;
+    }
+    public void setCommentsCount(int commentsCount) {
+        this.commentsCount = commentsCount;
+    }
+
+    @DynamoDBAttribute(attributeName = "FistbumpedUsers")
+    public Set<String> getFistbumpedUsers() {
+        return fistbumpedUsers;
+    }
+    public void setFistbumpedUsers(Set<String> fistbumpedUsers) {
+        this.fistbumpedUsers = fistbumpedUsers;
+    }
+
+    @DynamoDBAttribute(attributeName = "CommentsJson")
+    @DynamoDBMarshalling (marshallerClass = CommentsJSONMarshaller.class)
+    public ArrayList<Comment> getComments() {
+        return comments;
+    }
+    public void setComments(ArrayList<Comment> comments) {
+        this.comments = comments;
+    }
 }

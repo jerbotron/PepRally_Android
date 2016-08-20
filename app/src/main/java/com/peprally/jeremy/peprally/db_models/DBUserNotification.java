@@ -6,102 +6,78 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 
 @DynamoDBTable(tableName = "UserNotifications")
 public class DBUserNotification implements Comparable<DBUserNotification> {
-    private String nickname;
-    private String nicknameSender;
-    private String facebookIDSender;
+    private String username;
+    private String senderUsername;
+    private String facebookIdSender;
+    private String postId;
+    private String commentId;
     private String comment;
-    private String postID;
-    private String commentID;
-    private String timeStamp;
-    private Long timeInSeconds;
-    // 0 = direct fistbump, 1 = comment on post, 2 = fistbump on post, 3 = fistbump on comment
-    private int type;
+    private Long timestampSeconds;
+    // 0 = direct fistbump, 1 = direct message, 2 = post comment, 3 = post fistbump, 4 = comment fistbump
+    private int notificationType;
 
     @Override
     public int compareTo(@NonNull DBUserNotification another) {
-        return timeInSeconds.compareTo(another.timeInSeconds);
+        return timestampSeconds.compareTo(another.timestampSeconds);
     }
 
-    @DynamoDBHashKey(attributeName = "Nickname")
-    public String getNickname() {
-        return nickname;
+    @DynamoDBHashKey(attributeName = "Username")
+    public String getUsername() {
+        return username;
+    }
+    public void setUsername(String username) {
+        this.username = username;
     }
 
-    public void setNickname(String nickname) {
-        this.nickname = nickname;
+    @DynamoDBRangeKey(attributeName = "TimestampSeconds")
+    public long getTimestampSeconds() {
+        return timestampSeconds;
+    }
+    public void setTimestampSeconds(long timestampSeconds) {
+        this.timestampSeconds = timestampSeconds;
     }
 
-    @DynamoDBRangeKey(attributeName = "TimeStampInSeconds")
-    public long getTimeInSeconds() {
-        return timeInSeconds;
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "SenderUsername-index", attributeName = "SenderUsername")
+    @DynamoDBIndexRangeKey(globalSecondaryIndexNames = {"PostId-SenderUsername-index", "CommentId-SenderUsername-index"}, attributeName = "SenderUsername")
+    public String getSenderUsername() {
+        return senderUsername;
+    }
+    public void setSenderUsername(String senderUsername) {
+        this.senderUsername = senderUsername;
     }
 
-    public void setTimeInSeconds(long timeInSeconds) {
-        this.timeInSeconds = timeInSeconds;
+    @DynamoDBAttribute(attributeName = "FacebookIdSender")
+    public String getFacebookIdSender() {
+        return facebookIdSender;
+    }
+    public void setFacebookIdSender(String facebookIdSender) { this.facebookIdSender = facebookIdSender; }
+
+    @DynamoDBIndexHashKey(globalSecondaryIndexNames = {"PostId-index", "PostId-CommentId-index", "PostId-SenderUsername-index"}, attributeName = "PostId")
+    public String getPostId() {
+        return postId;
+    }
+    public void setPostId(String postId) {
+        this.postId = postId;
     }
 
-    @DynamoDBAttribute(attributeName = "SenderNickname")
-    @DynamoDBIndexRangeKey(globalSecondaryIndexNames = {"PostID-SenderNickname-index", "CommentID-SenderNickname-index"}, attributeName = "SenderNickname")
-    public String getNicknameSender() {
-        return nicknameSender;
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "CommentId-SenderUsername-index", attributeName = "CommentId")
+    @DynamoDBIndexRangeKey(globalSecondaryIndexName = "PostId-CommentId-index", attributeName = "CommentId")
+    public String getCommentId() {
+        return commentId;
     }
-
-    public void setNicknameSender(String nicknameSender) {
-        this.nicknameSender = nicknameSender;
-    }
-
-    @DynamoDBAttribute(attributeName = "FacebookIDSender")
-    public String getFacebookIDSender() {
-        return facebookIDSender;
-    }
-
-    public void setFacebookIDSender(String facebookIDSender) {
-        this.facebookIDSender = facebookIDSender;
+    public void setCommentId(String commentId) {
+        this.commentId = commentId;
     }
 
     @DynamoDBAttribute(attributeName = "Comment")
     public String getComment() {
         return comment;
     }
-
     public void setComment(String comment) {
         this.comment = comment;
     }
 
-    @DynamoDBIndexHashKey(globalSecondaryIndexNames = {"PostID-index", "PostID-CommentID-index", "PostID-SenderNickname-index"}, attributeName = "PostID")
-    public String getPostID() {
-        return postID;
-    }
-
-    public void setPostID(String postID) {
-        this.postID = postID;
-    }
-
-    @DynamoDBIndexHashKey(globalSecondaryIndexNames = {"CommentID-index", "CommentID-SenderNickname-index"}, attributeName = "CommentID")
-    @DynamoDBIndexRangeKey(globalSecondaryIndexName = "PostID-CommentID-index", attributeName = "CommentID")
-    public String getCommentID() {
-        return commentID;
-    }
-
-    public void setCommentID(String commentID) {
-        this.commentID = commentID;
-    }
-
-    @DynamoDBAttribute(attributeName = "TimeStamp")
-    public String getTimeStamp() {
-        return timeStamp;
-    }
-
-    public void setTimeStamp(String timeStamp) {
-        this.timeStamp = timeStamp;
-    }
-
     @DynamoDBAttribute(attributeName = "NotificationType")
-    public int getType() {
-        return type;
-    }
-
-    public void setType(int type) {
-        this.type = type;
-    }
+    public int getNotificationType() { return notificationType; }
+    public void setNotificationType(int notificationType) { this.notificationType = notificationType; }
 }

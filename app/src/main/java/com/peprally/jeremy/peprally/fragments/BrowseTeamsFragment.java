@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +16,7 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.TeamsCardAdapter;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
-import com.peprally.jeremy.peprally.utils.Team;
+import com.peprally.jeremy.peprally.custom.Team;
 import com.peprally.jeremy.peprally.db_models.DBSport;
 
 import java.util.ArrayList;
@@ -34,7 +33,7 @@ public class BrowseTeamsFragment extends Fragment {
     private RecyclerView recyclerView;
 
     // AWS Variables
-    private DynamoDBHelper dbHelper;
+    private DynamoDBHelper dynamoDBHelper;
 
     // General Variables
     private static final String TAG = HomeActivity.class.getSimpleName();
@@ -47,7 +46,7 @@ public class BrowseTeamsFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        dbHelper = new DynamoDBHelper(getActivity());
+        dynamoDBHelper = new DynamoDBHelper(getActivity());
 
         new FetchSportsTableTask().execute();
     }
@@ -63,6 +62,14 @@ public class BrowseTeamsFragment extends Fragment {
         return view;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (dataFetched) {
+            initializeAdapter();
+        }
+    }
+
     private void initializeData(PaginatedScanList<DBSport> result){
         teams = new ArrayList<>();
         for (DBSport DBSport : result) {
@@ -74,41 +81,23 @@ public class BrowseTeamsFragment extends Fragment {
     }
 
     private void initializeAdapter() {
-        TeamsCardAdapter teamsCardAdapter = new TeamsCardAdapter(teams);
-        recyclerView.setAdapter(teamsCardAdapter);
-        teamsCardAdapter.setOnItemClickListener(new TeamsCardAdapter.TeamsAdapterClickListener() {
+        TeamsCardAdapter teamsCardAdapter = new TeamsCardAdapter(teams, new TeamsCardAdapter.AdapterOnClickCallback() {
             @Override
-            public void onItemClick(View v, int position) {
-                ((HomeActivity) getActivity()).launchBrowsePlayerActivity(teams.get(position).name);
+            public void onClick(int position) {
+                teamsCardOnClickHandler(position);
             }
         });
+        recyclerView.setAdapter(teamsCardAdapter);
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        Log.d(TAG, "browse fragment resumed");
-        if (dataFetched) {
-            initializeAdapter();
-        }
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        Log.d(TAG, "browse fragment paused");
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        Log.d(TAG, "browse fragment destroyed");
+    public void teamsCardOnClickHandler(int position) {
+        ((HomeActivity) getActivity()).launchBrowsePlayerActivity(teams.get(position).name);
     }
 
     private class FetchSportsTableTask extends AsyncTask<Void, Void, PaginatedScanList<DBSport>> {
         @Override
         protected PaginatedScanList<DBSport> doInBackground(Void... params) {
-            return dbHelper.getMapper().scan(DBSport.class, new DynamoDBScanExpression());
+            return dynamoDBHelper.getMapper().scan(DBSport.class, new DynamoDBScanExpression());
         }
 
         @Override

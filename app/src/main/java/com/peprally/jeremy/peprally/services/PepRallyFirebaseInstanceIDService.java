@@ -54,12 +54,7 @@ public class PepRallyFirebaseInstanceIDService extends FirebaseInstanceIdService
      * @param token The new token.
      */
     private void sendRegistrationToServer(String token) {
-        DynamoDBHelper dbHelper = new DynamoDBHelper(getApplicationContext());
-        DBUserProfile userProfile = dbHelper.queryDBUserProfileWithCognitoID();
-        if (userProfile != null) {
-            userProfile.setFMSInstanceID(token);
-            dbHelper.saveDBObject(userProfile);
-            Log.d(TAG, "Token saved");
-        }
+        DynamoDBHelper dynamoDBHelper = new DynamoDBHelper(getApplicationContext());
+        dynamoDBHelper.updateFirebaseInstanceID(token);
     }
 }

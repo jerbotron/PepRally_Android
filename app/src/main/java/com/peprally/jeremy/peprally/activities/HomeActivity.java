@@ -1,10 +1,15 @@
 package com.peprally.jeremy.peprally.activities;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -15,8 +20,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.facebook.AccessToken;
@@ -28,9 +35,10 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
+import com.peprally.jeremy.peprally.enums.IntentRequestEnum;
 import com.peprally.jeremy.peprally.fragments.BrowseTeamsFragment;
 import com.peprally.jeremy.peprally.fragments.TrendingFragment;
-import com.peprally.jeremy.peprally.utils.ActivityEnum;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
@@ -43,10 +51,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // AWS Variables
-    private DynamoDBHelper dbHelper;
+    private DynamoDBHelper dynamoDBHelper;
 
     // UI Variables
     private DrawerLayout drawer;
+    private MenuItem menuChatItem, menuNotificationItem;
+    private ProgressDialog progressDialogDeleteProfile;
     private ViewPager viewPagerHome;
 
     // Fragment Variables
@@ -64,14 +74,13 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext());
-        AccessToken currentToken = AccessToken.getCurrentAccessToken();
         Profile fbProfile = Profile.getCurrentProfile();
 
         // Set main activity content view
         setContentView(R.layout.activity_home);
 
         // Initialize member variables
-        dbHelper = new DynamoDBHelper(this);
+        dynamoDBHelper = new DynamoDBHelper(this);
 
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
 
@@ -85,7 +94,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
         // Setup UI components
         Toolbar toolbar = (Toolbar) findViewById(R.id.id_toolbar_home);
-        toolbar.setTitle("PepRally");
+        toolbar.setTitle("");
+        TextView toolbarTitle = (TextView) toolbar.findViewById(R.id.id_text_view_toolbar_title);
+        Typeface customTf = Typeface.createFromAsset(getAssets(), "fonts/Sketch 3D.otf");
+        toolbarTitle.setTypeface(customTf);
         setSupportActionBar(toolbar);
 
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout_home);
@@ -100,8 +112,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         // Fetch FB img_default_profile photo and first name and display them in sidebar header
         View headerView = navigationView.getHeaderView(0);
         LinearLayout header = (LinearLayout) headerView.findViewById(R.id.id_sidebar_header);
-        ProfilePictureView profilePicture = (ProfilePictureView) headerView.findViewById(R.id.profile_image_header);
-        profilePicture.setProfileId(currentToken.getUserId());
+        ImageView profilePicture = (ImageView) headerView.findViewById(R.id.profile_image_header);
+        Helpers.setFacebookProfileImage(getApplicationContext(),
+                profilePicture,
+                fbProfile.getId(),
+                3,
+                true);
         TextView sidebar_name = (TextView) headerView.findViewById(R.id.sidebar_header_name);
         sidebar_name.setText(fbProfile.getFirstName());
         header.setOnClickListener(new View.OnClickListener() {
@@ -115,6 +131,14 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main_toolbar, menu);
+        menuChatItem = menu.findItem(R.id.id_item_chat);
+        menuNotificationItem = menu.findItem(R.id.id_item_notifications);
+        if (userProfileParcel != null && userProfileParcel.hasNewMessage()) {
+            menuChatItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_chat_notify));
+        }
+        if (userProfileParcel != null && userProfileParcel.hasNewNotification()) {
+            menuNotificationItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_notifications_notify));
+        }
         return true;
     }
 
@@ -147,15 +171,12 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         int id = item.getItemId();
         if (id == R.id.nav_settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
-            startActivity(intent);
+            intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
+            startActivityForResult(intent, IntentRequestEnum.SETTINGS_REQUEST.toInt());
             overridePendingTransition(R.anim.right_in, R.anim.left_out);
         }
         else if (id == R.id.nav_logout) {
-            finish();
-            LoginManager.getInstance().logOut();
-            Intent intent = new Intent(this, LoginActivity.class);
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-            startActivity(intent);
+            logOutAccount();
         }
         drawer.closeDrawer(GravityCompat.START);
         return true;
@@ -176,9 +197,22 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
-            switch (requestCode) {
-                case Helpers.NEW_POST_REQUEST_CODE:
+            switch (IntentRequestEnum.fromInt(requestCode)) {
+                case NEW_POST_REQUEST:
                     trendingFragment.addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
+                    break;
+                case SETTINGS_REQUEST:
+                    if (data.getBooleanExtra("DELETE_PROFILE", false)) {
+                        toggleDeletingPostLoadingDialog(true);
+                        dynamoDBHelper.deleteUserAccount(userProfileParcel, new DynamoDBHelper.AsyncTaskCallback() {
+                            @Override
+                            public void onTaskDone() {
+                                toggleDeletingPostLoadingDialog(false);
+                                logOutAccount();
+                                Toast.makeText(HomeActivity.this, "Account deleted!", Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
                     break;
             }
         }
@@ -188,7 +222,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     protected void onResume() {
         super.onResume();
         Helpers.checkGooglePlayServicesAvailable(this);
-
+        new UpdateUserNotificationAlertsAsyncTask().execute();
     }
 
     @Override
@@ -208,10 +242,25 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
      *********************************** GENERAL METHODS/INTERFACES ********************************
      **********************************************************************************************/
 
+    private void toggleDeletingPostLoadingDialog(boolean show) {
+        if (show)
+            progressDialogDeleteProfile = ProgressDialog.show(HomeActivity.this, "Delete Profile", "Deleting ... ", true);
+        else
+            progressDialogDeleteProfile.dismiss();
+    }
+
+    public void logOutAccount() {
+        finish();
+        LoginManager.getInstance().logOut();
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+    }
+
     public void launchBrowsePlayerActivity(String team) {
         Intent intent = new Intent(HomeActivity.this, FavoritePlayerActivity.class);
         intent.putExtra("CALLING_ACTIVITY", "HomeActivity");
-        intent.putExtra("CURRENT_USER_NICKNAME", userProfileParcel.getCurUserNickname());
+        intent.putExtra("CURRENT_USERNAME", userProfileParcel.getCurUsername());
         intent.putExtra("TEAM", team);
         startActivity(intent);
         overridePendingTransition(R.anim.right_in, R.anim.left_out);
@@ -219,7 +268,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     public void launchNewPostActivity() {
         Intent intent = new Intent(HomeActivity.this, NewPostActivity.class);
-        startActivityForResult(intent, Helpers.NEW_POST_REQUEST_CODE);
+        startActivityForResult(intent, IntentRequestEnum.NEW_POST_REQUEST.toInt());
         overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
     }
 
@@ -235,7 +284,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         trendingFragment = new TrendingFragment();
         BrowseTeamsFragment browseTeamsFragment = new BrowseTeamsFragment();
         ProfileViewPagerAdapter adapter = new ProfileViewPagerAdapter(getSupportFragmentManager());
-//        adapter.addFrag(new EventsFragment(), "Events");
         adapter.addFrag(trendingFragment, "Trending");
         adapter.addFrag(browseTeamsFragment, "Teams");
         viewPager.setAdapter(adapter);
@@ -244,7 +292,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         TabLayout tabLayout = (TabLayout) findViewById(R.id.id_tablayout_home);
         if (tabLayout != null) {
             tabLayout.setupWithViewPager(viewPagerHome);
-            tabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
                 @Override
                 public void onTabSelected(TabLayout.Tab tab) {
                     viewPagerHome.setCurrentItem(tab.getPosition());
@@ -261,6 +309,20 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+    private void updateMenuItemsNotificationAlerts(boolean chatAlert, boolean notificationAlert) {
+        if (menuChatItem != null && menuNotificationItem != null) {
+            if (chatAlert)
+                menuChatItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_chat_notify));
+            else
+                menuChatItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_chat));
+
+            if (notificationAlert)
+                menuNotificationItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_notifications_notify));
+            else
+                menuNotificationItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_notifications));
+        }
+    }
+
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
@@ -269,13 +331,13 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         protected Boolean doInBackground(Profile... params) {
             DBUserProfile userProfile = new DBUserProfile();
             DBPlayerProfile playerProfile = new DBPlayerProfile();
-            userProfile.setCognitoId(dbHelper.getIdentityID());
+            userProfile.setCognitoId(dynamoDBHelper.getIdentityID());
             DynamoDBQueryExpression<DBUserProfile> queryExpression = new DynamoDBQueryExpression<DBUserProfile>()
-                    .withIndexName("CognitoID-index")
+                    .withIndexName("CognitoId-index")
                     .withHashKeyValues(userProfile)
                     .withConsistentRead(false);
 
-            List<DBUserProfile> results = dbHelper.getMapper().query(DBUserProfile.class, queryExpression);
+            List<DBUserProfile> results = dynamoDBHelper.getMapper().query(DBUserProfile.class, queryExpression);
             if (results == null || results.size() == 0) {
                 Log.d(TAG, "CognitoID not found: current user does not exist in database.");
             }
@@ -283,7 +345,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 if (results.size() == 1) {
                     userProfile = results.get(0);
                     if (userProfile.getIsVarsityPlayer()) {
-                        playerProfile = dbHelper.loadDBPlayerProfile(userProfile.getTeam(), userProfile.getPlayerIndex());
+                        playerProfile = dynamoDBHelper.loadDBPlayerProfile(userProfile.getTeam(), userProfile.getPlayerIndex());
                     }
                     userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
                     return true;
@@ -299,6 +361,24 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                 viewPagerHome = (ViewPager) findViewById(R.id.id_viewpager_home);
                 setupViewPager(viewPagerHome);
             }
+        }
+    }
+
+    private class UpdateUserNotificationAlertsAsyncTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... voids) {
+            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurUsername());
+            if (userProfile != null) {
+                userProfileParcel.setHasNewMessage(userProfile.getHasNewMessage());
+                userProfileParcel.setHasNewNotification(userProfile.getHasNewNotification());
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            updateMenuItemsNotificationAlerts(userProfileParcel.hasNewMessage(),
+                                              userProfileParcel.hasNewNotification());
         }
     }
 }

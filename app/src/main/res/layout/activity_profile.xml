@@ -35,7 +35,7 @@
                     android:layout_width="128dp"
                     android:layout_height="128dp"
                     android:layout_gravity="start"
-                    android:background="@color/colorPrimaryDark"
+                    android:background="@color/colorPrimary"
                     android:layout_marginEnd="@dimen/activity_horizontal_margin"
                     android:layout_marginRight="@dimen/activity_horizontal_margin"
                     android:contentDescription="@string/content_description_image_view"/>
@@ -98,7 +98,7 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:gravity="center"
-                        android:background="@drawable/button_follow"
+                        android:background="@drawable/button_default"
                         android:padding="4dp"
                         android:clickable="true"
                         android:layout_marginLeft="@dimen/activity_horizontal_margin"
@@ -139,7 +139,7 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <com.peprally.jeremy.peprally.utils.ProfileViewPager
+    <com.peprally.jeremy.peprally.custom.ui.ProfileViewPager
         android:id="@+id/id_viewpager_profile"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

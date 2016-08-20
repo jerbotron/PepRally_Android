@@ -97,8 +97,8 @@ public class ViewFistbumpsActivity extends AppCompatActivity {
         @SafeVarargs
         final protected List<DBUserProfile> doInBackground(List<String>... params) {
             List<DBUserProfile> userProfiles = new ArrayList<>();
-            for (String nickname : params[0]) {
-                DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(nickname);
+            for (String username : params[0]) {
+                DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(username);
                 if (userProfile != null)
                     userProfiles.add(userProfile);
             }

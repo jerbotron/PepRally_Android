@@ -6,9 +6,9 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBAttribut
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBHashKey;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMarshalling;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBTable;
-import com.peprally.jeremy.peprally.messaging.ChatMessage;
-import com.peprally.jeremy.peprally.messaging.Conversation;
-import com.peprally.jeremy.peprally.messaging.ConversationJSONMarshaller;
+import com.peprally.jeremy.peprally.custom.messaging.ChatMessage;
+import com.peprally.jeremy.peprally.custom.messaging.Conversation;
+import com.peprally.jeremy.peprally.db_models.json_marshallers.ConversationJSONMarshaller;
 
 @DynamoDBTable(tableName = "UserConversations")
 public class DBUserConversation implements Comparable<DBUserConversation> {
@@ -39,6 +39,7 @@ public class DBUserConversation implements Comparable<DBUserConversation> {
     public Conversation getConversation() { return conversation; }
     public void setConversation(Conversation conversation) { this.conversation = conversation; }
 
+    // Helpers
     public void addConversationChatMessage(ChatMessage message) {
         conversation.addChatMessage(message);
     }

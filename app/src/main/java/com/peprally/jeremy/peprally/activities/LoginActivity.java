@@ -2,8 +2,10 @@ package com.peprally.jeremy.peprally.activities;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -15,7 +17,9 @@ import android.text.Spanned;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.widget.AdapterView;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.util.Log;
@@ -39,11 +43,14 @@ import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.facebook.AccessToken;
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.custom.SpinnerArrayAdapter;
+import com.peprally.jeremy.peprally.custom.preferences.NotificationsPref;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
-import com.peprally.jeremy.peprally.db_models.DBUserNickname;
+import com.peprally.jeremy.peprally.db_models.DBUsername;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
+import com.peprally.jeremy.peprally.enums.SchoolsSupportedEnum;
 import com.peprally.jeremy.peprally.network.AWSCredentialProvider;
-import com.peprally.jeremy.peprally.utils.ActivityEnum;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
@@ -64,15 +71,15 @@ public class LoginActivity extends AppCompatActivity {
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // AWS Variables
-    private DynamoDBHelper dbHelper;
+    private DynamoDBHelper dynamoDBHelper;
 
     // FB Variables
     private AccessTokenTracker accessTokenTracker;
     private CallbackManager callbackManager;
 
     // UI Variables
-    private EditText editTextNickname;
-    private InputFilter nicknameFilter = new InputFilter() {
+    private EditText editTextUsername;
+    private InputFilter usernameFilter = new InputFilter() {
         public CharSequence filter(CharSequence source, int start, int end,
                                    Spanned dest, int dstart, int dend) {
             for (int i = start; i < end; i++) {
@@ -90,9 +97,11 @@ public class LoginActivity extends AppCompatActivity {
 
     // General Variables
     private static final String TAG = LoginActivity.class.getSimpleName();
-    private Bundle fbDataBundle;
     private boolean connectionSecured;
-    private String FMSInstanceID;
+    private boolean isNewUsernameTaken = true;
+    private Bundle fbDataBundle;
+    private SchoolsSupportedEnum userSelectedSchool;
+    private String FCMInstanceId;
 
     /***********************************************************************************************
      *************************************** ACTIVITY METHODS **************************************
@@ -101,8 +110,12 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         FacebookSdk.sdkInitialize(getApplicationContext());
+
+        // update userSelectedSchool to whatever was stored in sharedPref (will set to default choice if nothing is in sharedPref)
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
+        userSelectedSchool = SchoolsSupportedEnum.fromString(sharedPref.getString(getResources().getString(R.string.pref_key_school_network), ""));
+
         if (!Helpers.checkIfNetworkConnectionAvailable((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE))) {
-            setContentView(R.layout.activity_login);
             connectionSecured = false;
             LoginManager.getInstance().logOut();
             final LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
@@ -124,24 +137,25 @@ public class LoginActivity extends AppCompatActivity {
         }
         else {
             connectionSecured = true;
-            Log.d(TAG, "----- CHECKING Google Play Services -----");
             if (Helpers.checkGooglePlayServicesAvailable(this)) {
 
                 Log.d(TAG, "----- STARTING Pep Rally -----");
 
                 callbackManager = CallbackManager.Factory.create();
 
-                dbHelper = new DynamoDBHelper(this);
+                dynamoDBHelper = new DynamoDBHelper(this);
 
                 fbDataBundle = new Bundle();
 
-                FMSInstanceID = Helpers.getFMSInstanceID(this);
+                FCMInstanceId = Helpers.getFCMInstanceId(this);
 
                 accessTokenTracker = new AccessTokenTracker() {
                     @Override
                     protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken newAccessToken) {
-                        // When a new facebook account is used to login
-                        Log.d(TAG, "onCurrentAccessTokenChanged");
+                        // When a new facebook account is used to login, clear the shared preferences
+//                        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
+//                        sharedPref.edit().clear().apply();
+//                        Log.d(TAG, "clearing shared prefs");
                     }
                 };
 
@@ -161,7 +175,6 @@ public class LoginActivity extends AppCompatActivity {
         try {
             callbackManager.onActivityResult(requestCode, resultCode, data);
         } catch (NullPointerException e) {
-            Log.d(TAG, "No connection error, handled by login button OnClick");
             e.printStackTrace();
         }
     }
@@ -190,7 +203,7 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (connectionSecured)
+        if (accessTokenTracker != null && connectionSecured)
             accessTokenTracker.stopTracking();
     }
 
@@ -206,7 +219,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onTaskDone(CognitoCachingCredentialsProvider credentialsProvider) {
                 new CheckIfNewUserDBTask().execute(credentialsProvider);
-                dbHelper.refresh(getApplicationContext());
+                dynamoDBHelper.refresh(getApplicationContext());
             }
         });
         credentialProviderTask.execute();
@@ -256,51 +269,86 @@ public class LoginActivity extends AppCompatActivity {
      **********************************************************************************************/
     private void setupLoginScreen() {
         setContentView(R.layout.activity_login);
+        setupSchoolSpinner();
         final LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d(TAG, "login button onclick");
-                setContentView(R.layout.splash);
-            }
-        });
-        loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
-            @Override
-            public void onSuccess(LoginResult loginResult) {
-                Log.d(TAG, "fb login success");
-                AWSLoginTask();
-            }
+                if (userSelectedSchool == SchoolsSupportedEnum.PROMPT_TEXT) {
+                    Toast.makeText(LoginActivity.this, "Must select a school first!", Toast.LENGTH_SHORT).show();
+                    loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+                        @Override
+                        public void onSuccess(LoginResult loginResult) {
+                            LoginManager.getInstance().logOut();
+                        }
+                        @Override
+                        public void onCancel() {}
+                        @Override
+                        public void onError(FacebookException error) {}
+                    });
+                } else {
+                    setContentView(R.layout.splash);
+                    loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+                        @Override
+                        public void onSuccess(LoginResult loginResult) {
+                            AWSLoginTask();
+                        }
 
-            @Override
-            public void onCancel() {
-                Toast.makeText(getApplicationContext(), "Login attempt canceled.", Toast.LENGTH_LONG).show();
-                setContentView(R.layout.activity_login);
-            }
+                        @Override
+                        public void onCancel() {
+                            setContentView(R.layout.activity_login);
+                            setupSchoolSpinner();
+                            Toast.makeText(LoginActivity.this, "Login attempt canceled.", Toast.LENGTH_LONG).show();
+                        }
 
-            @Override
-            public void onError(FacebookException error) {
-                Toast.makeText(getApplicationContext(), "Login attempt failed.", Toast.LENGTH_LONG).show();
-                setContentView(R.layout.activity_login);
+                        @Override
+                        public void onError(FacebookException error) {
+                            setContentView(R.layout.activity_login);
+                            setupSchoolSpinner();
+                            Toast.makeText(LoginActivity.this, "Login attempt failed.", Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
             }
         });
     }
 
-    private void showNewNicknameDialog() {
+    private void setupSchoolSpinner() {
+        Spinner schoolSpinner = (Spinner) findViewById(R.id.id_spinner_school_picker);
+        schoolSpinner.setAdapter(new SpinnerArrayAdapter(LoginActivity.this, R.layout.spinner_login_item, getResources().getStringArray(R.array.schools_array)));
+        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
+        userSelectedSchool = SchoolsSupportedEnum.fromString(sharedPref.getString(getResources().getString(R.string.pref_key_school_network), ""));
+        schoolSpinner.setSelection(userSelectedSchool.getIndex());
+
+        schoolSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long id) {
+                String[] schoolList = getResources().getStringArray(R.array.schools_array);
+                userSelectedSchool = SchoolsSupportedEnum.fromString(schoolList[pos]);
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
+                sharedPref.edit().putString(getResources().getString(R.string.pref_key_school_network), userSelectedSchool.toString()).apply();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {}
+        });
+    }
+
+    private void showNewUsernameDialog() {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-        final View dialogView = View.inflate(this, R.layout.dialog_create_nickname, null);
+        final View dialogView = View.inflate(this, R.layout.dialog_create_username, null);
         dialogBuilder.setView(dialogView);
 
-        editTextNickname = (EditText) dialogView.findViewById(R.id.id_edit_text_new_nickname_dialog);
-        editTextNickname.setFilters(new InputFilter[] {nicknameFilter});
-        editTextNickname.setInputType(EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-        editTextNickname.addTextChangedListener(new TextWatcher() {
+        editTextUsername = (EditText) dialogView.findViewById(R.id.id_edit_text_new_username_dialog);
+        editTextUsername.setFilters(new InputFilter[] {usernameFilter});
+        editTextUsername.setInputType(EditorInfo.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        editTextUsername.addTextChangedListener(new TextWatcher() {
             public void afterTextChanged(Editable s) {
                 if (s.toString().trim().isEmpty() || s.length() < 2) {
-                    editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_error, 0);
-//                    editTextNickname.setCompoundDrawables(null, null, ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_error), null);
+                    editTextUsername.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_error, 0);
                 }
                 else {
-                    new CheckUniqueNicknameDBTask().execute(s.toString().trim().replace(" ", "_"));
+                    new CheckUniqueUsernameDBTask().execute(s.toString().trim().replace(" ", "_"));
                 }
             }
 
@@ -313,23 +361,24 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         dialogBuilder.setTitle("Welcome to PepRally!");
-        dialogBuilder.setMessage("Enter a unique nickname:");
+        dialogBuilder.setMessage("Pick a username:");
         dialogBuilder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
-                String nickname = editTextNickname.getText().toString().trim().replace(" ", "_");
-                if (nickname.trim().isEmpty() || nickname.length() < 2) {
-                    Toast.makeText(LoginActivity.this, "Nickname must be at least 2 characters long.", Toast.LENGTH_SHORT).show();
-                    showNewNicknameDialog();
-                }
-                else {
-                    new CreateNewUserProfileDBEntryTask().execute(nickname);
-                    new PushNewNicknameToDBTask().execute(nickname);
+                String username = editTextUsername.getText().toString().trim().replace(" ", "_");
+                if (username.trim().isEmpty() || username.length() < 2) {
+                    Toast.makeText(LoginActivity.this, "Username must be at least 2 characters long.", Toast.LENGTH_SHORT).show();
+                    showNewUsernameDialog();
+                } else if (isNewUsernameTaken) {
+                    Toast.makeText(LoginActivity.this, "Username taken.", Toast.LENGTH_SHORT).show();
+                    showNewUsernameDialog();
+                } else {
+                    new CreateNewUserProfileDBEntryTask().execute(username);
+                    new PushNewUserToDBAsyncTask().execute(username);
                 }
             }
         });
         dialogBuilder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
-                Log.d(TAG, "----- logging out of facebook -----");
                 LoginManager.getInstance().logOut();
                 setupLoginScreen();
             }
@@ -341,7 +390,7 @@ public class LoginActivity extends AppCompatActivity {
     private void launchVerifyVarsityPlayerDialog(final DBUserProfile userProfile,
                                                  final DBPlayerProfile playerProfile) {
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
-        final View dialogView = View.inflate(this, R.layout.dialog_verify_varsity_player, null);
+        final View dialogView = View.inflate(this, R.layout.dialog_confirm_varsity_player, null);
         dialogBuilder.setView(dialogView);
 
         TextView textViewVerifyVarsityLine1 = (TextView) dialogView.findViewById(R.id.id_text_view_verify_varsity_line1);
@@ -362,45 +411,42 @@ public class LoginActivity extends AppCompatActivity {
         textViewVerifyVarsityLine2.setText(line2Text);
 
         dialogBuilder.setTitle("Are you a varsity player?");
-        dialogBuilder.setMessage("We detected that you might be a varsity player, please confirm if you are the person below. " +
-                "(False confirmations will be detected and your account may be banned.)");
+        dialogBuilder.setMessage("We detected that you might be a varsity player, please confirm if you are the player below: ");
         dialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
                 playerProfile.setHasUserProfile(true);
-                playerProfile.setNickname(userProfile.getNickname());
+                playerProfile.setUsername(userProfile.getUsername());
                 new PushPlayerProfileChangesToDBTask().execute(playerProfile);
-                UserProfileParcel userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
-                finish();
-                Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
-                intent.putExtra("PLAYER_PROFILE_PARCEL", userProfileParcel);
-                startActivity(intent);
-                overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+                loginPeprally(true, new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile));
             }
         });
         dialogBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
-                UserProfileParcel userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
-                finish();
-                Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
-                intent.putExtra("PLAYER_PROFILE_PARCEL", userProfileParcel);
-                startActivity(intent);
-                overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+                loginPeprally(true, new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile));
             }
         });
         AlertDialog b = dialogBuilder.create();
         b.show();
     }
 
-    private void showNicknameTaken() {
-        if (!editTextNickname.getText().toString().trim().isEmpty()) {
-            editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_error,0);
+    private void showUsernameTaken() {
+        if (!editTextUsername.getText().toString().trim().isEmpty()) {
+            editTextUsername.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_error,0);
         }
     }
 
-    private void showNicknameAvailable() {
-        if (!editTextNickname.getText().toString().trim().isEmpty()) {
-            editTextNickname.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_check,0);
+    private void showUsernameAvailable() {
+        if (!editTextUsername.getText().toString().trim().isEmpty()) {
+            editTextUsername.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_check,0);
         }
+    }
+
+    private void loginPeprally(boolean isNewUser, UserProfileParcel userProfileParcel) {
+        finish();
+        Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
+        intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
+        startActivity(intent);
+        overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
     }
 
     /***********************************************************************************************
@@ -419,60 +465,61 @@ public class LoginActivity extends AppCompatActivity {
             userProfile = new DBUserProfile();
             userProfile.setCognitoId(credentialsProvider.getIdentityId());
             DynamoDBQueryExpression<DBUserProfile> queryExpression = new DynamoDBQueryExpression<DBUserProfile>()
-                    .withIndexName("CognitoID-index")
+                    .withIndexName("CognitoId-index")
                     .withHashKeyValues(userProfile)
                     .withConsistentRead(false);
 
             List<DBUserProfile> results = mapper.query(DBUserProfile.class, queryExpression);
-            if (results == null || results.size() == 0) {
-                return true;
-            }
-            else{
-                if (results.size() == 1) {
-                    userProfile = results.get(0);
-                    if (userProfile.getIsVarsityPlayer()) {
-                        playerProfile = mapper.load(DBPlayerProfile.class, userProfile.getTeam(), userProfile.getPlayerIndex());
-                    }
+            if (results != null && results.size() == 1) {
+                userProfile = results.get(0);
+                // update FCM instance id if it is changed
+                if (userProfile.getFCMInstanceId() == null || !userProfile.getFCMInstanceId().equals(FCMInstanceId)) {
+                    userProfile.setFCMInstanceId(FCMInstanceId);
+                    dynamoDBHelper.saveDBObject(userProfile);
                 }
-                else{
-                    Log.d(TAG, "Query result should have only returned single user!");
+                // check if user is a varsity player
+                if (userProfile.getIsVarsityPlayer()) {
+                    playerProfile = mapper.load(DBPlayerProfile.class, userProfile.getTeam(), userProfile.getPlayerIndex());
                 }
                 return false;
             }
+            return true;
         }
 
         @Override
         protected void onPostExecute(Boolean isNewUser) {
             if (isNewUser) {
                 bundleFacebookData();
-                showNewNicknameDialog();
+                showNewUsernameDialog();
             }
             else {
-                UserProfileParcel userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
-                finish();
-                Intent intent = new Intent(getApplicationContext(), HomeActivity.class);
-                intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
-                startActivity(intent);
-                overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+                // make sure user is logging into their selected school network
+                if (!userProfile.getSchoolName().equals(userSelectedSchool.toString())) {
+                    Toast.makeText(LoginActivity.this, "Please log into your selected school network! You may change your network in user settings after you log in.", Toast.LENGTH_LONG).show();
+                    LoginManager.getInstance().logOut();
+                    setupLoginScreen();
+                } else {
+                    loginPeprally(false, new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile));
+                }
             }
         }
     }
 
-    private class CheckUniqueNicknameDBTask extends AsyncTask<String, Void, Boolean> {
+    private class CheckUniqueUsernameDBTask extends AsyncTask<String, Void, Boolean> {
         @Override
         protected Boolean doInBackground(String... params) {
-            // params[0] = nickname
-            DBUserNickname userNickname = dbHelper.loadDBNickname(params[0]);
-            return userNickname != null;
+            DBUsername username = dynamoDBHelper.loadDBUsername(params[0]);
+            return username != null;
         }
 
         @Override
-        protected void onPostExecute(Boolean nicknameTaken) {
-            if (nicknameTaken) {
-                showNicknameTaken();
+        protected void onPostExecute(Boolean usernameTaken) {
+            isNewUsernameTaken = usernameTaken;
+            if (usernameTaken) {
+                showUsernameTaken();
             }
             else {
-                showNicknameAvailable();
+                showUsernameAvailable();
             }
         }
     }
@@ -480,26 +527,30 @@ public class LoginActivity extends AppCompatActivity {
     private class CreateNewUserProfileDBEntryTask extends AsyncTask<String, Void, DBUserProfile> {
         @Override
         protected DBUserProfile doInBackground(String... params) {
-            String userNickname = params[0];
-            DBUserProfile userProfile = dbHelper.loadDBUserProfile(userNickname);
+            String username = params[0];
+            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(username);
             if (userProfile == null) {
                 userProfile = new DBUserProfile();
-                userProfile.setNickname(userNickname);
-                userProfile.setCognitoId(dbHelper.getIdentityID());
-                userProfile.setFMSInstanceID(FMSInstanceID);
-                userProfile.setFacebookID(fbDataBundle.getString("ID"));
+                userProfile.setUsername(username);
+                userProfile.setCognitoId(dynamoDBHelper.getIdentityID());
+                userProfile.setFCMInstanceId(FCMInstanceId);
+                userProfile.setFacebookId(fbDataBundle.getString("ID"));
                 userProfile.setFacebookLink(fbDataBundle.getString("LINK"));
                 userProfile.setEmail(fbDataBundle.getString("EMAIL"));
-                userProfile.setFirstName(fbDataBundle.getString("FIRSTNAME"));
-                userProfile.setLastName(fbDataBundle.getString("LASTNAME"));
+                userProfile.setFirstname(fbDataBundle.getString("FIRSTNAME"));
+                userProfile.setLastname(fbDataBundle.getString("LASTNAME"));
                 userProfile.setGender(fbDataBundle.getString("GENDER"));
                 userProfile.setBirthday(fbDataBundle.getString("BIRTHDAY"));
+                userProfile.setSchoolName(userSelectedSchool.toString());
+                userProfile.setNotificationsPref(new NotificationsPref(true, true, true, true, true));
                 userProfile.setNewUser(true);
-                userProfile.setConversationIDs(new HashSet<>(Collections.singletonList("_")));
+                userProfile.setHasNewMessage(false);
+                userProfile.setHasNewNotification(false);
+                userProfile.setConversationIds(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setUsersDirectFistbumpSent(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setUsersDirectFistbumpReceived(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setDateJoined(Helpers.getTimestampString());
-                dbHelper.saveDBObject(userProfile);
+                dynamoDBHelper.saveDBObject(userProfile);
                 return userProfile;
             }
             return null;
@@ -513,14 +564,15 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private class CheckIfNewUserIsVarsityPlayerDBTask extends AsyncTask<DBUserProfile, Void, Boolean> {
-        String userNickname;
+        String username;
         DBUserProfile userProfile;
         DBPlayerProfile playerProfile;
         @Override
         protected Boolean doInBackground(DBUserProfile... params) {
             userProfile = params[0];
-            userNickname = userProfile.getNickname();
+            username = userProfile.getUsername();
             String gender = "M";
             if (userProfile.getGender().equals("female")) gender = "F";
 
@@ -530,17 +582,17 @@ public class LoginActivity extends AppCompatActivity {
                     .withHashKeyValues(playerProfile)
                     .withConsistentRead(false);
 
-            List<DBPlayerProfile> results = dbHelper.getMapper().query(DBPlayerProfile.class, queryExpression);
+            List<DBPlayerProfile> results = dynamoDBHelper.getMapper().query(DBPlayerProfile.class, queryExpression);
             for (DBPlayerProfile profile : results) {
-                if (profile.getFirstName().equals(userProfile.getFirstName()) &&
-                        profile.getLastName().equals(userProfile.getLastName())) {
+                if (profile.getFirstName().equals(userProfile.getFirstname()) &&
+                        profile.getLastName().equals(userProfile.getLastname())) {
                     playerProfile = profile;
                     userProfile.setIsVarsityPlayer(true);
                     userProfile.setTeam(profile.getTeam());
                     userProfile.setPlayerIndex(profile.getIndex());
                     playerProfile.setHasUserProfile(true);
-                    dbHelper.saveDBObject(userProfile);
-                    dbHelper.saveDBObject(playerProfile);
+                    dynamoDBHelper.saveDBObject(userProfile);
+                    dynamoDBHelper.saveDBObject(playerProfile);
                     Log.d(TAG, "VARSITY PLAYER HIT");
                     return true;
                 }
@@ -554,24 +606,19 @@ public class LoginActivity extends AppCompatActivity {
                 launchVerifyVarsityPlayerDialog(userProfile, playerProfile);
             }
             else {
-                UserProfileParcel userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, null);
-                finish();
-                Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
-                intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
-                startActivity(intent);
-                overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+                loginPeprally(true, new UserProfileParcel(ActivityEnum.HOME, userProfile, null));
             }
         }
     }
 
-    private class PushNewNicknameToDBTask extends AsyncTask<String, Void, Void> {
+    private class PushNewUserToDBAsyncTask extends AsyncTask<String, Void, Void> {
         @Override
         protected Void doInBackground(String... params) {
-            DBUserNickname newUserNickname = new DBUserNickname();
-            newUserNickname.setNickname(params[0]);
-            newUserNickname.setCognitoID(dbHelper.getIdentityID());
-            newUserNickname.setFacebookID(AccessToken.getCurrentAccessToken().getUserId());
-            dbHelper.saveDBObject(newUserNickname);
+            DBUsername newUsername = new DBUsername();
+            newUsername.setUsername(params[0]);
+            newUsername.setCognitoId(dynamoDBHelper.getIdentityID());
+            newUsername.setFacebookId(AccessToken.getCurrentAccessToken().getUserId());
+            dynamoDBHelper.saveDBObject(newUsername);
             return null;
         }
     }
@@ -579,7 +626,7 @@ public class LoginActivity extends AppCompatActivity {
     private class PushPlayerProfileChangesToDBTask extends AsyncTask<DBPlayerProfile, Void, Void> {
         @Override
         protected Void doInBackground(DBPlayerProfile... params) {
-            dbHelper.saveDBObject(params[0]);
+            dynamoDBHelper.saveDBObject(params[0]);
             return null;
         }
     }

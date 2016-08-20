@@ -22,10 +22,10 @@
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"/>
         <TextView
-            android:id="@+id/id_text_view_profile_edit_nickname"
+            android:id="@+id/id_text_view_profile_edit_username"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/placeholder_nickname"
+            android:text="@string/placeholder_username"
             android:textSize="14sp"
             android:textColor="@android:color/tertiary_text_dark"
             android:background="@drawable/edit_text_box"

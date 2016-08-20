@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.RelativeLayout;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
@@ -15,6 +17,7 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.NotificationCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserNotification;
+import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
@@ -32,7 +35,7 @@ public class NotificationsActivity extends AppCompatActivity {
     private SwipeRefreshLayout notificationsSwipeRefreshContainer;
 
     // AWS Variables
-    private DynamoDBHelper dbHelper;
+    private DynamoDBHelper dynamoDBHelper;
 
     // General Variables
     private UserProfileParcel userProfileParcel;
@@ -45,7 +48,7 @@ public class NotificationsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notifications);
 
-        dbHelper = new DynamoDBHelper(this);
+        dynamoDBHelper = new DynamoDBHelper(this);
 
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
 
@@ -70,6 +73,9 @@ public class NotificationsActivity extends AppCompatActivity {
                 refreshAdapter();
             }
         });
+
+        // remove user new notification alert
+        new RemoveUserNewNotificationAlertAsyncTask().execute(userProfileParcel.getCurUsername());
     }
 
     @Override
@@ -109,11 +115,11 @@ public class NotificationsActivity extends AppCompatActivity {
             // Reverse notifications so they are shown in ascending order w.r.t time stamp
             Collections.sort(notifications);
             Collections.reverse(notifications);
-            NotificationCardAdapter notificationCardAdapter = new NotificationCardAdapter(this, notifications);
-            recyclerView.setAdapter(notificationCardAdapter);
+            NotificationCardAdapter notificationCardAdapter = new NotificationCardAdapter(this, notifications, userProfileParcel);
+            recyclerView.swapAdapter(notificationCardAdapter, true);
         }
         else {
-            recyclerView.setAdapter(new EmptyAdapter());
+            recyclerView.swapAdapter(new EmptyAdapter(), true);
         }
     }
 
@@ -128,11 +134,11 @@ public class NotificationsActivity extends AppCompatActivity {
         @Override
         protected PaginatedQueryList<DBUserNotification> doInBackground(Void... params) {
             DBUserNotification userNotification = new DBUserNotification();
-            userNotification.setNickname(userProfileParcel.getCurUserNickname());
+            userNotification.setUsername(userProfileParcel.getCurUsername());
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withHashKeyValues(userNotification)
                     .withConsistentRead(true);
-            return dbHelper.getMapper().query(DBUserNotification.class, queryExpression);
+            return dynamoDBHelper.getMapper().query(DBUserNotification.class, queryExpression);
         }
 
         @Override
@@ -142,6 +148,23 @@ public class NotificationsActivity extends AppCompatActivity {
             // stop refresh loading animation
             if (notificationsSwipeRefreshContainer.isRefreshing())
                 notificationsSwipeRefreshContainer.setRefreshing(false);
+
+            // stop on load progress circle animation
+            RelativeLayout progressCircleContainer = (RelativeLayout) findViewById(R.id.id_container_notification_progress_circle);
+            progressCircleContainer.setVisibility(View.GONE);
+        }
+    }
+
+    private class RemoveUserNewNotificationAlertAsyncTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... strings) {
+            String username = strings[0];
+            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(username);
+            if (userProfile != null) {
+                userProfile.setHasNewNotification(false);
+                dynamoDBHelper.saveDBObject(userProfile);
+            }
+            return null;
         }
     }
 }

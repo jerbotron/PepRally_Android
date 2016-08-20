@@ -1,5 +1,12 @@
 <resources>
     <string name="label_app_name">PepRally</string>
+    <string name="label_app_version">v1.0.0</string>
+    <string name="label_app_name_version">PepRally v1.0.0</string>
+    <string name="label_app_full_version">Version 1.0.0 - UT BETA</string>
+    <string name="label_app_location">Made in Austin, TX</string>
+    <string name="label_app_facebook_link">https://www.facebook.com/peprallyapp</string>
+    <string name="label_app_instagram_link">http://instagram.com/peprallyapp</string>
+    <string name="label_app_twitter_link">763241237243580416</string>
     <string name="activity_label_new_post">New Post</string>
     <string name="activity_label_new_comment">Comments</string>
     <string name="activity_label_notifications">Notifications</string>
@@ -7,11 +14,22 @@
     <string name="activity_label_view_fistbumps">Fistbumps</string>
     <string name="activity_label_conversations">Messages</string>
     <string name="activity_label_messaging">Chat</string>
+    <string name="activity_label_settings">Settings</string>
     <string name="team_slogan">Hook\'em Horns</string>
 
     <!-- Strings related to Login Activity -->
     <string name="facebook_app_id">1006674646058120</string>
-    <string name="dialog_nickname_text">Pick a unique nickname!</string>
+    <string name="dialog_username_text">Pick a unique username!</string>
+    <string name="spinner_prompt_text">Choose your school and campus:</string>
+    <string name="school_name_prompt_text">Choose your school and campus</string>
+    <string name="school_name_ut_austin">University of Texas - Austin</string>
+    <string name="school_name_texas_state">Texas State University</string>
+    <string-array name="schools_array">
+        <item>@string/school_name_prompt_text</item>
+        <item>@string/school_name_ut_austin</item>
+        <item>@string/school_name_texas_state</item>
+    </string-array>
+
 
     <!-- Strings related to Profile Activity -->
     <string name="profile_fist_bumps"> Fistbumps</string>
@@ -35,7 +53,7 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
-    <string name="invalid_characters_message">Nicknames cannot contain special characters or spaces. Letters, numbers and underscores only.</string>
+    <string name="invalid_characters_message">Username cannot contain special characters or spaces. Letters, numbers and underscores only.</string>
     <string name="no_peprally_account_message">has not made a PepRally profile yet. Tell your friends about PepRally!</string>
     <string name="no_posts_message">You have not created any posts yet!</string>
     <string name="no_comments_message">No comments.</string>
@@ -43,7 +61,7 @@
 
     <!-- Default Profile Content Strings -->
     <string name="default_firstname"><i>NAME, AGE</i></string>
-    <string name="default_nickname"><i>Must pick a nickname!</i></string>
+    <string name="default_username"><i>Must pick a username!</i></string>
     <string name="default_fav_team"><i>Pick your favorite team!</i></string>
     <string name="default_fav_player"><i>Pick your favorite player!</i></string>
     <string name="default_pep_talk"><i>Team needs you, let\'s hear it!</i></string>
@@ -59,10 +77,12 @@
         look like on a card. This sentence has no meaning, it\'s a waste of time to read it. Okay thanks bye.</string>
 
     <!-- Notification content placeholders -->
-    <string name="notification_0_placeholder">"sent you a direct fistbump.</string>
-    <string name="notification_1_placeholder">"commented: \""</string>
-    <string name="notification_2_placeholder">"fistbumped your post.</string>
-    <string name="notification_3_placeholder">"fistbumped your comment.</string>
+    <string name="notification_0_placeholder">direct fistbumped you.</string>
+    <string name="notification_1_placeholder">sent you a message.</string>
+    <string name="notification_2_placeholder">commented: \""</string>
+    <string name="notification_3_placeholder">fistbumped your post.</string>
+    <string name="notification_4_placeholder">fistbumped your comment.</string>
+    <string name="notification_5_placeholder">fistbumped you back. It\'s a match!</string>
 
     <!-- Error Message Strings -->
     <string name="no_connection_text">Oops! Looks like you\'ve lost internet connection. Please check your
@@ -75,7 +95,7 @@
     <!-- Place holders -->
     <string name="new_post_char_text">200</string>
     <string name="new_post_button_text">Post</string>
-    <string name="placeholder_nickname">nickname</string>
+    <string name="placeholder_username">username</string>
     <string name="placeholder_post_time">time</string>
     <string name="placeholder_post_fistbumps_count">0</string>
     <string name="placeholder_profile_text_age">NAME, AGE</string>
@@ -90,15 +110,60 @@
     <string name="placeholder_edit_profile">EDIT PROFILE</string>
     <string name="placeholder_notifications">Notifications</string>
     <string name="placeholder_messages">Messages</string>
-    <string name="placeholder_app_version">Version 1.0 - UT BETA</string>
     <string name="placeholder_no_notifications">No new notifications.</string>
     <string name="placeholder_no_messages">No messages yet. Give someone a fistbump!</string>
     <string name="placeholder_nothing_trending">Make a post! :)</string>
     <string name="placeholder_logout">Logout</string>
     <string name="placeholder_delete_profile">Delete Profile</string>
-    <string name="placeholder_fistbump_match_send_message">SEND A MESSAGE</string>
-    <string name="placeholder_fistbump_match_go_back">GO BACK</string>
+    <string name="placeholder_fistbump_match_send_message">Send a message</string>
+    <string name="placeholder_fistbump_match_go_back">Go back</string>
     <string name="placeholder_messaging_hint">Send a message&#8230;</string>
+    <string name="placeholder_comment_hint">Leave a comment&#8230;</string>
+    <string name="placeholder_school">School</string>
+    <string name="placeholder_fistbump_match_title">It\'s a fistbump!</string>
+
+    <!-- Strings related to Settings/Preferences -->
+
+    <!-- Non-setting preferences -->
+    <string name="pref_key_school_network">pref_key_school_network</string>
+
+    <!-- Main setting groups-->
+    <string name="pref_group_my_account">MY ACCOUNT</string>
+    <string name="pref_group_support">SUPPORT</string>
+    <string name="pref_group_show_us_love">SUPPORT US &lt;3</string>
+
+    <!-- My Account Settings -->
+    <string name="pref_my_account_name">Name</string>
+    <string name="pref_my_account_username">Username</string>
+    <string name="pref_my_account_school">School Network</string>
+    <string name="pref_my_account_date_joined">Date Joined</string>
+    <string name="pref_my_account_email">Email</string>
+    <string name="pref_my_account_email_summary">Let us keep you updated!</string>
+    <string name="pref_my_account_email_invalid_msg">Email not updated, please enter a valid email!</string>
+    <string name="pref_my_account_notifications">Notification Settings</string>
+    <string name="pref_notifications_direct_fistbump">Direct fistbump notification</string>
+    <string name="pref_notifications_post_fistbump">Post fistbump notification</string>
+    <string name="pref_notifications_comment_fistbump">Comment fistbump notification</string>
+    <string name="pref_notifications_new_comment">New comment notification</string>
+    <string name="pref_notifications_direct_message">New message notification</string>
+    <string name="pref_notifications_fistbump_match">Fistbump match notification</string>
+    <string name="pref_notifications_pref_saved">Notification preferences saved!</string>
+
+    <!-- Support Settings -->
+    <string name="pref_support_faq">FAQ</string>
+    <string name="pref_support_privacy_policy">Privacy Policy</string>
+    <string name="pref_support_delete_account">Delete Account</string>
+    <string name="pref_delete_account_confirmation">Are you sure you want to delete your account?</string>
+    <string name="pref_delete_account_feedback_hint"><i>Tell us why you\'re leaving so we can get some closure? :\'(</i></string>
+
+    <!-- Show us love Settings -->
+    <string name="pref_show_love_feedback">Give us feedback or ask us a question!</string>
+    <string name="pref_show_love_rate_us">Rate PepRally</string>
+    <string name="pref_show_love_facebook">Facebook</string>
+    <string name="pref_show_love_instagram">IG</string>
+    <string name="pref_show_love_twitter">Twitter</string>
+    <string name="pref_feedback">We want to hear your thoughts!</string>
+    <string name="pref_feedback_msg"><i>We\'d love to know what you like or dislike about PepRally and what we can improve on!</i></string>
 
 
 </resources>

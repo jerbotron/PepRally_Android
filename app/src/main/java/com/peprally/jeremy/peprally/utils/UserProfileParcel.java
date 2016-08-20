@@ -3,20 +3,21 @@ package com.peprally.jeremy.peprally.utils;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.peprally.jeremy.peprally.custom.Comment;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
-import com.peprally.jeremy.peprally.db_models.DBUserComment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
 
 public class UserProfileParcel implements Parcelable {
     // Activity Data
     private ActivityEnum currentActivity;
-    private String curUserNickname;
+    private String curUsername;
 
     // General User Data
     private String firstname;
     private String lastname;
-    private String profileNickname;
+    private String profileUsername;
     private String cognitoID;
     private String facebookID;
     private String FMSInstanceID;
@@ -29,7 +30,10 @@ public class UserProfileParcel implements Parcelable {
     private String favoritePlayer;
     private String pepTalk;
     private String trashTalk;
-    private Boolean newNotification;
+    private String dateJoined;
+    private String email;
+    private Boolean hasNewMessage;
+    private Boolean hasNewNotification;
     private Boolean isVarsityPlayer;
     private Boolean isSelfProfile;
 
@@ -50,13 +54,13 @@ public class UserProfileParcel implements Parcelable {
                              DBUserProfile userProfile,
                              DBPlayerProfile playerProfile) {
         this.currentActivity = currentActivity;
-        this.curUserNickname = userProfile.getNickname();
-        this.firstname = userProfile.getFirstName();
-        this.lastname = userProfile.getLastName();
-        this.profileNickname = userProfile.getNickname();
+        this.curUsername = userProfile.getUsername();
+        this.firstname = userProfile.getFirstname();
+        this.lastname = userProfile.getLastname();
+        this.profileUsername = userProfile.getUsername();
         this.cognitoID = userProfile.getCognitoId();
-        this.facebookID = userProfile.getFacebookID();
-        this.FMSInstanceID = userProfile.getFMSInstanceID();
+        this.facebookID = userProfile.getFacebookId();
+        this.FMSInstanceID = userProfile.getFCMInstanceId();
         this.followersCount = userProfile.getFollowersCount();
         this.followingCount = userProfile.getFollowingCount();
         this.sentFistbumpsCount = userProfile.getSentFistbumpsCount();
@@ -66,7 +70,10 @@ public class UserProfileParcel implements Parcelable {
         this.favoritePlayer = userProfile.getFavoritePlayer();
         this.pepTalk = userProfile.getPepTalk();
         this.trashTalk = userProfile.getTrashTalk();
-        this.newNotification = false;
+        this.dateJoined = userProfile.getDateJoined();
+        this.email = userProfile.getEmail();
+        this.hasNewMessage = userProfile.getHasNewMessage();
+        this.hasNewNotification = userProfile.getHasNewNotification();
         this.isVarsityPlayer = userProfile.getIsVarsityPlayer();
         this.isSelfProfile = true;
 
@@ -90,18 +97,18 @@ public class UserProfileParcel implements Parcelable {
 
     // HomeActivity Constructor, only used to initialize a few required members
     public UserProfileParcel(ActivityEnum currentActivity,
-                             String curUserNickname,
+                             String curUsername,
                              String firstname,
                              String lastname,
-                             String profileNickname,
+                             String profileUsername,
                              String facebookID,
                              Boolean isSelfProfile)
     {
         this.currentActivity = currentActivity;
-        this.curUserNickname = curUserNickname;
+        this.curUsername = curUsername;
         this.firstname = firstname;
         this.lastname = lastname;
-        this.profileNickname = profileNickname;
+        this.profileUsername = profileUsername;
         this.facebookID = facebookID;
         this.isSelfProfile = isSelfProfile;
 
@@ -114,21 +121,22 @@ public class UserProfileParcel implements Parcelable {
         this.index = Helpers.INTEGER_INVALID;
         this.number = Helpers.INTEGER_INVALID;
         // Initialize un-used boolean members to temporary false value
-        this.newNotification = false;
+        this.hasNewMessage = false;
+        this.hasNewNotification = false;
         this.isVarsityPlayer = false;
         this.hasUserProfile = false;
     }
 
     // FavoritePlayerActivity Constructor, only used to initialize a few required members
     public UserProfileParcel(ActivityEnum currentActivity,
-                             String curUserNickname,
+                             String curUsername,
                              String firstname,
                              String team,
                              Integer index,
                              Boolean isSelfProfile)
     {
         this.currentActivity = currentActivity;
-        this.curUserNickname = curUserNickname;
+        this.curUsername = curUsername;
         this.firstname = firstname;
         this.team = team;
         this.index = index;
@@ -143,21 +151,22 @@ public class UserProfileParcel implements Parcelable {
         this.postsCount = Helpers.INTEGER_DEFAULT_COUNT;
         this.number = Helpers.INTEGER_INVALID;
         // Initialize un-used boolean members to temporary false value
-        this.newNotification = false;
+        this.hasNewMessage = false;
+        this.hasNewNotification = false;
         this.hasUserProfile = false;
     }
 
     // Post Adapter Constructor, only used to initialize a few required members
     public UserProfileParcel(ActivityEnum currentActivity,
-                             String curUserNickname,
+                             String curUsername,
                              DBUserPost userPost)
     {
         this.currentActivity = currentActivity;
-        this.curUserNickname = curUserNickname;
+        this.curUsername = curUsername;
         this.firstname = userPost.getFirstname();
-        this.profileNickname = userPost.getNickname();
-        this.facebookID = userPost.getFacebookID();
-        this.cognitoID = userPost.getCognitoID();
+        this.profileUsername = userPost.getUsername();
+        this.facebookID = userPost.getFacebookId();
+        this.cognitoID = userPost.getCognitoId();
         this.isSelfProfile = false;
 
         // Initialize integer values to invalid value
@@ -169,22 +178,22 @@ public class UserProfileParcel implements Parcelable {
         this.index = Helpers.INTEGER_INVALID;
         this.number = Helpers.INTEGER_INVALID;
         // Initialize un-used boolean members to temporary false value
-        this.newNotification = false;
+        this.hasNewMessage = false;
+        this.hasNewNotification = false;
         this.hasUserProfile = false;
         this.isVarsityPlayer = false;
     }
 
     // Comment Adapter Constructor, only used to initialize a few required members
     public UserProfileParcel(ActivityEnum currentActivity,
-                             String curUserNickname,
-                             DBUserComment userComment)
+                             String curUsername,
+                             Comment userComment)
     {
         this.currentActivity = currentActivity;
-        this.curUserNickname = curUserNickname;
-        this.firstname = userComment.getFirstname();
-        this.profileNickname = userComment.getNickname();
-        this.facebookID = userComment.getFacebookID();
-        this.cognitoID = userComment.getCognitoID();
+        this.curUsername = curUsername;
+        this.firstname = userComment.getCommentFirstname();
+        this.profileUsername = userComment.getCommentUsername();
+        this.facebookID = userComment.getFacebookId();
         this.isSelfProfile = false;
 
         // Initialize integer values to invalid value
@@ -196,7 +205,8 @@ public class UserProfileParcel implements Parcelable {
         this.index = Helpers.INTEGER_INVALID;
         this.number = Helpers.INTEGER_INVALID;
         // Initialize un-used boolean members to temporary false value
-        this.newNotification = false;
+        this.hasNewMessage = false;
+        this.hasNewNotification = false;
         this.hasUserProfile = false;
         this.isVarsityPlayer = false;
     }
@@ -204,10 +214,10 @@ public class UserProfileParcel implements Parcelable {
     // Parcel Constructor
     private UserProfileParcel(Parcel in) {
         this.currentActivity = ActivityEnum.fromString(in.readString());
-        this.curUserNickname = in.readString();
+        this.curUsername = in.readString();
         this.firstname = in.readString();
         this.lastname = in.readString();
-        this.profileNickname = in.readString();
+        this.profileUsername = in.readString();
         this.cognitoID = in.readString();
         this.facebookID = in.readString();
         this.FMSInstanceID = in.readString();
@@ -220,7 +230,10 @@ public class UserProfileParcel implements Parcelable {
         this.favoritePlayer = in.readString();
         this.pepTalk = in.readString();
         this.trashTalk = in.readString();
-        this.newNotification = in.readByte() != 0;
+        this.dateJoined = in.readString();
+        this.email = in.readString();
+        this.hasNewMessage = in.readByte() != 0;
+        this.hasNewNotification = in.readByte() != 0;
         this.isVarsityPlayer = in.readByte() != 0;
         this.isSelfProfile = in.readByte() != 0;
 
@@ -239,10 +252,10 @@ public class UserProfileParcel implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(currentActivity.getName());
-        dest.writeString(curUserNickname);
+        dest.writeString(curUsername);
         dest.writeString(firstname);
         dest.writeString(lastname);
-        dest.writeString(profileNickname);
+        dest.writeString(profileUsername);
         dest.writeString(cognitoID);
         dest.writeString(facebookID);
         dest.writeString(FMSInstanceID);
@@ -255,7 +268,10 @@ public class UserProfileParcel implements Parcelable {
         dest.writeString(favoritePlayer);
         dest.writeString(pepTalk);
         dest.writeString(trashTalk);
-        dest.writeByte((byte) (newNotification ? 1 : 0));
+        dest.writeString(dateJoined);
+        dest.writeString(email);
+        dest.writeByte((byte) (hasNewMessage ? 1 : 0));
+        dest.writeByte((byte) (hasNewNotification ? 1 : 0));
         dest.writeByte((byte) (isVarsityPlayer ? 1 : 0));
         dest.writeByte((byte) (isSelfProfile ? 1 : 0));
 
@@ -292,8 +308,8 @@ public class UserProfileParcel implements Parcelable {
     public ActivityEnum getCurrentActivity() {
         return currentActivity;
     }
-    public String getCurUserNickname() {
-        return curUserNickname;
+    public String getCurUsername() {
+        return curUsername;
     }
     public String getFirstname() {
         return firstname;
@@ -301,8 +317,8 @@ public class UserProfileParcel implements Parcelable {
     public String getLastname() {
         return lastname;
     }
-    public String getProfileNickname() {
-        return profileNickname;
+    public String getProfileUsername() {
+        return profileUsername;
     }
     public String getCognitoID() {
         return cognitoID;
@@ -340,8 +356,17 @@ public class UserProfileParcel implements Parcelable {
     public String getTrashTalk() {
         return trashTalk;
     }
-    public Boolean getNewNotification() {
-        return newNotification;
+    public String getDateJoined() {
+        return dateJoined;
+    }
+    public String getEmail() {
+        return email;
+    }
+    public Boolean hasNewMessage() {
+        return hasNewMessage;
+    }
+    public Boolean hasNewNotification() {
+        return hasNewNotification;
     }
     public Boolean getIsVarsityPlayer() {
         return isVarsityPlayer;
@@ -385,8 +410,8 @@ public class UserProfileParcel implements Parcelable {
     public void setCurrentActivity(ActivityEnum currentActivity) {
         this.currentActivity = currentActivity;
     }
-    public void setCurUserNickname(String curUserNickname) {
-        this.curUserNickname = curUserNickname;
+    public void setCurUsername(String curUsername) {
+        this.curUsername = curUsername;
     }
     public void setFirstname(String firstname) {
         this.firstname = firstname;
@@ -394,8 +419,8 @@ public class UserProfileParcel implements Parcelable {
     public void setLastname(String lastname) {
         this.lastname = lastname;
     }
-    public void setProfileNickname(String profileNickname) {
-        this.profileNickname = profileNickname;
+    public void setProfileUsername(String profileUsername) {
+        this.profileUsername = profileUsername;
     }
     public void setCognitoID(String cognitoID) {
         this.cognitoID = cognitoID;
@@ -433,8 +458,17 @@ public class UserProfileParcel implements Parcelable {
     public void setTrashTalk(String trashTalk) {
         this.trashTalk = trashTalk;
     }
-    public void setNewNotification(Boolean newNotification) {
-        this.newNotification = newNotification;
+    public void setDateJoined(String dateJoined) {
+        this.dateJoined = dateJoined;
+    }
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    public void setHasNewMessage(Boolean hasNewMessage) {
+        this.hasNewMessage = hasNewMessage;
+    }
+    public void setHasNewNotification(Boolean hasNewNotification) {
+        this.hasNewNotification = hasNewNotification;
     }
     public void setIsVarsityPlayer(Boolean isVarsityPlayer) {
         this.isVarsityPlayer = isVarsityPlayer;

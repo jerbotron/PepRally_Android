@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="@string/pref_group_my_account"
+        android:key="pref_key_my_account_settings">
+        <Preference
+            android:key="pref_key_my_account_name"
+            android:title="@string/pref_my_account_name"
+            android:summary="@string/placeholder_first_name" />
+        <Preference
+            android:key="pref_key_my_account_username"
+            android:title="@string/pref_my_account_username"
+            android:summary="@string/placeholder_username" />
+        <Preference
+            android:key="pref_key_my_account_school"
+            android:title="@string/pref_my_account_school"
+            android:summary="@string/placeholder_school" />
+        <Preference
+            android:key="pref_key_my_account_date_joined"
+            android:title="@string/pref_my_account_date_joined"
+            android:summary="date joined" />
+        <EditTextPreference
+            android:key="pref_key_my_account_email"
+            android:title="@string/pref_my_account_email"
+            android:summary="@string/pref_my_account_email_summary"
+            android:defaultValue="@string/pref_my_account_email_summary"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"/>
+        <Preference
+            android:key="pref_key_my_account_notifications"
+            android:title="@string/pref_my_account_notifications" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/pref_group_support"
+        android:key="pref_key_support_settings">
+        <Preference
+            android:key="pref_key_support_privacy_policy"
+            android:title="@string/pref_support_privacy_policy" />
+        <com.peprally.jeremy.peprally.custom.preferences.DeleteAccountPreference
+            android:key="pref_key_support_delete_account"
+            android:title="@string/pref_support_delete_account"
+            android:positiveButtonText="DELETE"
+            android:dialogTitle="Delete Account?"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/pref_group_show_us_love"
+        android:key="pref_key_show_us_love_settings">
+        <com.peprally.jeremy.peprally.custom.preferences.FeedbackPreference
+            android:key="pref_key_show_us_love_feedback"
+            android:title="@string/pref_show_love_feedback" />
+        <Preference
+            android:key="pref_key_show_us_love_facebook"
+            android:title="@string/pref_show_love_facebook"
+            android:icon="@drawable/ic_setting_fb"/>
+        <Preference
+            android:key="pref_key_show_us_love_instagram"
+            android:title="@string/pref_show_love_instagram"
+            android:icon="@drawable/ic_setting_ig"/>
+        <Preference
+            android:key="pref_key_show_us_love_twitter"
+            android:title="@string/pref_show_love_twitter"
+            android:icon="@drawable/ic_setting_twitter"/>
+    </PreferenceCategory>
+
+    <Preference
+        android:selectable="false"
+        android:enabled="false"
+        android:layout="@layout/settings_version_layout"
+        android:key="pref_key_app_version"/>
+</PreferenceScreen>

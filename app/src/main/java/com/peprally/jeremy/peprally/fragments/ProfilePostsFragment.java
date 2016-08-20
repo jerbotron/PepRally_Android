@@ -9,6 +9,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
@@ -46,6 +47,7 @@ public class ProfilePostsFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile_posts, container, false);
+
         userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
 
         // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
@@ -57,6 +59,7 @@ public class ProfilePostsFragment extends Fragment {
 
         // setup swipe refresh container
         profilePostsSwipeRefreshContainer = (SwipeRefreshLayout) view.findViewById(R.id.container_swipe_refresh_profile_posts);
+        profilePostsSwipeRefreshContainer.setRefreshing(true);
         profilePostsSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -70,8 +73,8 @@ public class ProfilePostsFragment extends Fragment {
 
     @Override
     public void onResume() {
-        super.onResume();
         refreshAdapter();
+        super.onResume();
     }
 
     /***********************************************************************************************
@@ -83,53 +86,55 @@ public class ProfilePostsFragment extends Fragment {
             posts.add(userPost);
         }
         postCardAdapter = new PostCardAdapter(getActivity(), posts, userProfileParcel);
-        recyclerView.setAdapter(postCardAdapter);
+        recyclerView.swapAdapter(postCardAdapter, true);
     }
 
     public void addPostToAdapter(String newPostText) {
         Bundle bundle = new Bundle();
-        bundle.putString("NICKNAME", userProfileParcel.getProfileNickname());
+        bundle.putString("USERNAME", userProfileParcel.getProfileUsername());
         bundle.putString("FACEBOOK_ID", userProfileParcel.getFacebookID());
         bundle.putString("FIRST_NAME", userProfileParcel.getFirstname());
         if (postCardAdapter == null) {
             posts = new ArrayList<>();
             postCardAdapter = new PostCardAdapter(getActivity(), posts, userProfileParcel);
-            recyclerView.setAdapter(postCardAdapter);
+            recyclerView.swapAdapter(postCardAdapter, true);
         }
         postCardAdapter.addPost(newPostText, bundle);
     }
 
     private void refreshAdapter() {
-        new FetchUserPostsTask().execute(userProfileParcel.getProfileNickname());
+        new FetchUserPostsTask().execute(userProfileParcel.getProfileUsername());
     }
 
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
+    @SuppressWarnings("unchecked")
     private class FetchUserPostsTask extends AsyncTask<String, Void, PaginatedQueryList<DBUserPost>> {
         @Override
         protected PaginatedQueryList<DBUserPost> doInBackground(String... params) {
-            String nickname = params[0];
-            if (nickname == null) return null;
-            DynamoDBHelper dynamoDBHelper = new DynamoDBHelper(getActivity().getApplicationContext());
-            DBUserPost userPost = new DBUserPost();
-            userPost.setNickname(nickname);
-            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
-                    .withHashKeyValues(userPost)
-                    .withConsistentRead(false)
-                    .withScanIndexForward(false);
-            return dynamoDBHelper.getMapper().query(DBUserPost.class, queryExpression);
+            String username = params[0];
+            if (username != null) {
+                DynamoDBHelper dynamoDBHelper = new DynamoDBHelper(getActivity().getApplicationContext());
+                DBUserPost userPost = new DBUserPost();
+                userPost.setUsername(username);
+                DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                        .withHashKeyValues(userPost)
+                        .withConsistentRead(true)
+                        .withScanIndexForward(false);
+                return dynamoDBHelper.getMapper().query(DBUserPost.class, queryExpression);
+            }
+            return null;
         }
 
         @Override
         protected void onPostExecute(PaginatedQueryList<DBUserPost> result) {
-
-            if (result != null && result.size() != 0) {
+            if (result != null && result.size() > 0) {
                 userProfileParcel.setPostsCount(result.size());
                 initializeAdapter(result);
             }
             else {
-                recyclerView.setAdapter(new EmptyAdapter());
+                recyclerView.swapAdapter(new EmptyAdapter(), true);
                 if (userProfileParcel.getIsSelfProfile()) {
                     noPostsText.setText(getResources().getString(R.string.no_posts_message));
                 }
