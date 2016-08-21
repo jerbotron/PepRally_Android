@@ -7,10 +7,13 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Vibrator;
+import android.support.graphics.drawable.VectorDrawableCompat;
+import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.text.Spanned;
 import android.text.TextUtils;
@@ -61,11 +64,19 @@ public class Helpers {
         }
     }
 
-    public static Spanned getTextHtml(String htmlText) {
+    public static Spanned getAPICompatHtml(String htmlText) {
         if (android.os.Build.VERSION.SDK_INT >= 24) {
             return Html.fromHtml(htmlText, Html.FROM_HTML_MODE_LEGACY);
         } else {
             return Html.fromHtml(htmlText);
+        }
+    }
+
+    public static Drawable getAPICompatVectorDrawable(Context callingContext, int resource_id) {
+        if (android.os.Build.VERSION.SDK_INT >= 21) {
+            return ContextCompat.getDrawable(callingContext, resource_id);
+        } else {
+            return VectorDrawableCompat.create(callingContext.getResources(), resource_id, callingContext.getTheme());
         }
     }
 
@@ -93,7 +104,7 @@ public class Helpers {
         return "https://graph.facebook.com/" + facebookId + "/picture?type=" + type;
     }
 
-    public static String getFavPlayerText(String firstName, String lastName, int number, String team) {
+    public static String getFavPlayerString(String firstName, String lastName, int number, String team) {
         switch (team) {
             case "Golf":
             case "Rowing":
@@ -208,9 +219,7 @@ public class Helpers {
         if (status == ConnectionResult.SUCCESS)
         {
             FirebaseInstanceId instanceId = FirebaseInstanceId.getInstance();
-            String token = instanceId.getToken();
-            Log.d("HELPERS: ", "FCM reg token = " + token);
-            return token;
+            return instanceId.getToken();
         }
         return null;
     }

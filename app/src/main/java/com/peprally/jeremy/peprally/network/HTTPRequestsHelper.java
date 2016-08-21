@@ -95,18 +95,17 @@ public class HTTPRequestsHelper {
                                 new Response.Listener<JSONObject>() {
                                     @Override
                                     public void onResponse(JSONObject response) {
-                                        try {
-                                            Log.d("HTTPRequestHelper: ", response.toString(4));
-                                        } catch (JSONException e) {
-                                            e.printStackTrace();
-                                        }
+//                                        try {
+//                                            Log.d("HTTPRequestHelper: ", response.toString(4));
+//                                        } catch (JSONException e) {
+//                                            e.printStackTrace();
+//                                        }
                                     }
                                 },
                                 new Response.ErrorListener() {
                                     @Override
                                     public void onErrorResponse(VolleyError error) {
                                         error.printStackTrace();
-                                        Log.d("HTTPRequestHelper: ", "Error: " + error.getMessage());
                                     }
                                 }
                         ) {

@@ -276,15 +276,20 @@ public class ProfileActivity extends AppCompatActivity {
                 }
             });
 
-            textView_sentFistbumpsCount.setText(Helpers.getTextHtml("<b>"
+            // set text view texts
+            textView_sentFistbumpsCount.setText(Helpers.getAPICompatHtml("<b>"
                     + Integer.toString(userProfileParcel.getSentFistbumpsCount())
                     + "</b> " + getString(R.string.fistbumps_sent)));
-            textView_receivedFistbumpsCount.setText(Helpers.getTextHtml("<b>"
+            textView_receivedFistbumpsCount.setText(Helpers.getAPICompatHtml("<b>"
                     + Integer.toString(userProfileParcel.getReceivedFistbumpsCount())
                     + "</b> " + getString(R.string.fistbumps_received)));
-            textView_postsCount.setText(Helpers.getTextHtml("<b>"
+            textView_postsCount.setText(Helpers.getAPICompatHtml("<b>"
                     + Integer.toString(userProfileParcel.getPostsCount())
                     + "</b> " + getString(R.string.profile_posts)));
+
+            // set text view drawables safely to avoid vector drawable compatibility issues
+            textView_postsCount.setCompoundDrawablesWithIntrinsicBounds(
+                    null, null, Helpers.getAPICompatVectorDrawable(getApplicationContext(), R.drawable.ic_new_post), null);
         }
 
         // update user fistbump and edit profile button
@@ -450,40 +455,41 @@ public class ProfileActivity extends AppCompatActivity {
 
         // is user is looking at his/her own profile
         if (isSelfProfile) {
-            // If user is viewing their own profile
-            if (userProfileParcel.isSelfProfile()) {
-                buttonEditProfile.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (!editMode) {
-                            // Switch Fragment to editFragment
+            // set vector drawable safely to avoid compatibility issues
+            buttonEditProfileContent.setCompoundDrawablesWithIntrinsicBounds(
+                    null, null, Helpers.getAPICompatVectorDrawable(getApplicationContext(), R.drawable.ic_edit), null);
+
+            buttonEditProfile.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (!editMode) {
+                        // Switch Fragment to editFragment
 //                            appBarLayout.setExpanded(false, false);
-                            tabLayout.setVisibility(View.GONE);
-                            actionFAB.setVisibility(View.INVISIBLE);
-                            adapter.addFrag(editFragment, "Edit Profile");
-                            adapter.attachFrag(2);
-                            adapter.notifyDataSetChanged();
-                            viewPagerProfile.setCurrentItem(2);
-                            ((ProfileViewPager) viewPagerProfile).setAllowedSwipeDirection(ProfileViewPager.SwipeDirection.none);
+                        tabLayout.setVisibility(View.GONE);
+                        actionFAB.setVisibility(View.INVISIBLE);
+                        adapter.addFrag(editFragment, "Edit Profile");
+                        adapter.attachFrag(2);
+                        adapter.notifyDataSetChanged();
+                        viewPagerProfile.setCurrentItem(2);
+                        ((ProfileViewPager) viewPagerProfile).setAllowedSwipeDirection(ProfileViewPager.SwipeDirection.none);
 
-                            // Change Actionbar title
-                            supportActionBar.setTitle("Edit Profile");
+                        // Change Actionbar title
+                        supportActionBar.setTitle("Edit Profile");
 
-                            editMode = true;
-                        }
+                        editMode = true;
                     }
-                });
+                }
+            });
 
-                // launch new post activity
-                actionFAB.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent intent = new Intent(getApplicationContext(), NewPostActivity.class);
-                        startActivityForResult(intent, IntentRequestEnum.NEW_POST_REQUEST.toInt());
-                        overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
-                    }
-                });
-            }
+            // launch new post activity
+            actionFAB.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(ProfileActivity.this, NewPostActivity.class);
+                    startActivityForResult(intent, IntentRequestEnum.NEW_POST_REQUEST.toInt());
+                    overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
+                }
+            });
         }
         else {
             // if current user already fistbumped profile user
@@ -610,8 +616,8 @@ public class ProfileActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String curUserFacebookID) {
             if (curUserFacebookID != null) {
-                Helpers.setFacebookProfileImage(getApplicationContext(), leftUserProfileImage, curUserFacebookID, 3, true);
-                Helpers.setFacebookProfileImage(getApplicationContext(), rightUserProfileImage, userProfileParcel.getFacebookID(), 3, true);
+                Helpers.setFacebookProfileImage(ProfileActivity.this, leftUserProfileImage, curUserFacebookID, 3, true);
+                Helpers.setFacebookProfileImage(ProfileActivity.this, rightUserProfileImage, userProfileParcel.getFacebookID(), 3, true);
             }
         }
     }

@@ -6,7 +6,5 @@
     android:textColor="@color/colorAccentDark"
     android:text="@string/spinner_prompt_text"
     android:textSize="16sp"
-    android:drawableEnd="@drawable/ic_arrow_drop_down"
-    android:drawableRight="@drawable/ic_arrow_drop_down"
     android:minLines="1"
     android:maxLines="1" />

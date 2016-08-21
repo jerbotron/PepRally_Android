@@ -331,6 +331,8 @@ public class NewCommentActivity extends AppCompatActivity{
             // Update fistbumps/comments count
             mainPostFistbumpsCount.setText(String.valueOf(userPost.getFistbumpsCount()));
             mainPostCommentsCount.setText(String.valueOf(userPost.getCommentsCount()));
+            mainPostCommentsCount.setCompoundDrawablesWithIntrinsicBounds(
+                    Helpers.getAPICompatVectorDrawable(getApplicationContext(), R.drawable.ic_replies), null, null, null);
 
             // if user already liked the post
             if (userPost.getFistbumpedUsers().contains(username)) {
@@ -342,7 +344,7 @@ public class NewCommentActivity extends AppCompatActivity{
                 @Override
                 public void onClick(View view) {
                     if (mainPost.getFistbumpsCount() > 0) {
-                        Intent intent = new Intent(getApplicationContext(), ViewFistbumpsActivity.class);
+                        Intent intent = new Intent(NewCommentActivity.this, ViewFistbumpsActivity.class);
                         intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                         intent.putStringArrayListExtra("FISTBUMPED_USERS", new ArrayList<>(mainPost.getFistbumpedUsers()));
                         startActivity(intent);

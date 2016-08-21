@@ -150,7 +150,7 @@ public class MessagingActivity extends AppCompatActivity {
                 TextView confirmDeleteMessage = (TextView) dialogViewConfirmDelete.findViewById(R.id.id_dialog_confirm_delete_conversation);
                 ImageView confirmDeleteImage = (ImageView) dialogViewConfirmDelete.findViewById(R.id.id_dialog_confirm_delete_conversation_image);
                 confirmDeleteMessage.setText("Are you sure you want to delete this conversation with " + receiverUsername + "?");
-                Helpers.setFacebookProfileImage(getApplicationContext(),
+                Helpers.setFacebookProfileImage(MessagingActivity.this,
                         confirmDeleteImage,
                         conversation.getUsernameFacebookIdMap().get(receiverUsername),
                         3,
@@ -232,42 +232,65 @@ public class MessagingActivity extends AppCompatActivity {
             progressDialogDeleteConversation.dismiss();
     }
 
+    private void launchConversationHasBeenDeletedDialog() {
+        AlertDialog.Builder dialogBuilderConfirmDelete = new AlertDialog.Builder(this);
+        View dialogViewConfirmDelete = View.inflate(this, R.layout.dialog_confirm_delete, null);
+        dialogBuilderConfirmDelete.setView(dialogViewConfirmDelete);
+        dialogBuilderConfirmDelete.setTitle("Conversation Deleted");
+        dialogBuilderConfirmDelete.setMessage("Sorry, this conversation has been deleted by the other user :(");
+        dialogBuilderConfirmDelete.setPositiveButton("Close", null);
+        dialogBuilderConfirmDelete.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                finish();
+            }
+        });
+        dialogBuilderConfirmDelete.create().show();
+    }
+
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
-    private class PushChatMessageToDBAsyncTask extends AsyncTask<ChatMessage, Void, Void> {
+    private class PushChatMessageToDBAsyncTask extends AsyncTask<ChatMessage, Void, Boolean> {
         @Override
-        protected Void doInBackground(ChatMessage... chatMessages) {
+        protected Boolean doInBackground(ChatMessage... chatMessages) {
             ChatMessage chatMessage = chatMessages[0];
             DBUserConversation userConversation = dynamoDBHelper.loadDBUserConversation(chatMessage.getConversationID());
-            userConversation.setTimeStampLatest(Helpers.getTimestampSeconds());
-            userConversation.addConversationChatMessage(chatMessage);
-            dynamoDBHelper.saveDBObject(userConversation);
-            return null;
+            if (userConversation != null) {
+                userConversation.setTimeStampLatest(Helpers.getTimestampSeconds());
+                userConversation.addConversationChatMessage(chatMessage);
+                dynamoDBHelper.saveDBObject(userConversation);
+                return true;
+            }
+            return false;
         }
 
         @Override
-        protected void onPostExecute(Void aVoid) {
-            // send update notification to messaging server
-            if (receiverJoined) {
-                JSONObject jsonData = new JSONObject();
-                try {
-                    jsonData.put("receiver_username", receiverUsername);
-                    jsonData.put("sender_username", currentUsername);
-                    jsonData.put("data", messageChatText.getText().toString().trim());
-                } catch (JSONException e) { e.printStackTrace(); }
-                socket.emitString("send_message", jsonData.toString());
-            }
-            else {
-                Bundle bundle = new Bundle();
-                bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_MESSAGE.toInt());
-                bundle.putString("RECEIVER_USERNAME", receiverUsername);
-                bundle.putString("SENDER_USERNAME", currentUsername);
-                bundle.putString("SENDER_FACEBOOK_ID", currentUserFacebookId);
-                httpRequestsHelper.makePushNotificationRequest(bundle);
+        protected void onPostExecute(Boolean conversationSavedSuccess) {
+            if (conversationSavedSuccess) {
+                // send update notification to messaging server
+                if (receiverJoined) {
+                    JSONObject jsonData = new JSONObject();
+                    try {
+                        jsonData.put("receiver_username", receiverUsername);
+                        jsonData.put("sender_username", currentUsername);
+                        jsonData.put("data", messageChatText.getText().toString().trim());
+                    } catch (JSONException e) { e.printStackTrace(); }
+                    socket.emitString("send_message", jsonData.toString());
+                }
+                else {
+                    Bundle bundle = new Bundle();
+                    bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_MESSAGE.toInt());
+                    bundle.putString("RECEIVER_USERNAME", receiverUsername);
+                    bundle.putString("SENDER_USERNAME", currentUsername);
+                    bundle.putString("SENDER_FACEBOOK_ID", currentUserFacebookId);
+                    httpRequestsHelper.makePushNotificationRequest(bundle);
 
-                // notify receiving user of new message alert next time they open the app
-                messagesFragment.notifyReceiverNewMessageAlert();
+                    // notify receiving user of new message alert next time they open the app
+                    messagesFragment.notifyReceiverNewMessageAlert();
+                }
+            } else {
+                launchConversationHasBeenDeletedDialog();
             }
         }
     }
@@ -340,7 +363,7 @@ public class MessagingActivity extends AppCompatActivity {
             String facebookId = conversation.getUserFacebookId(receiverUsername);
             titleText.setText(title);
             messageText.setText(message);
-            Helpers.setFacebookProfileImage(getContext().getApplicationContext(),
+            Helpers.setFacebookProfileImage(getContext(),
                     profileImage,
                     facebookId,
                     3,

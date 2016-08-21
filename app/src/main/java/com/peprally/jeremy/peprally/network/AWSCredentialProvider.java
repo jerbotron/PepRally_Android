@@ -38,9 +38,7 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingC
     }
 
     protected CognitoCachingCredentialsProvider doInBackground(Void... params) {
-
-        Log.d(TAG, "verifying credentials");
-
+//        Log.d(TAG, "verifying credentials");
         try {
             FacebookSdk.sdkInitialize(callingContext);
             AccessToken currentToken = AccessToken.getCurrentAccessToken();
@@ -73,10 +71,6 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingC
         if (credentialsProvider == null) {
             new AWSCredentialProvider(callingContext, loginTaskCallback).execute();
         } else {
-            Log.d(TAG, "credentials verified");
-//            Log.d(TAG, "credentials: " + credentialsProvider.getCredentials().toString());
-//            Log.d(TAG, "identity pool id: " + credentialsProvider.getIdentityPoolId());
-//            Log.d(TAG, "identity provider: " + credentialsProvider.getIdentityProvider());
             CognitoSyncManager syncClient = new CognitoSyncManager(
                     callingContext,
                     Regions.US_EAST_1,

@@ -80,10 +80,10 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
             case "Swimming and Diving":
             case "Tennis":
             case "Track and Field":
-                playerCardHolder.playerName.setText(Helpers.getTextHtml("<b>" + playerNameText + "</b>"));
+                playerCardHolder.playerName.setText(Helpers.getAPICompatHtml("<b>" + playerNameText + "</b>"));
                 break;
             default:
-                playerCardHolder.playerName.setText(Helpers.getTextHtml("<b>#"
+                playerCardHolder.playerName.setText(Helpers.getAPICompatHtml("<b>#"
                         + String.valueOf(curPlayer.getNumber()) + " "
                         + playerNameText + "</b>"));
                 break;

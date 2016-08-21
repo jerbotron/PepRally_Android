@@ -99,13 +99,11 @@
                         android:layout_marginTop="4dp"
                         android:layout_marginBottom="8dp">
                         <TextView
+                            android:id="@+id/id_profile_posts_count"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:id="@+id/id_profile_posts_count"
                             android:gravity="center"
                             android:drawablePadding="10dp"
-                            android:drawableRight="@drawable/ic_new_post"
-                            android:drawableEnd="@drawable/ic_new_post"
                             android:text="@string/profile_posts"
                             android:textColor="@color/colorWhite"
                             android:clickable="true"/>
@@ -127,8 +125,6 @@
                             android:id="@+id/id_button_edit_profile_content"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:drawableRight="@drawable/ic_edit"
-                            android:drawableEnd="@drawable/ic_edit"
                             android:text="@string/placeholder_edit_profile"
                             android:textSize="12sp"
                             android:drawablePadding="8dp"

@@ -88,9 +88,6 @@
                     android:gravity="center"
                     android:text="@string/placeholder_post_fistbumps_count"
                     android:drawablePadding="4dp"
-                    app:srcCompat="@drawable/ic_replies"
-                    android:drawableStart="@drawable/ic_replies"
-                    android:drawableLeft="@drawable/ic_replies"
                     android:clickable="true"/>
             </LinearLayout>
         </RelativeLayout>

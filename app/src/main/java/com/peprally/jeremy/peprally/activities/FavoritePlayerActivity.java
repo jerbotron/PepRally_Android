@@ -99,7 +99,7 @@ public class FavoritePlayerActivity extends AppCompatActivity {
         DBPlayerProfile playerProfile = roster.get(position);
         if (callingActivity.equals("ProfileActivity")) {
             Intent intent = new Intent();
-            intent.putExtra("FAVORITE_PLAYER", Helpers.getFavPlayerText(playerProfile.getFirstName(),
+            intent.putExtra("FAVORITE_PLAYER", Helpers.getFavPlayerString(playerProfile.getFirstName(),
                     playerProfile.getLastName(),
                     playerProfile.getNumber(),
                     playerProfile.getTeam()));

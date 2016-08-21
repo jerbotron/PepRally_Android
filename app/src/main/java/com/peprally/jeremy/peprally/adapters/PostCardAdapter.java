@@ -109,6 +109,8 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         final int fistbumpsCount = curPost.getFistbumpsCount();
         postHolder.postFistbumpsCount.setText(String.valueOf(fistbumpsCount));
         postHolder.postCommentsCount.setText(String.valueOf(curPost.getCommentsCount()));
+        postHolder.postCommentsCount.setCompoundDrawablesWithIntrinsicBounds(
+                Helpers.getAPICompatVectorDrawable(callingContext, R.drawable.ic_replies), null, null, null);
 
         postHolder.timeStamp.setText(Helpers.getTimetampString(curPost.getTimestampSeconds(), true));
 

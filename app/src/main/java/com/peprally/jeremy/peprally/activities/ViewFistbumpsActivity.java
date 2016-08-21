@@ -35,6 +35,7 @@ public class ViewFistbumpsActivity extends AppCompatActivity {
     /***********************************************************************************************
      *************************************** ACTIVITY METHODS **************************************
      **********************************************************************************************/
+    @SuppressWarnings("unchecked")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
