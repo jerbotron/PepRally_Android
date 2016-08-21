@@ -15,7 +15,7 @@ import com.peprally.jeremy.peprally.activities.SettingsActivity;
 import com.peprally.jeremy.peprally.enums.FeedbackEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 public class FeedbackPreference extends DialogPreference {
 
@@ -61,7 +61,7 @@ public class FeedbackPreference extends DialogPreference {
         Bundle bundle = new Bundle();
         bundle.putInt("FEEDBACK_TYPE", FeedbackEnum.GENERAL.toInt());
         bundle.putString("FEEDBACK", feedbackText);
-        bundle.putString("USERNAME", userProfileParcel.getCurUsername());
+        bundle.putString("USERNAME", userProfileParcel.getCurrentUsername());
         bundle.putLong("TIMESTAMP", Helpers.getTimestampSeconds());
         dynamoDBHelper.createNewFeedback(bundle);
     }

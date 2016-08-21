@@ -21,6 +21,7 @@ import com.peprally.jeremy.peprally.adapters.TeamsCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBSport;
 import com.peprally.jeremy.peprally.network.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.custom.Team;
+import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -125,15 +126,8 @@ public class FavoriteTeamActivity extends AppCompatActivity {
     private class FetchSportsTableTask extends AsyncTask<Void, Void, PaginatedScanList<DBSport>> {
         @Override
         protected PaginatedScanList<DBSport> doInBackground(Void... params) {
-            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    getApplicationContext(),                  // Context
-                    AWSCredentialProvider.IDENTITY_POOL_ID,   // Identity Pool ID
-                    AWSCredentialProvider.COGNITO_REGION      // Region
-            );
-
-            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
-            return mapper.scan(DBSport.class, new DynamoDBScanExpression());
+            DynamoDBHelper dynamoDBHelper = new DynamoDBHelper(getApplicationContext());
+            return dynamoDBHelper.getMapper().scan(DBSport.class, new DynamoDBScanExpression());
         }
 
         @Override

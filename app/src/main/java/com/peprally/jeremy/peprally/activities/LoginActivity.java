@@ -53,7 +53,7 @@ import com.peprally.jeremy.peprally.network.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import org.json.JSONException;
 import org.json.JSONObject;

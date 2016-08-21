@@ -13,7 +13,7 @@ import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.FistbumpedUserCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -11,7 +11,7 @@ import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 
 public class ProfileEditFragment extends Fragment {

@@ -19,7 +19,7 @@ import com.peprally.jeremy.peprally.adapters.NotificationCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserNotification;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -75,7 +75,7 @@ public class NotificationsActivity extends AppCompatActivity {
         });
 
         // remove user new notification alert
-        new RemoveUserNewNotificationAlertAsyncTask().execute(userProfileParcel.getCurUsername());
+        new RemoveUserNewNotificationAlertAsyncTask().execute(userProfileParcel.getCurrentUsername());
     }
 
     @Override
@@ -134,7 +134,7 @@ public class NotificationsActivity extends AppCompatActivity {
         @Override
         protected PaginatedQueryList<DBUserNotification> doInBackground(Void... params) {
             DBUserNotification userNotification = new DBUserNotification();
-            userNotification.setUsername(userProfileParcel.getCurUsername());
+            userNotification.setUsername(userProfileParcel.getCurrentUsername());
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withHashKeyValues(userNotification)
                     .withConsistentRead(true);

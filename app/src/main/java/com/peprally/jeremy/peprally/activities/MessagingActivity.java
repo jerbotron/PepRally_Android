@@ -11,7 +11,6 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,8 +33,8 @@ import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.network.SocketIO;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
+import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -337,7 +336,7 @@ public class MessagingActivity extends AppCompatActivity {
             final ImageView profileImage = (ImageView) view.findViewById(R.id.id_messaging_default_image);
 
             String title = "You fistbumped with " + receiverUsername;
-            String message = Helpers.getTimetampString(conversation.getTimestampCreated()) + " ago";
+            String message = Helpers.getTimetampString(conversation.getTimestampCreated(), false);
             String facebookId = conversation.getUserFacebookId(receiverUsername);
             titleText.setText(title);
             messageText.setText(message);
@@ -346,6 +345,15 @@ public class MessagingActivity extends AppCompatActivity {
                     facebookId,
                     3,
                     true);
+
+            profileImage.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+//                    getActivity().finish();
+                    AsyncHelpers.launchExistingUserProfileActivity(getContext(), receiverUsername, currentUsername);
+                }
+            });
+
             return view;
         }
     }
@@ -360,7 +368,7 @@ public class MessagingActivity extends AppCompatActivity {
         public void onCreate(@Nullable Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
 
-            messageArrayAdapter = new MessageArrayAdapter(getContext().getApplicationContext(),
+            messageArrayAdapter = new MessageArrayAdapter(getActivity(),
                     conversation.getChatMessages(),
                     currentUsername);
 

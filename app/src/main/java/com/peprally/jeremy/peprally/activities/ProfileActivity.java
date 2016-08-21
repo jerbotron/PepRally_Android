@@ -26,10 +26,12 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMappingException;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
 import com.peprally.jeremy.peprally.custom.messaging.Conversation;
+import com.peprally.jeremy.peprally.custom.ui.CircleImageTransformation;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.enums.IntentRequestEnum;
@@ -42,10 +44,10 @@ import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.custom.ui.ProfileViewPager;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 import com.squareup.picasso.Picasso;
 
-import org.w3c.dom.Text;
+import static com.peprally.jeremy.peprally.utils.Constants.INTEGER_INVALID;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -82,7 +84,7 @@ public class ProfileActivity extends AppCompatActivity {
         dynamoDBHelper = new DynamoDBHelper(this);
         httpRequestsHelper = new HTTPRequestsHelper(this);
 
-        userProfileParcel = getIntent().getExtras().getParcelable("USER_PROFILE_PARCEL");
+        userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
 
         // 3 Profile Activity cases currently:
         // - view/edit your own profile as a fan
@@ -96,7 +98,6 @@ public class ProfileActivity extends AppCompatActivity {
         supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
             supportActionBar.setDisplayHomeAsUpEnabled(true);
-            supportActionBar.setTitle(userProfileParcel.getFirstname());
         }
         fixProfileHeaderMarginTop();
 
@@ -114,47 +115,6 @@ public class ProfileActivity extends AppCompatActivity {
 //                }
 //            }
 //        });
-
-        // Follow Button and FAB
-        final LinearLayout buttonEditProfile = (LinearLayout) findViewById(R.id.id_button_edit_profile_container);
-        final TextView buttonEditProfileContent = (TextView) findViewById(R.id.id_button_edit_profile_content);
-        final FloatingActionButton actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
-        if (buttonEditProfile != null && buttonEditProfileContent != null) {
-            // If user is viewing their own profile
-            if (userProfileParcel.getIsSelfProfile()) {
-                buttonEditProfile.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        if (!editMode) {
-                            // Switch Fragment to editFragment
-//                            appBarLayout.setExpanded(false, false);
-                            tabLayout.setVisibility(View.GONE);
-                            actionFAB.setVisibility(View.INVISIBLE);
-                            adapter.addFrag(editFragment, "Edit Profile");
-                            adapter.attachFrag(2);
-                            adapter.notifyDataSetChanged();
-                            viewPagerProfile.setCurrentItem(2);
-                            ((ProfileViewPager) viewPagerProfile).setAllowedSwipeDirection(ProfileViewPager.SwipeDirection.none);
-
-                            // Change Actionbar title
-                            supportActionBar.setTitle("Edit Profile");
-
-                            editMode = true;
-                        }
-                    }
-                });
-
-                // launch new post activity
-                actionFAB.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent intent = new Intent(getApplicationContext(), NewPostActivity.class);
-                        startActivityForResult(intent, IntentRequestEnum.NEW_POST_REQUEST.toInt());
-                        overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
-                    }
-                });
-            }
-        }
     }
 
     @Override
@@ -234,7 +194,7 @@ public class ProfileActivity extends AppCompatActivity {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", notificationType.toInt());
         bundle.putString("RECEIVER_USERNAME", userProfileParcel.getProfileUsername());  // who the notification is going to
-        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());    // who the notification is from
+        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());    // who the notification is from
         bundle.putString("SENDER_FACEBOOK_ID", senderFacebookId);    // who the notification is from
         return bundle;
     }
@@ -247,6 +207,8 @@ public class ProfileActivity extends AppCompatActivity {
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
     private void createView() {
+        supportActionBar.setTitle(userProfileParcel.getFirstname());
+
         FragmentManager fragmentManager = getSupportFragmentManager();
         infoFragment = new ProfileInfoFragment();
         postsFragment = new ProfilePostsFragment();
@@ -287,7 +249,7 @@ public class ProfileActivity extends AppCompatActivity {
                 && textView_sentFistbumpsCount != null && textView_receivedFistbumpsCount != null) {
             final String imageURL;
             // Profile Image Setup
-            if (userProfileParcel.getIsVarsityPlayer()) {
+            if (userProfileParcel.isVarsityPlayer()) {
                 String rootImageURL = "https://s3.amazonaws.com/rosterphotos/";
                 String team = userProfileParcel.getTeam();
                 String extension = team.replace(" ", "+") + "/" + userProfileParcel.getRosterImageURL();
@@ -295,6 +257,7 @@ public class ProfileActivity extends AppCompatActivity {
                 Picasso.with(ProfileActivity.this)
                         .load(imageURL)
                         .placeholder(R.drawable.img_default_ut_placeholder)
+                        .transform(new CircleImageTransformation())
                         .into(imageView_profilePicture);
             }
             else {
@@ -325,8 +288,7 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
         // update user fistbump and edit profile button
-        if (!userProfileParcel.getIsSelfProfile())
-            updateDirectFistbumpButtons(didCurrentUserFistbumpProfileUserAlready);
+        updateProfileButtonAndFABBehavior(userProfileParcel.isSelfProfile(), didCurrentUserFistbumpProfileUserAlready);
     }
 
     /**
@@ -379,7 +341,7 @@ public class ProfileActivity extends AppCompatActivity {
             supportActionBar.setTitle(userProfileParcel.getProfileUsername());
         }
         else {
-            if (userProfileParcel.getIsSelfProfile()) {
+            if (userProfileParcel.isSelfProfile()) {
                 finish();
                 Intent intent = new Intent(this, HomeActivity.class);
                 userProfileParcel.setCurrentActivity(ActivityEnum.HOME);
@@ -447,7 +409,7 @@ public class ProfileActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 // increase appropriate fistbump counts
-                dynamoDBHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUsername());
+                dynamoDBHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurrentUsername());
                 dynamoDBHelper.incrementUserReceivedFistbumpsCount(userProfileParcel.getProfileUsername());
                 // add users to respective sent/received fistbump lists
                 new HandleCurUserDirectFistbumpToProfileUserTask().execute();
@@ -461,7 +423,7 @@ public class ProfileActivity extends AppCompatActivity {
                 showDirectFistbumpSnackbarConfirmation(true);
                 // update new UI button behaviors
                 setDidCurrentUserFistbumpProfileUserAlready(true);
-                updateDirectFistbumpButtons(true);
+                updateProfileButtonAndFABBehavior(false, true);
                 b.dismiss();
             }
         });
@@ -481,66 +443,106 @@ public class ProfileActivity extends AppCompatActivity {
         snackbar.show();
     }
 
-    private void updateDirectFistbumpButtons(boolean alreadyFistbumped) {
+    private void updateProfileButtonAndFABBehavior(boolean isSelfProfile, boolean alreadyFistbumped) {
         final LinearLayout buttonEditProfile = (LinearLayout) findViewById(R.id.id_button_edit_profile_container);
         final TextView buttonEditProfileContent = (TextView) findViewById(R.id.id_button_edit_profile_content);
         final FloatingActionButton actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
-        // if current user already fistbumped profile user
-        if (alreadyFistbumped) {
-            buttonEditProfileContent.setText(getResources().getString(R.string.profile_fistbumped_text));
-            buttonEditProfileContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorWhite));
-            buttonEditProfile.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_default_clicked));
-            buttonEditProfile.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    showDirectFistbumpSnackbarFistbumpAlreadySentConfirmation();
-                }
-            });
-            actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_fistbump_filled_50));
-            actionFAB.setBackgroundTintList(ContextCompat.getColorStateList(getApplicationContext(), R.color.colorPrimaryLight));
-            actionFAB.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    showDirectFistbumpSnackbarFistbumpAlreadySentConfirmation();
-                }
-            });
-        }
-        // if current user has not fistbumped profile user
-        else {
-            buttonEditProfileContent.setText(getResources().getString(R.string.profile_send_fistbump_text));
-            buttonEditProfileContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorPrimary));
-            buttonEditProfile.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_default));
-            buttonEditProfile.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    // check if profileUser is a varsity player who hasn't created a profile yet
-                    if (userProfileParcel.getIsVarsityPlayer() && !userProfileParcel.getHasUserProfile()) {
-                        showDirectFistbumpSnackbarConfirmation(false);
-                    }
-                    else {
-                        launchConfirmSendDirectFistbumpDialog();
-                    }
-                }
-            });
 
-            // direct fistbump feature
-            actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_fistbump_50_white));
-            actionFAB.setBackgroundTintList(ContextCompat.getColorStateList(getApplicationContext(), R.color.colorAccent));
-            actionFAB.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    // check if profileUser is a varsity player who hasn't created a profile yet
-                    if (userProfileParcel.getIsVarsityPlayer() && !userProfileParcel.getHasUserProfile()) {
-                        showDirectFistbumpSnackbarConfirmation(false);
+        // is user is looking at his/her own profile
+        if (isSelfProfile) {
+            // If user is viewing their own profile
+            if (userProfileParcel.isSelfProfile()) {
+                buttonEditProfile.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (!editMode) {
+                            // Switch Fragment to editFragment
+//                            appBarLayout.setExpanded(false, false);
+                            tabLayout.setVisibility(View.GONE);
+                            actionFAB.setVisibility(View.INVISIBLE);
+                            adapter.addFrag(editFragment, "Edit Profile");
+                            adapter.attachFrag(2);
+                            adapter.notifyDataSetChanged();
+                            viewPagerProfile.setCurrentItem(2);
+                            ((ProfileViewPager) viewPagerProfile).setAllowedSwipeDirection(ProfileViewPager.SwipeDirection.none);
+
+                            // Change Actionbar title
+                            supportActionBar.setTitle("Edit Profile");
+
+                            editMode = true;
+                        }
                     }
-                    else {
-                        launchConfirmSendDirectFistbumpDialog();
+                });
+
+                // launch new post activity
+                actionFAB.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(getApplicationContext(), NewPostActivity.class);
+                        startActivityForResult(intent, IntentRequestEnum.NEW_POST_REQUEST.toInt());
+                        overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
                     }
-                }
-            });
+                });
+            }
         }
-        // remove edit icon drawable
-        buttonEditProfileContent.setCompoundDrawablesWithIntrinsicBounds(0,0,0,0);
+        else {
+            // if current user already fistbumped profile user
+            if (alreadyFistbumped) {
+                buttonEditProfileContent.setText(getResources().getString(R.string.profile_fistbumped_text));
+                buttonEditProfileContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorWhite));
+                buttonEditProfile.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_default_clicked));
+                buttonEditProfile.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        showDirectFistbumpSnackbarFistbumpAlreadySentConfirmation();
+                    }
+                });
+                actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_fistbump_filled_50));
+                actionFAB.setBackgroundTintList(ContextCompat.getColorStateList(getApplicationContext(), R.color.colorPrimaryLight));
+                actionFAB.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        showDirectFistbumpSnackbarFistbumpAlreadySentConfirmation();
+                    }
+                });
+            }
+            // if current user has not fistbumped profile user
+            else {
+                buttonEditProfileContent.setText(getResources().getString(R.string.profile_send_fistbump_text));
+                buttonEditProfileContent.setTextColor(ContextCompat.getColor(ProfileActivity.this, R.color.colorPrimary));
+                buttonEditProfile.setBackground(ContextCompat.getDrawable(ProfileActivity.this, R.drawable.button_default));
+                buttonEditProfile.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // check if profileUser is a varsity player who hasn't created a profile yet
+                        if (userProfileParcel.isVarsityPlayer() && !userProfileParcel.getHasUserProfile()) {
+                            showDirectFistbumpSnackbarConfirmation(false);
+                        }
+                        else {
+                            launchConfirmSendDirectFistbumpDialog();
+                        }
+                    }
+                });
+
+                // direct fistbump feature
+                actionFAB.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_fistbump_50_white));
+                actionFAB.setBackgroundTintList(ContextCompat.getColorStateList(getApplicationContext(), R.color.colorAccent));
+                actionFAB.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // check if profileUser is a varsity player who hasn't created a profile yet
+                        if (userProfileParcel.isVarsityPlayer() && !userProfileParcel.getHasUserProfile()) {
+                            showDirectFistbumpSnackbarConfirmation(false);
+                        }
+                        else {
+                            launchConfirmSendDirectFistbumpDialog();
+                        }
+                    }
+                });
+            }
+            // remove edit icon drawable
+            buttonEditProfileContent.setCompoundDrawablesWithIntrinsicBounds(0,0,0,0);
+        }
     }
 
     private void launchFistbumpMatchDialog(final Conversation conversation, final String currentUserFacebookId) {
@@ -572,7 +574,7 @@ public class ProfileActivity extends AppCompatActivity {
                 finish();
                 Intent intent = new Intent(ProfileActivity.this, MessagingActivity.class);
                 intent.putExtra("CONVERSATION", conversation);
-                intent.putExtra("CURRENT_USERNAME", userProfileParcel.getCurUsername());
+                intent.putExtra("CURRENT_USERNAME", userProfileParcel.getCurrentUsername());
                 intent.putExtra("CURRENT_USER_FACEBOOK_ID", currentUserFacebookId);
                 startActivity(intent);
                 overridePendingTransition(R.anim.right_in, R.anim.left_out);
@@ -596,7 +598,7 @@ public class ProfileActivity extends AppCompatActivity {
         ImageView leftUserProfileImage, rightUserProfileImage;
         @Override
         protected String doInBackground(ImageView... params) {
-            DBUserProfile curUserProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurUsername());
+            DBUserProfile curUserProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurrentUsername());
             if (curUserProfile != null) {
                 leftUserProfileImage = params[0];
                 rightUserProfileImage = params[1];
@@ -623,38 +625,18 @@ public class ProfileActivity extends AppCompatActivity {
             // 1) Load general user's profile
             // 2) Load varsity player's profile
             // 3) Load varsity player's profile who also has a general profile
-            try {
-                userProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getProfileUsername());
-            }
-            catch (DynamoDBMappingException e) {
-                userProfile = null;
-            }
+            userProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getProfileUsername());
 
-            String playerTeam;
-            int playerIndex;
-            if (userProfile != null && userProfileParcel.getTeam() == null && userProfileParcel.getIndex().equals(Helpers.INTEGER_INVALID))
-            {
-                playerTeam = userProfile.getTeam();
-                playerIndex = userProfile.getPlayerIndex();
-            }
-            else {
-                playerTeam = userProfileParcel.getTeam();
-                playerIndex = userProfileParcel.getIndex();
-            }
-
-            try {
-                playerProfile = dynamoDBHelper.loadDBPlayerProfile(playerTeam, playerIndex);
-            }
-            catch (DynamoDBMappingException e) {
-                playerProfile = null;
-            }
-
-            if (userProfile != null) {
+            if (userProfile == null) {
+                playerProfile = dynamoDBHelper.loadDBPlayerProfile(userProfileParcel.getTeam(), userProfileParcel.getPlayerIndex());
+            } else {
                 if (userProfile.getNewUser())
                     SetupNewUserProfile();
-                if (!userProfileParcel.getIsSelfProfile()) {
-                    // check if current user has fistbumped profile user
-                    DBUserProfile curUser = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurUsername());
+                if (userProfile.getIsVarsityPlayer())
+                    playerProfile = dynamoDBHelper.loadDBPlayerProfile(userProfile.getTeam(), userProfile.getPlayerIndex());
+                if (!userProfileParcel.isSelfProfile()) {
+                    // check if current user has fistbumped profile user to correctly set UI components
+                    DBUserProfile curUser = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurrentUsername());
                     if (curUser.getUsersDirectFistbumpSent().contains(userProfileParcel.getProfileUsername())) {
                         setDidCurrentUserFistbumpProfileUserAlready(true);
                     }
@@ -690,7 +672,7 @@ public class ProfileActivity extends AppCompatActivity {
             }
             else {
                 userProfile.setIsVarsityPlayer(false);
-                userProfile.setPlayerIndex(Helpers.INTEGER_INVALID);
+                userProfile.setPlayerIndex(INTEGER_INVALID);
             }
             dynamoDBHelper.saveDBObject(userProfile);
         }
@@ -726,6 +708,22 @@ public class ProfileActivity extends AppCompatActivity {
                 userProfileParcel.setHasUserProfile(playerProfile.getHasUserProfile());
             }
         }
+
+        @SuppressWarnings("unchecked")
+        private DBPlayerProfile queryDBPlayerProfileWithUsername(String username) {
+            DBPlayerProfile playerProfile = new DBPlayerProfile();
+            playerProfile.setUsername(username);
+            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression<DBPlayerProfile>()
+                    .withIndexName("Username-index")
+                    .withHashKeyValues(playerProfile)
+                    .withConsistentRead(false);
+            PaginatedQueryList<DBPlayerProfile> queryResults = dynamoDBHelper.getMapper().query(DBPlayerProfile.class, queryExpression);
+            // make sure we only get 1 result back
+            if (queryResults != null && queryResults.size() == 1) {
+                return queryResults.get(0);
+            }
+            return null;
+        }
     }
 
     private class PushProfileChangesToDBTask extends AsyncTask<Void, Void, Void> {
@@ -751,19 +749,19 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
-    private class HandleCurUserDirectFistbumpToProfileUserTask extends AsyncTask<Void, Void, Boolean> {
+    private class HandleCurUserDirectFistbumpToProfileUserTask extends AsyncTask<Void, Void, Void> {
         DBUserProfile profileUser;
         DBUserProfile currentUser;
         @Override
-        protected Boolean doInBackground(Void... voids) {
+        protected Void doInBackground(Void... voids) {
             boolean isFistbumpMatch = false;
             profileUser = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getProfileUsername());
-            currentUser = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurUsername());
+            currentUser = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurrentUsername());
             if (profileUser != null && currentUser != null) {
                 currentUser.addUsersDirectFistbumpSent(userProfileParcel.getProfileUsername());
-                profileUser.addUsersDirectFistbumpReceived(userProfileParcel.getCurUsername());
+                profileUser.addUsersDirectFistbumpReceived(userProfileParcel.getCurrentUsername());
                 // check if fistbump match
-                if (profileUser.getUsersDirectFistbumpSent().contains(userProfileParcel.getCurUsername())) {
+                if (profileUser.getUsersDirectFistbumpSent().contains(userProfileParcel.getCurrentUsername())) {
                     // create new conversation if it is a match
                     dynamoDBHelper.createNewConversation(userProfileParcel, new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
                         @Override
@@ -779,16 +777,13 @@ public class ProfileActivity extends AppCompatActivity {
                 dynamoDBHelper.saveDBObject(currentUser);
                 dynamoDBHelper.saveDBObject(profileUser);
             }
-            return isFistbumpMatch;
-        }
 
-        @Override
-        protected void onPostExecute(Boolean isFistbumpMatch) {
             final NotificationEnum notificationType = isFistbumpMatch ? NotificationEnum.DIRECT_FISTBUMP_MATCH : NotificationEnum.DIRECT_FISTBUMP;
             // create new db user notification
             dynamoDBHelper.createNewNotification(makeDBUserNotificationDirectFistbumpBundle(), null);
             // send push notification to receiving user that they got a direct fistbump/direct fistbump match
             httpRequestsHelper.makePushNotificationRequest(makePushNotificationDirectFistbumpBundle(currentUser.getFacebookId(), notificationType));
+            return null;
         }
     }
 }

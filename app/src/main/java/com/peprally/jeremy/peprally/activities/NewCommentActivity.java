@@ -19,7 +19,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,7 +31,7 @@ import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -129,7 +128,7 @@ public class NewCommentActivity extends AppCompatActivity{
                     3,
                     true);
 
-            mainPostTimeStamp.setText(Helpers.getTimetampString(mainPost.getTimestampSeconds()));
+            mainPostTimeStamp.setText(Helpers.getTimetampString(mainPost.getTimestampSeconds(), true));
 
             // Post Button onClick handler
             postCommentButton.setOnClickListener(new View.OnClickListener() {
@@ -236,7 +235,7 @@ public class NewCommentActivity extends AppCompatActivity{
         else {
             Bundle bundle = new Bundle();
             bundle.putString("POST_USERNAME", mainPost.getUsername());
-            bundle.putString("COMMENT_USERNAME", userProfileParcel.getCurUsername());
+            bundle.putString("COMMENT_USERNAME", userProfileParcel.getCurrentUsername());
             bundle.putString("COMMENT_FIRST_NAME", userProfileParcel.getFirstname());
             bundle.putString("FACEBOOK_ID", userProfileParcel.getFacebookID());
             // when adding the first comment, initialize commentCardAdapter with null list
@@ -259,7 +258,7 @@ public class NewCommentActivity extends AppCompatActivity{
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
         bundle.putString("RECEIVER_USERNAME", curPost.getUsername());
-        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());
+        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());
         bundle.putString("SENDER_FACEBOOK_ID", userProfileParcel.getFacebookID());
         return bundle;
     }
@@ -324,7 +323,7 @@ public class NewCommentActivity extends AppCompatActivity{
         final TextView mainPostFistbumpsCount = (TextView) findViewById(R.id.id_text_view_post_card_fistbumps_count);
         final TextView mainPostCommentsCount = (TextView) findViewById(R.id.id_text_view_post_card_comments_count);
 
-        final String username = userProfileParcel.getCurUsername();
+        final String username = userProfileParcel.getCurrentUsername();
 
         // Setup button views and onClick handling callbacks:
         if (mainPostFistbump != null && mainPostFistbumpsCount != null) {
@@ -369,16 +368,16 @@ public class NewCommentActivity extends AppCompatActivity{
 
                         // update user fistbumps counts:
                         // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
-                        if (!userPost.getUsername().equals(userProfileParcel.getCurUsername())) {
+                        if (!userPost.getUsername().equals(userProfileParcel.getCurrentUsername())) {
                             // update the received fistbumps count of the main post user
                             dynamoDBHelper.decrementUserReceivedFistbumpsCount(userPost.getUsername());
                             // update the sent fistbumps count of the current user
-                            dynamoDBHelper.decrementUserSentFistbumpsCount(userProfileParcel.getCurUsername());
+                            dynamoDBHelper.decrementUserSentFistbumpsCount(userProfileParcel.getCurrentUsername());
                             // remove notification
-                            dynamoDBHelper.deletePostFistbumpNotification(NotificationEnum.POST_FISTBUMP, userPost.getPostId(), userProfileParcel.getCurUsername());
+                            dynamoDBHelper.deletePostFistbumpNotification(NotificationEnum.POST_FISTBUMP, userPost.getPostId(), userProfileParcel.getCurrentUsername());
                         }
                         // remove current user from fistbumped users
-                        userPost.removeFistbumpedUser(userProfileParcel.getCurUsername());
+                        userPost.removeFistbumpedUser(userProfileParcel.getCurrentUsername());
                     }
                     // If user has not liked the post yet
                     else {
@@ -392,17 +391,17 @@ public class NewCommentActivity extends AppCompatActivity{
 
                         // update user fistbumps counts:
                         // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
-                        if (!userPost.getUsername().equals(userProfileParcel.getCurUsername())) {
+                        if (!userPost.getUsername().equals(userProfileParcel.getCurrentUsername())) {
                             // update the received fistbumps count of the main post user
                             dynamoDBHelper.incrementUserReceivedFistbumpsCount(userPost.getUsername());
                             // update the sent fistbumps count of the current user
-                            dynamoDBHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUsername());
+                            dynamoDBHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurrentUsername());
                             // send push notification
                             dynamoDBHelper.createNewNotification(makeNotificationPostFistbumpBundle(userPost), null);
                             httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestPostFistbumpBundle(userPost));
                         }
                         // add current user to fistbumped users
-                        userPost.addFistbumpedUser(userProfileParcel.getCurUsername());
+                        userPost.addFistbumpedUser(userProfileParcel.getCurrentUsername());
                     }
                     // update post fistbumps count
                     userPost.setFistbumpsCount(fistbumpsCount);

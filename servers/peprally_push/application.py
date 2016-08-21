@@ -9,7 +9,7 @@ test_token = ["eo7NkHsfdYo:APA91bHG2hVMxyh98A0lPX5zEbLclSY9HvjhQlQbFKLaaKkeTB6Ow
 
 
 @application.route('/')
-def index():
+def playerIndex():
     return 'PepRally Push Notification Server'
 
 @application.route('/send', methods=['GET', 'POST'])

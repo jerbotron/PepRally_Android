@@ -9,25 +9,17 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.MenuItem;
-import android.view.View;
 
-import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.PlayersCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
-import com.peprally.jeremy.peprally.network.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
+import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 
 public class FavoritePlayerActivity extends AppCompatActivity {
@@ -115,7 +107,7 @@ public class FavoritePlayerActivity extends AppCompatActivity {
             finish();
             overridePendingTransition(R.anim.left_in, R.anim.right_out);
         } else if (callingActivity.equals("HomeActivity")) {
-            UserProfileParcel parcel = new UserProfileParcel(ActivityEnum.PROFILE,
+            UserProfileParcel userProfileParcel = new UserProfileParcel(ActivityEnum.PROFILE,
                     curUsername,
                     playerProfile.getFirstName(),
                     playerProfile.getTeam(),
@@ -124,10 +116,10 @@ public class FavoritePlayerActivity extends AppCompatActivity {
             // Check if current user is a varsity player viewing his/her own profile
             if (playerProfile.getHasUserProfile() &&
                     playerProfile.getUsername().equals(curUsername)) {
-                parcel.setIsSelfProfile(true);
+                userProfileParcel.setIsSelfProfile(true);
             }
             Intent intent = new Intent(FavoritePlayerActivity.this, ProfileActivity.class);
-            intent.putExtra("USER_PROFILE_PARCEL", parcel);
+            intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
             startActivity(intent);
             overridePendingTransition(R.anim.right_in, R.anim.left_out);
         }
@@ -142,26 +134,20 @@ public class FavoritePlayerActivity extends AppCompatActivity {
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
 
+    @SuppressWarnings("unchecked")
     private class FetchTeamRosterTask extends AsyncTask<String, Void, PaginatedQueryList<DBPlayerProfile>> {
         @Override
-        protected PaginatedQueryList<DBPlayerProfile> doInBackground(String... params) {
-            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    getApplicationContext(),                  // Context
-                    AWSCredentialProvider.IDENTITY_POOL_ID,   // Identity Pool ID
-                    AWSCredentialProvider.COGNITO_REGION      // Region
-            );
-            String team = params[0];
-            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            AmazonS3 s3 = new AmazonS3Client(credentialsProvider);
-            s3.setRegion(Region.getRegion(Regions.US_EAST_1));
+        protected PaginatedQueryList<DBPlayerProfile> doInBackground(String... teams) {
+            String team = teams[0];
+            DynamoDBHelper dynamoDBHelper = new DynamoDBHelper(getApplicationContext());
 
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
             DBPlayerProfile playerProfile = new DBPlayerProfile();
             playerProfile.setTeam(team);
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withHashKeyValues(playerProfile)
                     .withConsistentRead(false);
-            return mapper.query(DBPlayerProfile.class, queryExpression);
+
+            return dynamoDBHelper.getMapper().query(DBPlayerProfile.class, queryExpression);
         }
 
         @Override

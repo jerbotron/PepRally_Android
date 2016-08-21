@@ -3,6 +3,7 @@ package com.peprally.jeremy.peprally.network;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
@@ -25,12 +26,15 @@ import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.peprally.jeremy.peprally.utils.Constants.COGNITO_REGION;
+import static com.peprally.jeremy.peprally.utils.Constants.IDENTITY_POOL_ID;
 
 public class DynamoDBHelper {
 
@@ -47,8 +51,8 @@ public class DynamoDBHelper {
     public void refresh(Context callingContext) {
         credentialsProvider = new CognitoCachingCredentialsProvider(
                 callingContext,                                         // Context
-                AWSCredentialProvider.IDENTITY_POOL_ID,                 // Identity Pool ID
-                AWSCredentialProvider.COGNITO_REGION                    // Region
+                IDENTITY_POOL_ID,                 // Identity Pool ID
+                COGNITO_REGION                    // Region
         );
         ddbClient = new AmazonDynamoDBClient(credentialsProvider);
         mapper = new DynamoDBMapper(ddbClient);
@@ -88,8 +92,10 @@ public class DynamoDBHelper {
 
     // Database load Methods
 
-    public DBUserProfile loadDBUserProfile(String postUsername) {
-        return mapper.load(DBUserProfile.class, postUsername);
+    public DBUserProfile loadDBUserProfile(String username) {
+        if (username == null || username.isEmpty())
+            return null;
+        return mapper.load(DBUserProfile.class, username);
     }
 
     public DBPlayerProfile loadDBPlayerProfile(String playerTeam, Integer playerIndex) {
@@ -173,7 +179,7 @@ public class DynamoDBHelper {
     }
 
     public void createNewConversation(UserProfileParcel userProfileParcel, AsyncTaskCallbackWithReturnObject callbackWithReturnObject) {
-        new CreateNewDBUserConversationAsyncTask(callbackWithReturnObject).execute(userProfileParcel.getCurUsername(), userProfileParcel.getProfileUsername());
+        new CreateNewDBUserConversationAsyncTask(callbackWithReturnObject).execute(userProfileParcel.getCurrentUsername(), userProfileParcel.getProfileUsername());
     }
 
     // Database delete methods
@@ -214,7 +220,7 @@ public class DynamoDBHelper {
 
     public void deleteUserAccount(UserProfileParcel userProfileParcel, AsyncTaskCallback taskCallback) {
         new DeleteDBUserProfileAsyncTask().execute(userProfileParcel);
-        new DeleteDBUsernameAsyncTask().execute(userProfileParcel.getCurUsername());
+        new DeleteDBUsernameAsyncTask().execute(userProfileParcel.getCurrentUsername());
         new BatchDeleteDBUserPostsAsyncTask(taskCallback).execute(userProfileParcel);
     }
 
@@ -290,15 +296,15 @@ public class DynamoDBHelper {
         protected Void doInBackground(UserProfileParcel... userProfileParcels) {
             UserProfileParcel userProfileParcel = userProfileParcels[0];
             // First delete user profile and username
-            DBUserProfile userProfile = loadDBUserProfile(userProfileParcel.getCurUsername());
-            DBUsername username = loadDBUsername(userProfileParcel.getCurUsername());
+            DBUserProfile userProfile = loadDBUserProfile(userProfileParcel.getCurrentUsername());
+            DBUsername username = loadDBUsername(userProfileParcel.getCurrentUsername());
             mapper.delete(username);
             mapper.delete(userProfile);
 
             // delete all posts
             if (userProfileParcel.getPostsCount() != null && userProfileParcel.getPostsCount() > 0) {
                 DBUserPost userPost = new DBUserPost();
-                userPost.setUsername(userProfileParcel.getCurUsername());
+                userPost.setUsername(userProfileParcel.getCurrentUsername());
                 DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression<DBUserPost>()
                         .withHashKeyValues(userPost)
                         .withConsistentRead(true);
@@ -313,7 +319,7 @@ public class DynamoDBHelper {
 
             // delete all notification made to the deleted user
             DBUserNotification toUserNotification = new DBUserNotification();
-            toUserNotification.setUsername(userProfileParcel.getCurUsername());
+            toUserNotification.setUsername(userProfileParcel.getCurrentUsername());
             DynamoDBQueryExpression queryExpressionToUserNotifications = new DynamoDBQueryExpression<DBUserNotification>()
                     .withHashKeyValues(toUserNotification)
                     .withConsistentRead(true);
@@ -327,7 +333,7 @@ public class DynamoDBHelper {
 
             // delete all notifications made by the deleted user
             DBUserNotification fromUserNotification = new DBUserNotification();
-            fromUserNotification.setSenderUsername(userProfileParcel.getCurUsername());
+            fromUserNotification.setSenderUsername(userProfileParcel.getCurrentUsername());
             DynamoDBQueryExpression queryExpressionFromUserNotifications = new DynamoDBQueryExpression<DBUserNotification>()
                     .withHashKeyValues(fromUserNotification)
                     .withConsistentRead(false);
@@ -480,7 +486,7 @@ public class DynamoDBHelper {
         protected Void doInBackground(UserProfileParcel... userProfileParcels) {
             UserProfileParcel userProfileParcel = userProfileParcels[0];
             if (userProfileParcel.getPostsCount() != null && userProfileParcel.getPostsCount() > 0) {
-                String username = userProfileParcel.getCurUsername();
+                String username = userProfileParcel.getCurrentUsername();
                 DBUserPost userPost = new DBUserPost();
                 userPost.setUsername(username);
                 DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression<DBUserPost>()
@@ -530,9 +536,9 @@ public class DynamoDBHelper {
             // setting up new user notification
             userNotification.setUsername(bundle.getString("RECEIVER_USERNAME")); // who the notification is going to
             if (userProfileParcel != null) {
-                userNotification.setSenderUsername(userProfileParcel.getCurUsername());
+                userNotification.setSenderUsername(userProfileParcel.getCurrentUsername());
                 if (notificationType == NotificationEnum.DIRECT_FISTBUMP) {
-                    senderProfile = loadDBUserProfile(userProfileParcel.getCurUsername());
+                    senderProfile = loadDBUserProfile(userProfileParcel.getCurrentUsername());
                     userNotification.setFacebookIdSender(senderProfile.getFacebookId());
                 } else {
                     userNotification.setFacebookIdSender(userProfileParcel.getFacebookID());

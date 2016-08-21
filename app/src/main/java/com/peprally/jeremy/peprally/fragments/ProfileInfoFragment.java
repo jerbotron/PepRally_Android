@@ -3,7 +3,6 @@ package com.peprally.jeremy.peprally.fragments;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.text.Html;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -15,7 +14,7 @@ import android.widget.TextView;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -76,7 +75,7 @@ public class ProfileInfoFragment extends Fragment {
 
         textViewFirstName.setText("");    // set to empty so I can check later if populated under varsity profile
 
-        if (userProfileParcel.getIsVarsityPlayer()) {
+        if (userProfileParcel.isVarsityPlayer()) {
             String nameText = userProfileParcel.getFirstname() + " "
                             + userProfileParcel.getLastname();
             switch (userProfileParcel.getTeam()) {

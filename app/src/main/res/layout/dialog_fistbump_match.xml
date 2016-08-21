@@ -35,14 +35,16 @@
             android:layout_weight="0.35"
             android:layout_height="100dp"
             android:contentDescription="@string/content_description_image_view"/>
-        <ImageButton
+        <ImageView
             android:id="@+id/id_dialog_button_fistbump_match"
             android:layout_width="0dp"
             android:layout_weight="0.3"
             android:scaleType="fitCenter"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
+            android:adjustViewBounds="true"
             android:src="@drawable/ic_fistbump_match"
-            android:background="@color/colorWhite" />
+            android:background="@color/colorWhite"
+            android:contentDescription="@string/content_description_image_button"/>
         <ImageView
             android:id="@+id/id_dialog_fistbumped_user_profile_right"
             android:src="@drawable/img_default_profile"

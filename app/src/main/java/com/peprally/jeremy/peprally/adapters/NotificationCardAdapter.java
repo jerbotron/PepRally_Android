@@ -1,6 +1,5 @@
 package com.peprally.jeremy.peprally.adapters;
 
-
 import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -23,7 +22,7 @@ import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.List;
 
@@ -77,7 +76,7 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
                                         3,
                                         true);
 
-        notificationCardHolder.timeStamp.setText(Helpers.getTimetampString(userNotification.getTimestampSeconds()));
+        notificationCardHolder.timeStamp.setText(Helpers.getTimetampString(userNotification.getTimestampSeconds(), true));
 
         String content = "";
         NotificationEnum notificationType = NotificationEnum.fromInt(userNotification.getNotificationType());
@@ -109,7 +108,8 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
             public void onClick(View view) {
                 switch (NotificationEnum.fromInt(userNotification.getNotificationType())) {
                     case DIRECT_FISTBUMP:
-                        AsyncHelpers.launchUserProfileActivity(callingContext, dynamoDBHelper, userNotification.getSenderUsername(), userNotification.getUsername());
+//                        ((Activity) callingContext).finish();
+                        AsyncHelpers.launchExistingUserProfileActivity(callingContext, userNotification.getSenderUsername(), userNotification.getUsername());
                         break;
                     case POST_COMMENT:
                     case POST_FISTBUMP:

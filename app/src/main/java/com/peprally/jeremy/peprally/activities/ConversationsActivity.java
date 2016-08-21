@@ -18,7 +18,7 @@ import com.peprally.jeremy.peprally.adapters.ConversationCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -71,7 +71,7 @@ public class ConversationsActivity extends AppCompatActivity {
         });
 
         // remove user new message alert
-        new RemoveUserNewMessageAlertAsyncTask().execute(userProfileParcel.getCurUsername());
+        new RemoveUserNewMessageAlertAsyncTask().execute(userProfileParcel.getCurrentUsername());
     }
 
     @Override
@@ -115,7 +115,7 @@ public class ConversationsActivity extends AppCompatActivity {
     }
 
     private void refreshAdapter() {
-        new FetchUserConversationsAsyncTask().execute(userProfileParcel.getCurUsername());
+        new FetchUserConversationsAsyncTask().execute(userProfileParcel.getCurrentUsername());
     }
 
     /***********************************************************************************************

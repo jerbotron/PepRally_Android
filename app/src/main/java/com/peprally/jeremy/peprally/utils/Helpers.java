@@ -34,10 +34,6 @@ import java.util.Random;
 
 public class Helpers {
 
-    // CONSTANTS
-    public final static Integer INTEGER_DEFAULT_COUNT = 0;
-    public final static Integer INTEGER_INVALID = -1;
-
     // UI Helpers
     public static boolean isKeyboardShown(View rootView) {
         // 128dp = 32dp * 4, minimum button height 32dp and generic 4 rows soft keyboard
@@ -120,25 +116,27 @@ public class Helpers {
         return df.format(c.getTime());
     }
 
-    public static String getTimetampString(Long timestampInSeconds) {
+    public static String getTimetampString(Long timestampInSeconds, boolean shortSuffix) {
         long tsLongNow = getTimestampSeconds();
         long timeInSeconds = tsLongNow - timestampInSeconds;
-        String timestampString;
+        String timestampString, suffix;
         if (timeInSeconds < 60) {
-            timestampString = String.valueOf(timeInSeconds) + "s";
+            suffix = (shortSuffix) ? "s" : " seconds ago";
+            timestampString = String.valueOf(timeInSeconds) + suffix;
         }
         else if (timeInSeconds < 60 * 60) {
-            long timeInMins = timeInSeconds / 60;
-            timestampString = String.valueOf(timeInMins) + "m";
+            suffix = (shortSuffix) ? "m" : " minutes ago";
+            timestampString = String.valueOf(timeInSeconds / 60) + suffix;
         }
         else if (timeInSeconds < 60 * 60 * 24) {
-            long timeInHrs = timeInSeconds/60/60;
-            timestampString = String.valueOf(timeInHrs) + "h";
+            suffix = (shortSuffix) ? "h" : " hours ago";
+            timestampString = String.valueOf(timeInSeconds/60/60) + suffix;
         }
         else {
-            long timeInDays = timeInSeconds/60/60/24;
-            timestampString = String.valueOf(timeInDays) + "d";
+            suffix = (shortSuffix) ? "d" : " days ago";
+            timestampString = String.valueOf(timeInSeconds/60/60/24) + suffix;
         }
+
         return timestampString;
     }
 

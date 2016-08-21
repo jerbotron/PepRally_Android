@@ -115,7 +115,7 @@ public class DBPlayerProfile {
         this.gender = gender;
     }
 
-    @DynamoDBAttribute(attributeName = "Username")
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "Username-index", attributeName = "Username")
     public String getUsername() {
         return username;
     }

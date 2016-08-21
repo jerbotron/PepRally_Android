@@ -2,11 +2,9 @@ package com.peprally.jeremy.peprally.activities;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
@@ -26,11 +24,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
-import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
-import com.facebook.login.widget.ProfilePictureView;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
@@ -41,7 +37,7 @@ import com.peprally.jeremy.peprally.fragments.TrendingFragment;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.List;
 
@@ -260,7 +256,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     public void launchBrowsePlayerActivity(String team) {
         Intent intent = new Intent(HomeActivity.this, FavoritePlayerActivity.class);
         intent.putExtra("CALLING_ACTIVITY", "HomeActivity");
-        intent.putExtra("CURRENT_USERNAME", userProfileParcel.getCurUsername());
+        intent.putExtra("CURRENT_USERNAME", userProfileParcel.getCurrentUsername());
         intent.putExtra("TEAM", team);
         startActivity(intent);
         overridePendingTransition(R.anim.right_in, R.anim.left_out);
@@ -367,7 +363,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private class UpdateUserNotificationAlertsAsyncTask extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... voids) {
-            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurUsername());
+            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurrentUsername());
             if (userProfile != null) {
                 userProfileParcel.setHasNewMessage(userProfile.getHasNewMessage());
                 userProfileParcel.setHasNewNotification(userProfile.getHasNewNotification());

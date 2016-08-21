@@ -27,12 +27,11 @@ import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.CommentHolder> {
@@ -100,7 +99,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     @Override
     public void onBindViewHolder(final CommentHolder commentHolder, int position) {
         final Comment currentComment = comments.get(position);
-        final String currentUsername = userProfileParcel.getCurUsername();
+        final String currentUsername = userProfileParcel.getCurrentUsername();
         final String commentUsername = currentComment.getCommentUsername();
         Set<String> fistbumpedUsers = currentComment.getFistbumpedUsers();
 
@@ -118,7 +117,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         commentHolder.commentText.setText(currentComment.getCommentText());
         commentHolder.fistbumpsCount.setText(String.valueOf(currentComment.getFistbumpsCount()));
 
-        commentHolder.timestamp.setText(Helpers.getTimetampString(currentComment.getTimestampSeconds()));
+        commentHolder.timestamp.setText(Helpers.getTimetampString(currentComment.getTimestampSeconds(), true));
 
         // profile picture onclick handler
         commentHolder.profileImage.setOnClickListener(new View.OnClickListener() {
@@ -249,7 +248,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.COMMENT_FISTBUMP.toInt());
         bundle.putString("RECEIVER_USERNAME", comment.getCommentUsername());
-        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());
+        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());
         bundle.putString("SENDER_FACEBOOK_ID", userProfileParcel.getFacebookID());
         return bundle;
     }
@@ -258,7 +257,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_COMMENT.toInt());
         bundle.putString("RECEIVER_USERNAME", mainPost.getUsername());
-        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());
+        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());
         bundle.putString("SENDER_FACEBOOK_ID", userProfileParcel.getFacebookID());
         bundle.putString("COMMENT", comment);
         return bundle;
