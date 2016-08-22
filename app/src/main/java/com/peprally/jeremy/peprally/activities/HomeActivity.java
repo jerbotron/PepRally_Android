@@ -199,6 +199,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             switch (IntentRequestEnum.fromInt(requestCode)) {
                 case NEW_POST_REQUEST:
                     trendingFragment.addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
+                    trendingFragment.toggleTrendingModeIsHottestView(false);
                     break;
                 case SETTINGS_REQUEST:
                     if (data.getBooleanExtra("DELETE_PROFILE", false)) {
