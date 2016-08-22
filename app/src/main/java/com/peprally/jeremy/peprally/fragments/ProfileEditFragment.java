@@ -11,7 +11,7 @@ import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 
 public class ProfileEditFragment extends Fragment {
@@ -39,7 +39,6 @@ public class ProfileEditFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Log.d(TAG, "edit fragment view created");
         View view = inflater.inflate(R.layout.fragment_profile_edit, container, false);
 
         textViewUsername = (TextView) view.findViewById(R.id.id_text_view_profile_edit_username);
@@ -74,14 +73,12 @@ public class ProfileEditFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        Log.d(TAG, "edit fragment resumed");
         setupUserProfile();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        Log.d(TAG, "edit fragment paused");
         updateUserProfileBundleData();
     }
 

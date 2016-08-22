@@ -95,9 +95,7 @@
                         android:scaleY="0.9"
                         android:gravity="center"
                         android:text="@string/placeholder_post_fistbumps_count"
-                        android:drawablePadding="4dp"
-                        android:drawableStart="@drawable/ic_replies"
-                        android:drawableLeft="@drawable/ic_replies"/>
+                        android:drawablePadding="4dp" />
                 </LinearLayout>
             </LinearLayout>
             <TextView

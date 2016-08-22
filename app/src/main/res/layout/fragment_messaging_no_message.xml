@@ -25,5 +25,6 @@
         android:layout_margin="@dimen/activity_horizontal_margin"
         android:paddingBottom="80dp"
         android:src="@drawable/img_default_profile"
+        android:clickable="true"
         android:contentDescription="@string/content_description_image_view"/>
 </LinearLayout>

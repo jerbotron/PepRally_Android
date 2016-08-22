@@ -2,21 +2,18 @@ package com.peprally.jeremy.peprally.activities;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,11 +23,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
-import com.facebook.AccessToken;
 import com.facebook.FacebookSdk;
 import com.facebook.Profile;
 import com.facebook.login.LoginManager;
-import com.facebook.login.widget.ProfilePictureView;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
@@ -41,12 +36,16 @@ import com.peprally.jeremy.peprally.fragments.TrendingFragment;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.List;
 
-public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+import static com.peprally.jeremy.peprally.utils.Helpers.getAPICompatVectorDrawable;
 
+public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+    static {
+        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
+    }
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
@@ -113,7 +112,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         View headerView = navigationView.getHeaderView(0);
         LinearLayout header = (LinearLayout) headerView.findViewById(R.id.id_sidebar_header);
         ImageView profilePicture = (ImageView) headerView.findViewById(R.id.profile_image_header);
-        Helpers.setFacebookProfileImage(getApplicationContext(),
+        Helpers.setFacebookProfileImage(HomeActivity.this,
                 profilePicture,
                 fbProfile.getId(),
                 3,
@@ -134,10 +133,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         menuChatItem = menu.findItem(R.id.id_item_chat);
         menuNotificationItem = menu.findItem(R.id.id_item_notifications);
         if (userProfileParcel != null && userProfileParcel.hasNewMessage()) {
-            menuChatItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_chat_notify));
+            menuChatItem.setIcon(getAPICompatVectorDrawable(HomeActivity.this, R.drawable.ic_chat_bubble_notify));
         }
         if (userProfileParcel != null && userProfileParcel.hasNewNotification()) {
-            menuNotificationItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_notifications_notify));
+            menuNotificationItem.setIcon(getAPICompatVectorDrawable(HomeActivity.this, R.drawable.ic_notifications_notify));
         }
         return true;
     }
@@ -260,7 +259,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     public void launchBrowsePlayerActivity(String team) {
         Intent intent = new Intent(HomeActivity.this, FavoritePlayerActivity.class);
         intent.putExtra("CALLING_ACTIVITY", "HomeActivity");
-        intent.putExtra("CURRENT_USERNAME", userProfileParcel.getCurUsername());
+        intent.putExtra("CURRENT_USERNAME", userProfileParcel.getCurrentUsername());
         intent.putExtra("TEAM", team);
         startActivity(intent);
         overridePendingTransition(R.anim.right_in, R.anim.left_out);
@@ -312,14 +311,14 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private void updateMenuItemsNotificationAlerts(boolean chatAlert, boolean notificationAlert) {
         if (menuChatItem != null && menuNotificationItem != null) {
             if (chatAlert)
-                menuChatItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_chat_notify));
+                menuChatItem.setIcon(getAPICompatVectorDrawable(HomeActivity.this, R.drawable.ic_chat_bubble_notify));
             else
-                menuChatItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_chat));
+                menuChatItem.setIcon(getAPICompatVectorDrawable(HomeActivity.this, R.drawable.ic_chat_bubble));
 
             if (notificationAlert)
-                menuNotificationItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_notifications_notify));
+                menuNotificationItem.setIcon(getAPICompatVectorDrawable(HomeActivity.this, R.drawable.ic_notifications_notify));
             else
-                menuNotificationItem.setIcon(ContextCompat.getDrawable(getApplicationContext(), R.drawable.ic_notifications));
+                menuNotificationItem.setIcon(getAPICompatVectorDrawable(HomeActivity.this, R.drawable.ic_notifications));
         }
     }
 
@@ -338,19 +337,13 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
                     .withConsistentRead(false);
 
             List<DBUserProfile> results = dynamoDBHelper.getMapper().query(DBUserProfile.class, queryExpression);
-            if (results == null || results.size() == 0) {
-                Log.d(TAG, "CognitoID not found: current user does not exist in database.");
-            }
-            else{
-                if (results.size() == 1) {
-                    userProfile = results.get(0);
-                    if (userProfile.getIsVarsityPlayer()) {
-                        playerProfile = dynamoDBHelper.loadDBPlayerProfile(userProfile.getTeam(), userProfile.getPlayerIndex());
-                    }
-                    userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
-                    return true;
+            if (results != null && results.size() == 1) {
+                userProfile = results.get(0);
+                if (userProfile.getIsVarsityPlayer()) {
+                    playerProfile = dynamoDBHelper.loadDBPlayerProfile(userProfile.getTeam(), userProfile.getPlayerIndex());
                 }
-                Log.d(TAG, "Query result should have only returned single user!");
+                userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
+                return true;
             }
             return false;
         }
@@ -367,7 +360,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private class UpdateUserNotificationAlertsAsyncTask extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... voids) {
-            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurUsername());
+            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurrentUsername());
             if (userProfile != null) {
                 userProfileParcel.setHasNewMessage(userProfile.getHasNewMessage());
                 userProfileParcel.setHasNewNotification(userProfile.getHasNewNotification());

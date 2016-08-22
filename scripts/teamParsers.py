@@ -21,26 +21,26 @@ teamNames = {
 }
 
 teamSizes = {
-"baseball": 34,
+"baseball": 27,
 "mbball": 14,
-"football": 98,
+"football": 120,
 "mgolf": 8,
 "mswim": 32,
-"mten": 11,
+"mten": 12,
 "xc_tf": 101,
-"wbball": 15,
-"wgolf": 9,
+"wbball": 14,
+"wgolf": 7,
 "wrow": 56,
-"wsoc": 26,
+"wsoc": 24,
 "softball": 19,
-"wswim": 28,
+"wswim": 27,
 "wten": 7,
-"wvball": 16    
+"wvball": 17    
 }
 
 printRoster = True
 
-def parseTeamData(table, team, data, addToDb=True):
+def parseTeamData(table, team, data, addToDb):
     if team == "baseball":
         parse_baseball(table, team, data, addToDb)
     elif team == "mbball":
@@ -71,9 +71,8 @@ def parseTeamData(table, team, data, addToDb=True):
         parse_wten(table, team, data, addToDb)
     elif team == "wvball":
         parse_wvball(table, team, data, addToDb)
-    print "Done parsing all teams"
 
-def parse_wvball(table, team, data, addToDb=True):
+def parse_wvball(table, team, data, addToDb):
     item = {'Team': teamNames[team],
             'MF': 'F',
             'HasUserProfile': False}
@@ -120,7 +119,7 @@ def parse_wvball(table, team, data, addToDb=True):
                     'HasUserProfile': False}
     print "Team size = " + str(count)
 
-def parse_wten(table, team, data, addToDb=True):
+def parse_wten(table, team, data, addToDb):
     item = {'Team': teamNames[team],
             'MF': 'F',
             'HasUserProfile': False}
@@ -141,7 +140,7 @@ def parse_wten(table, team, data, addToDb=True):
             h = line.find("roster_dgrd_height")
             e = line.find("</td>", h)
             height = line[h + len("roster_dgrd_height") + 8:e - 7]
-            item['Height'] = height
+            if height: item['Height'] = height
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
@@ -158,7 +157,7 @@ def parse_wten(table, team, data, addToDb=True):
                     'HasUserProfile': False}
     print "Team size = " + str(count)
 
-def parse_wswim(table, team, data, addToDb=True):
+def parse_wswim(table, team, data, addToDb):
     item = {'Team': teamNames[team],
             'MF': 'F',
             'HasUserProfile': False}
@@ -200,7 +199,7 @@ def parse_wswim(table, team, data, addToDb=True):
                     'HasUserProfile': False}
     print "Team size = " + str(count)
 
-def parse_softball(table, team, data, addToDb=True):
+def parse_softball(table, team, data, addToDb):
     item = {'Team': teamNames[team],
             'MF': 'F',
             'HasUserProfile': False}
@@ -251,7 +250,7 @@ def parse_softball(table, team, data, addToDb=True):
                     'HasUserProfile': False}
     print "Team size = " + str(count)
 
-def parse_wsoc(table, team, data, addToDb=True):
+def parse_wsoc(table, team, data, addToDb):
     item = {'Team': teamNames[team],
             'MF': 'F',
             'HasUserProfile': False}
@@ -301,7 +300,7 @@ def parse_wsoc(table, team, data, addToDb=True):
                     'HasUserProfile': False}
     print "Team size = " + str(count)
 
-def parse_wrow(table, team, data, addToDb=True):
+def parse_wrow(table, team, data, addToDb):
     item = {'Team': teamNames[team],
             'MF': 'F',
             'HasUserProfile': False}
@@ -346,7 +345,7 @@ def parse_wrow(table, team, data, addToDb=True):
                     'HasUserProfile': False}
     print "Team size = " + str(count)
 
-def parse_wgolf(table, team, data, addToDb=True):
+def parse_wgolf(table, team, data, addToDb):
     item = {'Team': teamNames[team],
             'MF': 'F',
             'HasUserProfile': False}
@@ -383,7 +382,7 @@ def parse_wgolf(table, team, data, addToDb=True):
                     'HasUserProfile': False}
     print "Team size = " + str(count)
 
-def parse_wbball(table, team, data, addToDb=True):
+def parse_wbball(table, team, data, addToDb):
     item = {'Team': teamNames[team],
             'MF': 'F',
             'HasUserProfile': False}
@@ -392,7 +391,10 @@ def parse_wbball(table, team, data, addToDb=True):
         if "roster_dgrd_no" in line:
             n = line.find("roster_dgrd_no")
             e = line.find(" ", n)
-            number = int(line[n + len("roster_dgrd_no") + 2:e])
+            try:
+                number = int(line[n + len("roster_dgrd_no") + 2:e])
+            except ValueError:
+                number = -1
             item['Number'] = number
             item['Index'] = count + teamSizes['mbball']
             count += 1
@@ -433,7 +435,7 @@ def parse_wbball(table, team, data, addToDb=True):
                     'HasUserProfile': False}
     print "Team size = " + str(count)
 
-def parse_xc_tf(table, team, data, addToDb=True):
+def parse_xc_tf(table, team, data, addToDb):
     item = {'Team': teamNames[team],
             'MF': 'M',
             'HasUserProfile': False}
@@ -477,7 +479,7 @@ def parse_xc_tf(table, team, data, addToDb=True):
                 item['MF'] = 'F'
     print "Team size = " + str(count)
 
-def parse_mten(table, team, data, addToDb=True):
+def parse_mten(table, team, data, addToDb):
     item = {'Team': teamNames[team],
             'MF': 'M',
             'HasUserProfile': False}
@@ -498,7 +500,7 @@ def parse_mten(table, team, data, addToDb=True):
             h = line.find("roster_dgrd_height")
             e = line.find("</td>", h)
             height = line[h + len("roster_dgrd_height") + 8:e - 7]
-            item['Height'] = height
+            if height: item['Height'] = height
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
@@ -515,7 +517,7 @@ def parse_mten(table, team, data, addToDb=True):
                     'HasUserProfile': False}
     print "Team size = " + str(count)
 
-def parse_mswim(table, team, data, addToDb=True):
+def parse_mswim(table, team, data, addToDb):
     item = {'Team': teamNames[team],
             'MF': 'M',
             'HasUserProfile': False}
@@ -557,7 +559,7 @@ def parse_mswim(table, team, data, addToDb=True):
                     'HasUserProfile': False}
     print "Team size = " + str(count)
 
-def parse_mgolf(table, team, data, addToDb=True):
+def parse_mgolf(table, team, data, addToDb):
     item = {'Team': teamNames[team],
             'MF': 'M',
             'HasUserProfile': False}
@@ -598,7 +600,7 @@ def parse_mgolf(table, team, data, addToDb=True):
                     'HasUserProfile': False}
     print "Team size = " + str(count)
 
-def parse_football(table, team, data, addToDb=True):
+def parse_football(table, team, data, addToDb):
     item = {'Team': teamNames[team],
             'MF': 'M',
             'HasUserProfile': False}
@@ -656,7 +658,7 @@ def parse_football(table, team, data, addToDb=True):
                     'HasUserProfile': False}
     print "Team size = " + str(count)
 
-def parse_mbball(table, team, data, addToDb=True):
+def parse_mbball(table, team, data, addToDb):
     item = {'Team': teamNames[team],
             'MF': 'M',
             'HasUserProfile': False}
@@ -710,7 +712,7 @@ def parse_mbball(table, team, data, addToDb=True):
                     'HasUserProfile': False}
     print "Team size = " + str(count)
 
-def parse_baseball(table, team, data, addToDb=True):
+def parse_baseball(table, team, data, addToDb):
     item = {'Team': teamNames[team],
             'MF': 'M',
             'HasUserProfile': False}

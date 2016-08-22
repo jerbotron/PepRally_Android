@@ -4,7 +4,6 @@ package com.peprally.jeremy.peprally.adapters;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,8 +16,8 @@ import com.peprally.jeremy.peprally.db_models.DBUserConversation;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.custom.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
+import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,7 +69,7 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
 
     @NonNull
     public View getView(int position, View messageView, @NonNull ViewGroup parent) {
-        ChatMessage chatMessage = getItem(position);
+        final ChatMessage chatMessage = getItem(position);
         if (chatMessage != null) {
             LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             if (chatMessage.getUsername().equals(currentUsername)) {
@@ -79,8 +78,15 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
             else {
                 messageView = inflater.inflate(R.layout.message_left, parent, false);
                 ImageView leftImageView = (ImageView) messageView.findViewById(R.id.id_image_view_message_left);
-                if (leftImageView != null)
+                if (leftImageView != null) {
                     Helpers.setFacebookProfileImage(callingContext, leftImageView, chatMessage.getFacebookID(), 3, true);
+                    leftImageView.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            AsyncHelpers.launchExistingUserProfileActivity(callingContext, chatMessage.getUsername(), currentUsername);
+                        }
+                    });
+                }
             }
             TextView textViewMessageText = (TextView) messageView.findViewById(R.id.id_text_view_message_content);
             textViewMessageText.setText(chatMessage.getMessageContent());

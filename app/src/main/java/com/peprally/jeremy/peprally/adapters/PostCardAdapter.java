@@ -24,7 +24,7 @@ import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,7 +92,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                                         3,
                                         true);
 
-        final String curUsername = userProfileParcel.getCurUsername();
+        final String curUsername = userProfileParcel.getCurrentUsername();
 
         Set<String> fistbumpedUsers = curPost.getFistbumpedUsers();
 
@@ -109,8 +109,10 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         final int fistbumpsCount = curPost.getFistbumpsCount();
         postHolder.postFistbumpsCount.setText(String.valueOf(fistbumpsCount));
         postHolder.postCommentsCount.setText(String.valueOf(curPost.getCommentsCount()));
+        postHolder.postCommentsCount.setCompoundDrawablesWithIntrinsicBounds(
+                Helpers.getAPICompatVectorDrawable(callingContext, R.drawable.ic_replies), null, null, null);
 
-        postHolder.timeStamp.setText(Helpers.getTimetampString(curPost.getTimestampSeconds()));
+        postHolder.timeStamp.setText(Helpers.getTimetampString(curPost.getTimestampSeconds(), true));
 
         // profile picture onclick handlers:
         postHolder.profileImage.setOnClickListener(new View.OnClickListener() {
@@ -166,16 +168,16 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                     curPost.removeFistbumpedUser(curUsername);
                     // update user fistbumps counts
                     // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
-                    if (!curPost.getUsername().equals(userProfileParcel.getCurUsername())) {
+                    if (!curPost.getUsername().equals(userProfileParcel.getCurrentUsername())) {
                         // update the received fistbumps count of the main post user
                         dbHelper.decrementUserReceivedFistbumpsCount(curPost.getUsername());
                         // update the sent fistbumps count of the current user
-                        dbHelper.decrementUserSentFistbumpsCount(userProfileParcel.getCurUsername());
+                        dbHelper.decrementUserSentFistbumpsCount(userProfileParcel.getCurrentUsername());
                         // remove notification
-                        dbHelper.deletePostFistbumpNotification(NotificationEnum.POST_FISTBUMP, curPost.getPostId(), userProfileParcel.getCurUsername());
+                        dbHelper.deletePostFistbumpNotification(NotificationEnum.POST_FISTBUMP, curPost.getPostId(), userProfileParcel.getCurrentUsername());
                     }
                     // remove current user from fistbumped users
-                    curPost.removeFistbumpedUser(userProfileParcel.getCurUsername());
+                    curPost.removeFistbumpedUser(userProfileParcel.getCurrentUsername());
                 }
                 // If user has not liked the post yet
                 else {
@@ -187,18 +189,18 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                     curPost.addFistbumpedUser(curUsername);
                     // update user fistbumps counts
                     // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
-                    if (!curPost.getUsername().equals(userProfileParcel.getCurUsername())) {
+                    if (!curPost.getUsername().equals(userProfileParcel.getCurrentUsername())) {
                         // update the received fistbumps count of the main post user
                         dbHelper.incrementUserReceivedFistbumpsCount(curPost.getUsername());
                         // update the sent fistbumps count of the current user
-                        dbHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurUsername());
+                        dbHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurrentUsername());
                         // make new notification
                         dbHelper.createNewNotification(makeNotificationPostFistbumpBundle(curPost), null);
                         // send push notification
                         httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestPostFistbumpBundle(curPost));
                     }
                     // add current user to fistbumped users
-                    curPost.addFistbumpedUser(userProfileParcel.getCurUsername());
+                    curPost.addFistbumpedUser(userProfileParcel.getCurrentUsername());
                 }
                 // update post fistbumps count
                 curPost.setFistbumpsCount(fistbumpsCount);
@@ -258,7 +260,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
         bundle.putString("RECEIVER_USERNAME", curPost.getUsername());
-        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurUsername());
+        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());
         bundle.putString("SENDER_FACEBOOK_ID", userProfileParcel.getFacebookID());
         return bundle;
     }

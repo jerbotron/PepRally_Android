@@ -7,10 +7,13 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Vibrator;
+import android.support.graphics.drawable.VectorDrawableCompat;
+import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.text.Spanned;
 import android.text.TextUtils;
@@ -33,10 +36,6 @@ import java.util.Locale;
 import java.util.Random;
 
 public class Helpers {
-
-    // CONSTANTS
-    public final static Integer INTEGER_DEFAULT_COUNT = 0;
-    public final static Integer INTEGER_INVALID = -1;
 
     // UI Helpers
     public static boolean isKeyboardShown(View rootView) {
@@ -65,11 +64,19 @@ public class Helpers {
         }
     }
 
-    public static Spanned getTextHtml(String htmlText) {
+    public static Spanned getAPICompatHtml(String htmlText) {
         if (android.os.Build.VERSION.SDK_INT >= 24) {
             return Html.fromHtml(htmlText, Html.FROM_HTML_MODE_LEGACY);
         } else {
             return Html.fromHtml(htmlText);
+        }
+    }
+
+    public static Drawable getAPICompatVectorDrawable(Context callingContext, int resource_id) {
+        if (android.os.Build.VERSION.SDK_INT >= 21) {
+            return ContextCompat.getDrawable(callingContext, resource_id);
+        } else {
+            return VectorDrawableCompat.create(callingContext.getResources(), resource_id, callingContext.getTheme());
         }
     }
 
@@ -97,7 +104,7 @@ public class Helpers {
         return "https://graph.facebook.com/" + facebookId + "/picture?type=" + type;
     }
 
-    public static String getFavPlayerText(String firstName, String lastName, int number, String team) {
+    public static String getFavPlayerString(String firstName, String lastName, int number, String team) {
         switch (team) {
             case "Golf":
             case "Rowing":
@@ -120,25 +127,27 @@ public class Helpers {
         return df.format(c.getTime());
     }
 
-    public static String getTimetampString(Long timestampInSeconds) {
+    public static String getTimetampString(Long timestampInSeconds, boolean shortSuffix) {
         long tsLongNow = getTimestampSeconds();
         long timeInSeconds = tsLongNow - timestampInSeconds;
-        String timestampString;
+        String timestampString, suffix;
         if (timeInSeconds < 60) {
-            timestampString = String.valueOf(timeInSeconds) + "s";
+            suffix = (shortSuffix) ? "s" : " seconds ago";
+            timestampString = String.valueOf(timeInSeconds) + suffix;
         }
         else if (timeInSeconds < 60 * 60) {
-            long timeInMins = timeInSeconds / 60;
-            timestampString = String.valueOf(timeInMins) + "m";
+            suffix = (shortSuffix) ? "m" : " minutes ago";
+            timestampString = String.valueOf(timeInSeconds / 60) + suffix;
         }
         else if (timeInSeconds < 60 * 60 * 24) {
-            long timeInHrs = timeInSeconds/60/60;
-            timestampString = String.valueOf(timeInHrs) + "h";
+            suffix = (shortSuffix) ? "h" : " hours ago";
+            timestampString = String.valueOf(timeInSeconds/60/60) + suffix;
         }
         else {
-            long timeInDays = timeInSeconds/60/60/24;
-            timestampString = String.valueOf(timeInDays) + "d";
+            suffix = (shortSuffix) ? "d" : " days ago";
+            timestampString = String.valueOf(timeInSeconds/60/60/24) + suffix;
         }
+
         return timestampString;
     }
 
@@ -210,9 +219,7 @@ public class Helpers {
         if (status == ConnectionResult.SUCCESS)
         {
             FirebaseInstanceId instanceId = FirebaseInstanceId.getInstance();
-            String token = instanceId.getToken();
-            Log.d("HELPERS: ", "FCM reg token = " + token);
-            return token;
+            return instanceId.getToken();
         }
         return null;
     }

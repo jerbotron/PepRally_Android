@@ -21,10 +21,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingCredentialsProvider> {
+import static com.peprally.jeremy.peprally.utils.Constants.COGNITO_REGION;
+import static com.peprally.jeremy.peprally.utils.Constants.IDENTITY_POOL_ID;
 
-    public final static String IDENTITY_POOL_ID = "us-east-1:62a77974-d33d-4131-8a1d-122db8e07dfa";
-    public final static Regions COGNITO_REGION = Regions.US_EAST_1;
+public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingCredentialsProvider> {
 
     private Context callingContext;
     private LoginActivity.AWSLoginTaskCallback loginTaskCallback;
@@ -38,9 +38,7 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingC
     }
 
     protected CognitoCachingCredentialsProvider doInBackground(Void... params) {
-
-        Log.d(TAG, "verifying credentials");
-
+//        Log.d(TAG, "verifying credentials");
         try {
             FacebookSdk.sdkInitialize(callingContext);
             AccessToken currentToken = AccessToken.getCurrentAccessToken();
@@ -73,10 +71,6 @@ public class AWSCredentialProvider extends AsyncTask<Void, Void, CognitoCachingC
         if (credentialsProvider == null) {
             new AWSCredentialProvider(callingContext, loginTaskCallback).execute();
         } else {
-            Log.d(TAG, "credentials verified");
-//            Log.d(TAG, "credentials: " + credentialsProvider.getCredentials().toString());
-//            Log.d(TAG, "identity pool id: " + credentialsProvider.getIdentityPoolId());
-//            Log.d(TAG, "identity provider: " + credentialsProvider.getIdentityProvider());
             CognitoSyncManager syncClient = new CognitoSyncManager(
                     callingContext,
                     Regions.US_EAST_1,

@@ -10,17 +10,14 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.MenuItem;
 
-import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.TeamsCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBSport;
-import com.peprally.jeremy.peprally.network.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.custom.Team;
+import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,7 +53,7 @@ public class FavoriteTeamActivity extends AppCompatActivity {
             recyclerView.setHasFixedSize(true);
             // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
             recyclerView.setAdapter(new EmptyAdapter());
-            recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+            recyclerView.setLayoutManager(new LinearLayoutManager(FavoriteTeamActivity.this));
         }
 
         new FetchSportsTableTask().execute();
@@ -66,7 +63,7 @@ public class FavoriteTeamActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (dataFetched) {
-            recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext()));
+            recyclerView.setLayoutManager(new LinearLayoutManager(FavoriteTeamActivity.this));
             initializeAdapter();
         }
     }
@@ -125,15 +122,8 @@ public class FavoriteTeamActivity extends AppCompatActivity {
     private class FetchSportsTableTask extends AsyncTask<Void, Void, PaginatedScanList<DBSport>> {
         @Override
         protected PaginatedScanList<DBSport> doInBackground(Void... params) {
-            CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                    getApplicationContext(),                  // Context
-                    AWSCredentialProvider.IDENTITY_POOL_ID,   // Identity Pool ID
-                    AWSCredentialProvider.COGNITO_REGION      // Region
-            );
-
-            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
-            return mapper.scan(DBSport.class, new DynamoDBScanExpression());
+            DynamoDBHelper dynamoDBHelper = new DynamoDBHelper(getApplicationContext());
+            return dynamoDBHelper.getMapper().scan(DBSport.class, new DynamoDBScanExpression());
         }
 
         @Override

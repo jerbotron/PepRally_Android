@@ -7,7 +7,7 @@ SENDER_ID = 508839522244
 FCM_URL = 'https://gcm-http.googleapis.com/gcm/send'
 
 @application.route('/')
-def index():
+def playerIndex():
     print "sanity check"
     return 'PepRally Push Notification Server'
 

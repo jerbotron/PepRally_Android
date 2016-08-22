@@ -45,16 +45,25 @@
                     android:layout_height="match_parent"
                     android:orientation="vertical"
                     android:gravity="top|center">
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:id="@+id/id_fistbumps"
-                        android:drawableEnd="@drawable/ic_fistbumps"
-                        android:drawableRight="@drawable/ic_fistbumps"
-                        android:drawablePadding="4dp"
-                        android:text="@string/profile_fist_bumps"
-                        android:gravity="center_vertical"
-                        android:textColor="@color/colorWhite"/>
+                        android:orientation="horizontal"
+                        android:gravity="center_horizontal">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:id="@+id/id_fistbumps"
+                            android:text="@string/profile_fist_bumps"
+                            android:textColor="@color/colorWhite"/>
+                        <ImageView
+                            android:layout_width="50dp"
+                            android:layout_height="match_parent"
+                            android:src="@drawable/ic_fistbumped"
+                            android:adjustViewBounds="true"
+                            android:scaleType="fitCenter"
+                            android:contentDescription="@string/content_description_image_view"/>
+                    </LinearLayout>
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -82,16 +91,23 @@
                             android:textColor="@color/colorWhite"/>
 
                     </LinearLayout>
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:id="@+id/id_profile_posts_count"
-                        android:paddingTop="4dp"
-                        android:paddingBottom="8dp"
-                        android:drawablePadding="4dp"
-                        android:gravity="center"
-                        android:text="@string/profile_posts"
-                        android:textColor="@color/colorWhite" />
+                        android:orientation="horizontal"
+                        android:gravity="center_horizontal"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="8dp">
+                        <TextView
+                            android:id="@+id/id_profile_posts_count"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:drawablePadding="10dp"
+                            android:text="@string/profile_posts"
+                            android:textColor="@color/colorWhite"
+                            android:clickable="true"/>
+                    </LinearLayout>
                     <LinearLayout
                         android:id="@+id/id_button_edit_profile_container"
                         android:layout_width="match_parent"
@@ -109,8 +125,6 @@
                             android:id="@+id/id_button_edit_profile_content"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:drawableRight="@drawable/ic_edit"
-                            android:drawableEnd="@drawable/ic_edit"
                             android:text="@string/placeholder_edit_profile"
                             android:textSize="12sp"
                             android:drawablePadding="8dp"

@@ -9,7 +9,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
@@ -20,7 +19,7 @@ import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.PostCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -135,7 +134,7 @@ public class ProfilePostsFragment extends Fragment {
             }
             else {
                 recyclerView.swapAdapter(new EmptyAdapter(), true);
-                if (userProfileParcel.getIsSelfProfile()) {
+                if (userProfileParcel.isSelfProfile()) {
                     noPostsText.setText(getResources().getString(R.string.no_posts_message));
                 }
                 else {

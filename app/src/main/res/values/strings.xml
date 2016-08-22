@@ -27,7 +27,7 @@
     <string-array name="schools_array">
         <item>@string/school_name_prompt_text</item>
         <item>@string/school_name_ut_austin</item>
-        <item>@string/school_name_texas_state</item>
+        <!--<item>@string/school_name_texas_state</item>-->
     </string-array>
 
 

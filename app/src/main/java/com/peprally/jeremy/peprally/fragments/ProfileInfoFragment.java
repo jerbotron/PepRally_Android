@@ -3,8 +3,6 @@ package com.peprally.jeremy.peprally.fragments;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.text.Html;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,7 +13,7 @@ import android.widget.TextView;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,14 +43,12 @@ public class ProfileInfoFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Log.d(TAG, "profile view fragment created");
         return inflater.inflate(R.layout.fragment_profile_info, container, false);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        Log.d(TAG, "profile info fragment resumed");
         // get latest copy of userProfileParcel from ProfileActivity
         userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
         refresh();
@@ -76,7 +72,7 @@ public class ProfileInfoFragment extends Fragment {
 
         textViewFirstName.setText("");    // set to empty so I can check later if populated under varsity profile
 
-        if (userProfileParcel.getIsVarsityPlayer()) {
+        if (userProfileParcel.isVarsityPlayer()) {
             String nameText = userProfileParcel.getFirstname() + " "
                             + userProfileParcel.getLastname();
             switch (userProfileParcel.getTeam()) {
@@ -85,8 +81,10 @@ public class ProfileInfoFragment extends Fragment {
                 case "Basketball":
                 case "Football":
                 case "Baseball":
-                case "Softball":
-                    nameText = nameText + " #" + userProfileParcel.getNumber();
+                case "Softball": {
+                    if (userProfileParcel.getNumber() >= 0)
+                        nameText = nameText + " #" + userProfileParcel.getNumber();
+                }
             }
             textViewFirstName.setText(nameText);
 
@@ -137,28 +135,28 @@ public class ProfileInfoFragment extends Fragment {
                         break;
                 }
                 TextView tv_position = new TextView(getActivity());
-                tv_position.setText(Helpers.getTextHtml(text + "</b"));
+                tv_position.setText(Helpers.getAPICompatHtml(text + "</b"));
                 tv_position.setLayoutParams(tvparams);
                 playerInfoLayout.addView(tv_position);
             }
 
             if (userProfileParcel.getHeight() != null) {
                 TextView tv_height = new TextView(getActivity());
-                tv_height.setText(Helpers.getTextHtml("Height: <b>" + userProfileParcel.getHeight() + "</b>"));
+                tv_height.setText(Helpers.getAPICompatHtml("Height: <b>" + userProfileParcel.getHeight() + "</b>"));
                 tv_height.setLayoutParams(tvparams);
                 playerInfoLayout.addView(tv_height);
             }
 
             if (userProfileParcel.getWeight() != null) {
                 TextView tv_weight = new TextView(getActivity());
-                tv_weight.setText(Helpers.getTextHtml("Weight: <b>" + userProfileParcel.getWeight() + "</b>"));
+                tv_weight.setText(Helpers.getAPICompatHtml("Weight: <b>" + userProfileParcel.getWeight() + "</b>"));
                 tv_weight.setLayoutParams(tvparams);
                 playerInfoLayout.addView(tv_weight);
             }
 
             if (userProfileParcel.getYear() != null) {
                 TextView tv_year = new TextView(getActivity());
-                tv_year.setText(Helpers.getTextHtml("Year: <b>" + userProfileParcel.getYear() + "</b>"));
+                tv_year.setText(Helpers.getAPICompatHtml("Year: <b>" + userProfileParcel.getYear() + "</b>"));
                 tv_year.setLayoutParams(tvparams);
                 playerInfoLayout.addView(tv_year);
             }
@@ -166,12 +164,12 @@ public class ProfileInfoFragment extends Fragment {
             if (userProfileParcel.getHometown() != null && userProfileParcel.getHometown().contains("/")) {
                 String[] sa = userProfileParcel.getHometown().split("/");
                 TextView tv_hometown = new TextView(getActivity());
-                tv_hometown.setText(Helpers.getTextHtml("Hometown: <b>" + sa[0].substring(0, sa[0].length() - 1) + "</b>"));
+                tv_hometown.setText(Helpers.getAPICompatHtml("Hometown: <b>" + sa[0].substring(0, sa[0].length() - 1) + "</b>"));
                 tv_hometown.setLayoutParams(tvparams);
                 playerInfoLayout.addView(tv_hometown);
 
                 TextView tv_highschool = new TextView(getActivity());
-                tv_highschool.setText(Helpers.getTextHtml("High School: <b>" + sa[1].substring(1) + "</b>"));
+                tv_highschool.setText(Helpers.getAPICompatHtml("High School: <b>" + sa[1].substring(1) + "</b>"));
                 tv_highschool.setLayoutParams(tvparams);
                 playerInfoLayout.addView(tv_highschool);
             }

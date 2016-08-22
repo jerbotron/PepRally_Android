@@ -53,7 +53,7 @@ import com.peprally.jeremy.peprally.network.AWSCredentialProvider;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -116,6 +116,8 @@ public class LoginActivity extends AppCompatActivity {
         userSelectedSchool = SchoolsSupportedEnum.fromString(sharedPref.getString(getResources().getString(R.string.pref_key_school_network), ""));
 
         if (!Helpers.checkIfNetworkConnectionAvailable((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE))) {
+            setContentView(R.layout.activity_login);
+            setupSchoolSpinner();
             connectionSecured = false;
             LoginManager.getInstance().logOut();
             final LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
@@ -139,7 +141,7 @@ public class LoginActivity extends AppCompatActivity {
             connectionSecured = true;
             if (Helpers.checkGooglePlayServicesAvailable(this)) {
 
-                Log.d(TAG, "----- STARTING Pep Rally -----");
+//                Log.d(TAG, "----- STARTING Pep Rally -----");
 
                 callbackManager = CallbackManager.Factory.create();
 
@@ -240,7 +242,6 @@ public class LoginActivity extends AppCompatActivity {
                 new GraphRequest.GraphJSONObjectCallback() {
                     @Override
                     public void onCompleted(JSONObject object, GraphResponse response) {
-                        Log.d(TAG, response.toString());
                         String id = getFacebookDataSafely(response, "id");
                         String email = getFacebookDataSafely(response, "email");
                         String firstName = getFacebookDataSafely(response, "first_name");
@@ -493,8 +494,9 @@ public class LoginActivity extends AppCompatActivity {
                 showNewUsernameDialog();
             }
             else {
+                String userSchoolName = userProfile.getSchoolName();
                 // make sure user is logging into their selected school network
-                if (!userProfile.getSchoolName().equals(userSelectedSchool.toString())) {
+                if (!userSchoolName.equals(userSelectedSchool.toString()) && !userSchoolName.equals(SchoolsSupportedEnum.PROMPT_TEXT.toString())) {
                     Toast.makeText(LoginActivity.this, "Please log into your selected school network! You may change your network in user settings after you log in.", Toast.LENGTH_LONG).show();
                     LoginManager.getInstance().logOut();
                     setupLoginScreen();
@@ -593,7 +595,6 @@ public class LoginActivity extends AppCompatActivity {
                     playerProfile.setHasUserProfile(true);
                     dynamoDBHelper.saveDBObject(userProfile);
                     dynamoDBHelper.saveDBObject(playerProfile);
-                    Log.d(TAG, "VARSITY PLAYER HIT");
                     return true;
                 }
             }

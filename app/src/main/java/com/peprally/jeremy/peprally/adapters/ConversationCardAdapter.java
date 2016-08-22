@@ -18,7 +18,7 @@ import com.peprally.jeremy.peprally.custom.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.custom.messaging.Conversation;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +69,7 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
         final Conversation conversation = userConversation.getConversation();
         Map<String, String> usernameFacebookIDMap = conversation.getUsernameFacebookIdMap();
         for (String username : usernameFacebookIDMap.keySet()) {
-            if (!username.equals(userProfileParcel.getCurUsername())) {
+            if (!username.equals(userProfileParcel.getCurrentUsername())) {
                 Helpers.setFacebookProfileImage(callingContext,
                         MessageCardHolder.userConversationImage,
                         usernameFacebookIDMap.get(username),
@@ -92,7 +92,7 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
             MessageCardHolder.lastMessageContent.setHeight(0);
         }
 
-        MessageCardHolder.timeStamp.setText(Helpers.getTimetampString(userConversation.getTimeStampLatest()));
+        MessageCardHolder.timeStamp.setText(Helpers.getTimetampString(userConversation.getTimeStampLatest(), true));
 
         // conversation onclick handler
         MessageCardHolder.clickableContainer.setOnClickListener(new View.OnClickListener() {
@@ -100,7 +100,7 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
             public void onClick(View view) {
                 Intent intent = new Intent(callingContext, MessagingActivity.class);
                 intent.putExtra("CONVERSATION", conversation);
-                intent.putExtra("CURRENT_USERNAME", userProfileParcel.getCurUsername());
+                intent.putExtra("CURRENT_USERNAME", userProfileParcel.getCurrentUsername());
                 intent.putExtra("CURRENT_USER_FACEBOOK_ID", userProfileParcel.getFacebookID());
                 callingContext.startActivity(intent);
                 ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);

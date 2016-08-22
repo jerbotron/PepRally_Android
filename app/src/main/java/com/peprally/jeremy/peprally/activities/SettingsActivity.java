@@ -19,7 +19,7 @@ import android.widget.Toast;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.utils.UserProfileParcel;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 public class SettingsActivity extends AppCompatPreferenceActivity {
 
@@ -55,7 +55,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             if (preference instanceof EditTextPreference) {
                 if (preference.getKey().equals("pref_key_my_account_email")) {
                     if (Helpers.isValidEmail(stringValue)) {
-                        dynamoDBHelper.updateUserEmailPreferences(userProfileParcel.getCurUsername(), stringValue);
+                        dynamoDBHelper.updateUserEmailPreferences(userProfileParcel.getCurrentUsername(), stringValue);
                         preference.setSummary(stringValue);
                     } else if (Helpers.isValidEmail(userProfileParcel.getEmail())) {
                         preference.setSummary(userProfileParcel.getEmail());
@@ -175,7 +175,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             Preference notificationPref = findPreference("pref_key_my_account_notifications");
 
             namePref.setSummary(userProfileParcel.getFirstname());
-            usernamePref.setSummary(userProfileParcel.getCurUsername());
+            usernamePref.setSummary(userProfileParcel.getCurrentUsername());
             schoolPref.setSummary(sharedPref.getString("pref_key_school_network", ""));
             dateJoinedPref.setSummary(userProfileParcel.getDateJoined().split("\\s+")[0]);
             if (userProfileParcel.getEmail() != null && !userProfileParcel.getEmail().isEmpty())
@@ -305,7 +305,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         public void onPause() {
             super.onPause();
             dynamoDBHelper.updateUserNotificationPreferences(
-                    userProfileParcel.getCurUsername(),
+                    userProfileParcel.getCurrentUsername(),
                     notifyDirectFistbumpPref.isChecked(),
                     notifyPostFistbumpPref.isChecked(),
                     notifyCommentFistbumpPref.isChecked(),

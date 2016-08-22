@@ -1,18 +1,20 @@
-package com.peprally.jeremy.peprally.utils;
+package com.peprally.jeremy.peprally.custom;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
-import com.peprally.jeremy.peprally.custom.Comment;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 
+import static com.peprally.jeremy.peprally.utils.Constants.INTEGER_DEFAULT_COUNT;
+import static com.peprally.jeremy.peprally.utils.Constants.INTEGER_INVALID;
+
 public class UserProfileParcel implements Parcelable {
     // Activity Data
     private ActivityEnum currentActivity;
-    private String curUsername;
+    private String currentUsername;
 
     // General User Data
     private String firstname;
@@ -39,7 +41,7 @@ public class UserProfileParcel implements Parcelable {
 
     // Varsity-specific User Data
     private String team;
-    private Integer index;
+    private Integer playerIndex;
     private Integer number;
     private String year;
     private String height;
@@ -54,7 +56,7 @@ public class UserProfileParcel implements Parcelable {
                              DBUserProfile userProfile,
                              DBPlayerProfile playerProfile) {
         this.currentActivity = currentActivity;
-        this.curUsername = userProfile.getUsername();
+        this.currentUsername = userProfile.getUsername();
         this.firstname = userProfile.getFirstname();
         this.lastname = userProfile.getLastname();
         this.profileUsername = userProfile.getUsername();
@@ -79,7 +81,7 @@ public class UserProfileParcel implements Parcelable {
 
         if (this.isVarsityPlayer && playerProfile != null) {
             this.team = playerProfile.getTeam();
-            this.index = playerProfile.getIndex();
+            this.playerIndex = playerProfile.getIndex();
             this.number = playerProfile.getNumber();
             this.height = playerProfile.getHeight();
             this.weight = playerProfile.getWeight();
@@ -89,15 +91,15 @@ public class UserProfileParcel implements Parcelable {
             this.hasUserProfile = true;
         }
         else {
-            this.index = Helpers.INTEGER_INVALID;
-            this.number = Helpers.INTEGER_INVALID;
+            this.playerIndex = INTEGER_INVALID;
+            this.number = INTEGER_INVALID;
             this.hasUserProfile = false;
         }
     }
 
     // HomeActivity Constructor, only used to initialize a few required members
     public UserProfileParcel(ActivityEnum currentActivity,
-                             String curUsername,
+                             String currentUsername,
                              String firstname,
                              String lastname,
                              String profileUsername,
@@ -105,7 +107,7 @@ public class UserProfileParcel implements Parcelable {
                              Boolean isSelfProfile)
     {
         this.currentActivity = currentActivity;
-        this.curUsername = curUsername;
+        this.currentUsername = currentUsername;
         this.firstname = firstname;
         this.lastname = lastname;
         this.profileUsername = profileUsername;
@@ -113,13 +115,13 @@ public class UserProfileParcel implements Parcelable {
         this.isSelfProfile = isSelfProfile;
 
         // Initialize un-used integer members to temporary invalid value
-        this.followersCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.followingCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.sentFistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.receivedFistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.postsCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.index = Helpers.INTEGER_INVALID;
-        this.number = Helpers.INTEGER_INVALID;
+        this.followersCount = INTEGER_DEFAULT_COUNT;
+        this.followingCount = INTEGER_DEFAULT_COUNT;
+        this.sentFistbumpsCount = INTEGER_DEFAULT_COUNT;
+        this.receivedFistbumpsCount = INTEGER_DEFAULT_COUNT;
+        this.postsCount = INTEGER_DEFAULT_COUNT;
+        this.playerIndex = INTEGER_INVALID;
+        this.number = INTEGER_INVALID;
         // Initialize un-used boolean members to temporary false value
         this.hasNewMessage = false;
         this.hasNewNotification = false;
@@ -129,27 +131,27 @@ public class UserProfileParcel implements Parcelable {
 
     // FavoritePlayerActivity Constructor, only used to initialize a few required members
     public UserProfileParcel(ActivityEnum currentActivity,
-                             String curUsername,
+                             String currentUsername,
                              String firstname,
                              String team,
-                             Integer index,
+                             Integer playerIndex,
                              Boolean isSelfProfile)
     {
         this.currentActivity = currentActivity;
-        this.curUsername = curUsername;
+        this.currentUsername = currentUsername;
         this.firstname = firstname;
         this.team = team;
-        this.index = index;
+        this.playerIndex = playerIndex;
         this.isSelfProfile = isSelfProfile;
         this.isVarsityPlayer = true;
 
         // Initialize integer values to invalid value
-        this.followersCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.followingCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.sentFistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.receivedFistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.postsCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.number = Helpers.INTEGER_INVALID;
+        this.followersCount = INTEGER_DEFAULT_COUNT;
+        this.followingCount = INTEGER_DEFAULT_COUNT;
+        this.sentFistbumpsCount = INTEGER_DEFAULT_COUNT;
+        this.receivedFistbumpsCount = INTEGER_DEFAULT_COUNT;
+        this.postsCount = INTEGER_DEFAULT_COUNT;
+        this.number = INTEGER_INVALID;
         // Initialize un-used boolean members to temporary false value
         this.hasNewMessage = false;
         this.hasNewNotification = false;
@@ -158,11 +160,11 @@ public class UserProfileParcel implements Parcelable {
 
     // Post Adapter Constructor, only used to initialize a few required members
     public UserProfileParcel(ActivityEnum currentActivity,
-                             String curUsername,
+                             String currentUsername,
                              DBUserPost userPost)
     {
         this.currentActivity = currentActivity;
-        this.curUsername = curUsername;
+        this.currentUsername = currentUsername;
         this.firstname = userPost.getFirstname();
         this.profileUsername = userPost.getUsername();
         this.facebookID = userPost.getFacebookId();
@@ -170,13 +172,13 @@ public class UserProfileParcel implements Parcelable {
         this.isSelfProfile = false;
 
         // Initialize integer values to invalid value
-        this.followersCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.followingCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.sentFistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.receivedFistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.postsCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.index = Helpers.INTEGER_INVALID;
-        this.number = Helpers.INTEGER_INVALID;
+        this.followersCount = INTEGER_DEFAULT_COUNT;
+        this.followingCount = INTEGER_DEFAULT_COUNT;
+        this.sentFistbumpsCount = INTEGER_DEFAULT_COUNT;
+        this.receivedFistbumpsCount = INTEGER_DEFAULT_COUNT;
+        this.postsCount = INTEGER_DEFAULT_COUNT;
+        this.playerIndex = INTEGER_INVALID;
+        this.number = INTEGER_INVALID;
         // Initialize un-used boolean members to temporary false value
         this.hasNewMessage = false;
         this.hasNewNotification = false;
@@ -186,24 +188,24 @@ public class UserProfileParcel implements Parcelable {
 
     // Comment Adapter Constructor, only used to initialize a few required members
     public UserProfileParcel(ActivityEnum currentActivity,
-                             String curUsername,
+                             String currentUsername,
                              Comment userComment)
     {
         this.currentActivity = currentActivity;
-        this.curUsername = curUsername;
+        this.currentUsername = currentUsername;
         this.firstname = userComment.getCommentFirstname();
         this.profileUsername = userComment.getCommentUsername();
         this.facebookID = userComment.getFacebookId();
         this.isSelfProfile = false;
 
         // Initialize integer values to invalid value
-        this.followersCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.followingCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.sentFistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.receivedFistbumpsCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.postsCount = Helpers.INTEGER_DEFAULT_COUNT;
-        this.index = Helpers.INTEGER_INVALID;
-        this.number = Helpers.INTEGER_INVALID;
+        this.followersCount = INTEGER_DEFAULT_COUNT;
+        this.followingCount = INTEGER_DEFAULT_COUNT;
+        this.sentFistbumpsCount = INTEGER_DEFAULT_COUNT;
+        this.receivedFistbumpsCount = INTEGER_DEFAULT_COUNT;
+        this.postsCount = INTEGER_DEFAULT_COUNT;
+        this.playerIndex = INTEGER_INVALID;
+        this.number = INTEGER_INVALID;
         // Initialize un-used boolean members to temporary false value
         this.hasNewMessage = false;
         this.hasNewNotification = false;
@@ -214,7 +216,7 @@ public class UserProfileParcel implements Parcelable {
     // Parcel Constructor
     private UserProfileParcel(Parcel in) {
         this.currentActivity = ActivityEnum.fromString(in.readString());
-        this.curUsername = in.readString();
+        this.currentUsername = in.readString();
         this.firstname = in.readString();
         this.lastname = in.readString();
         this.profileUsername = in.readString();
@@ -238,7 +240,7 @@ public class UserProfileParcel implements Parcelable {
         this.isSelfProfile = in.readByte() != 0;
 
         this.team = in.readString();
-        this.index = in.readInt();
+        this.playerIndex = in.readInt();
         this.number = in.readInt();
         this.year = in.readString();
         this.height = in.readString();
@@ -252,7 +254,7 @@ public class UserProfileParcel implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(currentActivity.getName());
-        dest.writeString(curUsername);
+        dest.writeString(currentUsername);
         dest.writeString(firstname);
         dest.writeString(lastname);
         dest.writeString(profileUsername);
@@ -276,7 +278,7 @@ public class UserProfileParcel implements Parcelable {
         dest.writeByte((byte) (isSelfProfile ? 1 : 0));
 
         dest.writeString(team);
-        dest.writeInt(index);
+        dest.writeInt(playerIndex);
         dest.writeInt(number);
         dest.writeString(year);
         dest.writeString(height);
@@ -308,8 +310,8 @@ public class UserProfileParcel implements Parcelable {
     public ActivityEnum getCurrentActivity() {
         return currentActivity;
     }
-    public String getCurUsername() {
-        return curUsername;
+    public String getCurrentUsername() {
+        return currentUsername;
     }
     public String getFirstname() {
         return firstname;
@@ -368,18 +370,18 @@ public class UserProfileParcel implements Parcelable {
     public Boolean hasNewNotification() {
         return hasNewNotification;
     }
-    public Boolean getIsVarsityPlayer() {
+    public Boolean isVarsityPlayer() {
         return isVarsityPlayer;
     }
-    public Boolean getIsSelfProfile() {
+    public Boolean isSelfProfile() {
         return isSelfProfile;
     }
     // Varsity-specific Get Methods
     public String getTeam() {
         return team;
     }
-    public Integer getIndex() {
-        return index;
+    public Integer getPlayerIndex() {
+        return playerIndex;
     }
     public Integer getNumber() {
         return number;
@@ -410,8 +412,8 @@ public class UserProfileParcel implements Parcelable {
     public void setCurrentActivity(ActivityEnum currentActivity) {
         this.currentActivity = currentActivity;
     }
-    public void setCurUsername(String curUsername) {
-        this.curUsername = curUsername;
+    public void setCurrentUsername(String currentUsername) {
+        this.currentUsername = currentUsername;
     }
     public void setFirstname(String firstname) {
         this.firstname = firstname;
@@ -480,8 +482,8 @@ public class UserProfileParcel implements Parcelable {
     public void setTeam(String team) {
         this.team = team;
     }
-    public void setIndex(Integer index) {
-        this.index = index;
+    public void setPlayerIndex(Integer playerIndex) {
+        this.playerIndex = playerIndex;
     }
     public void setNumber(Integer number) {
         this.number = number;

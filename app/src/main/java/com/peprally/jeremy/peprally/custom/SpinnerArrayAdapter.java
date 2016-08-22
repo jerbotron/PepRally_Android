@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.enums.SchoolsSupportedEnum;
+import com.peprally.jeremy.peprally.utils.Helpers;
 
 public class SpinnerArrayAdapter extends ArrayAdapter<String> {
 
@@ -66,5 +67,16 @@ public class SpinnerArrayAdapter extends ArrayAdapter<String> {
     @Override
     public View getDropDownView(int position, View convertView, @NonNull ViewGroup parent) {
         return getCustomDropDownView(position, convertView, parent);
+    }
+
+    @NonNull
+    @Override
+    public View getView(int position, View convertView, ViewGroup parent) {
+        View view = super.getView(position, convertView, parent);
+        TextView textViewSpinnerChoice = (TextView) view.findViewById(R.id.id_text_view_spinner_login);
+        textViewSpinnerChoice.setCompoundDrawablesWithIntrinsicBounds(
+                null, null, Helpers.getAPICompatVectorDrawable(callingContext, R.drawable.ic_arrow_drop_down), null
+        );
+        return view;
     }
 }
