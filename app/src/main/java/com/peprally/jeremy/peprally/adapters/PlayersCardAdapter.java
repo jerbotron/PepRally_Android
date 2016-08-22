@@ -14,6 +14,7 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.FavoritePlayerActivity;
 import com.peprally.jeremy.peprally.custom.ui.CircleImageTransformation;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
+import com.peprally.jeremy.peprally.utils.Constants;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.squareup.picasso.Picasso;
 
@@ -65,8 +66,7 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
     public void onBindViewHolder(final PlayerCardHolder playerCardHolder, int position) {
         final DBPlayerProfile curPlayer = roster.get(position);
         String extension = curPlayer.getTeam().replace(" ","+") + "/" + curPlayer.getImageURL();
-        String rootImageURL = "https://s3.amazonaws.com/rosterphotos/";
-        final String url = rootImageURL + extension;
+        final String url = Constants.S3_ROSTER_PHOTOS_2016_URL + extension;
         Picasso.with(callingContext)
                 .load(url)
                 .placeholder(R.drawable.img_default_ut_placeholder)
@@ -83,9 +83,14 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
                 playerCardHolder.playerName.setText(Helpers.getAPICompatHtml("<b>" + playerNameText + "</b>"));
                 break;
             default:
-                playerCardHolder.playerName.setText(Helpers.getAPICompatHtml("<b>#"
-                        + String.valueOf(curPlayer.getNumber()) + " "
-                        + playerNameText + "</b>"));
+                if (curPlayer.getNumber() >= 0) {
+                    playerCardHolder.playerName.setText(Helpers.getAPICompatHtml("<b>#"
+                            + String.valueOf(curPlayer.getNumber()) + " "
+                            + playerNameText + "</b>"));
+                } else {
+                    playerCardHolder.playerName.setText(Helpers.getAPICompatHtml("<b> "
+                            + playerNameText + "</b>"));
+                }
                 break;
         }
         String playerInfoText = "";

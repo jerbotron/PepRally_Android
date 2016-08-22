@@ -34,7 +34,7 @@ def createTable():
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1', endpoint_url="https://dynamodb.us-east-1.amazonaws.com")
 
 # table = createTable()
-table = dynamodb.Table("PlayerProfiles")
+table = dynamodb.Table("PlayerProfiles_UTAustin")
 
 rosters_urls = {
 "baseball": "http://texassports.com/roster.aspx?path=baseball",
@@ -56,23 +56,6 @@ rosters_urls = {
 
 for team, url in rosters_urls.iteritems():
     print "Team = " + team
-    data = urllib2.urlopen(url)
-    parseTeamData(table, team, data)
+    parseTeamData(table, team, urllib2.urlopen(url), True)
 
 print("Table status:", table.table_status)
-
-# parse_baseball(table, js, team)
-# parse_mbball(table, js, team)
-# parse_football(table, 'football', urllib2.urlopen(rosters_urls['football']))
-# parse_mgolf(table, js, team)
-# parse_mswim(table, js, team)
-# parse_mten(table, js, team)
-# parse_xc_tf(table, 'xc_tf', urllib2.urlopen(rosters_urls['xc_tf']))
-# parse_wbball(table, js, team)
-# parse_wgolf(table, js, team)
-# parse_wrow(table, 'wrow', urllib2.urlopen(rosters_urls['wrow']))
-# parse_wsoc(table, js, team)
-# parse_softball(table, js, team)
-# parse_wswim(table, js, team)
-# parse_wten(table, js, team)
-# parse_wvball(table, 'wvball', urllib2.urlopen(rosters_urls['wvball']))

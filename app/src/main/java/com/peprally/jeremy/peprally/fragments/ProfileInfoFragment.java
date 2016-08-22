@@ -81,8 +81,10 @@ public class ProfileInfoFragment extends Fragment {
                 case "Basketball":
                 case "Football":
                 case "Baseball":
-                case "Softball":
-                    nameText = nameText + " #" + userProfileParcel.getNumber();
+                case "Softball": {
+                    if (userProfileParcel.getNumber() >= 0)
+                        nameText = nameText + " #" + userProfileParcel.getNumber();
+                }
             }
             textViewFirstName.setText(nameText);
 

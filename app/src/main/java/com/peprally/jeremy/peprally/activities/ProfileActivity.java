@@ -41,6 +41,7 @@ import com.peprally.jeremy.peprally.fragments.ProfileInfoFragment;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
+import com.peprally.jeremy.peprally.utils.Constants;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.custom.ui.ProfileViewPager;
@@ -250,10 +251,9 @@ public class ProfileActivity extends AppCompatActivity {
             final String imageURL;
             // Profile Image Setup
             if (userProfileParcel.isVarsityPlayer()) {
-                String rootImageURL = "https://s3.amazonaws.com/rosterphotos/";
                 String team = userProfileParcel.getTeam();
                 String extension = team.replace(" ", "+") + "/" + userProfileParcel.getRosterImageURL();
-                imageURL = rootImageURL + extension;
+                imageURL = Constants.S3_ROSTER_PHOTOS_2016_URL + extension;
                 Picasso.with(ProfileActivity.this)
                         .load(imageURL)
                         .placeholder(R.drawable.img_default_ut_placeholder)

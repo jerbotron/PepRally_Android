@@ -2,7 +2,7 @@ package com.peprally.jeremy.peprally.db_models;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 
-@DynamoDBTable(tableName = "PlayerProfiles")
+@DynamoDBTable(tableName = "PlayerProfiles_UTAustin")
 public class DBPlayerProfile {
     private String team;
     private String firstName;
