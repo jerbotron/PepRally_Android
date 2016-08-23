@@ -14,7 +14,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.activities.NewCommentActivity;
+import com.peprally.jeremy.peprally.activities.PostCommentActivity;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
@@ -122,7 +122,6 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                     Intent intent = new Intent(callingContext, ProfileActivity.class);
                     // clicked on own profile
                     if (curPost.getUsername().equals(curUsername)) {
-                        userProfileParcel.setCurrentActivity(ActivityEnum.PROFILE);
                         userProfileParcel.setIsSelfProfile(true);
                         intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                     }
@@ -231,7 +230,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
     }
 
     /***********************************************************************************************
-     *********************************** GENERAL METHODS/INTERFACES ********************************
+     *********************************** GENERAL_METHODS ********************************
      **********************************************************************************************/
     private void adapterAddItemTop(DBUserPost newPost) {
         posts.add(0, newPost);
@@ -239,8 +238,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
     }
 
     private void launchNewCommentActivity(DBUserPost curPost) {
-        Intent intent = new Intent(callingContext, NewCommentActivity.class);
-        userProfileParcel.setCurrentActivity(ActivityEnum.NEWCOMMENT);
+        Intent intent = new Intent(callingContext, PostCommentActivity.class);
         intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
         intent.putExtra("MAIN_POST", curPost);
         callingContext.startActivity(intent);

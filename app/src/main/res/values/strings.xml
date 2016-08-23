@@ -121,6 +121,8 @@
     <string name="placeholder_comment_hint">Leave a comment&#8230;</string>
     <string name="placeholder_school">School</string>
     <string name="placeholder_fistbump_match_title">It\'s a fistbump!</string>
+    <string name="placeholder_menu_delete">Delete</string>
+    <string name="placeholder_menu_unselect">Unselect</string>
 
     <!-- Strings related to Settings/Preferences -->
 

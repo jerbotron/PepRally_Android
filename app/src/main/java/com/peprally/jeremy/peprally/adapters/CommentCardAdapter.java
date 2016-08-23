@@ -17,7 +17,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.activities.NewCommentActivity;
+import com.peprally.jeremy.peprally.activities.PostCommentActivity;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.custom.Comment;
@@ -126,7 +126,6 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                 Intent intent = new Intent(callingContext, ProfileActivity.class);
                 // clicked on own profile
                 if (commentUsername.equals(currentUsername)) {
-                    userProfileParcel.setCurrentActivity(ActivityEnum.PROFILE);
                     intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                 }
                 // clicked on another user's profile
@@ -221,7 +220,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     }
 
     /***********************************************************************************************
-     *********************************** GENERAL METHODS/INTERFACES ********************************
+     *********************************** GENERAL_METHODS ********************************
      **********************************************************************************************/
     private Bundle makeNotificationCommentFistbumpBundle(Comment comment) {
         Bundle bundle = new Bundle();
@@ -299,7 +298,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         dynamoDBHelper.addNewPostComment(newComment, new DynamoDBHelper.AsyncTaskCallback() {
             @Override
             public void onTaskDone() {
-                ((NewCommentActivity) callingContext).postAddCommentCleanup();
+                ((PostCommentActivity) callingContext).postAddCommentCleanup();
             }
         });
 
@@ -332,7 +331,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                     @Override
                     public void onTaskDone() {
                         adapterRemoveItemAt(position);
-                        ((NewCommentActivity) callingContext).postDeleteCommentCleanup();
+                        ((PostCommentActivity) callingContext).postDeleteCommentCleanup();
                         // dismiss comment delete loading dialog
                         toggleDeletingCommentLoadingDialog(false);
                     }

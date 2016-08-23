@@ -17,6 +17,7 @@ import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.ConversationCardAdapter;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
@@ -47,6 +48,7 @@ public class ConversationsActivity extends AppCompatActivity {
         dynamoDBHelper = new DynamoDBHelper(this);
 
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
+        userProfileParcel.setCurrentActivity(ActivityEnum.CONVERSATIONS);
 
         // setup home button on action bar
         ActionBar supportActionBar = getSupportActionBar();

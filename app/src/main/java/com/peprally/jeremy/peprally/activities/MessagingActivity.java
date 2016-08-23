@@ -186,7 +186,7 @@ public class MessagingActivity extends AppCompatActivity {
     }
 
     /***********************************************************************************************
-     *********************************** GENERAL METHODS/INTERFACES ********************************
+     *********************************** GENERAL_METHODS ********************************
      **********************************************************************************************/
     private void sendChatMessage(String message) {
         ChatMessage newMessage = new ChatMessage(conversation.getConversationID(),

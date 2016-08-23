@@ -83,7 +83,7 @@ public class ProfileEditFragment extends Fragment {
     }
 
     /***********************************************************************************************
-     *********************************** GENERAL METHODS/INTERFACES ********************************
+     *********************************** GENERAL_METHODS ********************************
      **********************************************************************************************/
     private void updateUserProfileBundleData() {
         String pepTalk = editTextPepTalk.getText().toString().trim();
@@ -110,7 +110,8 @@ public class ProfileEditFragment extends Fragment {
         // TODO: CALCULATE USER AGE FROM FB DATA
         textViewFirstName.setText(userProfileParcel.getFirstname()); // + ", " + Integer.toString(23));
         textViewUsername.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0);
-        textViewUsername.setText("@"+userProfileParcel.getProfileUsername());
+        String usernameText = "@"+userProfileParcel.getProfileUsername();
+        textViewUsername.setText(usernameText);
         textViewFavTeam.setText(userProfileParcel.getFavoriteTeam());
         textViewFavPlayer.setText(userProfileParcel.getFavoritePlayer());
         editTextPepTalk.setText(userProfileParcel.getPepTalk());
@@ -126,6 +127,9 @@ public class ProfileEditFragment extends Fragment {
     }
 
     public void setFavPlayer(String favoritePlayer) {
-        textViewFavPlayer.setText(favoritePlayer);
+        if (favoritePlayer == null)
+            textViewFavPlayer.setText("");
+        else
+            textViewFavPlayer.setText(favoritePlayer);
     }
 }

@@ -95,7 +95,7 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
     }
 
     /***********************************************************************************************
-     *********************************** GENERAL METHODS/INTERFACES ********************************
+     *********************************** GENERAL_METHODS ********************************
      **********************************************************************************************/
     public void notifyReceiverNewMessage(String receiverUsername) {
         new NotifyUserNewMessageAsyncTask().execute(receiverUsername);

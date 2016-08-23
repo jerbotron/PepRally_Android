@@ -82,6 +82,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         dynamoDBHelper = new DynamoDBHelper(this);
 
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
+        userProfileParcel.setCurrentActivity(ActivityEnum.HOME);
 
         if (userProfileParcel == null) {
             new FetchUserProfileParcelTask().execute(fbProfile);
@@ -184,8 +185,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     private void onNavBarHeaderClick() {
         finish();
         // Viewing self profile
-        Intent intent = new Intent(this, ProfileActivity.class);
-        userProfileParcel.setCurrentActivity(ActivityEnum.PROFILE);
+        Intent intent = new Intent(HomeActivity.this, ProfileActivity.class);
         userProfileParcel.setIsSelfProfile(true);
         intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
         startActivity(intent);
@@ -239,7 +239,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     }
 
     /***********************************************************************************************
-     *********************************** GENERAL METHODS/INTERFACES ********************************
+     *********************************** GENERAL_METHODS ********************************
      **********************************************************************************************/
 
     private void toggleDeletingPostLoadingDialog(boolean show) {
@@ -259,7 +259,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     public void launchBrowsePlayerActivity(String team) {
         Intent intent = new Intent(HomeActivity.this, FavoritePlayerActivity.class);
-        intent.putExtra("CALLING_ACTIVITY", "HomeActivity");
+        intent.putExtra("CALLING_ACTIVITY", "HOME_ACTIVITY");
         intent.putExtra("CURRENT_USERNAME", userProfileParcel.getCurrentUsername());
         intent.putExtra("TEAM", team);
         startActivity(intent);

@@ -17,6 +17,7 @@ import android.view.MenuItem;
 import android.widget.Toast;
 
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
@@ -95,6 +96,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
         // initialize member variables
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
+        userProfileParcel.setCurrentActivity(ActivityEnum.SETTINGS);
         dynamoDBHelper = new DynamoDBHelper(this);
 
         mainPreferencesFragment = new MainPreferencesFragment();

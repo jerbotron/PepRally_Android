@@ -8,7 +8,11 @@ public enum ActivityEnum {
     FAVORITEPLAYER("FavoritePlayer"),
     FAVORITETEAM("FavoriteTeam"),
     NEWPOST("NewPost"),
-    NEWCOMMENT("NewComment");
+    POSTCOMMENT("PostComment"),
+    MESSAGING("Messaging"),
+    CONVERSATIONS("Conversations"),
+    NOTIFICATIONS("Notifications"),
+    VIEWFISTBUMPS("ViewFistbumps");
 
     private final String name;
     ActivityEnum(String name) {
