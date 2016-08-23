@@ -116,7 +116,7 @@ public class NewPostActivity extends AppCompatActivity {
     }
 
     /***********************************************************************************************
-     *********************************** GENERAL METHODS/INTERFACES ********************************
+     *********************************** GENERAL_METHODS ********************************
      **********************************************************************************************/
     private final class NewPostHints {
         private String new_post_hint_1 = getResources().getString(R.string.default_post_question_1);

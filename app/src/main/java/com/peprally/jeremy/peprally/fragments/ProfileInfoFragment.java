@@ -1,8 +1,10 @@
 package com.peprally.jeremy.peprally.fragments;
 
+import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,10 +13,15 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.activities.FavoritePlayerActivity;
+import com.peprally.jeremy.peprally.activities.FavoriteTeamActivity;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
+import com.peprally.jeremy.peprally.enums.IntentRequestEnum;
+import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,7 +62,7 @@ public class ProfileInfoFragment extends Fragment {
     }
 
     /***********************************************************************************************
-     *********************************** GENERAL METHODS/INTERFACES ********************************
+     *********************************** GENERAL_METHODS ********************************
      **********************************************************************************************/
     private void refresh() {
         setupUserProfile(getView());
@@ -196,18 +203,32 @@ public class ProfileInfoFragment extends Fragment {
             parent_container.removeView(textViewUsername);
         }
         else {
-            textViewUsername.setText("@" + userProfileParcel.getProfileUsername());
+            String usernameText = "@" + userProfileParcel.getProfileUsername();
+            textViewUsername.setText(usernameText);
         }
 
         if (userProfileParcel.getFavoriteTeam() == null) {
             parent_container.removeView(view.findViewById(R.id.profile_layout_fav_team));
         } else {
             textViewFavTeam.setText(userProfileParcel.getFavoriteTeam());
+            textViewFavTeam.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    launchFavoritePlayerActivity();
+                }
+            });
         }
         if (userProfileParcel.getFavoritePlayer() == null) {
             parent_container.removeView(view.findViewById(R.id.profile_layout_fav_player));
         } else {
             textViewFavPlayer.setText(userProfileParcel.getFavoritePlayer());
+            textViewFavPlayer.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    String[] nameArray = parseFavoritePlayerTextReturnFirstnameLastnameArray(userProfileParcel.getFavoritePlayer());
+                    AsyncHelpers.launchVarsityPlayerProfileActivity(getContext(), nameArray[0], nameArray[1], userProfileParcel.getCurrentUsername());
+                }
+            });
         }
         if (userProfileParcel.getPepTalk() == null) {
             parent_container.removeView(view.findViewById(R.id.profile_layout_pep_talk));
@@ -218,6 +239,29 @@ public class ProfileInfoFragment extends Fragment {
             parent_container.removeView(view.findViewById(R.id.profile_layout_trash_talk));
         } else {
             textViewTrashTalk.setText(userProfileParcel.getTrashTalk());
+        }
+
+    }
+
+    /***********************************************************************************************
+     **************************************** GENERAL_METHODS **************************************
+     **********************************************************************************************/
+    private void launchFavoritePlayerActivity() {
+        Intent intent = new Intent(getContext(), FavoritePlayerActivity.class);
+        intent.putExtra("CALLING_ACTIVITY", "PROFILE_FRAGMENT");
+        intent.putExtra("CURRENT_USERNAME", userProfileParcel.getCurrentUsername());
+        intent.putExtra("TEAM", userProfileParcel.getFavoriteTeam());
+        startActivityForResult(intent, IntentRequestEnum.FAV_PLAYER_REQUEST.toInt());
+        getActivity().overridePendingTransition(R.anim.right_in, R.anim.left_out);
+    }
+
+    private String[] parseFavoritePlayerTextReturnFirstnameLastnameArray(String favoritePlayerText) {
+        String[] stringArray = favoritePlayerText.split(" ");
+
+        if (stringArray.length <= 2) {
+            return stringArray;
+        } else {
+            return Arrays.copyOfRange(stringArray, stringArray.length - 2, stringArray.length);
         }
 
     }

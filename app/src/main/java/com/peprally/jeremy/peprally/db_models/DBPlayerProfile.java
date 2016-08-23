@@ -43,7 +43,7 @@ public class DBPlayerProfile {
         this.number = number;
     }
 
-    @DynamoDBAttribute(attributeName = "FirstName")
+    @DynamoDBIndexHashKey(globalSecondaryIndexName = "FirstName-LastName-index", attributeName = "FirstName")
     public String getFirstName() {
         return firstName;
     }
@@ -51,7 +51,7 @@ public class DBPlayerProfile {
         this.firstName = firstName;
     }
 
-    @DynamoDBAttribute(attributeName = "LastName")
+    @DynamoDBIndexRangeKey(globalSecondaryIndexName = "FirstName-LastName-index", attributeName = "LastName")
     public String getLastName() {
         return lastName;
     }

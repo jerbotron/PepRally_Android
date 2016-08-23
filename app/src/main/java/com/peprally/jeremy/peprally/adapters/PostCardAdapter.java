@@ -14,7 +14,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.activities.NewCommentActivity;
+import com.peprally.jeremy.peprally.activities.PostCommentActivity;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
@@ -122,7 +122,6 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                     Intent intent = new Intent(callingContext, ProfileActivity.class);
                     // clicked on own profile
                     if (curPost.getUsername().equals(curUsername)) {
-                        userProfileParcel.setCurrentActivity(ActivityEnum.PROFILE);
                         userProfileParcel.setIsSelfProfile(true);
                         intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                     }
@@ -195,9 +194,9 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                         // update the sent fistbumps count of the current user
                         dbHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurrentUsername());
                         // make new notification
-                        dbHelper.createNewNotification(makeNotificationPostFistbumpBundle(curPost), null);
+                        dbHelper.createNewNotification(makeDBNotificationBundlePostFistbump(curPost));
                         // send push notification
-                        httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestPostFistbumpBundle(curPost));
+                        httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostFistbump(curPost));
                     }
                     // add current user to fistbumped users
                     curPost.addFistbumpedUser(userProfileParcel.getCurrentUsername());
@@ -231,7 +230,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
     }
 
     /***********************************************************************************************
-     *********************************** GENERAL METHODS/INTERFACES ********************************
+     *********************************** GENERAL_METHODS ********************************
      **********************************************************************************************/
     private void adapterAddItemTop(DBUserPost newPost) {
         posts.add(0, newPost);
@@ -239,15 +238,14 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
     }
 
     private void launchNewCommentActivity(DBUserPost curPost) {
-        Intent intent = new Intent(callingContext, NewCommentActivity.class);
-        userProfileParcel.setCurrentActivity(ActivityEnum.NEWCOMMENT);
+        Intent intent = new Intent(callingContext, PostCommentActivity.class);
         intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
         intent.putExtra("MAIN_POST", curPost);
         callingContext.startActivity(intent);
         ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
     }
 
-    private Bundle makeNotificationPostFistbumpBundle(DBUserPost curPost) {
+    private Bundle makeDBNotificationBundlePostFistbump(DBUserPost curPost) {
         Bundle bundle = new Bundle();
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
@@ -256,12 +254,11 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         return bundle;
     }
 
-    private Bundle makeHTTPPostRequestPostFistbumpBundle(DBUserPost curPost) {
+    private Bundle makePushNotificationBundlePostFistbump(DBUserPost curPost) {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
         bundle.putString("RECEIVER_USERNAME", curPost.getUsername());
         bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());
-        bundle.putString("SENDER_FACEBOOK_ID", userProfileParcel.getFacebookID());
         return bundle;
     }
 

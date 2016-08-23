@@ -186,7 +186,7 @@ public class MessagingActivity extends AppCompatActivity {
     }
 
     /***********************************************************************************************
-     *********************************** GENERAL METHODS/INTERFACES ********************************
+     *********************************** GENERAL_METHODS ********************************
      **********************************************************************************************/
     private void sendChatMessage(String message) {
         ChatMessage newMessage = new ChatMessage(conversation.getConversationID(),
@@ -283,7 +283,6 @@ public class MessagingActivity extends AppCompatActivity {
                     bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_MESSAGE.toInt());
                     bundle.putString("RECEIVER_USERNAME", receiverUsername);
                     bundle.putString("SENDER_USERNAME", currentUsername);
-                    bundle.putString("SENDER_FACEBOOK_ID", currentUserFacebookId);
                     httpRequestsHelper.makePushNotificationRequest(bundle);
 
                     // notify receiving user of new message alert next time they open the app

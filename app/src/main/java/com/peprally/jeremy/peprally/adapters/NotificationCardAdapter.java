@@ -14,7 +14,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.activities.NewCommentActivity;
+import com.peprally.jeremy.peprally.activities.PostCommentActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserNotification;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
@@ -47,15 +47,15 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
     static class NotificationCardHolder extends RecyclerView.ViewHolder {
         CardView cardView;
         LinearLayout clickableContainer;
-        ImageView userNotifyingImage;
+        ImageView profileImage;
         TextView content;
         TextView timeStamp;
 
         private NotificationCardHolder(View itemView) {
             super(itemView);
             cardView = (CardView) itemView.findViewById(R.id.id_card_view_notifications);
-            clickableContainer = (LinearLayout) itemView.findViewById(R.id.id_recycler_view_container_notification);
-            userNotifyingImage = (ImageView) itemView.findViewById(R.id.id_notification_card_profile_photo);
+            clickableContainer = (LinearLayout) itemView.findViewById(R.id.id_notification_card_container_clickable);
+            profileImage = (ImageView) itemView.findViewById(R.id.id_notification_card_profile_photo);
             content = (TextView) itemView.findViewById(R.id.id_notification_card_content);
             timeStamp = (TextView) itemView.findViewById(R.id.id_notification_card_time_stamp);
         }
@@ -71,7 +71,7 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
     public void onBindViewHolder(final NotificationCardHolder notificationCardHolder, int position) {
         final DBUserNotification userNotification = notifications.get(position);
         Helpers.setFacebookProfileImage(callingContext,
-                                        notificationCardHolder.userNotifyingImage,
+                                        notificationCardHolder.profileImage,
                                         userNotification.getFacebookIdSender(),
                                         3,
                                         true);
@@ -103,6 +103,16 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
 
         notificationCardHolder.content.setText(Helpers.getAPICompatHtml("<b>"+userNotification.getSenderUsername()+"</b> " + content));
 
+        // clickable handlers
+
+        notificationCardHolder.profileImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+//                ((Activity) callingContext).finish();
+                AsyncHelpers.launchExistingUserProfileActivity(callingContext, userNotification.getSenderUsername(), userNotification.getUsername());
+            }
+        });
+
         notificationCardHolder.clickableContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -128,19 +138,14 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
     }
 
     /***********************************************************************************************
-     *********************************** GENERAL METHODS/INTERFACES ********************************
+     *********************************** GENERAL_METHODS ********************************
      **********************************************************************************************/
     private void launchNewCommentActivity(DBUserPost curPost) {
-        Intent intent = new Intent(callingContext, NewCommentActivity.class);
-        userProfileParcel.setCurrentActivity(ActivityEnum.NEWCOMMENT);
+        Intent intent = new Intent(callingContext, PostCommentActivity.class);
         intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
         intent.putExtra("MAIN_POST", curPost);
         callingContext.startActivity(intent);
         ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
-    }
-
-    private void launchProfileActivity() {
-
     }
 
     /***********************************************************************************************

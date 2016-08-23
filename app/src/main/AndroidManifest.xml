@@ -54,7 +54,7 @@
             android:theme="@style/NewPostTheme"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".activities.NewCommentActivity"
+            android:name=".activities.PostCommentActivity"
             android:label="@string/activity_label_new_comment"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize" />

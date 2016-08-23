@@ -34,8 +34,8 @@ public class DBUserProfile {
     private int sentFistbumpsCount;
     private int receivedFistbumpsCount;
     private int postsCount;
-    private int notificationsCount;         //TODO: implement when I need to buffer notifications
     private int playerIndex;
+    private long lastLoggedInTimestamp;
     private boolean hasNewMessage;
     private boolean hasNewNotification;
     private boolean isNewUser;
@@ -273,10 +273,17 @@ public class DBUserProfile {
     public int getPlayerIndex() {
         return playerIndex;
     }
-    public void setPlayerIndex(int index) {
-        this.playerIndex = index;
+    public void setPlayerIndex(int playerIndex) {
+        this.playerIndex = playerIndex;
     }
 
+    @DynamoDBAttribute(attributeName = "LastLoggedInTimestamp")
+    public long getLastLoggedInTimestamp() {
+        return lastLoggedInTimestamp;
+    }
+    public void setLastLoggedInTimestamp(long lastLoggedInTimestamp) {
+        this.lastLoggedInTimestamp = lastLoggedInTimestamp;
+    }
 
     @DynamoDBAttribute(attributeName = "ConversationIds")
     public Set<String> getConversationIds() {

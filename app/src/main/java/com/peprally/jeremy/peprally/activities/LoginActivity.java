@@ -3,6 +3,9 @@ package com.peprally.jeremy.peprally.activities;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
@@ -15,6 +18,7 @@ import android.text.Editable;
 import android.text.InputFilter;
 import android.text.Spanned;
 import android.text.TextWatcher;
+import android.util.Base64;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
@@ -27,9 +31,13 @@ import android.util.Log;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
+import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
@@ -58,6 +66,8 @@ import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -141,8 +151,6 @@ public class LoginActivity extends AppCompatActivity {
             connectionSecured = true;
             if (Helpers.checkGooglePlayServicesAvailable(this)) {
 
-//                Log.d(TAG, "----- STARTING Pep Rally -----");
-
                 callbackManager = CallbackManager.Factory.create();
 
                 dynamoDBHelper = new DynamoDBHelper(this);
@@ -154,10 +162,7 @@ public class LoginActivity extends AppCompatActivity {
                 accessTokenTracker = new AccessTokenTracker() {
                     @Override
                     protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken newAccessToken) {
-                        // When a new facebook account is used to login, clear the shared preferences
-//                        SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(LoginActivity.this);
-//                        sharedPref.edit().clear().apply();
-//                        Log.d(TAG, "clearing shared prefs");
+//                        Log.d(TAG, "access token changed");
                     }
                 };
 
@@ -210,7 +215,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     /***********************************************************************************************
-     *********************************** GENERAL METHODS/INTERFACES ********************************
+     *********************************** GENERAL_METHODS ********************************
      **********************************************************************************************/
     public interface AWSLoginTaskCallback {
         void onTaskDone(CognitoCachingCredentialsProvider credentialsProvider);
@@ -418,12 +423,12 @@ public class LoginActivity extends AppCompatActivity {
                 playerProfile.setHasUserProfile(true);
                 playerProfile.setUsername(userProfile.getUsername());
                 new PushPlayerProfileChangesToDBTask().execute(playerProfile);
-                loginPeprally(true, new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile));
+                loginPeprally(new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile));
             }
         });
         dialogBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
-                loginPeprally(true, new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile));
+                loginPeprally(new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile));
             }
         });
         AlertDialog b = dialogBuilder.create();
@@ -442,7 +447,7 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private void loginPeprally(boolean isNewUser, UserProfileParcel userProfileParcel) {
+    private void loginPeprally(UserProfileParcel userProfileParcel) {
         finish();
         Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
         intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
@@ -476,12 +481,13 @@ public class LoginActivity extends AppCompatActivity {
                 // update FCM instance id if it is changed
                 if (userProfile.getFCMInstanceId() == null || !userProfile.getFCMInstanceId().equals(FCMInstanceId)) {
                     userProfile.setFCMInstanceId(FCMInstanceId);
-                    dynamoDBHelper.saveDBObject(userProfile);
                 }
                 // check if user is a varsity player
                 if (userProfile.getIsVarsityPlayer()) {
                     playerProfile = mapper.load(DBPlayerProfile.class, userProfile.getTeam(), userProfile.getPlayerIndex());
                 }
+                userProfile.setLastLoggedInTimestamp(Helpers.getTimestampSeconds());
+                dynamoDBHelper.saveDBObject(userProfile);
                 return false;
             }
             return true;
@@ -501,7 +507,7 @@ public class LoginActivity extends AppCompatActivity {
                     LoginManager.getInstance().logOut();
                     setupLoginScreen();
                 } else {
-                    loginPeprally(false, new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile));
+                    loginPeprally(new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile));
                 }
             }
         }
@@ -552,6 +558,7 @@ public class LoginActivity extends AppCompatActivity {
                 userProfile.setUsersDirectFistbumpSent(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setUsersDirectFistbumpReceived(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setDateJoined(Helpers.getTimestampString());
+                userProfile.setLastLoggedInTimestamp(Helpers.getTimestampSeconds());
                 dynamoDBHelper.saveDBObject(userProfile);
                 return userProfile;
             }
@@ -568,23 +575,24 @@ public class LoginActivity extends AppCompatActivity {
 
     @SuppressWarnings("unchecked")
     private class CheckIfNewUserIsVarsityPlayerDBTask extends AsyncTask<DBUserProfile, Void, Boolean> {
-        String username;
         DBUserProfile userProfile;
         DBPlayerProfile playerProfile;
         @Override
         protected Boolean doInBackground(DBUserProfile... params) {
             userProfile = params[0];
-            username = userProfile.getUsername();
-            String gender = "M";
-            if (userProfile.getGender().equals("female")) gender = "F";
 
             playerProfile = new DBPlayerProfile();
-            playerProfile.setGender(gender);
+            playerProfile.setFirstName(userProfile.getFirstname());
+            playerProfile.setLastName(userProfile.getLastname());
             DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
                     .withHashKeyValues(playerProfile)
+                    .withIndexName("FirstName-LastName-index")
+                    .withRangeKeyCondition("LastName", new Condition()
+                            .withComparisonOperator(ComparisonOperator.EQ)
+                            .withAttributeValueList(new AttributeValue().withS(userProfile.getLastname())))
                     .withConsistentRead(false);
 
-            List<DBPlayerProfile> results = dynamoDBHelper.getMapper().query(DBPlayerProfile.class, queryExpression);
+            PaginatedQueryList<DBPlayerProfile> results = dynamoDBHelper.getMapper().query(DBPlayerProfile.class, queryExpression);
             for (DBPlayerProfile profile : results) {
                 if (profile.getFirstName().equals(userProfile.getFirstname()) &&
                         profile.getLastName().equals(userProfile.getLastname())) {
@@ -607,7 +615,7 @@ public class LoginActivity extends AppCompatActivity {
                 launchVerifyVarsityPlayerDialog(userProfile, playerProfile);
             }
             else {
-                loginPeprally(true, new UserProfileParcel(ActivityEnum.HOME, userProfile, null));
+                loginPeprally(new UserProfileParcel(ActivityEnum.HOME, userProfile, null));
             }
         }
     }

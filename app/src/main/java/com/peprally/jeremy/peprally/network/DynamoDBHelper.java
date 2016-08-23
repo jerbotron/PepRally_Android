@@ -3,7 +3,6 @@ package com.peprally.jeremy.peprally.network;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
@@ -29,7 +28,9 @@ import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -160,18 +161,12 @@ public class DynamoDBHelper {
     }
 
     // Database create methods
-    public void addNewPostComment(Comment comment, AsyncTaskCallback taskCallback) {
-        new AddNewPostCommentAsyncTask(taskCallback).execute(comment);
+    public void addNewPostComment(Bundle bundle, AsyncTaskCallback taskCallback) {
+        new AddNewPostCommentAsyncTask(taskCallback).execute(bundle);
     }
 
-    public void createNewNotification(Bundle bundle, AsyncTaskCallbackWithReturnObject asyncTaskCallbackWithReturnObject) {
-        // if sending a direct fistbump notification, we need to query to find the facebook id of the sender
-        // and make the correct push notification call
-        if (NotificationEnum.fromInt(bundle.getInt("NOTIFICATION_TYPE")) == NotificationEnum.DIRECT_FISTBUMP ) {
-            new CreateNewDBUserNotificationAsyncTask(asyncTaskCallbackWithReturnObject).execute(bundle);
-        } else {
-            new CreateNewDBUserNotificationAsyncTask().execute(bundle);
-        }
+    public void createNewNotification(Bundle bundle) {
+        new CreateNewDBUserNotificationAsyncTask().execute(bundle);
     }
 
     public void createNewFeedback(Bundle bundle) {
@@ -401,7 +396,7 @@ public class DynamoDBHelper {
         }
     }
 
-    private class AddNewPostCommentAsyncTask extends AsyncTask<Comment, Void, Void> {
+    private class AddNewPostCommentAsyncTask extends AsyncTask<Bundle, Void, Void> {
 
         private AsyncTaskCallback taskCallback;
 
@@ -410,12 +405,28 @@ public class DynamoDBHelper {
         }
 
         @Override
-        protected Void doInBackground(Comment... comments) {
-            Comment newComment = comments[0];
-            DBUserPost parentPost = loadDBUserPost(newComment.getPostId());
-            if (parentPost != null) {
-                parentPost.addComment(newComment);
-                mapper.save(parentPost);
+        protected Void doInBackground(Bundle... bundles) {
+            Bundle bundle = bundles[0];
+
+            DBUserProfile commentUserProfile = loadDBUserProfile(bundle.getString("COMMENT_USERNAME"));
+            if (commentUserProfile != null) {
+                Comment newComment = new Comment(
+                        bundle.getString("POST_ID"),
+                        bundle.getString("COMMENT_ID"),
+                        bundle.getString("COMMENT_USERNAME"),
+                        commentUserProfile.getFirstname(),
+                        bundle.getString("POST_USERNAME"),
+                        commentUserProfile.getFacebookId(),
+                        bundle.getString("COMMENT_TEXT"),
+                        bundle.getLong("TIMESTAMP"),
+                        0,
+                        new HashSet<>(Collections.singletonList("_"))
+                );
+                DBUserPost parentPost = loadDBUserPost(newComment.getPostId());
+                if (parentPost != null) {
+                    parentPost.addComment(newComment);
+                    mapper.save(parentPost);
+                }
             }
             return null;
         }
@@ -512,76 +523,54 @@ public class DynamoDBHelper {
 
     // Notification Tasks
     private class CreateNewDBUserNotificationAsyncTask extends AsyncTask<Bundle, Void, Void> {
-
-        private AsyncTaskCallbackWithReturnObject asyncTaskCallbackWithReturnObject;
-
-        private CreateNewDBUserNotificationAsyncTask() {
-            this.asyncTaskCallbackWithReturnObject = null;
-        }
-
-        private CreateNewDBUserNotificationAsyncTask(AsyncTaskCallbackWithReturnObject taskCallbackWithReturnObject) {
-            this.asyncTaskCallbackWithReturnObject = taskCallbackWithReturnObject;
-        }
-
         @Override
         protected Void doInBackground(Bundle... params) {
             Bundle bundle = params[0];
+            // initialize bundle contents
+            String receiverUsername = bundle.getString("RECEIVER_USERNAME");
             UserProfileParcel userProfileParcel = bundle.getParcelable("USER_PROFILE_PARCEL");
-            DBUserNotification userNotification = new DBUserNotification();
-            DBUserProfile senderProfile;
-            // get the notification type
             NotificationEnum notificationType = NotificationEnum.fromInt(bundle.getInt("NOTIFICATION_TYPE"));
-            // getting time stamp
-            userNotification.setTimestampSeconds(Helpers.getTimestampSeconds());
-            // setting up new user notification
-            userNotification.setUsername(bundle.getString("RECEIVER_USERNAME")); // who the notification is going to
+
             if (userProfileParcel != null) {
+                // get sender profile
+                DBUserProfile senderProfile = loadDBUserProfile(userProfileParcel.getCurrentUsername());
+                // initialize new notification object
+                DBUserNotification userNotification = new DBUserNotification();
+                userNotification.setNotificationType(notificationType.toInt());
+                userNotification.setUsername(receiverUsername); // who the notification is going to
                 userNotification.setSenderUsername(userProfileParcel.getCurrentUsername());
-                if (notificationType == NotificationEnum.DIRECT_FISTBUMP) {
-                    senderProfile = loadDBUserProfile(userProfileParcel.getCurrentUsername());
-                    userNotification.setFacebookIdSender(senderProfile.getFacebookId());
-                } else {
-                    userNotification.setFacebookIdSender(userProfileParcel.getFacebookID());
+                userNotification.setFacebookIdSender(senderProfile.getFacebookId());
+                userNotification.setTimestampSeconds(Helpers.getTimestampSeconds());
+
+                switch (notificationType) {
+                    case DIRECT_FISTBUMP:
+                        break;
+                    case POST_COMMENT:
+                        userNotification.setPostId(bundle.getString("POST_ID"));
+                        userNotification.setCommentId(bundle.getString("COMMENT_ID"));
+                        userNotification.setComment(bundle.getString("COMMENT"));
+                        break;
+                    case POST_FISTBUMP:
+                        userNotification.setPostId(bundle.getString("POST_ID"));
+                        break;
+                    case COMMENT_FISTBUMP:
+                        userNotification.setPostId(bundle.getString("POST_ID"));
+                        userNotification.setCommentId(bundle.getString("COMMENT_ID"));
+                        break;
+                    default:
+                        userNotification.setNotificationType(-1);   // invalid notification type
+                        break;
                 }
-            }
 
-            switch (notificationType) {
-                case DIRECT_FISTBUMP:
-                    userNotification.setNotificationType(notificationType.toInt());
-                    // special case for direct_fistbump notification, we need to manually query for
-                    // the sender facebook id since the notification is made on their user profile
-//                    if (senderProfile != null) {
-//                        asyncTaskCallbackWithReturnObject.onTaskDone(senderProfile.getFacebookId());
-//                    }
-                    break;
-                case POST_COMMENT:
-                    userNotification.setNotificationType(notificationType.toInt());
-                    userNotification.setPostId(bundle.getString("POST_ID"));
-                    userNotification.setCommentId(bundle.getString("COMMENT_ID"));
-                    userNotification.setComment(bundle.getString("COMMENT"));
-                    break;
-                case POST_FISTBUMP:
-                    userNotification.setNotificationType(notificationType.toInt());
-                    userNotification.setPostId(bundle.getString("POST_ID"));
-                    break;
-                case COMMENT_FISTBUMP:
-                    userNotification.setNotificationType(notificationType.toInt());
-                    userNotification.setPostId(bundle.getString("POST_ID"));
-                    userNotification.setCommentId(bundle.getString("COMMENT_ID"));
-                    break;
-                default:
-                    userNotification.setNotificationType(-1);   // invalid notification type
-                    break;
-            }
+                // set receiver profile's newNotification flag to true
+                DBUserProfile receiverUserProfile = loadDBUserProfile(bundle.getString("RECEIVER_USERNAME"));
+                if (receiverUserProfile != null) {
+                    receiverUserProfile.setHasNewNotification(true);
+                    saveDBObject(receiverUserProfile);
+                }
 
-            // set receiver profile's newNotification flag to true
-            DBUserProfile receiverUserProfile = loadDBUserProfile(bundle.getString("RECEIVER_USERNAME"));
-            if (receiverUserProfile != null) {
-                receiverUserProfile.setHasNewNotification(true);
-                saveDBObject(receiverUserProfile);
+                saveDBObject(userNotification);
             }
-
-            saveDBObject(userNotification);
             return null;
         }
     }

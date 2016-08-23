@@ -17,6 +17,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,6 +31,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExp
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
+import com.peprally.jeremy.peprally.custom.ProfileActivityStackSingleton;
 import com.peprally.jeremy.peprally.custom.messaging.Conversation;
 import com.peprally.jeremy.peprally.custom.ui.CircleImageTransformation;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
@@ -86,13 +88,14 @@ public class ProfileActivity extends AppCompatActivity {
         httpRequestsHelper = new HTTPRequestsHelper(this);
 
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
+        ProfileActivityStackSingleton.getInstance().push(userProfileParcel);
+        userProfileParcel.setCurrentActivity(ActivityEnum.PROFILE);
 
         // 3 Profile Activity cases currently:
         // - view/edit your own profile as a fan
         // - view/edit your own profile as a player
         // - view a varsity player profile
         setContentView(R.layout.activity_profile);
-        new FetchUserProfileFromDBTask().execute();
 
         final Toolbar toolbar = (Toolbar) findViewById(R.id.id_toolbar_profile);
         setSupportActionBar(toolbar);
@@ -116,6 +119,13 @@ public class ProfileActivity extends AppCompatActivity {
 //                }
 //            }
 //        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        userProfileParcel = ProfileActivityStackSingleton.getInstance().peek();
+        new FetchUserProfileFromDBTask().execute();
     }
 
     @Override
@@ -157,14 +167,14 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     /***********************************************************************************************
-     *********************************** GENERAL METHODS/INTERFACES ********************************
+     **************************************** GENERAL_METHODS **************************************
      **********************************************************************************************/
     public UserProfileParcel getUserProfileParcel() {
         return userProfileParcel;
     }
 
     public void editFavoriteTeam() {
-        Intent intent = new Intent(this, FavoriteTeamActivity.class);
+        Intent intent = new Intent(ProfileActivity.this, FavoriteTeamActivity.class);
         startActivityForResult(intent, IntentRequestEnum.FAV_TEAM_REQUEST.toInt());
         overridePendingTransition(R.anim.right_in, R.anim.left_out);
     }
@@ -175,15 +185,15 @@ public class ProfileActivity extends AppCompatActivity {
             Toast.makeText(ProfileActivity.this, "Pick a favorite team first!", Toast.LENGTH_SHORT).show();
         }
         else {
-            Intent intent = new Intent(this, FavoritePlayerActivity.class);
-            intent.putExtra("CALLING_ACTIVITY", "ProfileActivity");
+            Intent intent = new Intent(ProfileActivity.this, FavoritePlayerActivity.class);
+            intent.putExtra("CALLING_ACTIVITY", "PROFILE_ACTIVITY");
             intent.putExtra("TEAM", favTeam);
             startActivityForResult(intent, IntentRequestEnum.FAV_PLAYER_REQUEST.toInt());
             overridePendingTransition(R.anim.right_in, R.anim.left_out);
         }
     }
 
-    private Bundle makeDBUserNotificationDirectFistbumpBundle() {
+    private Bundle makeDBNotificationBundleDirectFistbump() {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_FISTBUMP.toInt());
         bundle.putString("RECEIVER_USERNAME", userProfileParcel.getProfileUsername());  // who the notification is going to
@@ -191,12 +201,11 @@ public class ProfileActivity extends AppCompatActivity {
         return bundle;
     }
 
-    private Bundle makePushNotificationDirectFistbumpBundle(String senderFacebookId, NotificationEnum notificationType) {
+    private Bundle makePushNotificationDirectFistbumpBundle(NotificationEnum notificationType) {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", notificationType.toInt());
         bundle.putString("RECEIVER_USERNAME", userProfileParcel.getProfileUsername());  // who the notification is going to
         bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());    // who the notification is from
-        bundle.putString("SENDER_FACEBOOK_ID", senderFacebookId);    // who the notification is from
         return bundle;
     }
 
@@ -241,13 +250,13 @@ public class ProfileActivity extends AppCompatActivity {
             }
         });
 
-        final ImageView imageView_profilePicture = (ImageView) findViewById(R.id.id_image_view_profile_image);
-        final TextView textView_postsCount = (TextView) findViewById(R.id.id_profile_posts_count);
-        final TextView textView_sentFistbumpsCount = (TextView) findViewById(R.id.id_fistbumps_sent);
-        final TextView textView_receivedFistbumpsCount = (TextView) findViewById(R.id.id_fistbumps_received);
+        final ImageView imageViewProfilePicture = (ImageView) findViewById(R.id.id_image_view_profile_image);
+        final TextView textViewPostsCount = (TextView) findViewById(R.id.id_profile_posts_count);
+        final TextView textViewSentFistbumpsCount = (TextView) findViewById(R.id.id_fistbumps_sent);
+        final TextView textViewReceivedFistbumpsCount = (TextView) findViewById(R.id.id_fistbumps_received);
 
-        if (imageView_profilePicture != null && textView_postsCount != null
-                && textView_sentFistbumpsCount != null && textView_receivedFistbumpsCount != null) {
+        if (imageViewProfilePicture != null && textViewPostsCount != null
+                && textViewSentFistbumpsCount != null && textViewReceivedFistbumpsCount != null) {
             final String imageURL;
             // Profile Image Setup
             if (userProfileParcel.isVarsityPlayer()) {
@@ -258,18 +267,18 @@ public class ProfileActivity extends AppCompatActivity {
                         .load(imageURL)
                         .placeholder(R.drawable.img_default_ut_placeholder)
                         .transform(new CircleImageTransformation())
-                        .into(imageView_profilePicture);
+                        .into(imageViewProfilePicture);
             }
             else {
-                imageURL = "https://graph.facebook.com/" + userProfileParcel.getFacebookID() + "/picture?width=9999";
+                imageURL = Helpers.getFacebookProfileImageURL(userProfileParcel.getFacebookID(), 3);
                 Helpers.setFacebookProfileImage(this,
-                        imageView_profilePicture,
+                        imageViewProfilePicture,
                         userProfileParcel.getFacebookID(),
                         3,
                         true);
             }
 
-            imageView_profilePicture.setOnClickListener(new View.OnClickListener() {
+            imageViewProfilePicture.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     launchProfileImageDialog(imageURL);
@@ -277,18 +286,18 @@ public class ProfileActivity extends AppCompatActivity {
             });
 
             // set text view texts
-            textView_sentFistbumpsCount.setText(Helpers.getAPICompatHtml("<b>"
+            textViewSentFistbumpsCount.setText(Helpers.getAPICompatHtml("<b>"
                     + Integer.toString(userProfileParcel.getSentFistbumpsCount())
                     + "</b> " + getString(R.string.fistbumps_sent)));
-            textView_receivedFistbumpsCount.setText(Helpers.getAPICompatHtml("<b>"
+            textViewReceivedFistbumpsCount.setText(Helpers.getAPICompatHtml("<b>"
                     + Integer.toString(userProfileParcel.getReceivedFistbumpsCount())
                     + "</b> " + getString(R.string.fistbumps_received)));
-            textView_postsCount.setText(Helpers.getAPICompatHtml("<b>"
+            textViewPostsCount.setText(Helpers.getAPICompatHtml("<b>"
                     + Integer.toString(userProfileParcel.getPostsCount())
                     + "</b> " + getString(R.string.profile_posts)));
 
             // set text view drawables safely to avoid vector drawable compatibility issues
-            textView_postsCount.setCompoundDrawablesWithIntrinsicBounds(
+            textViewPostsCount.setCompoundDrawablesWithIntrinsicBounds(
                     null, null, Helpers.getAPICompatVectorDrawable(getApplicationContext(), R.drawable.ic_new_post), null);
         }
 
@@ -348,8 +357,7 @@ public class ProfileActivity extends AppCompatActivity {
         else {
             if (userProfileParcel.isSelfProfile()) {
                 finish();
-                Intent intent = new Intent(this, HomeActivity.class);
-                userProfileParcel.setCurrentActivity(ActivityEnum.HOME);
+                Intent intent = new Intent(ProfileActivity.this, HomeActivity.class);
                 intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
                 startActivity(intent);
                 overridePendingTransition(R.anim.left_in, R.anim.right_out);
@@ -358,6 +366,8 @@ public class ProfileActivity extends AppCompatActivity {
                 finish();
                 overridePendingTransition(R.anim.left_in, R.anim.right_out);
             }
+            // pop current profile's userProfileParcel from stack
+            ProfileActivityStackSingleton.getInstance().pop();
         }
     }
 
@@ -634,6 +644,7 @@ public class ProfileActivity extends AppCompatActivity {
             userProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getProfileUsername());
 
             if (userProfile == null) {
+                Log.d(TAG, "team = " + userProfileParcel.getTeam() + " index = " + userProfileParcel.getPlayerIndex());
                 playerProfile = dynamoDBHelper.loadDBPlayerProfile(userProfileParcel.getTeam(), userProfileParcel.getPlayerIndex());
             } else {
                 if (userProfile.getNewUser())
@@ -655,6 +666,7 @@ public class ProfileActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void v) {
             UpdateUserProfileParcel();
+
             createView();
         }
 
@@ -786,9 +798,9 @@ public class ProfileActivity extends AppCompatActivity {
 
             final NotificationEnum notificationType = isFistbumpMatch ? NotificationEnum.DIRECT_FISTBUMP_MATCH : NotificationEnum.DIRECT_FISTBUMP;
             // create new db user notification
-            dynamoDBHelper.createNewNotification(makeDBUserNotificationDirectFistbumpBundle(), null);
+            dynamoDBHelper.createNewNotification(makeDBNotificationBundleDirectFistbump());
             // send push notification to receiving user that they got a direct fistbump/direct fistbump match
-            httpRequestsHelper.makePushNotificationRequest(makePushNotificationDirectFistbumpBundle(currentUser.getFacebookId(), notificationType));
+            httpRequestsHelper.makePushNotificationRequest(makePushNotificationDirectFistbumpBundle(notificationType));
             return null;
         }
     }

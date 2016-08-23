@@ -9,10 +9,12 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
@@ -37,8 +39,8 @@ public class TrendingFragment extends Fragment {
      **********************************************************************************************/
     // UI Variables
     private PostCardAdapter postCardAdapter;
+    private ImageButton imageButtonHottest, imageButtonLatest;
     private RecyclerView recyclerView;
-    private RelativeLayout progressCircleContainer;
     private SwipeRefreshLayout trendingSwipeRefreshContainer;
 
     // General Variables
@@ -66,9 +68,6 @@ public class TrendingFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_trending, container, false);
 
-        // initialize UI components
-        progressCircleContainer = (RelativeLayout) view.findViewById(R.id.id_container_trending_progress_circle);
-
         // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
         recyclerView = (RecyclerView) view.findViewById(R.id.id_recycler_view_trending_posts);
         LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getActivity());
@@ -78,6 +77,7 @@ public class TrendingFragment extends Fragment {
 
         // setup swipe refresh container
         trendingSwipeRefreshContainer = (SwipeRefreshLayout) view.findViewById(R.id.container_swipe_refresh_trending_posts);
+        Log.d("TF: ", "refreshing container from oncreateview");
         trendingSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -94,43 +94,21 @@ public class TrendingFragment extends Fragment {
             }
         });
 
-        final ImageButton imageButtonHottest = (ImageButton) view.findViewById(R.id.id_image_button_trending_hottest);
-        final ImageButton imageButtonLatest = (ImageButton) view.findViewById(R.id.id_image_button_trending_latest);
+        imageButtonHottest = (ImageButton) view.findViewById(R.id.id_image_button_trending_hottest);
+        imageButtonLatest = (ImageButton) view.findViewById(R.id.id_image_button_trending_latest);
 
         if (imageButtonHottest != null && imageButtonLatest != null) {
             imageButtonHottest.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    // start on load progress circle animation
-                    progressCircleContainer.setVisibility(View.VISIBLE);
-                    trendingMode = TrendingModeEnum.HOTTEST;
-
-//                    initializeAdapter(posts);
-                    refreshAdapter();
-
-                    // update UI buttons
-                    imageButtonHottest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_trending_on));
-                    imageButtonLatest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_clock));
-                    imageButtonHottest.setClickable(false);
-                    imageButtonLatest.setClickable(true);
+                    toggleTrendingModeIsHottestView(true);
                 }
             });
 
             imageButtonLatest.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    // start on load progress circle animation
-                    progressCircleContainer.setVisibility(View.VISIBLE);
-                    trendingMode = TrendingModeEnum.LATEST;
-
-//                    initializeAdapter(posts);
-                    refreshAdapter();
-
-                    // update UI buttons
-                    imageButtonHottest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_trending));
-                    imageButtonLatest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_clock_on));
-                    imageButtonHottest.setClickable(true);
-                    imageButtonLatest.setClickable(false);
+                    toggleTrendingModeIsHottestView(false);
                 }
             });
         }
@@ -140,12 +118,12 @@ public class TrendingFragment extends Fragment {
 
     @Override
     public void onResume() {
-        super.onResume();
         refreshAdapter();
+        super.onResume();
     }
 
     /***********************************************************************************************
-     *********************************** GENERAL METHODS/INTERFACES ********************************
+     *********************************** GENERAL_METHODS ********************************
      **********************************************************************************************/
     private void updateCachedPosts(List<DBUserPost> results) {
         posts = new ArrayList<>(results);
@@ -194,7 +172,34 @@ public class TrendingFragment extends Fragment {
     }
 
     private void refreshAdapter() {
+        // start on load progress circle animation and get latest posts
+        trendingSwipeRefreshContainer.post(new Runnable() {
+            @Override
+            public void run() {
+                trendingSwipeRefreshContainer.setRefreshing(true);
+            }
+        });
         new FetchUserPostsTask().execute();
+    }
+
+    public void toggleTrendingModeIsHottestView(boolean isTrendingModeHottest) {
+        if (imageButtonHottest != null && imageButtonLatest != null) {
+            trendingMode = (isTrendingModeHottest) ? TrendingModeEnum.HOTTEST : TrendingModeEnum.LATEST;
+            refreshAdapter();
+
+            // update UI buttons
+            if (isTrendingModeHottest) {
+                imageButtonHottest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_trending_on));
+                imageButtonLatest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_clock));
+                imageButtonHottest.setClickable(false);
+                imageButtonLatest.setClickable(true);
+            } else {
+                imageButtonHottest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_trending));
+                imageButtonLatest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_clock_on));
+                imageButtonHottest.setClickable(true);
+                imageButtonLatest.setClickable(false);
+            }
+        }
     }
 
     /***********************************************************************************************
@@ -214,11 +219,14 @@ public class TrendingFragment extends Fragment {
             initializeAdapter(posts);
 
             // stop refresh loading animation
-            if (trendingSwipeRefreshContainer.isRefreshing())
-                trendingSwipeRefreshContainer.setRefreshing(false);
-
-            // stop on load progress circle animation
-            progressCircleContainer.setVisibility(View.GONE);
+            if (trendingSwipeRefreshContainer.isRefreshing()) {
+                trendingSwipeRefreshContainer.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        trendingSwipeRefreshContainer.setRefreshing(false);
+                    }
+                });
+            }
         }
     }
 }

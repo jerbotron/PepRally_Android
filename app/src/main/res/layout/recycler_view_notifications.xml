@@ -19,7 +19,7 @@
             android:layout_width="50dp"
             android:layout_height="50dp"
             android:contentDescription="@string/content_description_image_view"
-            android:clickable="false"/>
+            android:clickable="true"/>
         <LinearLayout
             android:id="@+id/id_notification_card_container_clickable"
             android:layout_width="0dp"
