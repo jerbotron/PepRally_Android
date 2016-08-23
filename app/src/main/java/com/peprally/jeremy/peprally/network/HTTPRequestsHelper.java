@@ -49,6 +49,7 @@ public class HTTPRequestsHelper {
             try {
                 DynamoDBHelper dynamoDBHelper = new DynamoDBHelper(callingContext);
                 Bundle bundle = params[0];
+                DBUserProfile senderProfile = dynamoDBHelper.loadDBUserProfile(bundle.getString("SENDER_USERNAME"));
                 DBUserProfile receiverProfile = dynamoDBHelper.loadDBUserProfile(bundle.getString("RECEIVER_USERNAME"));
                 if (receiverProfile != null) {
                     NotificationEnum notificationType = NotificationEnum.fromInt(bundle.getInt("NOTIFICATION_TYPE"));
@@ -85,7 +86,7 @@ public class HTTPRequestsHelper {
                         jsonData.put("receiver_id", receiverFMSID);
                         jsonData.put("receiver_username", bundle.getString("RECEIVER_USERNAME"));
                         jsonData.put("sender_username", bundle.getString("SENDER_USERNAME"));
-                        jsonData.put("sender_facebook_id", bundle.getString("SENDER_FACEBOOK_ID"));
+                        jsonData.put("sender_facebook_id", senderProfile.getFacebookId());
                         jsonData.put("notification_type", String.valueOf(bundle.getInt("NOTIFICATION_TYPE")));
                         jsonData.put("comment_text", bundle.getString("COMMENT"));
 

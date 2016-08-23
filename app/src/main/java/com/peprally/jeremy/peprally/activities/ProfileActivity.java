@@ -31,6 +31,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExp
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
+import com.peprally.jeremy.peprally.custom.ProfileActivityStackSingleton;
 import com.peprally.jeremy.peprally.custom.messaging.Conversation;
 import com.peprally.jeremy.peprally.custom.ui.CircleImageTransformation;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
@@ -48,8 +49,6 @@ import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.custom.ui.ProfileViewPager;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 import com.squareup.picasso.Picasso;
-
-import java.util.Stack;
 
 import static com.peprally.jeremy.peprally.utils.Constants.INTEGER_INVALID;
 
@@ -74,7 +73,6 @@ public class ProfileActivity extends AppCompatActivity {
 
     // General Variables
     private static UserProfileParcel userProfileParcel;
-    private UserProfileParcel cachedUserProfileParcel;
     private static final String TAG = ProfileActivity.class.getSimpleName();
     private boolean editMode = false;
     private boolean didCurrentUserFistbumpProfileUserAlready = false;
@@ -90,8 +88,7 @@ public class ProfileActivity extends AppCompatActivity {
         httpRequestsHelper = new HTTPRequestsHelper(this);
 
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
-        cachedUserProfileParcel = userProfileParcel;
-        // if coming from another user's profile
+        ProfileActivityStackSingleton.getInstance().push(userProfileParcel);
         userProfileParcel.setCurrentActivity(ActivityEnum.PROFILE);
 
         // 3 Profile Activity cases currently:
@@ -99,7 +96,6 @@ public class ProfileActivity extends AppCompatActivity {
         // - view/edit your own profile as a player
         // - view a varsity player profile
         setContentView(R.layout.activity_profile);
-        new FetchUserProfileFromDBTask().execute();
 
         final Toolbar toolbar = (Toolbar) findViewById(R.id.id_toolbar_profile);
         setSupportActionBar(toolbar);
@@ -128,10 +124,8 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-//        profilesViewedUserProfileParcelStack.push(userProfileParcel);
-        if (userProfileParcel.getCurrentActivity().equals(ActivityEnum.PROFILE)) {
-            userProfileParcel = cachedUserProfileParcel;
-        }
+        userProfileParcel = ProfileActivityStackSingleton.getInstance().peek();
+        new FetchUserProfileFromDBTask().execute();
     }
 
     @Override
@@ -199,7 +193,7 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
-    private Bundle makeDBUserNotificationDirectFistbumpBundle() {
+    private Bundle makeDBNotificationBundleDirectFistbump() {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_FISTBUMP.toInt());
         bundle.putString("RECEIVER_USERNAME", userProfileParcel.getProfileUsername());  // who the notification is going to
@@ -207,12 +201,11 @@ public class ProfileActivity extends AppCompatActivity {
         return bundle;
     }
 
-    private Bundle makePushNotificationDirectFistbumpBundle(String senderFacebookId, NotificationEnum notificationType) {
+    private Bundle makePushNotificationDirectFistbumpBundle(NotificationEnum notificationType) {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", notificationType.toInt());
         bundle.putString("RECEIVER_USERNAME", userProfileParcel.getProfileUsername());  // who the notification is going to
         bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());    // who the notification is from
-        bundle.putString("SENDER_FACEBOOK_ID", senderFacebookId);    // who the notification is from
         return bundle;
     }
 
@@ -373,6 +366,8 @@ public class ProfileActivity extends AppCompatActivity {
                 finish();
                 overridePendingTransition(R.anim.left_in, R.anim.right_out);
             }
+            // pop current profile's userProfileParcel from stack
+            ProfileActivityStackSingleton.getInstance().pop();
         }
     }
 
@@ -671,6 +666,7 @@ public class ProfileActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void v) {
             UpdateUserProfileParcel();
+
             createView();
         }
 
@@ -802,9 +798,9 @@ public class ProfileActivity extends AppCompatActivity {
 
             final NotificationEnum notificationType = isFistbumpMatch ? NotificationEnum.DIRECT_FISTBUMP_MATCH : NotificationEnum.DIRECT_FISTBUMP;
             // create new db user notification
-            dynamoDBHelper.createNewNotification(makeDBUserNotificationDirectFistbumpBundle(), null);
+            dynamoDBHelper.createNewNotification(makeDBNotificationBundleDirectFistbump());
             // send push notification to receiving user that they got a direct fistbump/direct fistbump match
-            httpRequestsHelper.makePushNotificationRequest(makePushNotificationDirectFistbumpBundle(currentUser.getFacebookId(), notificationType));
+            httpRequestsHelper.makePushNotificationRequest(makePushNotificationDirectFistbumpBundle(notificationType));
             return null;
         }
     }

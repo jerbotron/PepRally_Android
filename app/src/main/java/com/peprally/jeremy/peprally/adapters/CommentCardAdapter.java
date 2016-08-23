@@ -30,8 +30,6 @@ import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.CommentHolder> {
@@ -190,8 +188,8 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                         // update the sent fistbumps count of the current user
                         dynamoDBHelper.incrementUserSentFistbumpsCount(currentUsername);
                         // send push notification
-                        dynamoDBHelper.createNewNotification(makeNotificationCommentFistbumpBundle(currentComment), null);
-                        httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestCommentFistbumpBundle(currentComment));
+                        dynamoDBHelper.createNewNotification(makeDBNotificationBundleCommentFistbump(currentComment));
+                        httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundleCommentFistbump(currentComment));
                     }
                     // add current user to fistbumped users
                     currentComment.addFistbumpedUser(currentUsername);
@@ -222,7 +220,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     /***********************************************************************************************
      *********************************** GENERAL_METHODS ********************************
      **********************************************************************************************/
-    private Bundle makeNotificationCommentFistbumpBundle(Comment comment) {
+    private Bundle makeDBNotificationBundleCommentFistbump(Comment comment) {
         Bundle bundle = new Bundle();
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.COMMENT_FISTBUMP.toInt());
@@ -232,7 +230,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         return bundle;
     }
 
-    private Bundle makeNotificationPostCommentBundle(String comment, String commentID) {
+    private Bundle makeDBNotificationBundlePostComment(String comment, String commentID) {
         Bundle bundle = new Bundle();
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_COMMENT.toInt());
@@ -243,21 +241,19 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         return bundle;
     }
 
-    private Bundle makeHTTPPostRequestCommentFistbumpBundle(Comment comment) {
+    private Bundle makePushNotificationBundleCommentFistbump(Comment comment) {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.COMMENT_FISTBUMP.toInt());
         bundle.putString("RECEIVER_USERNAME", comment.getCommentUsername());
         bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());
-        bundle.putString("SENDER_FACEBOOK_ID", userProfileParcel.getFacebookID());
         return bundle;
     }
 
-    private Bundle makeHTTPPostRequestPostCommentBundle(String comment) {
+    private Bundle makePushNotificationBundlePostComment(String comment) {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_COMMENT.toInt());
         bundle.putString("RECEIVER_USERNAME", mainPost.getUsername());
         bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());
-        bundle.putString("SENDER_FACEBOOK_ID", userProfileParcel.getFacebookID());
         bundle.putString("COMMENT", comment);
         return bundle;
     }
@@ -278,24 +274,17 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     /***********************************************************************************************
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
-    public void addComment(String commentText, Bundle bundle) {
+    public void addComment(String commentText, String commentUsername) {
         Long timestampSeconds = Helpers.getTimestampSeconds();
-        Long postTimeInSeconds = mainPost.getTimestampSeconds();
+        Bundle bundle = new Bundle();
+        bundle.putString("POST_ID", Helpers.getPostCommentIdString(mainPost.getUsername(), mainPost.getTimestampSeconds()));
+        bundle.putString("POST_USERNAME", mainPost.getUsername());
+        bundle.putString("COMMENT_ID", Helpers.getPostCommentIdString(commentUsername, timestampSeconds));
+        bundle.putString("COMMENT_USERNAME", commentUsername);
+        bundle.putLong("TIMESTAMP", timestampSeconds);
+        bundle.putString("COMMENT_TEXT", commentText);
 
-        Comment newComment = new Comment(
-                bundle.getString("POST_USERNAME") + "_" + postTimeInSeconds.toString(),
-                bundle.getString("COMMENT_USERNAME") + "_" + timestampSeconds.toString(),
-                bundle.getString("COMMENT_USERNAME"),
-                bundle.getString("COMMENT_FIRST_NAME"),
-                bundle.getString("POST_USERNAME"),
-                bundle.getString("FACEBOOK_ID"),
-                commentText,
-                timestampSeconds,
-                0,
-                new HashSet<>(Collections.singletonList("_"))
-        );
-
-        dynamoDBHelper.addNewPostComment(newComment, new DynamoDBHelper.AsyncTaskCallback() {
+        dynamoDBHelper.addNewPostComment(bundle, new DynamoDBHelper.AsyncTaskCallback() {
             @Override
             public void onTaskDone() {
                 ((PostCommentActivity) callingContext).postAddCommentCleanup();
@@ -303,9 +292,10 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         });
 
         // send push notification (if not commenting on own post)
-        if (!newComment.getCommentUsername().equals(newComment.getPostUsername())) {
-            dynamoDBHelper.createNewNotification(makeNotificationPostCommentBundle(commentText, newComment.getCommentId()), null);
-            httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestPostCommentBundle(commentText));
+        if (!commentUsername.equals(mainPost.getUsername())) {
+            dynamoDBHelper.createNewNotification(
+                    makeDBNotificationBundlePostComment(commentText, Helpers.getPostCommentIdString(commentUsername, timestampSeconds)));
+            httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostComment(commentText));
         }
     }
 

@@ -183,7 +183,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     }
 
     private void onNavBarHeaderClick() {
-        finish();
         // Viewing self profile
         Intent intent = new Intent(HomeActivity.this, ProfileActivity.class);
         userProfileParcel.setIsSelfProfile(true);

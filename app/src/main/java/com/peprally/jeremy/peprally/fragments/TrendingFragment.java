@@ -9,6 +9,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -76,6 +77,7 @@ public class TrendingFragment extends Fragment {
 
         // setup swipe refresh container
         trendingSwipeRefreshContainer = (SwipeRefreshLayout) view.findViewById(R.id.container_swipe_refresh_trending_posts);
+        Log.d("TF: ", "refreshing container from oncreateview");
         trendingSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -116,8 +118,8 @@ public class TrendingFragment extends Fragment {
 
     @Override
     public void onResume() {
-        super.onResume();
         refreshAdapter();
+        super.onResume();
     }
 
     /***********************************************************************************************
@@ -170,13 +172,18 @@ public class TrendingFragment extends Fragment {
     }
 
     private void refreshAdapter() {
+        // start on load progress circle animation and get latest posts
+        trendingSwipeRefreshContainer.post(new Runnable() {
+            @Override
+            public void run() {
+                trendingSwipeRefreshContainer.setRefreshing(true);
+            }
+        });
         new FetchUserPostsTask().execute();
     }
 
     public void toggleTrendingModeIsHottestView(boolean isTrendingModeHottest) {
         if (imageButtonHottest != null && imageButtonLatest != null) {
-            // start on load progress circle animation and get latest posts
-            trendingSwipeRefreshContainer.setRefreshing(true);
             trendingMode = (isTrendingModeHottest) ? TrendingModeEnum.HOTTEST : TrendingModeEnum.LATEST;
             refreshAdapter();
 
@@ -212,8 +219,14 @@ public class TrendingFragment extends Fragment {
             initializeAdapter(posts);
 
             // stop refresh loading animation
-            if (trendingSwipeRefreshContainer.isRefreshing())
-                trendingSwipeRefreshContainer.setRefreshing(false);
+            if (trendingSwipeRefreshContainer.isRefreshing()) {
+                trendingSwipeRefreshContainer.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        trendingSwipeRefreshContainer.setRefreshing(false);
+                    }
+                });
+            }
         }
     }
 }

@@ -151,6 +151,10 @@ public class Helpers {
         return timestampString;
     }
 
+    public static String getPostCommentIdString(String username, Long timestamp) {
+        return username + "_" + timestamp.toString();
+    }
+
     public static int generateRandomInteger() {
         Random random = new Random(getTimestampSeconds());
 

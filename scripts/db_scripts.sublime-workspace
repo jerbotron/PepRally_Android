@@ -4,6 +4,18 @@
 		"selected_items":
 		[
 			[
+				"te",
+				"testPost"
+			],
+			[
+				"c",
+				"count"
+			],
+			[
+				"url",
+				"urllib2"
+			],
+			[
 				"back",
 				"background-color"
 			],
@@ -46,10 +58,6 @@
 			[
 				"print",
 				"printRoster"
-			],
-			[
-				"url",
-				"url"
 			],
 			[
 				"team",
@@ -288,10 +296,6 @@
 				"num_of_nodes"
 			],
 			[
-				"te",
-				"temp_val"
-			],
-			[
 				"prev",
 				"prev_min"
 			],
@@ -375,6 +379,30 @@
 	},
 	"buffers":
 	[
+		{
+			"file": "autoMakeTables.py",
+			"settings":
+			{
+				"buffer_size": 2146,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "teamParsers.py",
+			"settings":
+			{
+				"buffer_size": 32364,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "userPostsTestScript.py",
+			"settings":
+			{
+				"buffer_size": 823,
+				"line_ending": "Unix"
+			}
+		}
 	],
 	"build_system": "",
 	"build_system_choices":
@@ -475,8 +503,30 @@
 	],
 	"file_history":
 	[
-		"/home/jeremy/AndroidStudioProjects/PepRally/scripts/teamParsers.py",
 		"/home/jeremy/AndroidStudioProjects/PepRally/servers/peprally_push/server.py",
+		"/home/jeremy/AndroidStudioProjects/PepRally/scripts/test.py",
+		"/home/jeremy/AndroidStudioProjects/PepRally/scripts/teamParsers.py",
+		"/home/jeremy/Pictures/UT Players/2016/Volleyball/fetch_player_card.py",
+		"/home/jeremy/Pictures/UT Players/2016/Track and Field/fetch_player_card.py",
+		"/home/jeremy/Pictures/UT Players/2016/Tennis/Womens/fetch_player_card.py",
+		"/home/jeremy/Pictures/UT Players/2016/Tennis/Mens/fetch_player_card.py",
+		"/home/jeremy/Pictures/UT Players/2016/Swimming and Diving/Womens/fetch_player_card.py",
+		"/home/jeremy/Pictures/UT Players/2016/Swimming and Diving/Mens/fetch_player_card.py",
+		"/home/jeremy/Pictures/UT Players/2016/Softball/fetch_player_card.py",
+		"/home/jeremy/Pictures/UT Players/2016/Soccer/fetch_player_card.py",
+		"/home/jeremy/Pictures/UT Players/2016/Rowing/fetch_player_card.py",
+		"/home/jeremy/Pictures/UT Players/2016/Golf/Womens/fetch_player_card.py",
+		"/home/jeremy/Pictures/UT Players/2016/Golf/Mens/fetch_player_card.py",
+		"/home/jeremy/Pictures/UT Players/2016/Football/fetch_player_card.py",
+		"/home/jeremy/Pictures/UT Players/2016/Basketball/Womens/fetch_player_card.py",
+		"/home/jeremy/Pictures/UT Players/2016/Basketball/Mens/fetch_player_card.py",
+		"/home/jeremy/Pictures/UT Players/2016/Baseball/fetch_player_card.py",
+		"/home/jeremy/Projects/PepRally/scripts/teamParsers.py",
+		"/home/jeremy/Projects/PepRally/scripts/testPython.py",
+		"/home/jeremy/Projects/PepRally/scripts/teamParsers.pyc",
+		"/home/jeremy/Projects/PepRally/scripts/test.py",
+		"/home/jeremy/AndroidStudioProjects/PepRally/scripts/credentials.csv",
+		"/home/jeremy/AndroidStudioProjects/PepRally/scripts/autoMakeTables.py",
 		"/home/jeremy/Projects/PepRally/website/package.json",
 		"/home/jeremy/Projects/github/peprally_website/package.json",
 		"/home/jeremy/Projects/github/peprally_website/bootstrap/index.html",
@@ -496,7 +546,6 @@
 		"/tmp/fz3temp-1/server 2.py",
 		"/home/jeremy/AndroidStudioProjects/PepRally/flask/server.py",
 		"/home/jeremy/Projects/github/flask-site/eb-venv/eb-flask/application.py",
-		"/home/jeremy/AndroidStudioProjects/PepRally/scripts/autoMakeTables.py",
 		"/home/jeremy/Pictures/UT Players/Football/fetch_player_card.py",
 		"/home/jeremy/Projects/Pep Rally/scripts/test.py",
 		"/home/jeremy/Pictures/UT Players/Track and Field/fetch_player_card.py",
@@ -574,7 +623,7 @@
 	],
 	"find":
 	{
-		"height": 24.0
+		"height": 30.0
 	},
 	"find_in_files":
 	{
@@ -589,6 +638,15 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"teamSizes",
+			"mten",
+			"wten",
+			"mten",
+			"addToDb=True",
+			"addToDb",
+			"parse_wbball",
+			"js",
+			"teamSizes",
 			"D26B20",
 			"f6bf01",
 			"fec503",
@@ -693,6 +751,7 @@
 		"regex": false,
 		"replace_history":
 		[
+			"addToDb",
 			"d77d3c",
 			"D26B20",
 			"d77d3c",
@@ -736,8 +795,108 @@
 	"groups":
 	[
 		{
+			"selected": 1,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "autoMakeTables.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2146,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								791,
+								791
+							]
+						],
+						"settings":
+						{
+							"side_bar_folders_auto_load_folder": 1,
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 288.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "teamParsers.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 32364,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4554,
+								4554
+							]
+						],
+						"settings":
+						{
+							"side_bar_folders_auto_load_folder": 1,
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1824.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		},
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 2,
+					"file": "userPostsTestScript.py",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 823,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								575,
+								575
+							]
+						],
+						"settings":
+						{
+							"side_bar_folders_auto_load_folder": 1,
+							"syntax": "Packages/Python/Python.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 48.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				}
 			]
 		}
 	],
@@ -758,11 +917,18 @@
 				0,
 				1,
 				1
+			],
+			[
+				1,
+				0,
+				2,
+				1
 			]
 		],
 		"cols":
 		[
 			0.0,
+			0.5,
 			1.0
 		],
 		"rows":
@@ -774,7 +940,7 @@
 	"menu_visible": true,
 	"output.exec":
 	{
-		"height": 124.0
+		"height": 354.0
 	},
 	"output.find_results":
 	{
@@ -784,7 +950,7 @@
 	"project": "db_scripts.sublime-project",
 	"replace":
 	{
-		"height": 44.0
+		"height": 54.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -793,6 +959,10 @@
 		"last_filter": "",
 		"selected_items":
 		[
+			[
+				"par",
+				"teamParsers.py"
+			],
 			[
 				"agen",
 				"public/css/agency.css"

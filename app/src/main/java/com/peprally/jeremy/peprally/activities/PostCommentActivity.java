@@ -246,19 +246,14 @@ public class PostCommentActivity extends AppCompatActivity{
             Toast.makeText(this, "Comment can't be empty!", Toast.LENGTH_SHORT).show();
         }
         else {
-            Bundle bundle = new Bundle();
-            bundle.putString("POST_USERNAME", mainPost.getUsername());
-            bundle.putString("COMMENT_USERNAME", userProfileParcel.getCurrentUsername());
-            bundle.putString("COMMENT_FIRST_NAME", userProfileParcel.getFirstname());
-            bundle.putString("FACEBOOK_ID", userProfileParcel.getFacebookID());
             // when adding the first comment, initialize commentCardAdapter with null list
             if (commentCardAdapter == null)
                 initializeAdapter(null, false);
-            commentCardAdapter.addComment(newCommentText, bundle);
+            commentCardAdapter.addComment(newCommentText, userProfileParcel.getCurrentUsername());
         }
     }
 
-    private Bundle makeNotificationPostFistbumpBundle(DBUserPost curPost) {
+    private Bundle makeDBNotificationBundlePostFistbump(DBUserPost curPost) {
         Bundle bundle = new Bundle();
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
@@ -267,12 +262,11 @@ public class PostCommentActivity extends AppCompatActivity{
         return bundle;
     }
 
-    private Bundle makeHTTPPostRequestPostFistbumpBundle(DBUserPost curPost) {
+    private Bundle makePushNotificationBundlePostFistbump(DBUserPost curPost) {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
         bundle.putString("RECEIVER_USERNAME", curPost.getUsername());
         bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());
-        bundle.putString("SENDER_FACEBOOK_ID", userProfileParcel.getFacebookID());
         return bundle;
     }
 
@@ -412,8 +406,8 @@ public class PostCommentActivity extends AppCompatActivity{
                             // update the sent fistbumps count of the current user
                             dynamoDBHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurrentUsername());
                             // send push notification
-                            dynamoDBHelper.createNewNotification(makeNotificationPostFistbumpBundle(userPost), null);
-                            httpRequestsHelper.makePushNotificationRequest(makeHTTPPostRequestPostFistbumpBundle(userPost));
+                            dynamoDBHelper.createNewNotification(makeDBNotificationBundlePostFistbump(userPost));
+                            httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostFistbump(userPost));
                         }
                         // add current user to fistbumped users
                         userPost.addFistbumpedUser(userProfileParcel.getCurrentUsername());
