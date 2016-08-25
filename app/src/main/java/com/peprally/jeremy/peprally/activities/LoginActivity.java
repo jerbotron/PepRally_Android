@@ -351,7 +351,8 @@ public class LoginActivity extends AppCompatActivity {
         editTextUsername.addTextChangedListener(new TextWatcher() {
             public void afterTextChanged(Editable s) {
                 if (s.toString().trim().isEmpty() || s.length() < 2) {
-                    editTextUsername.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_error, 0);
+                    editTextUsername.setCompoundDrawablesWithIntrinsicBounds(null, null,
+                            Helpers.getAPICompatVectorDrawable(getApplicationContext(), R.drawable.ic_error), null);
                 }
                 else {
                     new CheckUniqueUsernameDBTask().execute(s.toString().trim().replace(" ", "_"));
@@ -437,13 +438,15 @@ public class LoginActivity extends AppCompatActivity {
 
     private void showUsernameTaken() {
         if (!editTextUsername.getText().toString().trim().isEmpty()) {
-            editTextUsername.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_error,0);
+            editTextUsername.setCompoundDrawablesWithIntrinsicBounds(null, null,
+                    Helpers.getAPICompatVectorDrawable(getApplicationContext(), R.drawable.ic_error), null);
         }
     }
 
     private void showUsernameAvailable() {
         if (!editTextUsername.getText().toString().trim().isEmpty()) {
-            editTextUsername.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_check,0);
+            editTextUsername.setCompoundDrawablesWithIntrinsicBounds(null, null,
+                    Helpers.getAPICompatVectorDrawable(getApplicationContext(), R.drawable.ic_check), null);
         }
     }
 
