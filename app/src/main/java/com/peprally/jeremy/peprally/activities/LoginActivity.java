@@ -243,14 +243,16 @@ public class LoginActivity extends AppCompatActivity {
                         String gender = getFacebookDataSafely(response, "gender");
                         String birthday = getFacebookDataSafely(response, "birthday");
                         Profile profile = Profile.getCurrentProfile();
-                        String link = profile.getLinkUri().toString();
-                        fbDataBundle.putString("ID", id);
-                        fbDataBundle.putString("LINK", link);
-                        fbDataBundle.putString("EMAIL", email);
-                        fbDataBundle.putString("FIRSTNAME", firstName);
-                        fbDataBundle.putString("LASTNAME", lastName);
-                        fbDataBundle.putString("GENDER", gender);
-                        fbDataBundle.putString("BIRTHDAY", birthday);
+                        if (profile != null) {
+                            String link = profile.getLinkUri().toString();
+                            fbDataBundle.putString("ID", id);
+                            fbDataBundle.putString("LINK", link);
+                            fbDataBundle.putString("EMAIL", email);
+                            fbDataBundle.putString("FIRSTNAME", firstName);
+                            fbDataBundle.putString("LASTNAME", lastName);
+                            fbDataBundle.putString("GENDER", gender);
+                            fbDataBundle.putString("BIRTHDAY", birthday);
+                        }
                     }
                 });
         Bundle fbData = new Bundle();
