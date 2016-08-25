@@ -151,7 +151,11 @@ public class LoginActivity extends AppCompatActivity {
                     @Override
                     protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken newAccessToken) {
 //                        Log.d(TAG, "access token changed");
-                        bundleFacebookData();
+                        if (newAccessToken != null) {
+                            bundleFacebookData(newAccessToken);
+                            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                            sharedPreferences.edit().putString("CURRENT_FACEBOOK_ID", newAccessToken.getUserId()).apply();
+                        }
                     }
                 };
 
@@ -230,9 +234,9 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private void bundleFacebookData() {
+    private void bundleFacebookData(AccessToken accessToken) {
         GraphRequest request = GraphRequest.newMeRequest(
-                AccessToken.getCurrentAccessToken(),
+                accessToken,
                 new GraphRequest.GraphJSONObjectCallback() {
                     @Override
                     public void onCompleted(JSONObject object, GraphResponse response) {
@@ -497,7 +501,7 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean isNewUser) {
             if (isNewUser) {
-                bundleFacebookData();
+                bundleFacebookData(AccessToken.getCurrentAccessToken());
                 showNewUsernameDialog();
             }
             else {

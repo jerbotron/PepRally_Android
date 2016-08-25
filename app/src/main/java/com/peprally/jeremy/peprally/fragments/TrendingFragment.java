@@ -77,7 +77,6 @@ public class TrendingFragment extends Fragment {
 
         // setup swipe refresh container
         trendingSwipeRefreshContainer = (SwipeRefreshLayout) view.findViewById(R.id.container_swipe_refresh_trending_posts);
-        Log.d("TF: ", "refreshing container from oncreateview");
         trendingSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {

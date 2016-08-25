@@ -126,12 +126,19 @@ public class NotificationsActivity extends AppCompatActivity {
     }
 
     private void refreshAdapter() {
+        notificationsSwipeRefreshContainer.post(new Runnable() {
+            @Override
+            public void run() {
+                notificationsSwipeRefreshContainer.setRefreshing(true);
+            }
+        });
         new FetchUserNotificationsDBTask().execute();
     }
 
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
+    @SuppressWarnings("unchecked")
     private class FetchUserNotificationsDBTask extends AsyncTask<Void, Void, PaginatedQueryList<DBUserNotification>> {
         @Override
         protected PaginatedQueryList<DBUserNotification> doInBackground(Void... params) {
@@ -148,12 +155,14 @@ public class NotificationsActivity extends AppCompatActivity {
             initializeAdapter(results);
 
             // stop refresh loading animation
-            if (notificationsSwipeRefreshContainer.isRefreshing())
-                notificationsSwipeRefreshContainer.setRefreshing(false);
-
-            // stop on load progress circle animation
-            RelativeLayout progressCircleContainer = (RelativeLayout) findViewById(R.id.id_container_notification_progress_circle);
-            progressCircleContainer.setVisibility(View.GONE);
+            if (notificationsSwipeRefreshContainer.isRefreshing()) {
+                notificationsSwipeRefreshContainer.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        notificationsSwipeRefreshContainer.setRefreshing(false);
+                    }
+                });
+            }
         }
     }
 
