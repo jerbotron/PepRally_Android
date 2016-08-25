@@ -684,18 +684,20 @@ public class DynamoDBHelper {
         }
         @Override
         protected Conversation doInBackground(String... usernames) {
-            DBUserProfile fistbumpedUserProfile1 = loadDBUserProfile(usernames[0]);
-            DBUserProfile fistbumpedUserProfile2 = loadDBUserProfile(usernames[1]);
-            if (fistbumpedUserProfile1 != null && fistbumpedUserProfile2 != null) {
+            DBUserProfile receiverProfile = loadDBUserProfile(usernames[0]);
+            DBUserProfile senderProfile = loadDBUserProfile(usernames[1]);
+            if (receiverProfile != null && senderProfile != null) {
                 DBUserConversation newConversation = new DBUserConversation();
-                String conversation_id = fistbumpedUserProfile1.getFacebookId() + "_" + fistbumpedUserProfile2.getFacebookId();
+                String conversation_id = receiverProfile.getFacebookId() + "_" + senderProfile.getFacebookId();
                 newConversation.setConversationID(conversation_id);
+                newConversation.setSenderUsername(senderProfile.getUsername());
+                newConversation.setReceiverUsername(receiverProfile.getUsername());
                 Long timeInSeconds = Helpers.getTimestampSeconds();
                 newConversation.setTimeStampCreated(timeInSeconds);
                 newConversation.setTimeStampLatest(timeInSeconds);
                 Map<String, String> usernameFacebookIDMap = new HashMap<>();
-                usernameFacebookIDMap.put(fistbumpedUserProfile1.getUsername(), fistbumpedUserProfile1.getFacebookId());
-                usernameFacebookIDMap.put(fistbumpedUserProfile2.getUsername(), fistbumpedUserProfile2.getFacebookId());
+                usernameFacebookIDMap.put(receiverProfile.getUsername(), receiverProfile.getFacebookId());
+                usernameFacebookIDMap.put(senderProfile.getUsername(), senderProfile.getFacebookId());
                 newConversation.setConversation(new Conversation(conversation_id,
                                                                  timeInSeconds,
                                                                  new ArrayList<ChatMessage>(),
@@ -703,10 +705,10 @@ public class DynamoDBHelper {
 
                 // append conversation_id to each user
                 mapper.save(newConversation);
-                fistbumpedUserProfile1.addConversationId(conversation_id);
-                fistbumpedUserProfile2.addConversationId(conversation_id);
-                mapper.save(fistbumpedUserProfile1);
-                mapper.save(fistbumpedUserProfile2);
+                receiverProfile.addConversationId(conversation_id);
+                senderProfile.addConversationId(conversation_id);
+                mapper.save(receiverProfile);
+                mapper.save(senderProfile);
                 return newConversation.getConversation();
             }
             return null;
