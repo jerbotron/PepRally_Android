@@ -106,7 +106,7 @@ public class PostCommentActivity extends AppCompatActivity{
         final TextView mainPostTimeStamp = (TextView) findViewById(R.id.id_text_view_post_card_time_stamp);
         final TextView mainPostUsername = (TextView) findViewById(R.id.id_text_view_comment_main_post_username);
         final TextView mainPostTextContent = (TextView) findViewById(R.id.id_text_view_comment_main_post_content);
-        final EditText newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
+        final EditText editTextNewComment = (EditText) findViewById(R.id.id_edit_text_new_comment);
         final TextView textViewCharCount = (TextView) findViewById(R.id.id_text_view_comment_char_count);
         final TextView postCommentButton = (TextView) findViewById(R.id.id_text_view_button_new_comment_post);
 
@@ -146,24 +146,29 @@ public class PostCommentActivity extends AppCompatActivity{
             postCommentButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (newCommentCharCount < 0)
+                    if (newCommentCharCount < 0) {
                         Toast.makeText(PostCommentActivity.this, "Comment too long!", Toast.LENGTH_SHORT).show();
-                    else
-                        addCommentToAdapter(newCommentText.getText().toString().trim());
+                    }
+                    else {
+                        // disable post button so user can't spam posts
+                        postCommentButton.setClickable(false);
+                        addCommentToAdapter(editTextNewComment.getText().toString().trim());
+                    }
+
                 }
             });
 
             // real time update number of characters left on comment
-            newCommentText.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            editTextNewComment.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
                 @Override
                 public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                    if (Helpers.isKeyboardShown(newCommentText.getRootView()))
+                    if (Helpers.isKeyboardShown(editTextNewComment.getRootView()))
                         textViewCharCount.setVisibility(View.VISIBLE);
                     else
                         textViewCharCount.setVisibility(View.INVISIBLE);
                 }
             });
-            newCommentText.addTextChangedListener(new TextWatcher() {
+            editTextNewComment.addTextChangedListener(new TextWatcher() {
                 int prev_length = 0;
                 public void afterTextChanged(Editable s) {
                     if (prev_length >= 200) {
@@ -304,10 +309,15 @@ public class PostCommentActivity extends AppCompatActivity{
     public void postAddCommentCleanup() {
         postCommentsSwipeRefreshContainer.setRefreshing(true);
         new FetchUserPostDBTask(true).execute();
-        EditText newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
+        // reset new comment edit text
+        final EditText newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
         newCommentText.setText("");
         newCommentText.clearFocus();
         Helpers.hideSoftKeyboard(getApplicationContext(), newCommentText);
+
+        // re-enable post button
+        final TextView postCommentButton = (TextView) findViewById(R.id.id_text_view_button_new_comment_post);
+        postCommentButton.setClickable(true);
     }
 
     public void postDeleteCommentCleanup() {

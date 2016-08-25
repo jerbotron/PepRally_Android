@@ -842,8 +842,8 @@
 						"selection":
 						[
 							[
-								4554,
-								4554
+								4005,
+								4005
 							]
 						],
 						"settings":
@@ -854,7 +854,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 1824.0,
+						"translation.y": 1776.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,

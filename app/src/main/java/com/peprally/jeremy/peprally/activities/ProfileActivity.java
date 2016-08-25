@@ -50,6 +50,8 @@ import com.peprally.jeremy.peprally.custom.ui.ProfileViewPager;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 import com.squareup.picasso.Picasso;
 
+import org.w3c.dom.Text;
+
 import static com.peprally.jeremy.peprally.utils.Constants.INTEGER_INVALID;
 
 public class ProfileActivity extends AppCompatActivity {
@@ -74,7 +76,7 @@ public class ProfileActivity extends AppCompatActivity {
     // General Variables
     private static UserProfileParcel userProfileParcel;
     private static final String TAG = ProfileActivity.class.getSimpleName();
-    private boolean editMode = false;
+    private boolean profileEditMode;
     private boolean didCurrentUserFistbumpProfileUserAlready = false;
 
     /***********************************************************************************************
@@ -90,6 +92,7 @@ public class ProfileActivity extends AppCompatActivity {
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
         ProfileActivityStackSingleton.getInstance().push(userProfileParcel);
         userProfileParcel.setCurrentActivity(ActivityEnum.PROFILE);
+        profileEditMode = false;
 
         // 3 Profile Activity cases currently:
         // - view/edit your own profile as a fan
@@ -109,7 +112,7 @@ public class ProfileActivity extends AppCompatActivity {
 //        appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
 //            @Override
 //            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-//                if (!editMode) {
+//                if (!profileEditMode) {
 //                    if (verticalOffset == 0 && supportActionBar.getTitle() != null) {
 //                        supportActionBar.setTitle(userProfileParcel.getProfileUsername());
 //                    }
@@ -124,8 +127,10 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        userProfileParcel = ProfileActivityStackSingleton.getInstance().peek();
-        new FetchUserProfileFromDBTask().execute();
+        if (!profileEditMode) {
+            userProfileParcel = ProfileActivityStackSingleton.getInstance().peek();
+            new FetchUserProfileFromDBTask().execute();
+        }
     }
 
     @Override
@@ -141,7 +146,6 @@ public class ProfileActivity extends AppCompatActivity {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
             switch (IntentRequestEnum.fromInt(requestCode)) {
                 case FAV_TEAM_REQUEST:
@@ -159,6 +163,7 @@ public class ProfileActivity extends AppCompatActivity {
                     break;
             }
         }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
@@ -173,13 +178,13 @@ public class ProfileActivity extends AppCompatActivity {
         return userProfileParcel;
     }
 
-    public void editFavoriteTeam() {
+    public void launchFavoriteTeamActivity() {
         Intent intent = new Intent(ProfileActivity.this, FavoriteTeamActivity.class);
         startActivityForResult(intent, IntentRequestEnum.FAV_TEAM_REQUEST.toInt());
         overridePendingTransition(R.anim.right_in, R.anim.left_out);
     }
 
-    public void editFavoritePlayer() {
+    public void launchFavoritePlayerActivity() {
         String favTeam = editFragment.getFavTeam();
         if (favTeam.isEmpty()) {
             Toast.makeText(ProfileActivity.this, "Pick a favorite team first!", Toast.LENGTH_SHORT).show();
@@ -331,7 +336,8 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void handleBackPressed() {
-        if (editMode) {
+        if (profileEditMode) {
+            profileEditMode = false;
             // Push profile changes to DB
             new PushProfileChangesToDBTask().execute();
 
@@ -349,10 +355,14 @@ public class ProfileActivity extends AppCompatActivity {
             infoFragment.onResume();
             ((ProfileViewPager) viewPagerProfile).setAllowedSwipeDirection(ProfileViewPager.SwipeDirection.all);
 
-            editMode = false;
-
             // Change back Actionbar title
             supportActionBar.setTitle(userProfileParcel.getProfileUsername());
+
+            // change button UI content
+            final TextView buttonEditProfileContent = (TextView) findViewById(R.id.id_button_edit_profile_content);
+            buttonEditProfileContent.setText(getString(R.string.placeholder_edit_profile));
+            buttonEditProfileContent.setCompoundDrawablesWithIntrinsicBounds(
+                    null, null, Helpers.getAPICompatVectorDrawable(getApplicationContext(), R.drawable.ic_edit), null);
         }
         else {
             if (userProfileParcel.isSelfProfile()) {
@@ -472,7 +482,8 @@ public class ProfileActivity extends AppCompatActivity {
             buttonEditProfile.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (!editMode) {
+                    if (!profileEditMode) {
+                        profileEditMode = true;
                         // Switch Fragment to editFragment
 //                            appBarLayout.setExpanded(false, false);
                         tabLayout.setVisibility(View.GONE);
@@ -486,7 +497,10 @@ public class ProfileActivity extends AppCompatActivity {
                         // Change Actionbar title
                         supportActionBar.setTitle("Edit Profile");
 
-                        editMode = true;
+                        // change button UI content
+                        buttonEditProfileContent.setText(getString(R.string.placeholder_editing_profile));
+                        buttonEditProfileContent.setCompoundDrawablesWithIntrinsicBounds(
+                                null, null, null, null);
                     }
                 }
             });

@@ -1,8 +1,8 @@
 <resources>
     <string name="label_app_name">PepRally</string>
-    <string name="label_app_version">v1.0.0</string>
-    <string name="label_app_name_version">PepRally v1.0.0</string>
-    <string name="label_app_full_version">Version 1.0.0 - UT BETA</string>
+    <string name="label_app_version">v1.0.2</string>
+    <string name="label_app_name_version">PepRally v1.0.2</string>
+    <string name="label_app_full_version">Version 1.0.2 - UT BETA</string>
     <string name="label_app_location">Made in Austin, TX</string>
     <string name="label_app_facebook_link">https://www.facebook.com/peprallyapp</string>
     <string name="label_app_instagram_link">http://instagram.com/peprallyapp</string>
@@ -68,10 +68,10 @@
     <string name="default_trash_talk"><i>Let em\' know what\'s up!</i></string>
 
     <string name="default_post_question_1"><i>What\'s on your mind?</i></string>
-    <string name="default_post_question_2"><i>Shout out your favorite player!</i></string>
-    <string name="default_post_question_3"><i>Say something encouraging about a team!</i></string>
-    <string name="default_post_question_5"><i>Share your best trash talk about another school!</i></string>
-    <string name="default_post_question_4"><i>You win a FREE BURRITO! (After you make a post)</i></string>
+    <string name="default_post_question_2"><i>Share something new you learned today!</i></string>
+    <string name="default_post_question_3"><i>What\'s your go-to one liner?</i></string>
+    <string name="default_post_question_5"><i>Someone is probably having a bad day, say something to cheer them up!</i></string>
+    <string name="default_post_question_4"><i>What are you looking forward to?</i></string>
 
     <string name="example_text">This is a sample post message to see what the view would
         look like on a card. This sentence has no meaning, it\'s a waste of time to read it. Okay thanks bye.</string>
@@ -85,8 +85,8 @@
     <string name="notification_5_placeholder">fistbumped you back. It\'s a match!</string>
 
     <!-- Error Message Strings -->
-    <string name="no_connection_text">Oops! Looks like you\'ve lost internet connection. Please check your
-        connection settings and try re-open PepRally!</string>
+    <string name="no_connection_text">Uh oh! Looks like you\'ve lost internet connection. Please check your
+        connection settings and try re-opening PepRally.</string>
 
     <!-- Content Description Strings -->
     <string name="content_description_image_view">Image View</string>
@@ -108,6 +108,7 @@
     <string name="placeholder_first_name">First Name</string>
     <string name="placeholder_view_profile">View Profile</string>
     <string name="placeholder_edit_profile">EDIT PROFILE</string>
+    <string name="placeholder_editing_profile">EDITING PROFILE&#8230;</string>
     <string name="placeholder_notifications">Notifications</string>
     <string name="placeholder_messages">Messages</string>
     <string name="placeholder_no_notifications">No new notifications.</string>

@@ -46,8 +46,8 @@ public class FavoritePlayerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_favorite_player);
 
         callingActivity = getIntent().getStringExtra("CALLING_ACTIVITY");
-        String team = getIntent().getStringExtra("TEAM");
-        ActionBar supportActionBar = getSupportActionBar();
+        final String team = getIntent().getStringExtra("TEAM");
+        final ActionBar supportActionBar = getSupportActionBar();
         assert supportActionBar != null;
         supportActionBar.setTitle(team);
         supportActionBar.setDisplayHomeAsUpEnabled(true);
@@ -71,14 +71,12 @@ public class FavoritePlayerActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+        if (callingActivity.equals("PROFILE_ACTIVITY")) {
+            Intent intent = new Intent();
+            setResult(Activity.RESULT_CANCELED, intent);
+        }
         finish();
         overridePendingTransition(R.anim.left_in, R.anim.right_out);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_unselect, menu);
-        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
@@ -86,12 +84,6 @@ public class FavoritePlayerActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case android.R.id.home:
                 onBackPressed();
-                return true;
-            case R.id.id_item_unselect:
-                Intent intent = new Intent();
-                setResult(Activity.RESULT_OK, intent);
-                finish();
-                overridePendingTransition(R.anim.left_in, R.anim.right_out);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

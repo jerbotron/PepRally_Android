@@ -51,7 +51,7 @@ public class ConversationsActivity extends AppCompatActivity {
         userProfileParcel.setCurrentActivity(ActivityEnum.CONVERSATIONS);
 
         // setup home button on action bar
-        ActionBar supportActionBar = getSupportActionBar();
+        final ActionBar supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
             supportActionBar.setDisplayHomeAsUpEnabled(true);
         }
@@ -117,6 +117,12 @@ public class ConversationsActivity extends AppCompatActivity {
     }
 
     private void refreshAdapter() {
+        conversationSwipeRefreshContainer.post(new Runnable() {
+            @Override
+            public void run() {
+                conversationSwipeRefreshContainer.setRefreshing(true);
+            }
+        });
         new FetchUserConversationsAsyncTask().execute(userProfileParcel.getCurrentUsername());
     }
 
@@ -153,12 +159,14 @@ public class ConversationsActivity extends AppCompatActivity {
             initializeAdapter(userConversations);
 
             // stop refresh loading animation
-            if (conversationSwipeRefreshContainer.isRefreshing())
-                conversationSwipeRefreshContainer.setRefreshing(false);
-
-            // stop on load progress circle animation
-            RelativeLayout progressCircleContainer = (RelativeLayout) findViewById(R.id.id_container_conversation_progress_circle);
-            progressCircleContainer.setVisibility(View.GONE);
+            if (conversationSwipeRefreshContainer.isRefreshing()) {
+                conversationSwipeRefreshContainer.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        conversationSwipeRefreshContainer.setRefreshing(false);
+                    }
+                });
+            }
         }
     }
 

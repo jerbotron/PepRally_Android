@@ -180,19 +180,21 @@ public class Helpers {
                                                String facebookId,
                                                int size,
                                                boolean rounded) {
-        if (rounded) {
-            Picasso.with(callingContext)
-                    .load(getFacebookProfileImageURL(facebookId, size))
-                    .placeholder(R.drawable.img_default_profile)
-                    .error(R.drawable.img_default_profile)
-                    .transform(new CircleImageTransformation())
-                    .into(imageView);
-        } else {
-            Picasso.with(callingContext)
-                    .load(getFacebookProfileImageURL(facebookId, size))
-                    .placeholder(R.drawable.img_default_profile)
-                    .error(R.drawable.img_default_profile)
-                    .into(imageView);
+        if (facebookId != null && !facebookId.isEmpty()) {
+            if (rounded) {
+                Picasso.with(callingContext)
+                        .load(getFacebookProfileImageURL(facebookId, size))
+                        .placeholder(R.drawable.img_default_profile)
+                        .error(R.drawable.img_default_profile)
+                        .transform(new CircleImageTransformation())
+                        .into(imageView);
+            } else {
+                Picasso.with(callingContext)
+                        .load(getFacebookProfileImageURL(facebookId, size))
+                        .placeholder(R.drawable.img_default_profile)
+                        .error(R.drawable.img_default_profile)
+                        .into(imageView);
+            }
         }
     }
 

@@ -33,11 +33,10 @@ public class ProfileInfoFragment extends Fragment {
      **********************************************************************************************/
     // General Variables
     private UserProfileParcel userProfileParcel;
-    private static final String TAG = ProfileInfoFragment.class.getSimpleName();
 
-    private Map<String, String>  baseballPositions = new HashMap<>();
-    private Map<String, String>  basketballPositions = new HashMap<>();
-    private Map<String, String>  footballPositions = new HashMap<>();
+    private Map<String, String> baseballPositions = new HashMap<>();
+    private Map<String, String> basketballPositions = new HashMap<>();
+    private Map<String, String> footballPositions = new HashMap<>();
 
     /***********************************************************************************************
      *************************************** FRAGMENT METHODS **************************************

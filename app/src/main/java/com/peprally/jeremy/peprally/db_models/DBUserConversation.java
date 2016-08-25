@@ -13,6 +13,8 @@ import com.peprally.jeremy.peprally.db_models.json_marshallers.ConversationJSONM
 @DynamoDBTable(tableName = "UserConversations")
 public class DBUserConversation implements Comparable<DBUserConversation> {
     private String conversationID;
+    private String senderUsername;
+    private String receiverUsername;
     private Long timeStampLatest;
     private Long timeStampCreated;
     private Conversation conversation;
@@ -22,9 +24,27 @@ public class DBUserConversation implements Comparable<DBUserConversation> {
         return this.timeStampLatest.compareTo(another.timeStampLatest);
     }
 
+    // Helpers
+    public void addConversationChatMessage(ChatMessage message) {
+        conversation.addChatMessage(message);
+    }
+
+    public String getOtherUsername(String currentUsername) {
+        return (currentUsername.equals(senderUsername)) ? receiverUsername : senderUsername;
+    }
+
+    // Getters/Setters
     @DynamoDBHashKey(attributeName = "ConversationID")
     public String getConversationID() { return conversationID; }
     public void setConversationID(String conversationID) { this.conversationID = conversationID; }
+
+    @DynamoDBAttribute(attributeName = "ReceiverUsername")
+    public String getSenderUsername() { return senderUsername; }
+    public void setSenderUsername(String senderUsername) { this.senderUsername = senderUsername; }
+
+    @DynamoDBAttribute(attributeName = "SenderUsername")
+    public String getReceiverUsername() { return receiverUsername; }
+    public void setReceiverUsername(String receiverUsername) { this.receiverUsername = receiverUsername; }
 
     @DynamoDBAttribute(attributeName = "TimestampLatest")
     public Long getTimeStampLatest() { return timeStampLatest; }
@@ -38,9 +58,4 @@ public class DBUserConversation implements Comparable<DBUserConversation> {
     @DynamoDBMarshalling (marshallerClass = ConversationJSONMarshaller.class)
     public Conversation getConversation() { return conversation; }
     public void setConversation(Conversation conversation) { this.conversation = conversation; }
-
-    // Helpers
-    public void addConversationChatMessage(ChatMessage message) {
-        conversation.addChatMessage(message);
-    }
 }

@@ -25,10 +25,6 @@ public class NewPostActivity extends AppCompatActivity {
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
-    // UI Variables
-    private EditText editTextNewPost;
-    private TextView textViewCharCount;
-
     // General Variables
 //    private static final String TAG = NewPostActivity.class.getSimpleName();
     private int charCount = 200;
@@ -43,13 +39,13 @@ public class NewPostActivity extends AppCompatActivity {
 
         final NewPostHints newPostHints = new NewPostHints();
 
-        ActionBar supportActionBar = getSupportActionBar();
+        final ActionBar supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
             supportActionBar.setDisplayHomeAsUpEnabled(true);
         }
 
-        editTextNewPost = (EditText) findViewById(R.id.id_edit_text_new_post);
-        textViewCharCount = (TextView) findViewById(R.id.new_post_char_count);
+        final EditText editTextNewPost = (EditText) findViewById(R.id.id_edit_text_new_post);
+        final TextView textViewCharCount = (TextView) findViewById(R.id.new_post_char_count);
 
         editTextNewPost.setHint(newPostHints.getRandomHint());
         editTextNewPost.addTextChangedListener(new TextWatcher() {
@@ -60,9 +56,7 @@ public class NewPostActivity extends AppCompatActivity {
                 }
             }
 
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
 
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 charCount -= (s.length() - prev_length);
@@ -79,6 +73,7 @@ public class NewPostActivity extends AppCompatActivity {
                 if (editTextNewPost.getText().toString().isEmpty())
                     Toast.makeText(getApplicationContext(), "Post can't be empty!", Toast.LENGTH_SHORT).show();
                 else {
+                    newPostButton.setClickable(false);
                     Intent intent = new Intent();
                     intent.putExtra("NEW_POST_TEXT", editTextNewPost.getText().toString());
                     setResult(Activity.RESULT_OK, intent);
