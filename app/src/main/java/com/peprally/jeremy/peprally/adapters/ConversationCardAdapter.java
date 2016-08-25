@@ -17,6 +17,7 @@ import com.peprally.jeremy.peprally.activities.MessagingActivity;
 import com.peprally.jeremy.peprally.custom.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.custom.messaging.Conversation;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
+import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
@@ -42,7 +43,7 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
 
     static class MessageCardHolder extends RecyclerView.ViewHolder {
         LinearLayout clickableContainer;
-        ImageView userConversationImage;
+        ImageView profileImage;
         TextView username;
         TextView lastMessageContent;
         TextView timeStamp;
@@ -50,7 +51,7 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
         private MessageCardHolder(View itemView) {
             super(itemView);
             clickableContainer = (LinearLayout) itemView.findViewById(R.id.id_recycler_view_container_conversation);
-            userConversationImage = (ImageView) itemView.findViewById(R.id.id_conversation_card_profile_photo);
+            profileImage = (ImageView) itemView.findViewById(R.id.id_conversation_card_profile_photo);
             username = (TextView) itemView.findViewById(R.id.id_conversation_card_username);
             lastMessageContent = (TextView) itemView.findViewById(R.id.id_conversation_card_content);
             timeStamp = (TextView) itemView.findViewById(R.id.id_conversation_card_time_stamp);
@@ -67,17 +68,15 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
     public void onBindViewHolder(MessageCardHolder MessageCardHolder, int position) {
         final DBUserConversation userConversation = conversations.get(position);
         final Conversation conversation = userConversation.getConversation();
-        Map<String, String> usernameFacebookIDMap = conversation.getUsernameFacebookIdMap();
-        for (String username : usernameFacebookIDMap.keySet()) {
-            if (!username.equals(userProfileParcel.getCurrentUsername())) {
-                Helpers.setFacebookProfileImage(callingContext,
-                        MessageCardHolder.userConversationImage,
-                        usernameFacebookIDMap.get(username),
-                        3,
-                        true);
-                MessageCardHolder.username.setText(username);
-            }
-        }
+        final String receiverUsername = userConversation.getOtherUsername(userProfileParcel.getCurrentUsername());
+        final Map<String, String> usernameFacebookIDMap = conversation.getUsernameFacebookIdMap();
+
+        Helpers.setFacebookProfileImage(callingContext,
+                MessageCardHolder.profileImage,
+                usernameFacebookIDMap.get(receiverUsername),
+                3,
+                true);
+        MessageCardHolder.username.setText(receiverUsername);
 
         ArrayList<ChatMessage> messages = conversation.getChatMessages();
         if (messages != null && messages.size() > 0) {
@@ -94,7 +93,14 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
 
         MessageCardHolder.timeStamp.setText(Helpers.getTimetampString(userConversation.getTimeStampLatest(), true));
 
-        // conversation onclick handler
+        // onclick handlers
+        MessageCardHolder.profileImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                AsyncHelpers.launchExistingUserProfileActivity(callingContext, receiverUsername, userProfileParcel.getCurrentUsername());
+            }
+        });
+
         MessageCardHolder.clickableContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

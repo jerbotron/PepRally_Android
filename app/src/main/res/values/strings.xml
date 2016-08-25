@@ -108,6 +108,7 @@
     <string name="placeholder_first_name">First Name</string>
     <string name="placeholder_view_profile">View Profile</string>
     <string name="placeholder_edit_profile">EDIT PROFILE</string>
+    <string name="placeholder_editing_profile">EDITING PROFILE&#8230;</string>
     <string name="placeholder_notifications">Notifications</string>
     <string name="placeholder_messages">Messages</string>
     <string name="placeholder_no_notifications">No new notifications.</string>

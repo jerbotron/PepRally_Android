@@ -70,5 +70,5 @@
         android:selectable="false"
         android:enabled="false"
         android:layout="@layout/settings_version_layout"
-        android:key="pref_key_app_version"/>
+        android:key="pref_key_app_version" />
 </PreferenceScreen>

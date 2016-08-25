@@ -3,9 +3,6 @@ package com.peprally.jeremy.peprally.activities;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.Signature;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
@@ -13,12 +10,10 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatDelegate;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.Spanned;
 import android.text.TextWatcher;
-import android.util.Base64;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
@@ -26,7 +21,6 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.util.Log;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
@@ -46,6 +40,7 @@ import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.Profile;
+import com.facebook.ProfileTracker;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
@@ -66,17 +61,12 @@ import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
 public class LoginActivity extends AppCompatActivity {
-    static {
-        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
-    }
-
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
@@ -86,6 +76,7 @@ public class LoginActivity extends AppCompatActivity {
     // FB Variables
     private AccessTokenTracker accessTokenTracker;
     private CallbackManager callbackManager;
+    private LoginButton facebookLoginButton;
 
     // UI Variables
     private EditText editTextUsername;
@@ -126,21 +117,21 @@ public class LoginActivity extends AppCompatActivity {
         userSelectedSchool = SchoolsSupportedEnum.fromString(sharedPref.getString(getResources().getString(R.string.pref_key_school_network), ""));
 
         if (!Helpers.checkIfNetworkConnectionAvailable((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE))) {
+            connectionSecured = false;
             setContentView(R.layout.activity_login);
             setupSchoolSpinner();
-            connectionSecured = false;
             LoginManager.getInstance().logOut();
-            final LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
+            facebookLoginButton = (LoginButton) findViewById(R.id.login_button);
             final Snackbar snackbar = Snackbar.make(findViewById(R.id.id_activity_login_container), getResources().getString(R.string.no_connection_text), Snackbar.LENGTH_INDEFINITE);
             snackbar.setAction("OKAY", new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     snackbar.dismiss();
                 }});
-            TextView tv_snackbar = (TextView) snackbar.getView().findViewById(android.support.design.R.id.snackbar_text);
-            tv_snackbar.setMaxLines(5);
+            final TextView textViewSnackbar = (TextView) snackbar.getView().findViewById(android.support.design.R.id.snackbar_text);
+            textViewSnackbar.setMaxLines(5);
             snackbar.show();
-            loginButton.setOnClickListener(new View.OnClickListener() {
+            facebookLoginButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     snackbar.show();
@@ -150,19 +141,17 @@ public class LoginActivity extends AppCompatActivity {
         else {
             connectionSecured = true;
             if (Helpers.checkGooglePlayServicesAvailable(this)) {
-
+                // facebook login initialization
                 callbackManager = CallbackManager.Factory.create();
 
                 dynamoDBHelper = new DynamoDBHelper(this);
-
                 fbDataBundle = new Bundle();
-
                 FCMInstanceId = Helpers.getFCMInstanceId(this);
-
                 accessTokenTracker = new AccessTokenTracker() {
                     @Override
                     protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken newAccessToken) {
 //                        Log.d(TAG, "access token changed");
+                        bundleFacebookData();
                     }
                 };
 
@@ -276,13 +265,15 @@ public class LoginActivity extends AppCompatActivity {
     private void setupLoginScreen() {
         setContentView(R.layout.activity_login);
         setupSchoolSpinner();
-        final LoginButton loginButton = (LoginButton) findViewById(R.id.login_button);
-        loginButton.setOnClickListener(new View.OnClickListener() {
+        facebookLoginButton = (LoginButton) findViewById(R.id.login_button);
+        facebookLoginButton.setReadPermissions(Arrays.asList("public_profile", "email", "user_birthday"));
+
+        facebookLoginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (userSelectedSchool == SchoolsSupportedEnum.PROMPT_TEXT) {
                     Toast.makeText(LoginActivity.this, "Must select a school first!", Toast.LENGTH_SHORT).show();
-                    loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+                    facebookLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
                         @Override
                         public void onSuccess(LoginResult loginResult) {
                             LoginManager.getInstance().logOut();
@@ -293,10 +284,12 @@ public class LoginActivity extends AppCompatActivity {
                         public void onError(FacebookException error) {}
                     });
                 } else {
-                    setContentView(R.layout.splash);
-                    loginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+                    facebookLoginButton.registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
                         @Override
                         public void onSuccess(LoginResult loginResult) {
+                            setContentView(R.layout.splash);
+                            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+                            sharedPreferences.edit().putString("CURRENT_FACEBOOK_ID", loginResult.getAccessToken().getUserId()).apply();
                             AWSLoginTask();
                         }
 
@@ -312,6 +305,7 @@ public class LoginActivity extends AppCompatActivity {
                             setContentView(R.layout.activity_login);
                             setupSchoolSpinner();
                             Toast.makeText(LoginActivity.this, "Login attempt failed.", Toast.LENGTH_LONG).show();
+                            error.printStackTrace();
                         }
                     });
                 }
@@ -448,6 +442,11 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void loginPeprally(UserProfileParcel userProfileParcel) {
+        // save current user's username and first name to shared preferences
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        sharedPreferences.edit().putString("CURRENT_USERNAME", userProfileParcel.getCurrentUsername()).apply();
+        sharedPreferences.edit().putString("CURRENT_FIRSTNAME", userProfileParcel.getFirstname()).apply();
+
         finish();
         Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
         intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);

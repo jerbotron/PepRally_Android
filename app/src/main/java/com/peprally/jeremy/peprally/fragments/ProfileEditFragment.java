@@ -2,7 +2,6 @@ package com.peprally.jeremy.peprally.fragments;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -57,13 +56,13 @@ public class ProfileEditFragment extends Fragment {
         textViewFavTeam.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((ProfileActivity) getActivity()).editFavoriteTeam();
+                ((ProfileActivity) getActivity()).launchFavoriteTeamActivity();
             }
         });
         textViewFavPlayer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((ProfileActivity) getActivity()).editFavoritePlayer();
+                ((ProfileActivity) getActivity()).launchFavoritePlayerActivity();
             }
         });
 

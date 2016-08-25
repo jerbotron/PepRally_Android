@@ -2,9 +2,11 @@ package com.peprally.jeremy.peprally.activities;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.GravityCompat;
@@ -12,7 +14,6 @@ import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.app.AppCompatDelegate;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -43,9 +44,6 @@ import java.util.List;
 import static com.peprally.jeremy.peprally.utils.Helpers.getAPICompatVectorDrawable;
 
 public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
-    static {
-        AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
-    }
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
@@ -72,8 +70,6 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        FacebookSdk.sdkInitialize(getApplicationContext());
-        Profile fbProfile = Profile.getCurrentProfile();
 
         // Set main activity content view
         setContentView(R.layout.activity_home);
@@ -81,11 +77,13 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         // Initialize member variables
         dynamoDBHelper = new DynamoDBHelper(this);
 
+        // initialize incoming activity data
         userProfileParcel = getIntent().getParcelableExtra("USER_PROFILE_PARCEL");
         userProfileParcel.setCurrentActivity(ActivityEnum.HOME);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
         if (userProfileParcel == null) {
-            new FetchUserProfileParcelTask().execute(fbProfile);
+            new FetchUserProfileParcelTask().execute();
         }
         else {
             viewPagerHome = (ViewPager) findViewById(R.id.id_viewpager_home);
@@ -115,11 +113,11 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         ImageView profilePicture = (ImageView) headerView.findViewById(R.id.profile_image_header);
         Helpers.setFacebookProfileImage(HomeActivity.this,
                 profilePicture,
-                fbProfile.getId(),
+                sharedPreferences.getString("CURRENT_FACEBOOK_ID", ""),
                 3,
                 true);
         TextView sidebar_name = (TextView) headerView.findViewById(R.id.sidebar_header_name);
-        sidebar_name.setText(fbProfile.getFirstName());
+        sidebar_name.setText(sharedPreferences.getString("CURRENT_FIRSTNAME", ""));
         header.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -325,9 +323,9 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
-    private class FetchUserProfileParcelTask extends AsyncTask<Profile, Void, Boolean> {
+    private class FetchUserProfileParcelTask extends AsyncTask<Void, Void, Boolean> {
         @Override
-        protected Boolean doInBackground(Profile... params) {
+        protected Boolean doInBackground(Void... params) {
             DBUserProfile userProfile = new DBUserProfile();
             DBPlayerProfile playerProfile = new DBPlayerProfile();
             userProfile.setCognitoId(dynamoDBHelper.getIdentityID());
