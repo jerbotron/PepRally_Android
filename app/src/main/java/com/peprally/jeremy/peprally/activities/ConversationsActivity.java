@@ -15,6 +15,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExp
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.ConversationCardAdapter;
+import com.peprally.jeremy.peprally.custom.ui.EmptyViewSwipeRefreshLayout;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
@@ -32,7 +33,7 @@ public class ConversationsActivity extends AppCompatActivity {
      **********************************************************************************************/
     // UI Variables
     private RecyclerView recyclerView;
-    private SwipeRefreshLayout conversationSwipeRefreshContainer;
+    private EmptyViewSwipeRefreshLayout conversationSwipeRefreshContainer;
 
     // AWS Variables
     private DynamoDBHelper dynamoDBHelper;
@@ -64,7 +65,7 @@ public class ConversationsActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(rvLayoutManager);
 
         // setup swipe refresh container
-        conversationSwipeRefreshContainer = (SwipeRefreshLayout) findViewById(R.id.id_container_swipe_refresh_conversation);
+        conversationSwipeRefreshContainer = (EmptyViewSwipeRefreshLayout) findViewById(R.id.id_container_swipe_refresh_conversation);
         conversationSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {

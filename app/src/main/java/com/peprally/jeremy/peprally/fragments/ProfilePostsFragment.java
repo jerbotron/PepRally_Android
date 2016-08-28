@@ -18,6 +18,7 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.PostCardAdapter;
+import com.peprally.jeremy.peprally.custom.ui.EmptyViewSwipeRefreshLayout;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
@@ -34,7 +35,7 @@ public class ProfilePostsFragment extends Fragment {
     private PostCardAdapter postCardAdapter;
     private RecyclerView recyclerView;
     private TextView noPostsText;
-    private SwipeRefreshLayout profilePostsSwipeRefreshContainer;
+    private EmptyViewSwipeRefreshLayout profilePostsSwipeRefreshContainer;
 
     // General Variables
 //    private static final String TAG = ProfilePostsFragment.class.getSimpleName();
@@ -58,7 +59,7 @@ public class ProfilePostsFragment extends Fragment {
         recyclerView.setLayoutManager(rvLayoutManager);
 
         // setup swipe refresh container
-        profilePostsSwipeRefreshContainer = (SwipeRefreshLayout) view.findViewById(R.id.container_swipe_refresh_profile_posts);
+        profilePostsSwipeRefreshContainer = (EmptyViewSwipeRefreshLayout) view.findViewById(R.id.container_swipe_refresh_profile_posts);
         profilePostsSwipeRefreshContainer.setRefreshing(true);
         profilePostsSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override

@@ -3,6 +3,8 @@ package com.peprally.jeremy.peprally.network;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
@@ -28,6 +30,7 @@ import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -108,8 +111,11 @@ public class DynamoDBHelper {
     }
 
     public DBUserPost loadDBUserPost(String PostId) {
-        String postUsername = PostId.split("_")[0];
-        Long timestampSeconds = Long.valueOf(PostId.split("_")[1]);
+        String [] splitArray = PostId.split("_");
+        String postUsername = TextUtils.join("_", Arrays.copyOfRange(splitArray, 0, splitArray.length - 1));
+        Long timestampSeconds = Long.valueOf(splitArray[splitArray.length - 1]);
+        Log.d("DDH: ", postUsername);
+        Log.d("DDH: ", timestampSeconds.toString());
         return mapper.load(DBUserPost.class, postUsername, timestampSeconds);
     }
 
@@ -196,9 +202,9 @@ public class DynamoDBHelper {
         new DeleteDBUserNotificationAsyncTask(notificationType).execute(bundle);
     }
 
-    public void deleteCommentFistbumpNotification(NotificationEnum notificationType, String commentID, String senderUsername) {
+    public void deleteCommentFistbumpNotification(NotificationEnum notificationType, String commentId, String senderUsername) {
         Bundle bundle = new Bundle();
-        bundle.putString("COMMENT_ID", commentID);
+        bundle.putString("COMMENT_ID", commentId);
         bundle.putString("SENDER_USERNAME", senderUsername);
         new DeleteDBUserNotificationAsyncTask(notificationType).execute(bundle);
     }
@@ -223,6 +229,10 @@ public class DynamoDBHelper {
 
     public void batchDeletePostNotifications(DBUserPost userPost) {
         new BatchDeletePostDBUserNotificationsAsyncTask().execute(userPost);
+    }
+
+    public void batchDeleteCommentFistbumpNotifications(NotificationEnum notificationType, Comment userComment) {
+        new BatchDeleteCommentDBUserNotificationsAsyncTask(notificationType).execute(userComment);
     }
 
     public void deleteConversation(Conversation conversation, AsyncTaskCallback taskCallback) {
@@ -622,12 +632,15 @@ public class DynamoDBHelper {
                 }
                 case COMMENT_FISTBUMP: {
                     userNotification.setCommentId(bundle.getString("COMMENT_ID"));
+                    expressionAttributeValues.put(":type", new AttributeValue().withN(String.valueOf(notificationType.toInt())));
                     queryExpression = new DynamoDBQueryExpression<DBUserNotification>()
                             .withIndexName("CommentId-SenderUsername-index")
                             .withHashKeyValues(userNotification)
                             .withRangeKeyCondition("SenderUsername", new Condition()
                                     .withComparisonOperator(ComparisonOperator.EQ)
                                     .withAttributeValueList(new AttributeValue().withS(bundle.getString("SENDER_USERNAME"))))
+                            .withFilterExpression("NotificationType = :type")
+                            .withExpressionAttributeValues(expressionAttributeValues)
                             .withConsistentRead(false);
                     break;
                 }
@@ -662,6 +675,43 @@ public class DynamoDBHelper {
                     for (DBUserNotification notification : queryResults) {
                         mapper.delete(notification);
                     }
+                }
+            }
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private  class BatchDeleteCommentDBUserNotificationsAsyncTask extends AsyncTask<Comment, Void, Void> {
+
+        private NotificationEnum notificationType;
+
+        private BatchDeleteCommentDBUserNotificationsAsyncTask(NotificationEnum notificationType) {
+            this.notificationType = notificationType;
+        }
+
+        @Override
+        protected Void doInBackground(Comment... comments) {
+            Comment userComment = comments[0];
+            DBUserNotification userNotification = new DBUserNotification();
+            userNotification.setPostId(userComment.getPostId());
+            Map<String, AttributeValue> expressionAttributeValues = new HashMap<>();
+            expressionAttributeValues.put(":type", new AttributeValue().withN(String.valueOf(notificationType.toInt())));
+            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression<DBUserNotification>()
+                    .withIndexName("PostId-CommentId-index")
+                    .withHashKeyValues(userNotification)
+                    .withRangeKeyCondition("CommentId", new Condition()
+                            .withComparisonOperator(ComparisonOperator.EQ)
+                            .withAttributeValueList(new AttributeValue().withS(userComment.getCommentId())))
+                    .withFilterExpression("NotificationType = :type")
+                    .withExpressionAttributeValues(expressionAttributeValues)
+                    .withConsistentRead(false);
+
+            PaginatedQueryList<DBUserNotification> queryResults = mapper.query(DBUserNotification.class, queryExpression);
+
+            if (queryResults != null && queryResults.size() > 0) {
+                for (DBUserNotification notification : queryResults) {
+                    mapper.delete(notification);
                 }
             }
             return null;

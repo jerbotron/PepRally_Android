@@ -14,17 +14,28 @@
         android:textStyle="italic"
         android:gravity="center"/>
 
-    <android.support.v4.widget.SwipeRefreshLayout
+    <com.peprally.jeremy.peprally.custom.ui.EmptyViewSwipeRefreshLayout
         android:id="@+id/container_swipe_refresh_trending_posts"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/id_container_trending_mode_selector">
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/id_recycler_view_trending_posts"
+        <FrameLayout
+            android:id="@+id/id_container_swipe_refresh_view_group"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-        </android.support.v7.widget.RecyclerView>
-    </android.support.v4.widget.SwipeRefreshLayout>
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp" />
+            </ScrollView>
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/id_recycler_view_trending_posts"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </FrameLayout>
+    </com.peprally.jeremy.peprally.custom.ui.EmptyViewSwipeRefreshLayout>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_trending_action"

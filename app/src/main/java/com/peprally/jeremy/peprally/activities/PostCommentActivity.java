@@ -26,6 +26,7 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.CommentCardAdapter;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.custom.Comment;
+import com.peprally.jeremy.peprally.custom.ui.EmptyViewSwipeRefreshLayout;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
@@ -48,7 +49,7 @@ public class PostCommentActivity extends AppCompatActivity{
     // UI Variables
     private RecyclerView recyclerView;
     private ProgressDialog progressDialogDeletePost;
-    private SwipeRefreshLayout postCommentsSwipeRefreshContainer;
+    private EmptyViewSwipeRefreshLayout postCommentsSwipeRefreshContainer;
 
     // AWS/HTTP Variables
     private DynamoDBHelper dynamoDBHelper;
@@ -93,8 +94,7 @@ public class PostCommentActivity extends AppCompatActivity{
         recyclerView.setLayoutManager(rvLayoutManager);
 
         // setup swipe refresh container
-        postCommentsSwipeRefreshContainer = (SwipeRefreshLayout) findViewById(R.id.container_swipe_refresh_post_comments);
-        postCommentsSwipeRefreshContainer.setRefreshing(true);
+        postCommentsSwipeRefreshContainer = (EmptyViewSwipeRefreshLayout) findViewById(R.id.container_swipe_refresh_post_comments);
         postCommentsSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -329,6 +329,13 @@ public class PostCommentActivity extends AppCompatActivity{
     }
 
     private void refreshAdapter(boolean scrollToBottom) {
+        // start refresh animation
+        postCommentsSwipeRefreshContainer.post(new Runnable() {
+            @Override
+            public void run() {
+                postCommentsSwipeRefreshContainer.setRefreshing(true);
+            }
+        });
         new FetchUserPostDBTask(scrollToBottom).execute();
     }
 
@@ -441,7 +448,8 @@ public class PostCommentActivity extends AppCompatActivity{
         final AlertDialog.Builder dialogBuilderUserDeleted = new AlertDialog.Builder(PostCommentActivity.this);
         final View dialogViewConfirmDelete = View.inflate(PostCommentActivity.this, R.layout.dialog_confirm_delete, null);
         dialogBuilderUserDeleted.setView(dialogViewConfirmDelete);
-        dialogBuilderUserDeleted.setMessage("Oops, looks like this user has deleted their account!");
+        dialogBuilderUserDeleted.setTitle("Oops!");
+        dialogBuilderUserDeleted.setMessage("Looks like this user has deleted his/her account!");
         dialogBuilderUserDeleted.setPositiveButton("Go back", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
                 new RemovePostCommentAsyncTask().execute(deletedCommentId);
@@ -488,6 +496,14 @@ public class PostCommentActivity extends AppCompatActivity{
             mainPost = userPost;
 
             initializeAdapter(userPost.getComments(), scrollToBottom);
+
+            // stop refresh animation
+            postCommentsSwipeRefreshContainer.post(new Runnable() {
+                @Override
+                public void run() {
+                    postCommentsSwipeRefreshContainer.setRefreshing(false);
+                }
+            });
         }
     }
 
@@ -506,6 +522,11 @@ public class PostCommentActivity extends AppCompatActivity{
             mainPost.setComments(postComments);
             dynamoDBHelper.saveDBObject(mainPost);
             return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            refreshAdapter(false);
         }
     }
 }

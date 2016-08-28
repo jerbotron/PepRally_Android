@@ -189,7 +189,6 @@ public class ViewFistbumpsActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
             new FetchFistbumpedUsersDBTask().execute(getFistbumpedUsers(mainPost, commentIndex));
         }
     }

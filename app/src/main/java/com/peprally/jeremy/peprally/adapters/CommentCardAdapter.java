@@ -4,7 +4,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
@@ -21,7 +20,6 @@ import com.peprally.jeremy.peprally.activities.PostCommentActivity;
 import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.custom.Comment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
-import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
@@ -109,6 +107,8 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
 
         if (fistbumpedUsers.contains(currentUsername)) {
             commentHolder.fistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
+        } else {
+            commentHolder.fistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_50, 0);
         }
 
         commentHolder.username.setText(commentUsername);
@@ -325,6 +325,8 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                 // remove notification if comment is not by the same post user
                 if (!comment.getCommentUsername().equals(mainPost.getUsername()))
                     dynamoDBHelper.deletePostCommentNotification(NotificationEnum.POST_COMMENT, comment);
+
+                dynamoDBHelper.batchDeleteCommentFistbumpNotifications(NotificationEnum.COMMENT_FISTBUMP, comment);
             }
         });
         dialogBuilderConfirmDelete.setNegativeButton("No", new DialogInterface.OnClickListener() {

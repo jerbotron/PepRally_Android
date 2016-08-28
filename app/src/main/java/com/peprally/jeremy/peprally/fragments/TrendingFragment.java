@@ -19,6 +19,7 @@ import com.peprally.jeremy.peprally.activities.HomeActivity;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.PostCardAdapter;
+import com.peprally.jeremy.peprally.custom.ui.EmptyViewSwipeRefreshLayout;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.custom.UserPostComparator;
@@ -38,7 +39,7 @@ public class TrendingFragment extends Fragment {
     private PostCardAdapter postCardAdapter;
     private ImageButton imageButtonHottest, imageButtonLatest;
     private RecyclerView recyclerView;
-    private SwipeRefreshLayout trendingSwipeRefreshContainer;
+    private EmptyViewSwipeRefreshLayout trendingSwipeRefreshContainer;
 
     // General Variables
     private ArrayList<DBUserPost> posts;
@@ -73,7 +74,7 @@ public class TrendingFragment extends Fragment {
         recyclerView.setLayoutManager(rvLayoutManager);
 
         // setup swipe refresh container
-        trendingSwipeRefreshContainer = (SwipeRefreshLayout) view.findViewById(R.id.container_swipe_refresh_trending_posts);
+        trendingSwipeRefreshContainer = (EmptyViewSwipeRefreshLayout) view.findViewById(R.id.container_swipe_refresh_trending_posts);
         trendingSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {

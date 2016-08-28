@@ -8,14 +8,13 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.RelativeLayout;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.NotificationCardAdapter;
+import com.peprally.jeremy.peprally.custom.ui.EmptyViewSwipeRefreshLayout;
 import com.peprally.jeremy.peprally.db_models.DBUserNotification;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
@@ -33,7 +32,7 @@ public class NotificationsActivity extends AppCompatActivity {
      **********************************************************************************************/
     // UI Variables
     private RecyclerView recyclerView;
-    private SwipeRefreshLayout notificationsSwipeRefreshContainer;
+    private EmptyViewSwipeRefreshLayout notificationsSwipeRefreshContainer;
 
     // AWS Variables
     private DynamoDBHelper dynamoDBHelper;
@@ -68,7 +67,7 @@ public class NotificationsActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(rvLayoutManager);
 
         // setup swipe refresh container
-        notificationsSwipeRefreshContainer = (SwipeRefreshLayout) findViewById(R.id.id_container_swipe_refresh_notifications);
+        notificationsSwipeRefreshContainer = (EmptyViewSwipeRefreshLayout) findViewById(R.id.id_container_swipe_refresh_notifications);
         notificationsSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
