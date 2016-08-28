@@ -119,7 +119,6 @@ public class PostCommentActivity extends AppCompatActivity{
 
             // load comments if applicable
             if (mainPost.getCommentsCount() > 0) {
-//                initializeAdapter(mainPost.getComments(), false);
                 refreshAdapter(false);
             }
 
@@ -439,15 +438,17 @@ public class PostCommentActivity extends AppCompatActivity{
      **************************************** GENERAL_METHODS **************************************
      **********************************************************************************************/
     public void launchCommentIsDeletedDialog(final String deletedCommentId) {
-        final AlertDialog.Builder dialogBuilderConfirmDelete = new AlertDialog.Builder(PostCommentActivity.this);
+        final AlertDialog.Builder dialogBuilderUserDeleted = new AlertDialog.Builder(PostCommentActivity.this);
         final View dialogViewConfirmDelete = View.inflate(PostCommentActivity.this, R.layout.dialog_confirm_delete, null);
-        dialogBuilderConfirmDelete.setView(dialogViewConfirmDelete);
-        dialogBuilderConfirmDelete.setMessage("Oops, looks like this user has deleted their account!");
-        dialogBuilderConfirmDelete.setPositiveButton("Go back", new DialogInterface.OnClickListener() {
+        dialogBuilderUserDeleted.setView(dialogViewConfirmDelete);
+        dialogBuilderUserDeleted.setMessage("Oops, looks like this user has deleted their account!");
+        dialogBuilderUserDeleted.setPositiveButton("Go back", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
                 new RemovePostCommentAsyncTask().execute(deletedCommentId);
             }
         });
+
+        dialogBuilderUserDeleted.create().show();
     }
 
     /***********************************************************************************************
@@ -463,7 +464,9 @@ public class PostCommentActivity extends AppCompatActivity{
 
         @Override
         protected DBUserPost doInBackground(Void... params) {
-            ArrayList<Comment> postComments = mainPost.getComments();
+
+            DBUserPost userPost = dynamoDBHelper.loadDBUserPost(mainPost.getUsername(), mainPost.getTimestampSeconds());
+            ArrayList<Comment> postComments = userPost.getComments();
 
             for (int i = 0; i < postComments.size(); ++i) {
                 if (dynamoDBHelper.loadDBUserProfile(postComments.get(i).getCommentUsername()) == null) {
@@ -471,11 +474,11 @@ public class PostCommentActivity extends AppCompatActivity{
                 }
             }
 
-            mainPost.setComments(postComments);
-            mainPost.setCommentsCount(postComments.size());
-            dynamoDBHelper.saveDBObject(mainPost);
+            userPost.setComments(postComments);
+            userPost.setCommentsCount(postComments.size());
+            dynamoDBHelper.saveDBObject(userPost);
 
-            return dynamoDBHelper.loadDBUserPost(mainPost.getUsername(), mainPost.getTimestampSeconds());
+            return userPost;
         }
 
         @Override

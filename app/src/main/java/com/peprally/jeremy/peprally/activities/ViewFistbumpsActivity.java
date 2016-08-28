@@ -98,15 +98,17 @@ public class ViewFistbumpsActivity extends AppCompatActivity {
      **************************************** GENERAL_METHODS **************************************
      **********************************************************************************************/
     public void launchUserIsDeletedDialog(final String deletedUsername) {
-        final AlertDialog.Builder dialogBuilderConfirmDelete = new AlertDialog.Builder(ViewFistbumpsActivity.this);
+        final AlertDialog.Builder dialogBuilderUserDeleted = new AlertDialog.Builder(ViewFistbumpsActivity.this);
         final View dialogViewConfirmDelete = View.inflate(ViewFistbumpsActivity.this, R.layout.dialog_confirm_delete, null);
-        dialogBuilderConfirmDelete.setView(dialogViewConfirmDelete);
-        dialogBuilderConfirmDelete.setMessage("Oops, looks like this user has deleted their account!");
-        dialogBuilderConfirmDelete.setPositiveButton("Go back", new DialogInterface.OnClickListener() {
+        dialogBuilderUserDeleted.setView(dialogViewConfirmDelete);
+        dialogBuilderUserDeleted.setMessage("Oops, looks like this user has deleted their account!");
+        dialogBuilderUserDeleted.setPositiveButton("Go back", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int whichButton) {
                 new RemoveFistbumpedUserAsyncTask().execute(deletedUsername);
             }
         });
+
+        dialogBuilderUserDeleted.create().show();
     }
 
     private ArrayList<String> getFistbumpedUsers(DBUserPost userPost, int commentIndex) {

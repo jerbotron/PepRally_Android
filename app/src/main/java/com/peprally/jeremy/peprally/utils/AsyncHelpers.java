@@ -109,14 +109,13 @@ public class AsyncHelpers {
             userProfile = dynamoDBHelper.loadDBUserProfile(profileUsername);
 
             if (userProfile == null) {
-
+                return false;
             } else {
                 if (userProfile.getIsVarsityPlayer()) {
                     playerProfile = dynamoDBHelper.loadDBPlayerProfile(userProfile.getTeam(), userProfile.getPlayerIndex());
                 }
                 return true;
             }
-            return false;
         }
 
         @Override
