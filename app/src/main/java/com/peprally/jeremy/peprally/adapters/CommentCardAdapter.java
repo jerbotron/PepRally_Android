@@ -4,9 +4,9 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -18,13 +18,13 @@ import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.PostCommentActivity;
-import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.custom.Comment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
-import com.peprally.jeremy.peprally.enums.ActivityEnum;
+import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
+import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
@@ -121,20 +121,15 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         commentHolder.profileImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(callingContext, ProfileActivity.class);
-                // clicked on own profile
-                if (commentUsername.equals(currentUsername)) {
-                    intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
-                }
-                // clicked on another user's profile
-                else {
-                    UserProfileParcel parcel = new UserProfileParcel(ActivityEnum.PROFILE,
-                            currentUsername,
-                            currentComment);
-                    intent.putExtra("USER_PROFILE_PARCEL", parcel);
-                }
-                callingContext.startActivity(intent);
-                ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
+                AsyncHelpers.launchExistingUserProfileActivity(callingContext,
+                        commentUsername,
+                        currentUsername,
+                        new DynamoDBHelper.AsyncTaskCallback() {
+                            @Override
+                            public void onTaskDone() {
+                                ((PostCommentActivity) callingContext).launchCommentIsDeletedDialog(currentComment.getCommentId());
+                            }
+                        });
             }
         });
 
@@ -145,7 +140,8 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                 if (currentComment.getFistbumpsCount() > 0) {
                     Intent intent = new Intent(callingContext, ViewFistbumpsActivity.class);
                     intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
-                    intent.putStringArrayListExtra("FISTBUMPED_USERS", new ArrayList<>(currentComment.getFistbumpedUsers()));
+                    intent.putExtra("USER_POST", mainPost);
+                    intent.putExtra("COMMENT_INDEX", commentHolder.getAdapterPosition());
                     callingContext.startActivity(intent);
                 }
             }
@@ -302,7 +298,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     private void launchDeleteCommentDialog(final Comment comment, final int position) {
         // First "Delete comment" dialog
         AlertDialog.Builder dialogBuilderDelete = new AlertDialog.Builder(callingContext);
-        final View dialogViewDelete = View.inflate(callingContext, R.layout.dialog_delete, null);
+        final View dialogViewDelete = View.inflate(callingContext, R.layout.dialog_delete_comment, null);
         dialogBuilderDelete.setView(dialogViewDelete);
         TextView textViewDelete = (TextView) dialogViewDelete.findViewById(R.id.id_text_view_comment_delete_button);
 

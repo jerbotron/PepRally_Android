@@ -219,7 +219,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     protected void onResume() {
         super.onResume();
         Helpers.checkGooglePlayServicesAvailable(this);
-        new UpdateUserNotificationAlertsAsyncTask().execute();
+        updateMenuItemsNotificationAlerts();
     }
 
     @Override
@@ -320,6 +320,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+    public void updateMenuItemsNotificationAlerts() {
+        new UpdateUserNotificationAlertsAsyncTask().execute();
+    }
+
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
@@ -355,7 +359,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    private class UpdateUserNotificationAlertsAsyncTask extends AsyncTask<Void, Void, Void> {
+    public class UpdateUserNotificationAlertsAsyncTask extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... voids) {
             DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurrentUsername());

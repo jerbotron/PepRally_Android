@@ -275,7 +275,7 @@ public class ProfileActivity extends AppCompatActivity {
                         .into(imageViewProfilePicture);
             }
             else {
-                imageURL = Helpers.getFacebookProfileImageURL(userProfileParcel.getFacebookID(), 3);
+                imageURL = "https://graph.facebook.com/" + userProfileParcel.getFacebookID() + "/picture?width=9999";
                 Helpers.setFacebookProfileImage(this,
                         imageViewProfilePicture,
                         userProfileParcel.getFacebookID(),
@@ -658,7 +658,6 @@ public class ProfileActivity extends AppCompatActivity {
             userProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getProfileUsername());
 
             if (userProfile == null) {
-                Log.d(TAG, "team = " + userProfileParcel.getTeam() + " index = " + userProfileParcel.getPlayerIndex());
                 playerProfile = dynamoDBHelper.loadDBPlayerProfile(userProfileParcel.getTeam(), userProfileParcel.getPlayerIndex());
             } else {
                 if (userProfile.getNewUser())
@@ -680,7 +679,6 @@ public class ProfileActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Void v) {
             UpdateUserProfileParcel();
-
             createView();
         }
 

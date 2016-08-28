@@ -32,6 +32,7 @@ import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
+import com.peprally.jeremy.peprally.utils.Constants;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
@@ -85,7 +86,7 @@ public class PostCommentActivity extends AppCompatActivity{
         }
 
         recyclerView = (RecyclerView) findViewById(R.id.id_recycler_view_post_comments);
-        LinearLayoutManager rvLayoutManager = new LinearLayoutManager(this);
+        final LinearLayoutManager rvLayoutManager = new LinearLayoutManager(this);
         recyclerView.setHasFixedSize(true);
         // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
         recyclerView.setAdapter(new EmptyAdapter());
@@ -97,7 +98,7 @@ public class PostCommentActivity extends AppCompatActivity{
         postCommentsSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                refreshAdapter();
+                refreshAdapter(false);
             }
         });
 
@@ -118,7 +119,8 @@ public class PostCommentActivity extends AppCompatActivity{
 
             // load comments if applicable
             if (mainPost.getCommentsCount() > 0) {
-                initializeAdapter(mainPost.getComments(), false);
+//                initializeAdapter(mainPost.getComments(), false);
+                refreshAdapter(false);
             }
 
             // display main post info correctly
@@ -138,7 +140,10 @@ public class PostCommentActivity extends AppCompatActivity{
             mainPostProfileImage.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    AsyncHelpers.launchExistingUserProfileActivity(PostCommentActivity.this, mainPost.getUsername(), userProfileParcel.getCurrentUsername());
+                    AsyncHelpers.launchExistingUserProfileActivity(PostCommentActivity.this,
+                            mainPost.getUsername(),
+                            userProfileParcel.getCurrentUsername(),
+                            null);
                 }
             });
 
@@ -324,8 +329,8 @@ public class PostCommentActivity extends AppCompatActivity{
         new FetchUserPostDBTask(false).execute();
     }
 
-    private void refreshAdapter() {
-        new FetchUserPostDBTask(false).execute();
+    private void refreshAdapter(boolean scrollToBottom) {
+        new FetchUserPostDBTask(scrollToBottom).execute();
     }
 
     private void toggleDeletingPostLoadingDialog(boolean show) {
@@ -363,7 +368,7 @@ public class PostCommentActivity extends AppCompatActivity{
                     if (mainPost.getFistbumpsCount() > 0) {
                         Intent intent = new Intent(PostCommentActivity.this, ViewFistbumpsActivity.class);
                         intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
-                        intent.putStringArrayListExtra("FISTBUMPED_USERS", new ArrayList<>(mainPost.getFistbumpedUsers()));
+                        intent.putExtra("USER_POST", mainPost);
                         startActivity(intent);
                     }
                 }
@@ -431,6 +436,21 @@ public class PostCommentActivity extends AppCompatActivity{
     }
 
     /***********************************************************************************************
+     **************************************** GENERAL_METHODS **************************************
+     **********************************************************************************************/
+    public void launchCommentIsDeletedDialog(final String deletedCommentId) {
+        final AlertDialog.Builder dialogBuilderConfirmDelete = new AlertDialog.Builder(PostCommentActivity.this);
+        final View dialogViewConfirmDelete = View.inflate(PostCommentActivity.this, R.layout.dialog_confirm_delete, null);
+        dialogBuilderConfirmDelete.setView(dialogViewConfirmDelete);
+        dialogBuilderConfirmDelete.setMessage("Oops, looks like this user has deleted their account!");
+        dialogBuilderConfirmDelete.setPositiveButton("Go back", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                new RemovePostCommentAsyncTask().execute(deletedCommentId);
+            }
+        });
+    }
+
+    /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
     private class FetchUserPostDBTask extends AsyncTask<Void, Void, DBUserPost> {
@@ -443,6 +463,18 @@ public class PostCommentActivity extends AppCompatActivity{
 
         @Override
         protected DBUserPost doInBackground(Void... params) {
+            ArrayList<Comment> postComments = mainPost.getComments();
+
+            for (int i = 0; i < postComments.size(); ++i) {
+                if (dynamoDBHelper.loadDBUserProfile(postComments.get(i).getCommentUsername()) == null) {
+                    postComments.remove(i);
+                }
+            }
+
+            mainPost.setComments(postComments);
+            mainPost.setCommentsCount(postComments.size());
+            dynamoDBHelper.saveDBObject(mainPost);
+
             return dynamoDBHelper.loadDBUserPost(mainPost.getUsername(), mainPost.getTimestampSeconds());
         }
 
@@ -453,6 +485,24 @@ public class PostCommentActivity extends AppCompatActivity{
             mainPost = userPost;
 
             initializeAdapter(userPost.getComments(), scrollToBottom);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private class RemovePostCommentAsyncTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... strings) {
+            String commentId = strings[0];
+            ArrayList<Comment> postComments = mainPost.getComments();
+            for (int i = 0; i < postComments.size(); ++i) {
+                if (postComments.get(i).getCommentId().equals(commentId)) {
+                    postComments.remove(i);
+                    break;
+                }
+            }
+            mainPost.setComments(postComments);
+            dynamoDBHelper.saveDBObject(mainPost);
+            return null;
         }
     }
 }

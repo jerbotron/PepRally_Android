@@ -25,21 +25,23 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:weightSum="1">
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_margin="8dp"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
-            android:background="@null"
-            android:clickable="true"
-            app:srcCompat="@drawable/ic_photo"
-            android:contentDescription="@string/content_description_image_button"/>
+        <!--<ImageButton-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_margin="8dp"-->
+            <!--android:paddingLeft="4dp"-->
+            <!--android:paddingRight="4dp"-->
+            <!--android:background="@null"-->
+            <!--android:clickable="true"-->
+            <!--app:srcCompat="@drawable/ic_photo"-->
+            <!--android:contentDescription="@string/content_description_image_button"/>-->
         <EditText
             android:id="@+id/id_edit_text_messaging_container"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_marginStart="4dp"
+            android:layout_marginLeft="4dp"
             android:inputType="textMultiLine"
             android:hint="@string/placeholder_messaging_hint"/>
         <ImageButton

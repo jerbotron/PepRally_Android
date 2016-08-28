@@ -372,7 +372,7 @@ public class MessagingActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View view) {
 //                    getActivity().finish();
-                    AsyncHelpers.launchExistingUserProfileActivity(getContext(), receiverUsername, currentUsername);
+                    AsyncHelpers.launchExistingUserProfileActivity(getContext(), receiverUsername, currentUsername, null);
                 }
             });
 

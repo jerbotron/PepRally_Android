@@ -42,16 +42,16 @@
         android:orientation="horizontal"
         android:layout_alignParentBottom="true">
 
-        <ImageButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="8dp"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
-            android:background="@null"
-            android:clickable="true"
-            app:srcCompat="@drawable/ic_photo"
-            android:contentDescription="@string/content_description_image_button"/>
+        <!--<ImageButton-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_margin="8dp"-->
+            <!--android:paddingLeft="8dp"-->
+            <!--android:paddingRight="8dp"-->
+            <!--android:background="@null"-->
+            <!--android:clickable="true"-->
+            <!--app:srcCompat="@drawable/ic_photo"-->
+            <!--android:contentDescription="@string/content_description_image_button"/>-->
 
         <View android:layout_height="match_parent"
             android:layout_width="0dp"
@@ -60,7 +60,7 @@
         <TextView
             android:id="@+id/new_post_char_count"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="32dp"
             android:gravity="center"
             android:text="@string/new_post_char_text"
             android:textSize="12sp"

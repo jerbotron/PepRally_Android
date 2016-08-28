@@ -214,9 +214,11 @@ public class DynamoDBHelper {
     }
 
     public void deleteUserAccount(UserProfileParcel userProfileParcel, AsyncTaskCallback taskCallback) {
-        new DeleteDBUserProfileAsyncTask().execute(userProfileParcel);
-        new DeleteDBUsernameAsyncTask().execute(userProfileParcel.getCurrentUsername());
-        new BatchDeleteDBUserPostsAsyncTask(taskCallback).execute(userProfileParcel);
+        if (userProfileParcel.getPostsCount() != null && userProfileParcel.getPostsCount() > 0) {
+            new BatchDeleteDBUserPostsAsyncTask().execute(userProfileParcel.getCurrentUsername());
+        }
+        // delete profile last, along with username, notifications and conversations
+        new DeleteDBUserProfileAsyncTask(taskCallback).execute(userProfileParcel);
     }
 
     public void batchDeletePostNotifications(DBUserPost userPost) {
@@ -287,71 +289,71 @@ public class DynamoDBHelper {
 
     @SuppressWarnings("unchecked")
     private class DeleteDBUserProfileAsyncTask extends AsyncTask<UserProfileParcel, Void, Void> {
+
+        private AsyncTaskCallback taskCallback;
+
+        private DeleteDBUserProfileAsyncTask(AsyncTaskCallback taskCallback) {
+            this.taskCallback = taskCallback;
+        }
+
         @Override
         protected Void doInBackground(UserProfileParcel... userProfileParcels) {
             UserProfileParcel userProfileParcel = userProfileParcels[0];
             // First delete user profile and username
             DBUserProfile userProfile = loadDBUserProfile(userProfileParcel.getCurrentUsername());
-            DBUsername username = loadDBUsername(userProfileParcel.getCurrentUsername());
-            mapper.delete(username);
-            mapper.delete(userProfile);
 
-            // delete all posts
-            if (userProfileParcel.getPostsCount() != null && userProfileParcel.getPostsCount() > 0) {
-                DBUserPost userPost = new DBUserPost();
-                userPost.setUsername(userProfileParcel.getCurrentUsername());
-                DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression<DBUserPost>()
-                        .withHashKeyValues(userPost)
+            if (userProfile != null) {
+                DBUsername username = loadDBUsername(userProfileParcel.getCurrentUsername());
+                if (username != null)
+                    mapper.delete(username);
+
+                // delete all notification made to the deleted user
+                DBUserNotification toUserNotification = new DBUserNotification();
+                toUserNotification.setUsername(userProfileParcel.getCurrentUsername());
+                DynamoDBQueryExpression queryExpressionToUserNotifications = new DynamoDBQueryExpression<DBUserNotification>()
+                        .withHashKeyValues(toUserNotification)
                         .withConsistentRead(true);
 
-                PaginatedQueryList<DBUserPost> queryResults = mapper.query(DBUserPost.class, queryExpression);
-                if (queryResults != null && queryResults.size() > 0) {
-                    for (DBUserPost post : queryResults) {
-                        mapper.delete(post);
+                PaginatedQueryList<DBUserNotification> queryResultsToUser = mapper.query(DBUserNotification.class, queryExpressionToUserNotifications);
+                if (queryResultsToUser != null && queryResultsToUser.size() > 0) {
+                    for (DBUserNotification notification : queryResultsToUser) {
+                        mapper.delete(notification);
                     }
                 }
-            }
 
-            // delete all notification made to the deleted user
-            DBUserNotification toUserNotification = new DBUserNotification();
-            toUserNotification.setUsername(userProfileParcel.getCurrentUsername());
-            DynamoDBQueryExpression queryExpressionToUserNotifications = new DynamoDBQueryExpression<DBUserNotification>()
-                    .withHashKeyValues(toUserNotification)
-                    .withConsistentRead(true);
+                // delete all notifications made by the deleted user
+                DBUserNotification fromUserNotification = new DBUserNotification();
+                fromUserNotification.setSenderUsername(userProfileParcel.getCurrentUsername());
+                DynamoDBQueryExpression queryExpressionFromUserNotifications = new DynamoDBQueryExpression<DBUserNotification>()
+                        .withHashKeyValues(fromUserNotification)
+                        .withConsistentRead(false);
 
-            PaginatedQueryList<DBUserNotification> queryResultsToUser = mapper.query(DBUserNotification.class, queryExpressionToUserNotifications);
-            if (queryResultsToUser != null && queryResultsToUser.size() > 0) {
-                for (DBUserNotification notification : queryResultsToUser) {
-                    mapper.delete(notification);
+                // Delete all user conversations:
+                for (String convoId : userProfile.getConversationIds()) {
+                    DBUserConversation userConversation = loadDBUserConversation(convoId);
+                    if (userConversation != null) {
+                        mapper.delete(userConversation);
+                    }
                 }
-            }
 
-            // delete all notifications made by the deleted user
-            DBUserNotification fromUserNotification = new DBUserNotification();
-            fromUserNotification.setSenderUsername(userProfileParcel.getCurrentUsername());
-            DynamoDBQueryExpression queryExpressionFromUserNotifications = new DynamoDBQueryExpression<DBUserNotification>()
-                    .withHashKeyValues(fromUserNotification)
-                    .withConsistentRead(false);
-
-            PaginatedQueryList<DBUserNotification> queryResultsFromUser = mapper.query(DBUserNotification.class, queryExpressionFromUserNotifications);
-            if (queryResultsFromUser != null && queryResultsFromUser.size() > 0) {
-                for (DBUserNotification notification : queryResultsFromUser) {
-                    mapper.delete(notification);
+                PaginatedQueryList<DBUserNotification> queryResultsFromUser = mapper.query(DBUserNotification.class, queryExpressionFromUserNotifications);
+                if (queryResultsFromUser != null && queryResultsFromUser.size() > 0) {
+                    for (DBUserNotification notification : queryResultsFromUser) {
+                        mapper.delete(notification);
+                    }
                 }
+
+                // delete profile last
+                mapper.delete(userProfile);
             }
 
             return null;
         }
-    }
 
-    private class DeleteDBUsernameAsyncTask extends AsyncTask<String,  Void, Void> {
         @Override
-        protected Void doInBackground(String... strings) {
-            String username = strings[0];
-            DBUsername dbUsername = mapper.load(DBUsername.class, username);
-            if (dbUsername != null)
-                mapper.delete(dbUsername);
-            return null;
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            taskCallback.onTaskDone();
         }
     }
 
@@ -485,30 +487,21 @@ public class DynamoDBHelper {
     }
 
     @SuppressWarnings("unchecked")
-    private class BatchDeleteDBUserPostsAsyncTask extends AsyncTask<UserProfileParcel, Void, Void> {
-
-        private AsyncTaskCallback taskCallback;
-
-        private BatchDeleteDBUserPostsAsyncTask(AsyncTaskCallback taskCallback) {
-            this.taskCallback = taskCallback;
-        }
-
+    private class BatchDeleteDBUserPostsAsyncTask extends AsyncTask<String, Void, Void> {
         @Override
-        protected Void doInBackground(UserProfileParcel... userProfileParcels) {
-            UserProfileParcel userProfileParcel = userProfileParcels[0];
-            if (userProfileParcel.getPostsCount() != null && userProfileParcel.getPostsCount() > 0) {
-                String username = userProfileParcel.getCurrentUsername();
-                DBUserPost userPost = new DBUserPost();
-                userPost.setUsername(username);
-                DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression<DBUserPost>()
-                        .withHashKeyValues(userPost)
-                        .withConsistentRead(true);
+        protected Void doInBackground(String... strings) {
+            String username = strings[0];
 
-                PaginatedQueryList<DBUserPost> queryResults = mapper.query(DBUserPost.class, queryExpression);
-                if (queryResults != null && queryResults.size() > 0) {
-                    for (DBUserPost post : queryResults) {
-                        mapper.delete(post);
-                    }
+            DBUserPost userPost = new DBUserPost();
+            userPost.setUsername(username);
+            DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression<DBUserPost>()
+                    .withHashKeyValues(userPost)
+                    .withConsistentRead(true);
+
+            PaginatedQueryList<DBUserPost> queryResults = mapper.query(DBUserPost.class, queryExpression);
+            if (queryResults != null && queryResults.size() > 0) {
+                for (DBUserPost post : queryResults) {
+                    mapper.delete(post);
                 }
             }
             return null;
@@ -517,7 +510,6 @@ public class DynamoDBHelper {
         @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            taskCallback.onTaskDone();
         }
     }
 
@@ -688,7 +680,7 @@ public class DynamoDBHelper {
             DBUserProfile senderProfile = loadDBUserProfile(usernames[1]);
             if (receiverProfile != null && senderProfile != null) {
                 DBUserConversation newConversation = new DBUserConversation();
-                String conversation_id = receiverProfile.getFacebookId() + "_" + senderProfile.getFacebookId();
+                String conversation_id = senderProfile.getFacebookId() + "_" + receiverProfile.getFacebookId();
                 newConversation.setConversationID(conversation_id);
                 newConversation.setSenderUsername(senderProfile.getUsername());
                 newConversation.setReceiverUsername(receiverProfile.getUsername());

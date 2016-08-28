@@ -109,7 +109,7 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
             @Override
             public void onClick(View view) {
 //                ((Activity) callingContext).finish();
-                AsyncHelpers.launchExistingUserProfileActivity(callingContext, userNotification.getSenderUsername(), userNotification.getUsername());
+                AsyncHelpers.launchExistingUserProfileActivity(callingContext, userNotification.getSenderUsername(), userNotification.getUsername(), null);
             }
         });
 
@@ -119,7 +119,7 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
                 switch (NotificationEnum.fromInt(userNotification.getNotificationType())) {
                     case DIRECT_FISTBUMP:
 //                        ((Activity) callingContext).finish();
-                        AsyncHelpers.launchExistingUserProfileActivity(callingContext, userNotification.getSenderUsername(), userNotification.getUsername());
+                        AsyncHelpers.launchExistingUserProfileActivity(callingContext, userNotification.getSenderUsername(), userNotification.getUsername(), null);
                         break;
                     case POST_COMMENT:
                     case POST_FISTBUMP:

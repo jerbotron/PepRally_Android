@@ -22,6 +22,7 @@ import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
+import com.peprally.jeremy.peprally.utils.Constants;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
@@ -145,7 +146,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                 if (curPost.getFistbumpsCount() > 0) {
                     Intent intent = new Intent(callingContext, ViewFistbumpsActivity.class);
                     intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
-                    intent.putStringArrayListExtra("FISTBUMPED_USERS", new ArrayList<>(curPost.getFistbumpedUsers()));
+                    intent.putExtra("USER_POST", curPost);
                     callingContext.startActivity(intent);
                 }
             }

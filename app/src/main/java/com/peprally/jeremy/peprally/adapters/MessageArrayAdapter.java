@@ -83,7 +83,7 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
                     leftImageView.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            AsyncHelpers.launchExistingUserProfileActivity(callingContext, chatMessage.getUsername(), currentUsername);
+                            AsyncHelpers.launchExistingUserProfileActivity(callingContext, chatMessage.getUsername(), currentUsername, null);
                         }
                     });
                 }
