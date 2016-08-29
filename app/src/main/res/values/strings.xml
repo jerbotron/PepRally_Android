@@ -1,8 +1,8 @@
 <resources>
     <string name="label_app_name">PepRally</string>
-    <string name="label_app_version">v1.0.6</string>
-    <string name="label_app_name_version">PepRally v1.0.6</string>
-    <string name="label_app_full_version">Version 1.0.6 - UT BETA</string>
+    <string name="label_app_version">v1.0.7</string>
+    <string name="label_app_name_version">PepRally v1.0.7</string>
+    <string name="label_app_full_version">Version 1.0.7 - UT BETA</string>
     <string name="label_app_location">Made in Austin, TX</string>
     <string name="label_app_facebook_link">https://www.facebook.com/peprallyapp</string>
     <string name="label_app_instagram_link">http://instagram.com/peprallyapp</string>

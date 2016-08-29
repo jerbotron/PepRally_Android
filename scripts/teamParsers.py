@@ -367,14 +367,11 @@ def parse_wgolf(table, team, data, addToDb):
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
             item['Year'] = year
-        if "roster_dgrd_player_hometown" in line:
-            h = line.find("roster_dgrd_player_hometown")
+        if "roster_dgrd_hometownhighschool" in line:
+            h = line.find("roster_dgrd_hometownhighschool")
             e = line.find("</td>", h)
-            hometown = line[h + len("roster_dgrd_player_hometown") + 2:e]
-            hs = line.find("roster_dgrd_player_highschool")
-            e = line.find("</td>", hs)
-            highschool = line[hs + len("roster_dgrd_player_highschool") + 2:e]
-            item['Hometown'] = hometown + " / " + highschool
+            hometown = line[h + len("roster_dgrd_hometownhighschool") + 2:e]
+            item['Hometown'] = hometown
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
             item = {'Team': teamNames[team],
@@ -577,22 +574,15 @@ def parse_mgolf(table, team, data, addToDb):
             item['Index'] = count
             count += 1
         if "roster_dgrd_height" in line:
-            h = line.find("roster_dgrd_height")
-            e = line.find("</td>", h)
-            height = line[h + len("roster_dgrd_height") + 8:e - 7]
-            item['Height'] = height
             y = line.find("roster_dgrd_academic_year")
             e = line.find(" ", y)
             year = line[y + len("roster_dgrd_academic_year") + 2:e]
             item['Year'] = year
-        if "roster_dgrd_player_hometown" in line:
-            h = line.find("roster_dgrd_player_hometown")
+        if "roster_dgrd_hometownhighschool" in line:
+            h = line.find("roster_dgrd_hometownhighschool")
             e = line.find("</td>", h)
-            hometown = line[h + len("roster_dgrd_player_hometown") + 2:e]
-            hs = line.find("roster_dgrd_player_highschool")
-            e = line.find("</td>", hs)
-            highschool = line[hs + len("roster_dgrd_player_highschool") + 2:e]
-            item['Hometown'] = hometown + " / " + highschool
+            hometown = line[h + len("roster_dgrd_hometownhighschool") + 2:e]
+            item['Hometown'] = hometown
             if (printRoster): print item
             if (addToDb): table.put_item(Item=item)
             item = {'Team': teamNames[team],
