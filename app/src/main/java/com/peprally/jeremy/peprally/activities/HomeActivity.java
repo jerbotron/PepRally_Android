@@ -24,8 +24,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
-import com.facebook.FacebookSdk;
-import com.facebook.Profile;
 import com.facebook.login.LoginManager;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
@@ -35,6 +33,7 @@ import com.peprally.jeremy.peprally.enums.IntentRequestEnum;
 import com.peprally.jeremy.peprally.fragments.BrowseTeamsFragment;
 import com.peprally.jeremy.peprally.fragments.TrendingFragment;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
+import com.peprally.jeremy.peprally.interfaces.PostContainerInterface;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
@@ -43,7 +42,7 @@ import java.util.List;
 
 import static com.peprally.jeremy.peprally.utils.Helpers.getAPICompatVectorDrawable;
 
-public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, PostContainerInterface{
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
@@ -196,7 +195,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             switch (IntentRequestEnum.fromInt(requestCode)) {
                 case NEW_POST_REQUEST:
                     trendingFragment.addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
-                    trendingFragment.toggleTrendingModeIsHottestView(false);
+                    trendingFragment.updateTrendingMode(false);
                     break;
                 case SETTINGS_REQUEST:
                     if (data.getBooleanExtra("DELETE_PROFILE", false)) {
@@ -271,6 +270,11 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 
     public UserProfileParcel getUserProfileParcel() {
         return userProfileParcel;
+    }
+
+    public void refreshPosts() {
+        viewPagerHome.setCurrentItem(0);
+        trendingFragment.refreshAdapter();
     }
 
     /***********************************************************************************************

@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 
@@ -22,6 +23,7 @@ import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 import com.peprally.jeremy.peprally.utils.Constants;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -138,25 +140,27 @@ public class ViewFistbumpsActivity extends AppCompatActivity {
         @SafeVarargs
         final protected List<DBUserProfile> doInBackground(ArrayList<String>... params) {
             ArrayList<String> fistbumpedUsers = params[0];
+            ArrayList<String> fistbumpedUsersCopy = fistbumpedUsers;
             if (fistbumpedUsers != null) {
                 List<DBUserProfile> userProfiles = new ArrayList<>();
-                for (int i = 0; i < fistbumpedUsers.size(); ++i) {
+                for (int i = 0; i < fistbumpedUsers.size(); i++) {
                     DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(fistbumpedUsers.get(i));
                     if (userProfile != null) {
                         userProfiles.add(userProfile);
                     } else {
-                        fistbumpedUsers.remove(i);
+                        fistbumpedUsersCopy.remove(i);
                         fistbumpedUsersNeedUpdate = true;
                     }
                 }
 
                 if (fistbumpedUsersNeedUpdate) {
                     if (commentIndex == Constants.INTEGER_INVALID) {
-                        mainPost.setFistbumpedUsers(new HashSet<>(fistbumpedUsers));
+                        mainPost.setFistbumpedUsers(new HashSet<>(fistbumpedUsersCopy));
+                        mainPost.setFistbumpsCount(fistbumpedUsersCopy.size());
                     } else {
-                        mainPost.getComments().get(commentIndex).setFistbumpedUsers(new HashSet<>(fistbumpedUsers));
+                        mainPost.getComments().get(commentIndex).setFistbumpedUsers(new HashSet<>(fistbumpedUsersCopy));
+                        mainPost.getComments().get(commentIndex).setFistbumpsCount(fistbumpedUsersCopy.size());
                     }
-                    mainPost.setFistbumpsCount(fistbumpedUsers.size());
                     dynamoDBHelper.saveDBObject(mainPost);
                 }
 

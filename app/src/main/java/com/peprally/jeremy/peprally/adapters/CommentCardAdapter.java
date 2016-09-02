@@ -28,6 +28,7 @@ import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Set;
 
 public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.CommentHolder> {
@@ -127,7 +128,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                         new DynamoDBHelper.AsyncTaskCallback() {
                             @Override
                             public void onTaskDone() {
-                                ((PostCommentActivity) callingContext).launchCommentIsDeletedDialog(currentComment.getCommentId());
+                                ((PostCommentActivity) callingContext).launchUserAccountIsDeletedDialog(currentComment.getCommentId());
                             }
                         });
             }
@@ -151,50 +152,72 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         commentHolder.fistbumpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int fistbumpsCount = currentComment.getFistbumpsCount();
                 Set<String> fistbumpedUsers = currentComment.getFistbumpedUsers();
                 // If user already liked the comment
                 if (fistbumpedUsers.contains(currentUsername)) {
-                    fistbumpsCount--;
+                    // update db items: remove current user from fistbumped users
+                    final int fistbumpsCount = currentComment.getFistbumpsCount() - 1;
+                    currentComment.removeFistbumpedUser(currentUsername);
+                    // update UI
                     commentHolder.fistbumpsCount.setText(String.valueOf(fistbumpsCount));
                     commentHolder.fistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_50, 0);
                     // update fistbumps counts
                     // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
                     if (!commentUsername.equals(currentUsername)) {
-                        // update the received fistbumps count of the main post user
-                        dynamoDBHelper.decrementUserReceivedFistbumpsCount(commentUsername);
-                        // update the sent fistbumps count of the current user
-                        dynamoDBHelper.decrementUserSentFistbumpsCount(currentUsername);
                         // remove notification
-                        dynamoDBHelper.deleteCommentFistbumpNotification(NotificationEnum.COMMENT_FISTBUMP, currentComment.getCommentId(), commentUsername);
+                        dynamoDBHelper.deleteCommentFistbumpNotification(
+                                currentComment.getPostId(),
+                                currentComment.getCommentId(),
+                                currentUsername,
+                                commentUsername,
+                                new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
+                                    @Override
+                                    public void onTaskDone(Object bundle) {
+                                        Bundle taskCallbackBundle = (Bundle) bundle;
+                                        if (taskCallbackBundle.getBoolean("NOTIFICATION_DELETED", false)) { // default, assume notification was not deleted
+                                            // update comment fistbumps count and save new comments to post and save post
+                                            currentComment.setFistbumpsCount(fistbumpsCount);
+                                            mainPost.setComments(comments);
+                                            dynamoDBHelper.saveDBUserPostIfExist(mainPost);
+                                        } else {
+                                            ((PostCommentActivity) callingContext).launchPostOrCommentIsDeletedDialog(taskCallbackBundle.getBoolean("IS_POST_DELETED", true)); // assume post was deleted
+                                        }
+                                    }
+                                });
                     }
-                    // remove current user from fistbumped users
-                    currentComment.removeFistbumpedUser(currentUsername);
                 }
                 // If user has not liked the comment yet
                 else {
-                    fistbumpsCount++;
+                    // update db items: add current user from fistbumped users
+                    final int fistbumpsCount = currentComment.getFistbumpsCount() + 1;
+                    currentComment.addFistbumpedUser(currentUsername);
+                    // update UI
                     commentHolder.fistbumpsCount.setText(String.valueOf(fistbumpsCount));
                     commentHolder.fistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
                     // update fistbumps counts:
                     // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
                     if (!commentUsername.equals(currentUsername)) {
-                        // update the received fistbumps count of the main post user
-                        dynamoDBHelper.incrementUserReceivedFistbumpsCount(commentUsername);
-                        // update the sent fistbumps count of the current user
-                        dynamoDBHelper.incrementUserSentFistbumpsCount(currentUsername);
-                        // send push notification
-                        dynamoDBHelper.createNewNotification(makeDBNotificationBundleCommentFistbump(currentComment));
-                        httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundleCommentFistbump(currentComment));
+                        dynamoDBHelper.createNewNotification(
+                                makeDBNotificationBundleCommentFistbump(currentComment),
+                                new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
+                                    @Override
+                                    public void onTaskDone(Object bundle) {
+                                        Bundle taskCallbackBundle = (Bundle) bundle;
+                                        if (taskCallbackBundle.getBoolean("NOTIFICATION_CREATED", false)) { // default, assume the notification was not created
+                                            // send push notification once db user notification is successfully created
+                                            httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundleCommentFistbump(currentComment));
+                                            // update comment fistbumps count and save new comments to post and save post
+                                            currentComment.setFistbumpsCount(fistbumpsCount);
+                                            mainPost.setComments(comments);
+                                            dynamoDBHelper.saveDBUserPostIfExist(mainPost);
+                                        } else {
+                                            ((PostCommentActivity) callingContext).launchPostOrCommentIsDeletedDialog(taskCallbackBundle.getBoolean("IS_POST_DELETED", true)); // assume post was deleted
+                                        }
+                                    }
+                                });
                     }
-                    // add current user to fistbumped users
-                    currentComment.addFistbumpedUser(currentUsername);
 
                 }
-                // update comment fistbumps count and save new comments to post and save post
-                currentComment.setFistbumpsCount(fistbumpsCount);
-                mainPost.setComments(comments);
-                dynamoDBHelper.saveDBObjectAsync(mainPost);
             }
         });
 
@@ -218,9 +241,9 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
      **********************************************************************************************/
     private Bundle makeDBNotificationBundleCommentFistbump(Comment comment) {
         Bundle bundle = new Bundle();
-        bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.COMMENT_FISTBUMP.toInt());
-        bundle.putString("RECEIVER_USERNAME", comment.getCommentUsername());    // who the notification is going to
+        bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
+        bundle.putString("RECEIVER_USERNAME", comment.getCommentUsername());
         bundle.putString("POST_ID", comment.getPostId());
         bundle.putString("COMMENT_ID", comment.getCommentId());
         return bundle;
@@ -240,16 +263,16 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     private Bundle makePushNotificationBundleCommentFistbump(Comment comment) {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.COMMENT_FISTBUMP.toInt());
-        bundle.putString("RECEIVER_USERNAME", comment.getCommentUsername());
         bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());
+        bundle.putString("RECEIVER_USERNAME", comment.getCommentUsername());
         return bundle;
     }
 
     private Bundle makePushNotificationBundlePostComment(String comment) {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_COMMENT.toInt());
-        bundle.putString("RECEIVER_USERNAME", mainPost.getUsername());
         bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());
+        bundle.putString("RECEIVER_USERNAME", mainPost.getUsername());
         bundle.putString("COMMENT", comment);
         return bundle;
     }
@@ -270,7 +293,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     /***********************************************************************************************
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
-    public void addComment(String commentText, String commentUsername) {
+    public void addComment(final String commentText, final String commentUsername) {
         Long timestampSeconds = Helpers.getTimestampSeconds();
         Bundle bundle = new Bundle();
         bundle.putString("POST_ID", Helpers.getPostCommentIdString(mainPost.getUsername(), mainPost.getTimestampSeconds()));
@@ -280,18 +303,27 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         bundle.putLong("TIMESTAMP", timestampSeconds);
         bundle.putString("COMMENT_TEXT", commentText);
 
-        dynamoDBHelper.addNewPostComment(bundle, new DynamoDBHelper.AsyncTaskCallback() {
+        dynamoDBHelper.createNewPostComment(bundle, new DynamoDBHelper.AsyncTaskCallback() {
             @Override
             public void onTaskDone() {
                 ((PostCommentActivity) callingContext).postAddCommentCleanup();
             }
         });
 
-        // send push notification (if not commenting on own post)
+        // create new user notification (if not commenting on own post)
         if (!commentUsername.equals(mainPost.getUsername())) {
             dynamoDBHelper.createNewNotification(
-                    makeDBNotificationBundlePostComment(commentText, Helpers.getPostCommentIdString(commentUsername, timestampSeconds)));
-            httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostComment(commentText));
+                    makeDBNotificationBundlePostComment(commentText, Helpers.getPostCommentIdString(commentUsername, timestampSeconds)),
+                    new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
+                        @Override
+                        public void onTaskDone(Object bundle) {
+                            if (((Bundle) bundle).getBoolean("NOTIFICATION_CREATED", false)) {  // assume notification was not created
+                                httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostComment(commentText));
+                            } else {
+                                ((PostCommentActivity) callingContext).launchPostOrCommentIsDeletedDialog(((Bundle) bundle).getBoolean("IS_POST_DELETED", true)); // assume post is deleted
+                            }
+                        }
+                    });
         }
     }
 
@@ -324,7 +356,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
                 });
                 // remove notification if comment is not by the same post user
                 if (!comment.getCommentUsername().equals(mainPost.getUsername()))
-                    dynamoDBHelper.deletePostCommentNotification(NotificationEnum.POST_COMMENT, comment);
+                    dynamoDBHelper.deletePostCommentNotification(comment.getPostId(), comment.getCommentId(), null);
 
                 dynamoDBHelper.batchDeleteCommentFistbumpNotifications(NotificationEnum.COMMENT_FISTBUMP, comment);
             }

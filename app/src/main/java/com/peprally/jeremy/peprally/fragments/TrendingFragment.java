@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class TrendingFragment extends Fragment {
+public class TrendingFragment extends Fragment{
 
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
@@ -59,7 +59,7 @@ public class TrendingFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         userProfileParcel = ((HomeActivity) getActivity()).getUserProfileParcel();
-        trendingMode = TrendingModeEnum.HOTTEST;
+        trendingMode = TrendingModeEnum.LATEST; // set default mode
     }
 
     @Override
@@ -95,18 +95,20 @@ public class TrendingFragment extends Fragment {
         imageButtonHottest = (ImageButton) view.findViewById(R.id.id_image_button_trending_hottest);
         imageButtonLatest = (ImageButton) view.findViewById(R.id.id_image_button_trending_latest);
 
+        updateTrendingMode(false);  // initially set trendingMode to latest
+
         if (imageButtonHottest != null && imageButtonLatest != null) {
             imageButtonHottest.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    toggleTrendingModeIsHottestView(true);
+                    updateTrendingMode(true);
                 }
             });
 
             imageButtonLatest.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    toggleTrendingModeIsHottestView(false);
+                    updateTrendingMode(false);
                 }
             });
         }
@@ -169,7 +171,7 @@ public class TrendingFragment extends Fragment {
         postCardAdapter.addPost(newPostText, bundle);
     }
 
-    private void refreshAdapter() {
+    public void refreshAdapter() {
         // start on load progress circle animation and get latest posts
         trendingSwipeRefreshContainer.post(new Runnable() {
             @Override
@@ -180,7 +182,7 @@ public class TrendingFragment extends Fragment {
         new FetchUserPostsTask().execute();
     }
 
-    public void toggleTrendingModeIsHottestView(boolean isTrendingModeHottest) {
+    public void updateTrendingMode(boolean isTrendingModeHottest) {
         if (imageButtonHottest != null && imageButtonLatest != null) {
             trendingMode = (isTrendingModeHottest) ? TrendingModeEnum.HOTTEST : TrendingModeEnum.LATEST;
             refreshAdapter();

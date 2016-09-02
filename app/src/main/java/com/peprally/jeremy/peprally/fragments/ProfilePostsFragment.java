@@ -20,6 +20,7 @@ import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.PostCardAdapter;
 import com.peprally.jeremy.peprally.custom.ui.EmptyViewSwipeRefreshLayout;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
+import com.peprally.jeremy.peprally.interfaces.PostContainerInterface;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
@@ -103,7 +104,7 @@ public class ProfilePostsFragment extends Fragment {
         postCardAdapter.addPost(newPostText, bundle);
     }
 
-    private void refreshAdapter() {
+    public void refreshAdapter() {
         new FetchUserPostsTask().execute(userProfileParcel.getProfileUsername());
     }
 

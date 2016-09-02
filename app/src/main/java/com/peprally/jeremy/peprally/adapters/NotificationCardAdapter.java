@@ -104,11 +104,9 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
         notificationCardHolder.content.setText(Helpers.getAPICompatHtml("<b>"+userNotification.getSenderUsername()+"</b> " + content));
 
         // clickable handlers
-
         notificationCardHolder.profileImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                ((Activity) callingContext).finish();
                 AsyncHelpers.launchExistingUserProfileActivity(callingContext, userNotification.getSenderUsername(), userNotification.getUsername(), null);
             }
         });
@@ -118,7 +116,6 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
             public void onClick(View view) {
                 switch (NotificationEnum.fromInt(userNotification.getNotificationType())) {
                     case DIRECT_FISTBUMP:
-//                        ((Activity) callingContext).finish();
                         AsyncHelpers.launchExistingUserProfileActivity(callingContext, userNotification.getSenderUsername(), userNotification.getUsername(), null);
                         break;
                     case POST_COMMENT:

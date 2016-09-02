@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
@@ -30,6 +32,8 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.custom.ui.CircleImageTransformation;
 import com.squareup.picasso.Picasso;
 
+import java.io.IOException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
@@ -37,7 +41,9 @@ import java.util.Random;
 
 public class Helpers {
 
-    // UI Helpers
+    /**
+     * UI Helpers
+     */
     public static boolean isKeyboardShown(View rootView) {
         // 128dp = 32dp * 4, minimum button height 32dp and generic 4 rows soft keyboard
         final int SOFT_KEYBOARD_HEIGHT_DP_THRESHOLD = 128;
@@ -80,28 +86,43 @@ public class Helpers {
         }
     }
 
-    // General Helpers
-    public static String getFacebookProfileImageURL(String facebookId, int size) {
+    /**
+     * General Helpers
+     */
+    public static String getFacebookProfilePictureURL(String facebookId, int size) {
         String type;
         switch (size) {
             case 0:
-                type = "small";
+                type = "type=small";
                 break;
             case 1:
-                type = "normal";
+                type = "type=normal";
                 break;
             case 2:
-                type = "album";
-                break;
-            case 4:
-                type = "square";
+                type = "type=album";
                 break;
             case 3:
+                type = "type=large";
+                break;
+            case 4:
+                type = "type=square";
+                break;
+            case 5:
             default:
-                type = "large";
+                type = "width=9999";
                 break;
         }
-        return "https://graph.facebook.com/" + facebookId + "/picture?type=" + type;
+        return "https://graph.facebook.com/" + facebookId + "/picture?" + type;
+    }
+
+    public static Bitmap getFacebookProfilePictureBitmap(String facebookId, Context callingContext){
+        try {
+            URL imageURL = new URL("https://graph.facebook.com/" + facebookId + "/picture?type=large");
+            return BitmapFactory.decodeStream(imageURL.openConnection().getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return BitmapFactory.decodeResource(callingContext.getResources(), R.drawable.logo_push_ut);
+        }
     }
 
     public static String getFavPlayerString(String firstName, String lastName, int number, String team) {
@@ -166,8 +187,9 @@ public class Helpers {
     }
 
 
-    // Network Helpers
-
+    /**
+     * Network Helpers
+     */
     public static boolean checkIfNetworkConnectionAvailable(ConnectivityManager connManager) {
         boolean isConnected = false;
         NetworkInfo mWifi = connManager.getActiveNetworkInfo();
@@ -183,14 +205,14 @@ public class Helpers {
         if (facebookId != null && !facebookId.isEmpty()) {
             if (rounded) {
                 Picasso.with(callingContext)
-                        .load(getFacebookProfileImageURL(facebookId, size))
+                        .load(getFacebookProfilePictureURL(facebookId, size))
                         .placeholder(R.drawable.img_default_profile)
                         .error(R.drawable.img_default_profile)
                         .transform(new CircleImageTransformation())
                         .into(imageView);
             } else {
                 Picasso.with(callingContext)
-                        .load(getFacebookProfileImageURL(facebookId, size))
+                        .load(getFacebookProfilePictureURL(facebookId, size))
                         .placeholder(R.drawable.img_default_profile)
                         .error(R.drawable.img_default_profile)
                         .into(imageView);
@@ -256,7 +278,6 @@ public class Helpers {
             ApplicationInfo applicationInfo = pm.getApplicationInfo("com.facebook.katana", 0);
             if (applicationInfo.enabled) {
                 // http://stackoverflow.com/a/24547437/1048340
-//
                 uri = Uri.parse("http://www.facebook.com/" + url);
             }
         } catch (PackageManager.NameNotFoundException ignored) {
@@ -279,8 +300,9 @@ public class Helpers {
         return intent;
     }
 
-    // Physical Helpers
-
+    /**
+     * Physical Helpers
+     */
     public static void vibrateDeviceNotification(Context callingContext) {
         Vibrator v = (Vibrator) callingContext.getSystemService(Context.VIBRATOR_SERVICE);
         v.vibrate(500);

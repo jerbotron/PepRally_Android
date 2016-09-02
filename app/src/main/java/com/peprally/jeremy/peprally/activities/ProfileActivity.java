@@ -17,7 +17,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.View;
@@ -41,6 +40,7 @@ import com.peprally.jeremy.peprally.fragments.ProfileEditFragment;
 import com.peprally.jeremy.peprally.fragments.ProfilePostsFragment;
 import com.peprally.jeremy.peprally.fragments.ProfileInfoFragment;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
+import com.peprally.jeremy.peprally.interfaces.PostContainerInterface;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Constants;
@@ -50,11 +50,9 @@ import com.peprally.jeremy.peprally.custom.ui.ProfileViewPager;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 import com.squareup.picasso.Picasso;
 
-import org.w3c.dom.Text;
-
 import static com.peprally.jeremy.peprally.utils.Constants.INTEGER_INVALID;
 
-public class ProfileActivity extends AppCompatActivity {
+public class ProfileActivity extends AppCompatActivity implements PostContainerInterface {
 
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
@@ -159,6 +157,7 @@ public class ProfileActivity extends AppCompatActivity {
                     editFragment.setFavPlayer(favoritePlayer);
                     break;
                 case NEW_POST_REQUEST:
+                    viewPagerProfile.setCurrentItem(1);
                     postsFragment.addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
                     break;
             }
@@ -198,19 +197,24 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
+    public void refreshPosts() {
+        viewPagerProfile.setCurrentItem(1);
+        postsFragment.refreshAdapter();
+    }
+
     private Bundle makeDBNotificationBundleDirectFistbump() {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.DIRECT_FISTBUMP.toInt());
-        bundle.putString("RECEIVER_USERNAME", userProfileParcel.getProfileUsername());  // who the notification is going to
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
+        bundle.putString("RECEIVER_USERNAME", userProfileParcel.getProfileUsername());
         return bundle;
     }
 
     private Bundle makePushNotificationDirectFistbumpBundle(NotificationEnum notificationType) {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", notificationType.toInt());
-        bundle.putString("RECEIVER_USERNAME", userProfileParcel.getProfileUsername());  // who the notification is going to
-        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());    // who the notification is from
+        bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());
+        bundle.putString("RECEIVER_USERNAME", userProfileParcel.getProfileUsername());
         return bundle;
     }
 
@@ -275,7 +279,8 @@ public class ProfileActivity extends AppCompatActivity {
                         .into(imageViewProfilePicture);
             }
             else {
-                imageURL = "https://graph.facebook.com/" + userProfileParcel.getFacebookID() + "/picture?width=9999";
+                //"https://graph.facebook.com/" + userProfileParcel.getFacebookID() + "/picture?width=9999";
+                imageURL = Helpers.getFacebookProfilePictureURL(userProfileParcel.getFacebookID(), 5);
                 Helpers.setFacebookProfileImage(this,
                         imageViewProfilePicture,
                         userProfileParcel.getFacebookID(),
@@ -433,11 +438,8 @@ public class ProfileActivity extends AppCompatActivity {
         fistbumpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // increase appropriate fistbump counts
-                dynamoDBHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurrentUsername());
-                dynamoDBHelper.incrementUserReceivedFistbumpsCount(userProfileParcel.getProfileUsername());
-                // add users to respective sent/received fistbump lists
-                new HandleCurUserDirectFistbumpToProfileUserTask().execute();
+                // add users to respective sent/received fistbump lists and increment fistbump counts
+                new SendDirectFistbumpToProfileUserAsyncTask().execute();
                 // update UI
                 final TextView buttonEditProfileContent = (TextView) findViewById(R.id.id_button_edit_profile_content);
                 final FloatingActionButton actionFAB = (FloatingActionButton) findViewById(R.id.fab_profile_action);
@@ -779,7 +781,7 @@ public class ProfileActivity extends AppCompatActivity {
         }
     }
 
-    private class HandleCurUserDirectFistbumpToProfileUserTask extends AsyncTask<Void, Void, Void> {
+    private class SendDirectFistbumpToProfileUserAsyncTask extends AsyncTask<Void, Void, Void> {
         DBUserProfile profileUser;
         DBUserProfile currentUser;
         @Override
@@ -788,6 +790,8 @@ public class ProfileActivity extends AppCompatActivity {
             profileUser = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getProfileUsername());
             currentUser = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurrentUsername());
             if (profileUser != null && currentUser != null) {
+                // increment fistbump counts to sender and receiver respectively
+                dynamoDBHelper.updateFistbumpsCount(currentUser, profileUser, true);
                 currentUser.addUsersDirectFistbumpSent(userProfileParcel.getProfileUsername());
                 profileUser.addUsersDirectFistbumpReceived(userProfileParcel.getCurrentUsername());
                 // check if fistbump match
@@ -809,10 +813,17 @@ public class ProfileActivity extends AppCompatActivity {
             }
 
             final NotificationEnum notificationType = isFistbumpMatch ? NotificationEnum.DIRECT_FISTBUMP_MATCH : NotificationEnum.DIRECT_FISTBUMP;
-            // create new db user notification
-            dynamoDBHelper.createNewNotification(makeDBNotificationBundleDirectFistbump());
-            // send push notification to receiving user that they got a direct fistbump/direct fistbump match
-            httpRequestsHelper.makePushNotificationRequest(makePushNotificationDirectFistbumpBundle(notificationType));
+            // create new user notification
+            dynamoDBHelper.createNewNotification(makeDBNotificationBundleDirectFistbump(),
+                    new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
+                        @Override
+                        public void onTaskDone(Object isNotificationCreated) {
+                            if ((boolean) isNotificationCreated) {
+                                // send push notification to receiver that they got a direct fistbump/direct fistbump match
+                                httpRequestsHelper.makePushNotificationRequest(makePushNotificationDirectFistbumpBundle(notificationType));
+                            }
+                        }
+                    });
             return null;
         }
     }

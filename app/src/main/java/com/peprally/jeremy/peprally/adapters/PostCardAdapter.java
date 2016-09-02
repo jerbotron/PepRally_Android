@@ -1,9 +1,11 @@
 package com.peprally.jeremy.peprally.adapters;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -20,6 +22,7 @@ import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
+import com.peprally.jeremy.peprally.interfaces.PostContainerInterface;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Constants;
@@ -169,12 +172,19 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                     // update user fistbumps counts
                     // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
                     if (!curPost.getUsername().equals(userProfileParcel.getCurrentUsername())) {
-                        // update the received fistbumps count of the main post user
-                        dbHelper.decrementUserReceivedFistbumpsCount(curPost.getUsername());
-                        // update the sent fistbumps count of the current user
-                        dbHelper.decrementUserSentFistbumpsCount(userProfileParcel.getCurrentUsername());
-                        // remove notification
-                        dbHelper.deletePostFistbumpNotification(NotificationEnum.POST_FISTBUMP, curPost.getPostId(), userProfileParcel.getCurrentUsername());
+                        // remove notification and also update fistbump counts respectively
+                        dbHelper.deletePostFistbumpNotification(
+                                curPost.getPostId(),
+                                userProfileParcel.getCurrentUsername(),
+                                curPost.getUsername(),
+                                new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
+                                    @Override
+                                    public void onTaskDone(Object bundle) {
+                                        if (!((Bundle) bundle).getBoolean("NOTIFICATION_CREATED", false)) { // assume that notification was not deleted
+                                            launchPostOrCommentIsDeletedDialog(true);   // post was deleted
+                                        }
+                                    }
+                                });
                     }
                     // remove current user from fistbumped users
                     curPost.removeFistbumpedUser(userProfileParcel.getCurrentUsername());
@@ -190,21 +200,27 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                     // update user fistbumps counts
                     // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
                     if (!curPost.getUsername().equals(userProfileParcel.getCurrentUsername())) {
-                        // update the received fistbumps count of the main post user
-                        dbHelper.incrementUserReceivedFistbumpsCount(curPost.getUsername());
-                        // update the sent fistbumps count of the current user
-                        dbHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurrentUsername());
                         // make new notification
-                        dbHelper.createNewNotification(makeDBNotificationBundlePostFistbump(curPost));
-                        // send push notification
-                        httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostFistbump(curPost));
+                        dbHelper.createNewNotification(
+                                makeDBNotificationBundlePostFistbump(curPost),
+                                new DynamoDBHelper.AsyncTaskCallbackWithReturnObject(){
+                                    @Override
+                                    public void onTaskDone(Object bundle) {
+                                        if (((Bundle) bundle).getBoolean("NOTIFICATION_CREATED", false)) { // assume that notification was not created
+                                            // send push notification
+                                            httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostFistbump(curPost));
+                                        } else {
+                                            launchPostOrCommentIsDeletedDialog(true);   // post was deleted
+                                        }
+                                    }
+                                });
                     }
                     // add current user to fistbumped users
                     curPost.addFistbumpedUser(userProfileParcel.getCurrentUsername());
                 }
                 // update post fistbumps count
                 curPost.setFistbumpsCount(fistbumpsCount);
-                dbHelper.saveDBObjectAsync(curPost);
+                dbHelper.saveDBUserPostIfExist(curPost);
             }
         });
 
@@ -231,7 +247,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
     }
 
     /***********************************************************************************************
-     *********************************** GENERAL_METHODS ********************************
+     **************************************** GENERAL_METHODS **************************************
      **********************************************************************************************/
     private void adapterAddItemTop(DBUserPost newPost) {
         posts.add(0, newPost);
@@ -248,9 +264,9 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
 
     private Bundle makeDBNotificationBundlePostFistbump(DBUserPost curPost) {
         Bundle bundle = new Bundle();
-        bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
-        bundle.putString("RECEIVER_USERNAME", curPost.getUsername());    // who the notification is going to
+        bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
+        bundle.putString("RECEIVER_USERNAME", curPost.getUsername());
         bundle.putString("POST_ID", curPost.getPostId());
         return bundle;
     }
@@ -278,6 +294,32 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                 timestampSeconds
         );
         new PushNewUserPostToDBTask().execute(newPost);
+    }
+
+    private void launchPostOrCommentIsDeletedDialog(boolean isPost) {
+        final AlertDialog.Builder dialogBuilderPostDeleted = new AlertDialog.Builder(callingContext);
+        final View dialogViewConfirmDelete = View.inflate(callingContext, R.layout.dialog_confirm_delete, null);
+        dialogBuilderPostDeleted.setView(dialogViewConfirmDelete);
+        dialogBuilderPostDeleted.setTitle("Oops!");
+        if (isPost)
+            dialogBuilderPostDeleted.setMessage("Looks like this post has been deleted!");
+        else
+            dialogBuilderPostDeleted.setMessage("Looks like this comment has been deleted!");
+        dialogBuilderPostDeleted.setPositiveButton("Go back", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                ((PostContainerInterface) callingContext).refreshPosts();
+            }
+        });
+
+        AlertDialog b = dialogBuilderPostDeleted.create();
+        b.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                ((PostContainerInterface) callingContext).refreshPosts();
+            }
+        });
+
+        b.show();
     }
 
     /***********************************************************************************************

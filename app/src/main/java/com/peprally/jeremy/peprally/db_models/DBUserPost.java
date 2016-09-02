@@ -73,6 +73,15 @@ public class DBUserPost implements Parcelable{
         commentsCount--;
     }
 
+    public boolean hasComment(String commentId) {
+        if (comments != null) {
+            for (Comment comment : comments) {
+                if (comment.getCommentId().equals(commentId)) return true;
+            }
+        }
+        return false;
+    }
+
     // Parcelable Methods
     private DBUserPost(Parcel in) {
         this.username = in.readString();
