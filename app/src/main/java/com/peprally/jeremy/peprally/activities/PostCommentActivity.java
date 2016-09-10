@@ -123,7 +123,7 @@ public class PostCommentActivity extends AppCompatActivity{
             Helpers.setFacebookProfileImage(this,
                     mainPostProfileImage,
                     mainPost.getFacebookId(),
-                    3,
+                    Helpers.FacebookProfilePictureEnum.LARGE,
                     true);
 
             mainPostTimeStamp.setText(Helpers.getTimetampString(mainPost.getTimestampSeconds(), true));
@@ -172,14 +172,11 @@ public class PostCommentActivity extends AppCompatActivity{
             editTextNewComment.addTextChangedListener(new TextWatcher() {
                 int prev_length = 0;
                 public void afterTextChanged(Editable s) {
-                    if (prev_length >= 200) {
+                    if (prev_length >= 200)
                         textViewCharCount.setTextColor(Color.RED);
-                    }
                 }
 
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-                }
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
                     newCommentCharCount -= (s.length() - prev_length);
@@ -363,7 +360,7 @@ public class PostCommentActivity extends AppCompatActivity{
                     Helpers.getAPICompatVectorDrawable(getApplicationContext(), R.drawable.ic_replies), null, null, null);
 
             // if user already liked the post
-            if (userPost.getFistbumpedUsers().contains(username)) {
+            if (userPost.getFistbumpedUsers() != null && userPost.getFistbumpedUsers().contains(username)) {
                 mainPostFistbump.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
                 mainPostFistbumpsCount.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_fistbump_filled_20, 0, 0, 0);
             }
@@ -372,10 +369,23 @@ public class PostCommentActivity extends AppCompatActivity{
                 @Override
                 public void onClick(View view) {
                     if (mainPost.getFistbumpsCount() > 0) {
-                        Intent intent = new Intent(PostCommentActivity.this, ViewFistbumpsActivity.class);
-                        intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
-                        intent.putExtra("USER_POST", mainPost);
-                        startActivity(intent);
+                        dynamoDBHelper.doActionIfDBUserPostAndCommentExists(
+                                mainPost,
+                                null,       // don't need to check comment
+                                new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
+                                    @Override
+                                    public void onTaskDone(Object bundle) {
+                                        if (((Bundle) bundle).getBoolean("POST_AND_COMMENT_EXISTS", false)) {   // assume worst case, that post/comment was deleted
+                                            Intent intent = new Intent(PostCommentActivity.this, ViewFistbumpsActivity.class);
+                                            intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
+                                            intent.putExtra("USER_POST", mainPost);
+                                            startActivity(intent);
+                                        } else {
+                                            launchPostOrCommentIsDeletedDialog(((Bundle) bundle).getBoolean("IS_POST_DELETED", true)); // assume post was deleted
+                                        }
+
+                                    }
+                                });
                     }
                 }
             });
@@ -384,19 +394,17 @@ public class PostCommentActivity extends AppCompatActivity{
             mainPostFistbump.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    int fistbumpsCount = Integer.parseInt(mainPostFistbumpsCount.getText().toString());
-                    Set<String> fistbumpedUsers = userPost.getFistbumpedUsers();
+                    final Set<String> fistbumpedUsers = userPost.getFistbumpedUsers();
                     // if user already liked the post
-                    if (fistbumpedUsers.contains(username)) {
-                        fistbumpsCount -= 1;
+                    if (fistbumpedUsers != null && fistbumpedUsers.contains(username)) {
+                        int fistbumpsCount = Integer.parseInt(mainPostFistbumpsCount.getText().toString()) - 1;
+                        // remove user from fistbumpedUsers set and update post fistbumps count
+                        userPost.removeFistbumpedUser(username);
+                        userPost.setFistbumpsCount(fistbumpsCount);
+                        // update UI
                         mainPostFistbumpsCount.setText(String.valueOf(fistbumpsCount));
                         mainPostFistbump.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_50, 0);
                         mainPostFistbumpsCount.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_fistbump_20, 0, 0, 0);
-
-                        // remove user from fistbumpedUsers set
-                        userPost.removeFistbumpedUser(username);
-
-                        // update user fistbumps counts:
                         // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
                         if (!userPost.getUsername().equals(userProfileParcel.getCurrentUsername())) {
                             // remove notification and also update fistbump counts respectively
@@ -407,47 +415,50 @@ public class PostCommentActivity extends AppCompatActivity{
                                     new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
                                         @Override
                                         public void onTaskDone(Object bundle) {
-                                            if (!((Bundle) bundle).getBoolean("NOTIFICATION_CREATED", false)) {  // assume notification wasn't created
+                                            if (((Bundle) bundle).getBoolean("TASK_SUCCESS", false)) {  // assume notification wasn't created
+                                                dynamoDBHelper.saveDBObjectAsync(userPost);
+                                            } else {
                                                 launchPostOrCommentIsDeletedDialog(((Bundle) bundle).getBoolean("IS_POST_DELETED", true));   // assume post is deleted
                                             }
                                         }
                                     });
+                        } else {
+                            // if I made changes to my own post, just save the post right away, I don't
+                            // need to check if the post has been deleted
+                            dynamoDBHelper.saveDBObjectAsync(userPost);
                         }
-                        // remove current user from fistbumped users
-                        userPost.removeFistbumpedUser(userProfileParcel.getCurrentUsername());
                     }
                     // If user has not liked the post yet
                     else {
-                        fistbumpsCount += 1;
+                        int fistbumpsCount = Integer.parseInt(mainPostFistbumpsCount.getText().toString()) + 1;
+                        // add user to fistbumpedUsers set and update post fistbumps count
+                        userPost.addFistbumpedUser(username);
+                        userPost.setFistbumpsCount(fistbumpsCount);
+                        // update UI
                         mainPostFistbumpsCount.setText(String.valueOf(fistbumpsCount));
                         mainPostFistbump.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
                         mainPostFistbumpsCount.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_fistbump_filled_20, 0, 0, 0);
-
-                        // add user to fistbumpedUsers set
-                        userPost.addFistbumpedUser(username);
-
-                        // update user fistbumps counts:
                         // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
                         if (!userPost.getUsername().equals(userProfileParcel.getCurrentUsername())) {
                             dynamoDBHelper.createNewNotification(makeDBNotificationBundlePostFistbump(userPost),
                                     new DynamoDBHelper.AsyncTaskCallbackWithReturnObject(){
                                         @Override
                                         public void onTaskDone(Object bundle) {
-                                            if (((Bundle) bundle).getBoolean("NOTIFICATION_CREATED", false)) {  // assume notification wasn't created
+                                            if (((Bundle) bundle).getBoolean("TASK_SUCCESS", false)) {  // assume notification wasn't created
                                                 // send push notification
                                                 httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostFistbump(userPost));
+                                                dynamoDBHelper.saveDBObjectAsync(userPost);
                                             } else {
                                                 launchPostOrCommentIsDeletedDialog(((Bundle) bundle).getBoolean("IS_POST_DELETED", true));   // assume post is deleted
                                             }
                                         }
                                     });
+                        } else {
+                            // if I made changes to my own post, just save the post right away, I don't
+                            // need to check if the post has been deleted
+                            dynamoDBHelper.saveDBObjectAsync(userPost);
                         }
-                        // add current user to fistbumped users
-                        userPost.addFistbumpedUser(userProfileParcel.getCurrentUsername());
                     }
-                    // update post fistbumps count
-                    userPost.setFistbumpsCount(fistbumpsCount);
-                    dynamoDBHelper.saveDBUserPostIfExist(userPost);
                 }
             });
         }

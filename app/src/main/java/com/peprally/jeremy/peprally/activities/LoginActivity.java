@@ -40,7 +40,6 @@ import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.Profile;
-import com.facebook.ProfileTracker;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
@@ -62,8 +61,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
 public class LoginActivity extends AppCompatActivity {
@@ -494,7 +491,8 @@ public class LoginActivity extends AppCompatActivity {
                 if (userProfile.getIsVarsityPlayer()) {
                     playerProfile = mapper.load(DBPlayerProfile.class, userProfile.getTeam(), userProfile.getPlayerIndex());
                 }
-                userProfile.setLastLoggedInTimestamp(Helpers.getTimestampSeconds());
+                userProfile.setTimestampLastLoggedIn(Helpers.getTimestampSeconds());
+                userProfile.setDateLastLoggedIn(Helpers.getTimestampString());
                 dynamoDBHelper.saveDBObject(userProfile);
                 return false;
             }
@@ -562,11 +560,8 @@ public class LoginActivity extends AppCompatActivity {
                 userProfile.setNewUser(true);
                 userProfile.setHasNewMessage(false);
                 userProfile.setHasNewNotification(false);
-                userProfile.setConversationIds(new HashSet<>(Collections.singletonList("_")));
-                userProfile.setUsersDirectFistbumpSent(new HashSet<>(Collections.singletonList("_")));
-                userProfile.setUsersDirectFistbumpReceived(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setDateJoined(Helpers.getTimestampString());
-                userProfile.setLastLoggedInTimestamp(Helpers.getTimestampSeconds());
+                userProfile.setTimestampLastLoggedIn(Helpers.getTimestampSeconds());
                 dynamoDBHelper.saveDBObject(userProfile);
                 return userProfile;
             }

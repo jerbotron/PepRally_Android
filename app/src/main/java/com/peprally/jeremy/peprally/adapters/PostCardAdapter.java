@@ -25,12 +25,10 @@ import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.interfaces.PostContainerInterface;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
-import com.peprally.jeremy.peprally.utils.Constants;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +37,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // AWS/HTTP Variables
-    private DynamoDBHelper dbHelper;
+    private DynamoDBHelper dynamoDBHelper;
     private HTTPRequestsHelper httpRequestsHelper;
 
     // General Variables
@@ -54,7 +52,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         this.callingContext = callingContext;
         this.posts = posts;
         this.userProfileParcel = userProfileParcel;
-        dbHelper = new DynamoDBHelper(callingContext);
+        dynamoDBHelper = new DynamoDBHelper(callingContext);
         httpRequestsHelper = new HTTPRequestsHelper(callingContext);
     }
 
@@ -93,14 +91,14 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         Helpers.setFacebookProfileImage(callingContext,
                                         postHolder.profileImage,
                                         curPost.getFacebookId(),
-                                        3,
+                                        Helpers.FacebookProfilePictureEnum.LARGE,
                                         true);
 
         final String curUsername = userProfileParcel.getCurrentUsername();
 
-        Set<String> fistbumpedUsers = curPost.getFistbumpedUsers();
+        final Set<String> fistbumpedUsers = curPost.getFistbumpedUsers();
 
-        if (fistbumpedUsers.contains(curUsername)) {
+        if (fistbumpedUsers != null && fistbumpedUsers.contains(curUsername)) {
             postHolder.postFistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
             postHolder.postFistbumpsCount.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_fistbump_filled_20, 0, 0, 0);
         } else {
@@ -147,10 +145,23 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
             @Override
             public void onClick(View view) {
                 if (curPost.getFistbumpsCount() > 0) {
-                    Intent intent = new Intent(callingContext, ViewFistbumpsActivity.class);
-                    intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
-                    intent.putExtra("USER_POST", curPost);
-                    callingContext.startActivity(intent);
+                    dynamoDBHelper.doActionIfDBUserPostAndCommentExists(
+                            curPost,
+                            null,       // don't need to check comment
+                            new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
+                                @Override
+                                public void onTaskDone(Object bundle) {
+                                    if (((Bundle) bundle).getBoolean("POST_AND_COMMENT_EXISTS", false)) {   // assume worst case, that post/comment was deleted
+                                        Intent intent = new Intent(callingContext, ViewFistbumpsActivity.class);
+                                        intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
+                                        intent.putExtra("USER_POST", curPost);
+                                        callingContext.startActivity(intent);
+                                    } else {
+                                        launchPostOrCommentIsDeletedDialog(((Bundle) bundle).getBoolean("IS_POST_DELETED", true)); // assume post was deleted
+                                    }
+
+                                }
+                            });
                 }
             }
         });
@@ -159,68 +170,73 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         postHolder.postFistbumpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int fistbumpsCount = Integer.parseInt(postHolder.postFistbumpsCount.getText().toString());
-                Set<String> fistbumpedUsers = curPost.getFistbumpedUsers();
+                final Set<String> fistbumpedUsers = curPost.getFistbumpedUsers();
                 // If user already liked the post
-                if (fistbumpedUsers.contains(curUsername)) {
-                    fistbumpsCount -= 1;
+                if (fistbumpedUsers != null && fistbumpedUsers.contains(curUsername)) {
+                    final int fistbumpsCount = Integer.parseInt(postHolder.postFistbumpsCount.getText().toString()) - 1;
+                    // remove user from fistbumpedUsers set
+                    curPost.removeFistbumpedUser(curUsername);
+                    curPost.setFistbumpsCount(fistbumpsCount);
+                    // update UI
                     postHolder.postFistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_50, 0);
                     postHolder.postFistbumpsCount.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_fistbump_20, 0, 0, 0);
                     postHolder.postFistbumpsCount.setText(String.valueOf(fistbumpsCount));
-                    // remove user from fistbumpedUsers set
-                    curPost.removeFistbumpedUser(curUsername);
-                    // update user fistbumps counts
                     // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
                     if (!curPost.getUsername().equals(userProfileParcel.getCurrentUsername())) {
                         // remove notification and also update fistbump counts respectively
-                        dbHelper.deletePostFistbumpNotification(
+                        dynamoDBHelper.deletePostFistbumpNotification(
                                 curPost.getPostId(),
                                 userProfileParcel.getCurrentUsername(),
                                 curPost.getUsername(),
                                 new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
                                     @Override
                                     public void onTaskDone(Object bundle) {
-                                        if (!((Bundle) bundle).getBoolean("NOTIFICATION_CREATED", false)) { // assume that notification was not deleted
-                                            launchPostOrCommentIsDeletedDialog(true);   // post was deleted
-                                        }
-                                    }
-                                });
-                    }
-                    // remove current user from fistbumped users
-                    curPost.removeFistbumpedUser(userProfileParcel.getCurrentUsername());
-                }
-                // If user has not liked the post yet
-                else {
-                    fistbumpsCount += 1;
-                    postHolder.postFistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
-                    postHolder.postFistbumpsCount.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_fistbump_filled_20, 0, 0, 0);
-                    postHolder.postFistbumpsCount.setText(String.valueOf(fistbumpsCount));
-                    // add user to fistbumpedUsers set
-                    curPost.addFistbumpedUser(curUsername);
-                    // update user fistbumps counts
-                    // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
-                    if (!curPost.getUsername().equals(userProfileParcel.getCurrentUsername())) {
-                        // make new notification
-                        dbHelper.createNewNotification(
-                                makeDBNotificationBundlePostFistbump(curPost),
-                                new DynamoDBHelper.AsyncTaskCallbackWithReturnObject(){
-                                    @Override
-                                    public void onTaskDone(Object bundle) {
-                                        if (((Bundle) bundle).getBoolean("NOTIFICATION_CREATED", false)) { // assume that notification was not created
-                                            // send push notification
-                                            httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostFistbump(curPost));
+                                        if (((Bundle) bundle).getBoolean("TASK_SUCCESS", false)) { // assume that notification was not deleted
+                                            dynamoDBHelper.saveDBObjectAsync(curPost);
                                         } else {
                                             launchPostOrCommentIsDeletedDialog(true);   // post was deleted
                                         }
                                     }
                                 });
+                    } else {
+                        // if I made changes to my own post, just save the post right away, I don't
+                        // need to check if the post has been deleted
+                        dynamoDBHelper.saveDBObjectAsync(curPost);
                     }
-                    // add current user to fistbumped users
-                    curPost.addFistbumpedUser(userProfileParcel.getCurrentUsername());
                 }
-                // update post fistbumps count
-                curPost.setFistbumpsCount(fistbumpsCount);
-                dbHelper.saveDBUserPostIfExist(curPost);
+                // If user has not liked the post yet
+                else {
+                    final int fistbumpsCount = Integer.parseInt(postHolder.postFistbumpsCount.getText().toString()) + 1;
+                    // add user to fistbumpedUsers set
+                    curPost.addFistbumpedUser(curUsername);
+                    curPost.setFistbumpsCount(fistbumpsCount);
+                    // update UI
+                    postHolder.postFistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
+                    postHolder.postFistbumpsCount.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_fistbump_filled_20, 0, 0, 0);
+                    postHolder.postFistbumpsCount.setText(String.valueOf(fistbumpsCount));
+                    // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
+                    if (!curPost.getUsername().equals(userProfileParcel.getCurrentUsername())) {
+                        // make new notification
+                        dynamoDBHelper.createNewNotification(
+                                makeDBNotificationBundlePostFistbump(curPost),
+                                new DynamoDBHelper.AsyncTaskCallbackWithReturnObject(){
+                                    @Override
+                                    public void onTaskDone(Object bundle) {
+                                        if (((Bundle) bundle).getBoolean("TASK_SUCCESS", false)) { // assume that notification was not created
+                                            // send push notification
+                                            httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostFistbump(curPost));
+                                            dynamoDBHelper.saveDBObjectAsync(curPost);
+                                        } else {
+                                            launchPostOrCommentIsDeletedDialog(true);   // post was deleted
+                                        }
+                                    }
+                                });
+                    } else {
+                        // if I made changes to my own post, just save the post right away, I don't
+                        // need to check if the post has been deleted
+                        dynamoDBHelper.saveDBObjectAsync(curPost);
+                    }
+                }
             }
         });
 
@@ -287,7 +303,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         DBUserPost newPost = new DBUserPost(
                 bundle.getString("USERNAME"),
                 bundle.getString("USERNAME") + "_" + timestampSeconds.toString(),
-                dbHelper.getIdentityID(),
+                dynamoDBHelper.getIdentityID(),
                 bundle.getString("FACEBOOK_ID"),
                 bundle.getString("FIRST_NAME"),
                 newPostText,
@@ -330,13 +346,13 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         protected DBUserPost doInBackground(DBUserPost... params) {
             // Save new post to DBUserPosts
             DBUserPost newPost= params[0];
-            dbHelper.saveDBObject(newPost);
+            dynamoDBHelper.saveDBObject(newPost);
 
             // Update UserProfile post count
-            DBUserProfile userProfile = dbHelper.loadDBUserProfile(newPost.getUsername());
+            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(newPost.getUsername());
             int curPostCount = userProfile.getPostsCount();
             userProfile.setPostsCount(curPostCount + 1);
-            dbHelper.saveDBObject(userProfile);
+            dynamoDBHelper.saveDBObject(userProfile);
 
             return newPost;
         }

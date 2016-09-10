@@ -73,7 +73,7 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
         Helpers.setFacebookProfileImage(callingContext,
                                         notificationCardHolder.profileImage,
                                         userNotification.getFacebookIdSender(),
-                                        3,
+                                        Helpers.FacebookProfilePictureEnum.LARGE,
                                         true);
 
         notificationCardHolder.timeStamp.setText(Helpers.getTimetampString(userNotification.getTimestampSeconds(), true));
@@ -83,6 +83,9 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
         switch (notificationType) {
             case DIRECT_FISTBUMP:
                 content = callingContext.getResources().getString(R.string.notification_0_placeholder);
+                break;
+            case DIRECT_FISTBUMP_MATCH:
+                content = callingContext.getResources().getString(R.string.notification_5_placeholder);
                 break;
             case POST_COMMENT:
                 content = callingContext.getResources().getString(R.string.notification_2_placeholder);

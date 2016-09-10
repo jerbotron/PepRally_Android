@@ -62,7 +62,7 @@ public class FistbumpedUserCardAdapter extends RecyclerView.Adapter<FistbumpedUs
         Helpers.setFacebookProfileImage(callingContext,
                 fistbumpedUserCardHolder.userImage,
                 userProfile.getFacebookId(),
-                3,
+                Helpers.FacebookProfilePictureEnum.LARGE,
                 true);
 
         fistbumpedUserCardHolder.username.setText(userProfile.getUsername());

@@ -95,8 +95,16 @@ public class DynamoDBHelper {
         new SaveDBObjectAsyncTask().execute(object);
     }
 
-    public void saveDBUserPostIfExist(DBUserPost userPost) {
-        new SaveDBUserPostIfExistAsyncTask().execute(userPost);
+    public void saveIfDBUserPostExists(DBUserPost userPost) {
+        new SaveDBUserPostIfExistsAsyncTask().execute(userPost);
+    }
+
+    public void saveIfDBUserPostAndCommentExists(DBUserPost userPost, Comment comment, AsyncTaskCallback taskCallback) {
+        new SaveDBUserPostAndCommentIfExistsAsyncTask(userPost, comment, taskCallback).execute();
+    }
+
+    public void doActionIfDBUserPostAndCommentExists(DBUserPost userPost, Comment comment, AsyncTaskCallbackWithReturnObject taskCallback) {
+        new DoActionIfDBUserPostAndCommentIfExistsAsyncTask(userPost, comment, taskCallback).execute();
     }
 
     /**
@@ -120,8 +128,6 @@ public class DynamoDBHelper {
         String [] splitArray = PostId.split("_");
         String postUsername = TextUtils.join("_", Arrays.copyOfRange(splitArray, 0, splitArray.length - 1));
         Long timestampSeconds = Long.valueOf(splitArray[splitArray.length - 1]);
-        Log.d("DDH: ", postUsername);
-        Log.d("DDH: ", timestampSeconds.toString());
         return mapper.load(DBUserPost.class, postUsername, timestampSeconds);
     }
 
@@ -134,7 +140,7 @@ public class DynamoDBHelper {
     }
 
     /**
-     * Database save/update methods
+     * Database update methods
      */
     public void updateFirebaseInstanceID(String newInstanceID) {
         new UpdateFirebaseInstanceIdAsyncTask().execute(newInstanceID);
@@ -155,6 +161,10 @@ public class DynamoDBHelper {
                                                                     notifyCommentFistbumpPref,
                                                                     notifyNewCommentPref,
                                                                     notifyDirectMessagePref);
+    }
+
+    private void updateUserLastLoggedInDate(String username) {
+        new UpdateUserLastLoggedInDateAsyncTask().execute(username);
     }
 
     /**
@@ -324,6 +334,18 @@ public class DynamoDBHelper {
         }
     }
 
+    private class UpdateUserLastLoggedInDateAsyncTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... strings) {
+            String username = strings[0];
+            DBUserProfile userProfile = loadDBUserProfile(username);
+            userProfile.setDateLastLoggedIn(Helpers.getTimestampString());
+            userProfile.setTimestampLastLoggedIn(Helpers.getTimestampSeconds());
+            mapper.save(userProfile);
+            return null;
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private class DeleteDBUserProfileAsyncTask extends AsyncTask<UserProfileParcel, Void, Void> {
 
@@ -397,18 +419,116 @@ public class DynamoDBHelper {
     /**
      * User post/comments async tasks
      */
-    private class SaveDBUserPostIfExistAsyncTask extends AsyncTask<DBUserPost, Void, Void> {
+    private class SaveDBUserPostIfExistsAsyncTask extends AsyncTask<DBUserPost, Void, Boolean> {
+        private AsyncTaskCallback postDeletedTaskCallback;
+
+        private SaveDBUserPostIfExistsAsyncTask() {
+            this.postDeletedTaskCallback = null;
+        }
+
+        private SaveDBUserPostIfExistsAsyncTask(AsyncTaskCallback taskCallback) {
+            this.postDeletedTaskCallback = taskCallback;
+        }
+
         @Override
-        protected Void doInBackground(DBUserPost... dbUserPosts) {
+        protected Boolean doInBackground(DBUserPost... dbUserPosts) {
             DBUserPost userPost = dbUserPosts[0];
             // save the input userPost if we can query it
             DBUserPost userPostExisting = loadDBUserPost(userPost.getPostId());
             if (userPostExisting != null) {
                 mapper.save(userPost);
+                return true;
             }
-            return null;
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean saveSuccess) {
+            super.onPostExecute(saveSuccess);
+            if (postDeletedTaskCallback != null && !saveSuccess) {
+                postDeletedTaskCallback.onTaskDone();   // if post was not found
+            }
         }
     }
+
+    private class SaveDBUserPostAndCommentIfExistsAsyncTask extends AsyncTask<Void, Void, Boolean> {
+        private AsyncTaskCallback taskCallback;
+        private DBUserPost userPost;
+        private Comment comment;
+
+        private SaveDBUserPostAndCommentIfExistsAsyncTask(DBUserPost userPost,
+                                                Comment comment,
+                                                AsyncTaskCallback taskCallback) {
+            this.userPost = userPost;
+            this.comment = comment;
+            this.taskCallback = taskCallback;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            // save the input userPost if we can query it
+            DBUserPost userPostExisting = loadDBUserPost(userPost.getPostId());
+            if (userPostExisting != null) {
+                if (userPostExisting.hasComment(comment.getCommentId())) {
+                    mapper.save(userPost);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean saveSuccess) {
+            super.onPostExecute(saveSuccess);
+            if (taskCallback != null && !saveSuccess) {
+                taskCallback.onTaskDone();   // if post was not found
+            }
+        }
+    }
+
+    private class DoActionIfDBUserPostAndCommentIfExistsAsyncTask extends AsyncTask<Void, Void, Boolean> {
+        private AsyncTaskCallbackWithReturnObject taskCallback;
+        private DBUserPost userPost;
+        private Comment comment;
+        private boolean isPostDeleted;
+
+        private DoActionIfDBUserPostAndCommentIfExistsAsyncTask(DBUserPost userPost,
+                                                                Comment comment,
+                                                                AsyncTaskCallbackWithReturnObject taskCallback) {
+            this.userPost = userPost;
+            this.comment = comment;
+            this.taskCallback = taskCallback;
+            this.isPostDeleted =  true;     // assume that post was deleted
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            // save the input userPost if we can query it
+            DBUserPost userPostExisting = loadDBUserPost(userPost.getPostId());
+            if (userPostExisting != null) {
+                isPostDeleted = false;  // post found
+                // if not looking for comment or found comment, return true
+                if (comment == null || userPostExisting.hasComment(comment.getCommentId())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean postAndCommentFound) {
+            super.onPostExecute(postAndCommentFound);
+            Bundle bundle = new Bundle();
+            bundle.putBoolean("POST_AND_COMMENT_EXISTS", postAndCommentFound);
+            if (!postAndCommentFound)
+                bundle.putBoolean("IS_POST_DELETED", isPostDeleted);
+
+            if (taskCallback != null) {
+                taskCallback.onTaskDone(bundle);   // if post and comment was found
+            }
+        }
+    }
+
     private class CreateNewPostCommentAsyncTask extends AsyncTask<Bundle, Void, Void> {
 
         private AsyncTaskCallback taskCallback;
@@ -432,9 +552,7 @@ public class DynamoDBHelper {
                         commentUserProfile.getFacebookId(),
                         bundle.getString("COMMENT_TEXT"),
                         bundle.getLong("TIMESTAMP"),
-                        0,
-                        new HashSet<>(Collections.singletonList("_"))
-                );
+                        0);
                 DBUserPost parentPost = loadDBUserPost(newComment.getPostId());
                 if (parentPost != null) {
                     parentPost.addComment(newComment);
@@ -486,6 +604,11 @@ public class DynamoDBHelper {
         @Override
         protected Void doInBackground(DBUserPost... dbUserPosts) {
             DBUserPost userPost = dbUserPosts[0];
+            DBUserProfile userProfile = loadDBUserProfile(userPost.getUsername());
+            if (userProfile != null) {
+                userProfile.setPostsCount(userProfile.getPostsCount() - 1);
+                mapper.save(userProfile);
+            }
             mapper.delete(userPost);
             return null;
         }
@@ -609,7 +732,7 @@ public class DynamoDBHelper {
             super.onPostExecute(notificationCreated);
             if (taskCallback != null) {
                 Bundle bundle = new Bundle();
-                bundle.putBoolean("NOTIFICATION_CREATED", notificationCreated);
+                bundle.putBoolean("TASK_SUCCESS", notificationCreated);
                 bundle.putBoolean("IS_POST_DELETED", isPostDeleted);
                 taskCallback.onTaskDone(bundle);
             }
@@ -647,9 +770,13 @@ public class DynamoDBHelper {
                     || notificationType == NotificationEnum.POST_FISTBUMP
                     || notificationType == NotificationEnum.COMMENT_FISTBUMP) {
 
+                Log.d("DH: ", "sanity check");
                 // check if post exists
                 DBUserPost userPost = loadDBUserPost(bundle.getString("POST_ID"));
-                if (userPost == null) return false;
+                if (userPost == null) {
+                    Log.d("DH: ", "not here ");
+                    return false;
+                }
 
                 if (notificationType == NotificationEnum.POST_COMMENT) {
                     userNotification.setPostId(bundle.getString("POST_ID"));
@@ -683,6 +810,7 @@ public class DynamoDBHelper {
                                 .withExpressionAttributeValues(expressionAttributeValues)
                                 .withConsistentRead(false);
                     } else if (notificationType == NotificationEnum.COMMENT_FISTBUMP) {
+                        Log.d("DH: ", "comments = " + userPost.getComments().toString());
                         // check if comment exists
                         if (!userPost.hasComment(bundle.getString("COMMENT_ID"))) {
                             isPostDeleted = false;
@@ -720,7 +848,7 @@ public class DynamoDBHelper {
             super.onPostExecute(notificationDeleted);
             if (taskCallback != null) {
                 Bundle bundle = new Bundle();
-                bundle.putBoolean("NOTIFICATION_CREATED", notificationDeleted);
+                bundle.putBoolean("TASK_SUCCESS", notificationDeleted);
                 bundle.putBoolean("IS_POST_DELETED", isPostDeleted);
                 taskCallback.onTaskDone(bundle);
             }

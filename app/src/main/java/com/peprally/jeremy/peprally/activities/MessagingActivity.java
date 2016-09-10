@@ -149,11 +149,12 @@ public class MessagingActivity extends AppCompatActivity {
                 View dialogViewConfirmDelete = View.inflate(this, R.layout.dialog_confirm_delete_conversation, null);
                 TextView confirmDeleteMessage = (TextView) dialogViewConfirmDelete.findViewById(R.id.id_dialog_confirm_delete_conversation);
                 ImageView confirmDeleteImage = (ImageView) dialogViewConfirmDelete.findViewById(R.id.id_dialog_confirm_delete_conversation_image);
-                confirmDeleteMessage.setText("Are you sure you want to delete this conversation with " + receiverUsername + "?");
+                String deleteText = "Are you sure you want to delete this conversation with " + receiverUsername + "?";
+                confirmDeleteMessage.setText(deleteText);
                 Helpers.setFacebookProfileImage(MessagingActivity.this,
                         confirmDeleteImage,
                         conversation.getUsernameFacebookIdMap().get(receiverUsername),
-                        3,
+                        Helpers.FacebookProfilePictureEnum.LARGE,
                         true);
                 dialogBuilderConfirmDelete.setView(dialogViewConfirmDelete);
                 dialogBuilderConfirmDelete.setTitle("Confirm Delete");
@@ -365,13 +366,12 @@ public class MessagingActivity extends AppCompatActivity {
             Helpers.setFacebookProfileImage(getContext(),
                     profileImage,
                     facebookId,
-                    3,
+                    Helpers.FacebookProfilePictureEnum.LARGE,
                     true);
 
             profileImage.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-//                    getActivity().finish();
                     AsyncHelpers.launchExistingUserProfileActivity(getContext(), receiverUsername, currentUsername, null);
                 }
             });

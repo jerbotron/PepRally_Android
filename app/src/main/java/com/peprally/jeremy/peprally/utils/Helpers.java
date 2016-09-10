@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
@@ -14,6 +16,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Vibrator;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.graphics.drawable.VectorDrawableCompat;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
@@ -21,9 +24,11 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
@@ -87,27 +92,60 @@ public class Helpers {
     }
 
     /**
+     *  This method is used to set the proper margins on the custom implemented toolbar in profile
+     *  layout.
+     */
+    public static void fixProfileHeaderMarginTop(Context callingContext, LinearLayout headerContainer) {
+        final CollapsingToolbarLayout.LayoutParams headerParams = (CollapsingToolbarLayout.LayoutParams) headerContainer.getLayoutParams();
+        TypedValue typedValue = new TypedValue();
+        int[] actionbarAttr = new int[] {android.R.attr.actionBarSize};
+        TypedArray a = callingContext.obtainStyledAttributes(typedValue.resourceId, actionbarAttr);
+        int actionbarSize = a.getDimensionPixelSize(0, -1);
+        a.recycle();
+        headerParams.setMargins(0, actionbarSize + getStatusBarHeight(callingContext.getResources()), 0, 0);
+        headerContainer.setLayoutParams(headerParams);
+    }
+
+    private static Integer getStatusBarHeight(Resources resources) {
+        Integer result = 0;
+        int resourceId = resources.getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = resources.getDimensionPixelSize(resourceId);
+        }
+        return result;
+    }
+
+    /**
      * General Helpers
      */
-    public static String getFacebookProfilePictureURL(String facebookId, int size) {
+    public enum FacebookProfilePictureEnum {
+        SMALL,
+        NORMAL,
+        ALBUM,
+        LARGE,
+        SQUARE,
+        MAX
+    }
+
+    public static String getFacebookProfilePictureURL(String facebookId, FacebookProfilePictureEnum pictureSize) {
         String type;
-        switch (size) {
-            case 0:
+        switch (pictureSize) {
+            case SMALL:
                 type = "type=small";
                 break;
-            case 1:
+            case NORMAL:
                 type = "type=normal";
                 break;
-            case 2:
+            case ALBUM:
                 type = "type=album";
                 break;
-            case 3:
+            case LARGE:
                 type = "type=large";
                 break;
-            case 4:
+            case SQUARE:
                 type = "type=square";
                 break;
-            case 5:
+            case MAX:
             default:
                 type = "width=9999";
                 break;
@@ -200,19 +238,19 @@ public class Helpers {
     public static void setFacebookProfileImage(Context callingContext,
                                                ImageView imageView,
                                                String facebookId,
-                                               int size,
+                                               FacebookProfilePictureEnum pictureSize,
                                                boolean rounded) {
         if (facebookId != null && !facebookId.isEmpty()) {
             if (rounded) {
                 Picasso.with(callingContext)
-                        .load(getFacebookProfilePictureURL(facebookId, size))
+                        .load(getFacebookProfilePictureURL(facebookId, pictureSize))
                         .placeholder(R.drawable.img_default_profile)
                         .error(R.drawable.img_default_profile)
                         .transform(new CircleImageTransformation())
                         .into(imageView);
             } else {
                 Picasso.with(callingContext)
-                        .load(getFacebookProfilePictureURL(facebookId, size))
+                        .load(getFacebookProfilePictureURL(facebookId, pictureSize))
                         .placeholder(R.drawable.img_default_profile)
                         .error(R.drawable.img_default_profile)
                         .into(imageView);

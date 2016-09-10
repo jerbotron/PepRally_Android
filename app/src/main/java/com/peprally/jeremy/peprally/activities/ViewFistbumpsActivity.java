@@ -149,20 +149,18 @@ public class ViewFistbumpsActivity extends AppCompatActivity {
                         userProfiles.add(userProfile);
                     } else {
                         fistbumpedUsersCopy.remove(i);
-                        fistbumpedUsersNeedUpdate = true;
                     }
                 }
 
-                if (fistbumpedUsersNeedUpdate) {
-                    if (commentIndex == Constants.INTEGER_INVALID) {
-                        mainPost.setFistbumpedUsers(new HashSet<>(fistbumpedUsersCopy));
-                        mainPost.setFistbumpsCount(fistbumpedUsersCopy.size());
-                    } else {
-                        mainPost.getComments().get(commentIndex).setFistbumpedUsers(new HashSet<>(fistbumpedUsersCopy));
-                        mainPost.getComments().get(commentIndex).setFistbumpsCount(fistbumpedUsersCopy.size());
-                    }
-                    dynamoDBHelper.saveDBObject(mainPost);
+                // update fistbump count every time we fetch fistbump users
+                if (commentIndex == Constants.INTEGER_INVALID) {        // post fistbumps
+                    mainPost.setFistbumpedUsers(new HashSet<>(fistbumpedUsersCopy));
+                    mainPost.setFistbumpsCount(fistbumpedUsersCopy.size());
+                } else {                                                // comment fistbumps
+                    mainPost.getComments().get(commentIndex).setFistbumpedUsers(new HashSet<>(fistbumpedUsersCopy));
+                    mainPost.getComments().get(commentIndex).setFistbumpsCount(fistbumpedUsersCopy.size());
                 }
+                dynamoDBHelper.saveDBObject(mainPost);
 
                 return userProfiles;
             }

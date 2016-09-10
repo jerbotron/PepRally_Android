@@ -152,7 +152,9 @@ public class PepRallyFirebaseMessagingService extends FirebaseMessagingService {
                     @Override
                     public void run() {
                         Picasso.with(getApplicationContext())
-                                .load(Helpers.getFacebookProfilePictureURL(senderFacebookId, 3))
+                                .load(Helpers.getFacebookProfilePictureURL(
+                                        senderFacebookId,
+                                        Helpers.FacebookProfilePictureEnum.LARGE))
                                 .transform(new CircleImageTransformation())
                                 .into(notification.contentView, android.R.id.icon, notifyId, notification);
                     }

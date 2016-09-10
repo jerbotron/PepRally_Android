@@ -8,7 +8,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.Menu;
 import android.view.MenuItem;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
@@ -24,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class FavoriteTeamActivity extends AppCompatActivity {
+public class BrowseTeamsActivity extends AppCompatActivity {
 
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
@@ -42,7 +41,7 @@ public class FavoriteTeamActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_favorite_team);
+        setContentView(R.layout.activity_browse_team);
 
         ActionBar supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
@@ -54,7 +53,7 @@ public class FavoriteTeamActivity extends AppCompatActivity {
             recyclerView.setHasFixedSize(true);
             // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
             recyclerView.setAdapter(new EmptyAdapter());
-            recyclerView.setLayoutManager(new LinearLayoutManager(FavoriteTeamActivity.this));
+            recyclerView.setLayoutManager(new LinearLayoutManager(BrowseTeamsActivity.this));
         }
 
         new FetchSportsTableTask().execute();
@@ -64,7 +63,7 @@ public class FavoriteTeamActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (dataFetched) {
-            recyclerView.setLayoutManager(new LinearLayoutManager(FavoriteTeamActivity.this));
+            recyclerView.setLayoutManager(new LinearLayoutManager(BrowseTeamsActivity.this));
             initializeAdapter();
         }
     }

@@ -3,12 +3,14 @@ package com.peprally.jeremy.peprally.custom;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,8 +35,7 @@ public class Comment implements Parcelable, Comparable<Comment>{
                    String facebookId,
                    String commentText,
                    Long timestampSeconds,
-                   int fistbumpsCount,
-                   Set<String> fistbumpedUsers)
+                   int fistbumpsCount)
     {
         this.postId = postId;
         this.commentId = commentId;
@@ -45,9 +46,12 @@ public class Comment implements Parcelable, Comparable<Comment>{
         this.commentText = commentText;
         this.timestampSeconds = timestampSeconds;
         this.fistbumpsCount = fistbumpsCount;
-        this.fistbumpedUsers = fistbumpedUsers;
+        this.fistbumpedUsers = null;
     }
 
+    /**
+     * JSON Helpers
+     */
     public Comment(JSONObject jsonComment) {
         try {
             postId = jsonComment.getString("post_id");
@@ -64,7 +68,12 @@ public class Comment implements Parcelable, Comparable<Comment>{
             for (int i = 0; i < jsonFistbumpedUsers.length(); i++) {
                 fistbumpedUsers.add(jsonFistbumpedUsers.getString(i));
             }
-        } catch (JSONException e) { e.printStackTrace(); }
+        } catch (JSONException e) {
+            if (e.getMessage().equals("No value for fistbumped_users"))
+                fistbumpedUsers = null;
+            else
+                e.printStackTrace();
+        }
     }
 
     @Override
@@ -72,7 +81,6 @@ public class Comment implements Parcelable, Comparable<Comment>{
         return this.timestampSeconds.compareTo(comment.timestampSeconds);
     }
 
-    // JSON Converter
     public JSONObject toJSONObject() {
         JSONObject jsonComment = new JSONObject();
         try {
@@ -93,7 +101,9 @@ public class Comment implements Parcelable, Comparable<Comment>{
         return jsonComment;
     }
 
-    // Parcelable Constructors
+    /**
+     * Parcelable Constructors
+      */
     private Comment(Parcel in) {
         this.postId = in.readString();
         this.commentId = in.readString();
@@ -140,11 +150,20 @@ public class Comment implements Parcelable, Comparable<Comment>{
 
     // Helpers
     public void addFistbumpedUser(String user) {
-        fistbumpedUsers.add(user);
+        if (fistbumpedUsers == null) {
+            fistbumpedUsers = new HashSet<>(Collections.singletonList(user));
+        } else {
+            fistbumpedUsers.add(user);
+        }
     }
 
     public void removeFistbumpedUser(String user) {
-        fistbumpedUsers.remove(user);
+        if (fistbumpedUsers != null) {
+            fistbumpedUsers.remove(user);
+            if (fistbumpedUsers.isEmpty()) {
+                fistbumpedUsers = null;
+            }
+        }
     }
 
     public void incrementFistbumpsCount() { fistbumpsCount++; }

@@ -74,7 +74,7 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
         Helpers.setFacebookProfileImage(callingContext,
                 MessageCardHolder.profileImage,
                 usernameFacebookIDMap.get(receiverUsername),
-                3,
+                Helpers.FacebookProfilePictureEnum.LARGE,
                 true);
         MessageCardHolder.username.setText(receiverUsername);
 

@@ -4,6 +4,8 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 import com.peprally.jeremy.peprally.custom.preferences.NotificationsPref;
 import com.peprally.jeremy.peprally.db_models.json_marshallers.NotificationsPrefJSONMarshaller;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 @DynamoDBTable(tableName = "UserProfiles")
@@ -23,6 +25,7 @@ public class DBUserProfile {
     private String pepTalk;
     private String trashTalk;
     private String dateJoined;
+    private String dateLastLoggedIn;
     private String schoolName;
     private String team;
     private Set<String> conversationIds;
@@ -35,7 +38,7 @@ public class DBUserProfile {
     private int receivedFistbumpsCount;
     private int postsCount;
     private int playerIndex;
-    private long lastLoggedInTimestamp;
+    private long timestampLastLoggedIn;
     private boolean hasNewMessage;
     private boolean hasNewNotification;
     private boolean isNewUser;
@@ -44,33 +47,48 @@ public class DBUserProfile {
 
     // Helpers
     public void addConversationId(String id) {
-        if (conversationIds != null)
+        if (conversationIds == null)
+            conversationIds = new HashSet<>(Collections.singletonList(id));
+        else
             conversationIds.add(id);
     }
 
     public void removeConversationId(String id) {
-        if (conversationIds != null)
+        if (conversationIds != null) {
             conversationIds.remove(id);
+            if (conversationIds.isEmpty())
+                conversationIds = null;
+        }
     }
 
     public void addUsersDirectFistbumpSent(String user) {
-        if (usersDirectFistbumpSent != null)
+        if (usersDirectFistbumpSent == null)
+            usersDirectFistbumpSent = new HashSet<>(Collections.singletonList(user));
+        else
             usersDirectFistbumpSent.add(user);
     }
 
     public void removeUsersDirectFistbumpSent(String user) {
-        if (usersDirectFistbumpSent != null)
+        if (usersDirectFistbumpSent != null) {
             usersDirectFistbumpSent.remove(user);
+            if (usersDirectFistbumpSent.isEmpty())
+                usersDirectFistbumpSent = null;
+        }
     }
 
     public void addUsersDirectFistbumpReceived(String user) {
-        if (usersDirectFistbumpReceived != null)
+        if (usersDirectFistbumpReceived == null)
+            usersDirectFistbumpReceived = new HashSet<>(Collections.singletonList(user));
+        else
             usersDirectFistbumpReceived.add(user);
     }
 
     public void removeUsersDirectFistbumpReceived(String user) {
-        if (usersDirectFistbumpReceived != null)
+        if (usersDirectFistbumpReceived != null) {
             usersDirectFistbumpReceived.remove(user);
+            if (usersDirectFistbumpReceived.isEmpty())
+                usersDirectFistbumpReceived = null;
+        }
     }
 
     // Setters/Getters
@@ -196,6 +214,14 @@ public class DBUserProfile {
         this.dateJoined = dateJoined;
     }
 
+    @DynamoDBAttribute(attributeName = "DateLastLoggedIn")
+    public String getDateLastLoggedIn() {
+        return dateLastLoggedIn;
+    }
+    public void setDateLastLoggedIn(String dateLastLoggedIn) {
+        this.dateLastLoggedIn = dateLastLoggedIn;
+    }
+
     @DynamoDBAttribute(attributeName = "SchoolName")
     public String getSchoolName() {
         return schoolName;
@@ -278,11 +304,11 @@ public class DBUserProfile {
     }
 
     @DynamoDBAttribute(attributeName = "LastLoggedInTimestamp")
-    public long getLastLoggedInTimestamp() {
-        return lastLoggedInTimestamp;
+    public long getTimestampLastLoggedIn() {
+        return timestampLastLoggedIn;
     }
-    public void setLastLoggedInTimestamp(long lastLoggedInTimestamp) {
-        this.lastLoggedInTimestamp = lastLoggedInTimestamp;
+    public void setTimestampLastLoggedIn(long timestampLastLoggedIn) {
+        this.timestampLastLoggedIn = timestampLastLoggedIn;
     }
 
     @DynamoDBAttribute(attributeName = "ConversationIds")

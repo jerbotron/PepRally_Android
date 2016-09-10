@@ -2,6 +2,7 @@ package com.peprally.jeremy.peprally.db_models;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 import com.peprally.jeremy.peprally.custom.Comment;
@@ -50,17 +51,25 @@ public class DBUserPost implements Parcelable{
         this.timestampSeconds = timestampSeconds;
         this.fistbumpsCount = 0;
         this.commentsCount = 0;
-        this.fistbumpedUsers = new HashSet<>(Collections.singletonList("_"));
         this.comments = new ArrayList<>();
     }
 
     // Helpers
     public void addFistbumpedUser(String user) {
-        fistbumpedUsers.add(user);
+        if (fistbumpedUsers == null) {
+            fistbumpedUsers = new HashSet<>(Collections.singletonList(user));
+        } else {
+            fistbumpedUsers.add(user);
+        }
     }
 
     public void removeFistbumpedUser(String user) {
-        fistbumpedUsers.remove(user);
+        if (fistbumpedUsers != null) {
+            fistbumpedUsers.remove(user);
+            if (fistbumpedUsers.isEmpty()) {
+                fistbumpedUsers = null;
+            }
+        }
     }
 
     public void addComment(Comment comment) {
@@ -76,6 +85,7 @@ public class DBUserPost implements Parcelable{
     public boolean hasComment(String commentId) {
         if (comments != null) {
             for (Comment comment : comments) {
+                Log.d("DH: ", "comment id = " + comment.getCommentId());
                 if (comment.getCommentId().equals(commentId)) return true;
             }
         }
@@ -93,7 +103,9 @@ public class DBUserPost implements Parcelable{
         this.timestampSeconds = in.readLong();
         this.fistbumpsCount = in.readInt();
         this.commentsCount = in.readInt();
-        this.fistbumpedUsers = new HashSet<>(Arrays.asList(in.createStringArray()));
+        if (in.readByte() == 1) {
+            this.fistbumpedUsers = new HashSet<>(Arrays.asList(in.createStringArray()));
+        }
         this.comments = CommentsJSONMarshaller.decodeJSONComments(in.readString());
     }
 
@@ -108,7 +120,13 @@ public class DBUserPost implements Parcelable{
         dest.writeLong(timestampSeconds);
         dest.writeInt(fistbumpsCount);
         dest.writeInt(commentsCount);
-        dest.writeStringArray(fistbumpedUsers.toArray(new String[fistbumpedUsers.size()]));
+        if (fistbumpedUsers != null) {
+            dest.writeByte((byte) 1);
+            dest.writeStringArray(fistbumpedUsers.toArray(new String[fistbumpedUsers.size()]));
+        }
+        else {
+            dest.writeByte((byte) 0);
+        }
         dest.writeString(CommentsJSONMarshaller.convertCommentsToJSON(comments));
     }
 

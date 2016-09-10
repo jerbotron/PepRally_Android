@@ -5,11 +5,11 @@
     android:orientation="vertical"
     android:id="@+id/id_container_profile_posts">
     <TextView
-        android:id="@+id/profile_posts_empty_text"
+        android:id="@+id/id_profile_posts_empty_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="@dimen/activity_vertical_margin"
-        android:text="@string/placeholder_sample_text"
+        android:text="@string/no_posts_message"
         android:textStyle="italic"
         android:gravity="center"/>
     <com.peprally.jeremy.peprally.custom.ui.EmptyViewSwipeRefreshLayout

@@ -41,6 +41,7 @@ import com.peprally.jeremy.peprally.fragments.ProfilePostsFragment;
 import com.peprally.jeremy.peprally.fragments.ProfileInfoFragment;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.interfaces.PostContainerInterface;
+import com.peprally.jeremy.peprally.interfaces.ProfileFragmentInterface;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Constants;
@@ -49,6 +50,8 @@ import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.custom.ui.ProfileViewPager;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 import com.squareup.picasso.Picasso;
+
+import java.util.Set;
 
 import static com.peprally.jeremy.peprally.utils.Constants.INTEGER_INVALID;
 
@@ -69,13 +72,38 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
     private ProfileEditFragment editFragment;
     private TabLayout tabLayout;
     private ViewPager viewPagerProfile;
-    private ProfileViewPagerAdapter adapter;
+    private ProfileViewPagerAdapter profileViewPagerAdapter;
 
     // General Variables
     private static UserProfileParcel userProfileParcel;
     private static final String TAG = ProfileActivity.class.getSimpleName();
     private boolean profileEditMode;
+    private ProfileViewPagerEnum lastViewPagerItem;
     private boolean didCurrentUserFistbumpProfileUserAlready = false;
+
+    private enum ProfileViewPagerEnum {
+        INFO(0),
+        POSTS(1),
+        EDIT(2);
+
+        private int value;
+
+        private ProfileViewPagerEnum(int  value) { this.value = value; }
+
+        public int toInt() { return value; }
+
+        public static ProfileViewPagerEnum fromInt(int x) {
+            switch (x) {
+                case 1:
+                    return POSTS;
+                case 2:
+                    return EDIT;
+                case 0:
+                default:
+                    return INFO;
+            }
+        }
+    }
 
     /***********************************************************************************************
      *************************************** ACTIVITY METHODS **************************************
@@ -104,7 +132,24 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
         if (supportActionBar != null) {
             supportActionBar.setDisplayHomeAsUpEnabled(true);
         }
-        fixProfileHeaderMarginTop();
+        Helpers.fixProfileHeaderMarginTop(ProfileActivity.this, (LinearLayout) findViewById(R.id.id_container_profile_header));
+
+        // create fragments and setup viewpager
+        final FragmentManager fragmentManager = getSupportFragmentManager();
+        infoFragment = new ProfileInfoFragment();
+        postsFragment = new ProfilePostsFragment();
+        editFragment = new ProfileEditFragment();
+
+        viewPagerProfile = (ProfileViewPager) findViewById(R.id.id_viewpager_profile);
+        profileViewPagerAdapter = new ProfileViewPagerAdapter(fragmentManager);
+        profileViewPagerAdapter.addFrag(infoFragment, "Info");
+        profileViewPagerAdapter.addFrag(postsFragment, "Posts");
+        viewPagerProfile.setAdapter(profileViewPagerAdapter);
+        tabLayout = (TabLayout) findViewById(R.id.tablayout_profile);
+        tabLayout.setupWithViewPager(viewPagerProfile);
+
+        // by default, always go to profile INFO fragment
+        lastViewPagerItem = ProfileViewPagerEnum.INFO;
 
 //        appBarLayout = (AppBarLayout) findViewById(R.id.id_profile_appbar_layout);
 //        appBarLayout.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
@@ -124,11 +169,18 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
 
     @Override
     protected void onResume() {
-        super.onResume();
         if (!profileEditMode) {
             userProfileParcel = ProfileActivityStackSingleton.getInstance().peek();
             new FetchUserProfileFromDBTask().execute();
         }
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        if (tabLayout != null && ProfileViewPagerEnum.fromInt(tabLayout.getSelectedTabPosition()) != ProfileViewPagerEnum.EDIT)
+            lastViewPagerItem = ProfileViewPagerEnum.fromInt(tabLayout.getSelectedTabPosition());
+        super.onPause();
     }
 
     @Override
@@ -150,15 +202,17 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
                     String favoriteTeam = data.getStringExtra("FAVORITE_TEAM");
                     userProfileParcel.setFavoriteTeam(favoriteTeam);
                     editFragment.setFavTeam(favoriteTeam);
+                    lastViewPagerItem = ProfileViewPagerEnum.INFO;
                     break;
                 case FAV_PLAYER_REQUEST:
                     String favoritePlayer = data.getStringExtra("FAVORITE_PLAYER");
                     userProfileParcel.setFavoritePlayer(favoritePlayer);
                     editFragment.setFavPlayer(favoritePlayer);
+                    lastViewPagerItem = ProfileViewPagerEnum.INFO;
                     break;
                 case NEW_POST_REQUEST:
-                    viewPagerProfile.setCurrentItem(1);
                     postsFragment.addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
+                    lastViewPagerItem = ProfileViewPagerEnum.POSTS;
                     break;
             }
         }
@@ -178,7 +232,7 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
     }
 
     public void launchFavoriteTeamActivity() {
-        Intent intent = new Intent(ProfileActivity.this, FavoriteTeamActivity.class);
+        Intent intent = new Intent(ProfileActivity.this, BrowseTeamsActivity.class);
         startActivityForResult(intent, IntentRequestEnum.FAV_TEAM_REQUEST.toInt());
         overridePendingTransition(R.anim.right_in, R.anim.left_out);
     }
@@ -189,7 +243,7 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
             Toast.makeText(ProfileActivity.this, "Pick a favorite team first!", Toast.LENGTH_SHORT).show();
         }
         else {
-            Intent intent = new Intent(ProfileActivity.this, FavoritePlayerActivity.class);
+            Intent intent = new Intent(ProfileActivity.this, BrowsePlayersActivity.class);
             intent.putExtra("CALLING_ACTIVITY", "PROFILE_ACTIVITY");
             intent.putExtra("TEAM", favTeam);
             startActivityForResult(intent, IntentRequestEnum.FAV_PLAYER_REQUEST.toInt());
@@ -197,8 +251,10 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
         }
     }
 
+    // PostsContainerInterface Method
     public void refreshPosts() {
-        viewPagerProfile.setCurrentItem(1);
+        viewPagerProfile.setCurrentItem(ProfileViewPagerEnum.POSTS.toInt());
+        lastViewPagerItem = ProfileViewPagerEnum.POSTS;
         postsFragment.refreshAdapter();
     }
 
@@ -228,36 +284,10 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
     private void createView() {
         supportActionBar.setTitle(userProfileParcel.getFirstname());
 
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        infoFragment = new ProfileInfoFragment();
-        postsFragment = new ProfilePostsFragment();
-        editFragment = new ProfileEditFragment();
-
-        viewPagerProfile = (ProfileViewPager) findViewById(R.id.id_viewpager_profile);
-        adapter = new ProfileViewPagerAdapter(fragmentManager);
-        adapter.addFrag(infoFragment, "Info");
-        adapter.addFrag(postsFragment, "Posts");
-        viewPagerProfile.setAdapter(adapter);
-        viewPagerProfile.setCurrentItem(0);
-
-        tabLayout = (TabLayout) findViewById(R.id.tablayout_profile);
-        assert tabLayout != null;
-        tabLayout.setupWithViewPager(viewPagerProfile);
-
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                viewPagerProfile.setCurrentItem(tab.getPosition());
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-            }
-        });
+        profileViewPagerAdapter.detachFrag(lastViewPagerItem.toInt());
+        profileViewPagerAdapter.attachFrag(lastViewPagerItem.toInt());
+        viewPagerProfile.setCurrentItem(lastViewPagerItem.toInt());
+        ((ProfileFragmentInterface) profileViewPagerAdapter.getItem(viewPagerProfile.getCurrentItem())).refreshFragment();
 
         final ImageView imageViewProfilePicture = (ImageView) findViewById(R.id.id_image_view_profile_image);
         final TextView textViewPostsCount = (TextView) findViewById(R.id.id_profile_posts_count);
@@ -280,11 +310,13 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
             }
             else {
                 //"https://graph.facebook.com/" + userProfileParcel.getFacebookID() + "/picture?width=9999";
-                imageURL = Helpers.getFacebookProfilePictureURL(userProfileParcel.getFacebookID(), 5);
+                imageURL = Helpers.getFacebookProfilePictureURL(
+                        userProfileParcel.getFacebookID(),
+                        Helpers.FacebookProfilePictureEnum.MAX);
                 Helpers.setFacebookProfileImage(this,
                         imageViewProfilePicture,
                         userProfileParcel.getFacebookID(),
-                        3,
+                        Helpers.FacebookProfilePictureEnum.LARGE,
                         true);
             }
 
@@ -295,16 +327,11 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
                 }
             });
 
-            // set text view texts
-            textViewSentFistbumpsCount.setText(Helpers.getAPICompatHtml("<b>"
-                    + Integer.toString(userProfileParcel.getSentFistbumpsCount())
-                    + "</b> " + getString(R.string.fistbumps_sent)));
-            textViewReceivedFistbumpsCount.setText(Helpers.getAPICompatHtml("<b>"
-                    + Integer.toString(userProfileParcel.getReceivedFistbumpsCount())
-                    + "</b> " + getString(R.string.fistbumps_received)));
-            textViewPostsCount.setText(Helpers.getAPICompatHtml("<b>"
-                    + Integer.toString(userProfileParcel.getPostsCount())
-                    + "</b> " + getString(R.string.profile_posts)));
+            // update profile header information
+            updateProfileHeaderCounts(
+                    userProfileParcel.getSentFistbumpsCount(),
+                    userProfileParcel.getReceivedFistbumpsCount(),
+                    userProfileParcel.getPostsCount());
 
             // set text view drawables safely to avoid vector drawable compatibility issues
             textViewPostsCount.setCompoundDrawablesWithIntrinsicBounds(
@@ -313,31 +340,6 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
 
         // update user fistbump and edit profile button
         updateProfileButtonAndFABBehavior(userProfileParcel.isSelfProfile(), didCurrentUserFistbumpProfileUserAlready);
-    }
-
-    /**
-     *  This method is used to set the proper margins on the custom implemented toolbar in profile
-     *  layout.
-     */
-    private void fixProfileHeaderMarginTop() {
-        final LinearLayout profileHeaderContainer = (LinearLayout) findViewById(R.id.id_container_profile_header);
-        CollapsingToolbarLayout.LayoutParams headerParams = (CollapsingToolbarLayout.LayoutParams) profileHeaderContainer.getLayoutParams();
-        TypedValue typedValue = new TypedValue();
-        int[] actionbarAttr = new int[] {android.R.attr.actionBarSize};
-        TypedArray a = this.obtainStyledAttributes(typedValue.resourceId, actionbarAttr);
-        int actionbarSize = a.getDimensionPixelSize(0, -1);
-        a.recycle();
-        headerParams.setMargins(0, actionbarSize + getStatusBarHeight(), 0, 0);
-        profileHeaderContainer.setLayoutParams(headerParams);
-    }
-
-    private Integer getStatusBarHeight() {
-        Integer result = 0;
-        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            result = getResources().getDimensionPixelSize(resourceId);
-        }
-        return result;
     }
 
     private void handleBackPressed() {
@@ -352,16 +354,16 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
 //            appBarLayout.setExpanded(true, false);
             tabLayout.setVisibility(View.VISIBLE);
             actionFAB.setVisibility(View.VISIBLE);
-            adapter.detachFrag(2);
-            adapter.removeFrag(2);
-            adapter.notifyDataSetChanged();
+            profileViewPagerAdapter.detachFrag(2);
+            profileViewPagerAdapter.removeFrag(2);
+            profileViewPagerAdapter.notifyDataSetChanged();
             editFragment.onPause();
-            viewPagerProfile.setCurrentItem(0);
+            viewPagerProfile.setCurrentItem(lastViewPagerItem.toInt());
             infoFragment.onResume();
             ((ProfileViewPager) viewPagerProfile).setAllowedSwipeDirection(ProfileViewPager.SwipeDirection.all);
 
             // Change back Actionbar title
-            supportActionBar.setTitle(userProfileParcel.getProfileUsername());
+            supportActionBar.setTitle(userProfileParcel.getFirstname());
 
             // change button UI content
             final TextView buttonEditProfileContent = (TextView) findViewById(R.id.id_button_edit_profile_content);
@@ -384,6 +386,22 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
             // pop current profile's userProfileParcel from stack
             ProfileActivityStackSingleton.getInstance().pop();
         }
+    }
+
+    private void updateProfileHeaderCounts(int sentFistbumpsCount, int receivedFistbumpsCount, int postsCount) {
+        final TextView textViewPostsCount = (TextView) findViewById(R.id.id_profile_posts_count);
+        final TextView textViewSentFistbumpsCount = (TextView) findViewById(R.id.id_fistbumps_sent);
+        final TextView textViewReceivedFistbumpsCount = (TextView) findViewById(R.id.id_fistbumps_received);
+        // set text view texts
+        textViewSentFistbumpsCount.setText(Helpers.getAPICompatHtml("<b>"
+                + Integer.toString(sentFistbumpsCount)
+                + "</b> " + getString(R.string.fistbumps_sent)));
+        textViewReceivedFistbumpsCount.setText(Helpers.getAPICompatHtml("<b>"
+                + Integer.toString(receivedFistbumpsCount)
+                + "</b> " + getString(R.string.fistbumps_received)));
+        textViewPostsCount.setText(Helpers.getAPICompatHtml("<b>"
+                + Integer.toString(postsCount)
+                + "</b> " + getString(R.string.profile_posts)));
     }
 
     private void launchProfileImageDialog(String imageURL) {
@@ -433,7 +451,8 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
 
         Typeface customTf = Typeface.createFromAsset(getAssets(), "fonts/Sketch 3D.otf");
         dialogTitle.setTypeface(customTf);
-        dialogTitle.setText("Send fistbump to " + userProfileParcel.getFirstname() + " ?");
+        String dialogTitleText = "Send fistbump to " + userProfileParcel.getFirstname() + " ?";
+        dialogTitle.setText(dialogTitleText);
         final AlertDialog b = dialogBuilder.create();
         fistbumpButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -490,10 +509,10 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
 //                            appBarLayout.setExpanded(false, false);
                         tabLayout.setVisibility(View.GONE);
                         actionFAB.setVisibility(View.INVISIBLE);
-                        adapter.addFrag(editFragment, "Edit Profile");
-                        adapter.attachFrag(2);
-                        adapter.notifyDataSetChanged();
-                        viewPagerProfile.setCurrentItem(2);
+                        profileViewPagerAdapter.addFrag(editFragment, "Edit Profile");
+                        profileViewPagerAdapter.attachFrag(2);
+                        profileViewPagerAdapter.notifyDataSetChanged();
+                        viewPagerProfile.setCurrentItem(ProfileViewPagerEnum.EDIT.toInt());
                         ((ProfileViewPager) viewPagerProfile).setAllowedSwipeDirection(ProfileViewPager.SwipeDirection.none);
 
                         // Change Actionbar title
@@ -595,7 +614,8 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
         Typeface customTf = Typeface.createFromAsset(getAssets(), "fonts/Sketch 3D.otf");
         dialogTitle.setTypeface(customTf);
         dialogTitle.setText(getResources().getString(R.string.placeholder_fistbump_match_title));
-        dialogMessage.setText("You and " + userProfileParcel.getFirstname() + " have fistbumped each other.");
+        String dialogText = "You and " + userProfileParcel.getFirstname() + " have fistbumped each other.";
+        dialogMessage.setText(dialogText);
 
         final AlertDialog b = dialogBuilder.create();
         // button on click handlers
@@ -642,8 +662,16 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
         @Override
         protected void onPostExecute(String curUserFacebookID) {
             if (curUserFacebookID != null) {
-                Helpers.setFacebookProfileImage(ProfileActivity.this, leftUserProfileImage, curUserFacebookID, 3, true);
-                Helpers.setFacebookProfileImage(ProfileActivity.this, rightUserProfileImage, userProfileParcel.getFacebookID(), 3, true);
+                Helpers.setFacebookProfileImage(ProfileActivity.this,
+                        leftUserProfileImage,
+                        curUserFacebookID,
+                        Helpers.FacebookProfilePictureEnum.LARGE,
+                        true);
+                Helpers.setFacebookProfileImage(ProfileActivity.this,
+                        rightUserProfileImage,
+                        userProfileParcel.getFacebookID(),
+                        Helpers.FacebookProfilePictureEnum.LARGE,
+                        true);
             }
         }
     }
@@ -794,8 +822,10 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
                 dynamoDBHelper.updateFistbumpsCount(currentUser, profileUser, true);
                 currentUser.addUsersDirectFistbumpSent(userProfileParcel.getProfileUsername());
                 profileUser.addUsersDirectFistbumpReceived(userProfileParcel.getCurrentUsername());
+
+                final Set<String> directFistbumpsSentUsers = profileUser.getUsersDirectFistbumpSent();
                 // check if fistbump match
-                if (profileUser.getUsersDirectFistbumpSent().contains(userProfileParcel.getCurrentUsername())) {
+                if (directFistbumpsSentUsers != null && directFistbumpsSentUsers.contains(userProfileParcel.getCurrentUsername())) {
                     // create new conversation if it is a match
                     dynamoDBHelper.createNewConversation(userProfileParcel, new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
                         @Override
@@ -817,10 +847,15 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
             dynamoDBHelper.createNewNotification(makeDBNotificationBundleDirectFistbump(),
                     new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
                         @Override
-                        public void onTaskDone(Object isNotificationCreated) {
-                            if ((boolean) isNotificationCreated) {
+                        public void onTaskDone(Object bundle) {
+                            if (((Bundle) bundle).getBoolean("TASK_SUCCESS", false)) {
                                 // send push notification to receiver that they got a direct fistbump/direct fistbump match
                                 httpRequestsHelper.makePushNotificationRequest(makePushNotificationDirectFistbumpBundle(notificationType));
+
+                                updateProfileHeaderCounts(
+                                        userProfileParcel.getSentFistbumpsCount(),
+                                        userProfileParcel.getReceivedFistbumpsCount() + 1,  // we just sent them a direct fistbump
+                                        userProfileParcel.getPostsCount());
                             }
                         }
                     });

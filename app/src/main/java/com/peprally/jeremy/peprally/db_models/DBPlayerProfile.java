@@ -107,7 +107,7 @@ public class DBPlayerProfile {
         this.hometown = hometown;
     }
 
-    @DynamoDBIndexHashKey(globalSecondaryIndexName = "MF-index", attributeName = "MF")
+    @DynamoDBAttribute(attributeName = "MF")
     public String getGender() {
         return gender;
     }

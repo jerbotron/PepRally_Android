@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,10 +12,10 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.activities.FavoritePlayerActivity;
-import com.peprally.jeremy.peprally.activities.FavoriteTeamActivity;
+import com.peprally.jeremy.peprally.activities.BrowsePlayersActivity;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.enums.IntentRequestEnum;
+import com.peprally.jeremy.peprally.interfaces.ProfileFragmentInterface;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
@@ -26,13 +25,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("")
-public class ProfileInfoFragment extends Fragment {
+public class ProfileInfoFragment extends Fragment implements ProfileFragmentInterface{
 
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
     // General Variables
     private UserProfileParcel userProfileParcel;
+    private View fragmentView;
 
     private Map<String, String> baseballPositions = new HashMap<>();
     private Map<String, String> basketballPositions = new HashMap<>();
@@ -49,32 +49,32 @@ public class ProfileInfoFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_profile_info, container, false);
+        fragmentView = inflater.inflate(R.layout.fragment_profile_info, container, false);
+        return fragmentView;
     }
 
     @Override
     public void onResume() {
+        refreshFragment();
         super.onResume();
-        // get latest copy of userProfileParcel from ProfileActivity
-        userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
-        refresh();
     }
 
     /***********************************************************************************************
      *********************************** GENERAL_METHODS ********************************
      **********************************************************************************************/
-    private void refresh() {
+    public void refreshFragment() {
+        // get latest copy of userProfileParcel from ProfileActivity
+        userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
         setupUserProfile(getView());
     }
 
     private void setupUserProfile(View view) {
-        final LinearLayout parent_container = (LinearLayout) view.findViewById(R.id.profile_view_container);
-        final TextView textViewFirstName = (TextView) view.findViewById(R.id.profile_view_name_age);
-        final TextView textViewUsername = (TextView) view.findViewById(R.id.profile_view_username);
-        final TextView textViewFavTeam = (TextView) view.findViewById(R.id.profile_view_fav_team);
-        final TextView textViewFavPlayer = (TextView) view.findViewById(R.id.profile_view_fav_player);
-        final TextView textViewPepTalk = (TextView) view.findViewById(R.id.profile_view_pep_talk);
-        final TextView textViewTrashTalk = (TextView) view.findViewById(R.id.profile_view_trash_talk);
+        final TextView textViewFirstName = (TextView) view.findViewById(R.id.id_profile_view_name_age);
+        final TextView textViewUsername = (TextView) view.findViewById(R.id.id_profile_view_username);
+        final TextView textViewFavTeam = (TextView) view.findViewById(R.id.id_profile_view_fav_team);
+        final TextView textViewFavPlayer = (TextView) view.findViewById(R.id.id_profile_view_fav_player);
+        final TextView textViewPepTalk = (TextView) view.findViewById(R.id.id_profile_view_pep_talk);
+        final TextView textViewTrashTalk = (TextView) view.findViewById(R.id.id_profile_view_trash_talk);
 
         textViewFirstName.setText("");    // set to empty so I can check later if populated under varsity profile
 
@@ -94,7 +94,7 @@ public class ProfileInfoFragment extends Fragment {
             }
             textViewFirstName.setText(nameText);
 
-            final LinearLayout playerInfoLayout = (LinearLayout) view.findViewById(R.id.profile_container_varsity_profile);
+            final LinearLayout playerInfoLayout = (LinearLayout) view.findViewById(R.id.id_profile_container_varsity_profile);
             LinearLayout.LayoutParams llparams = (LinearLayout.LayoutParams) playerInfoLayout.getLayoutParams();
             llparams.setMargins((int) getResources().getDimension(R.dimen.activity_horizontal_margin),
                     0,
@@ -180,14 +180,15 @@ public class ProfileInfoFragment extends Fragment {
                 playerInfoLayout.addView(tv_highschool);
             }
             if (!userProfileParcel.getHasUserProfile()) {
+                // if varsity player does not have a user profile, then add no profile text
                 TextView tv_no_profile = new TextView(getActivity());
                 LinearLayout.LayoutParams msg_params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
                 msg_params.setMargins(0,
                         (int) getResources().getDimension(R.dimen.activity_vertical_margin),
                         0,
                         0);
-                tv_no_profile.setText(userProfileParcel.getFirstname() + " " +
-                        getResources().getString(R.string.no_peprally_account_message));
+                String noProfileText = userProfileParcel.getFirstname() + " " + getResources().getString(R.string.no_peprally_account_message);
+                tv_no_profile.setText(noProfileText);
                 tv_no_profile.setTypeface(null, Typeface.ITALIC);
                 tv_no_profile.setLayoutParams(msg_params);
                 tv_no_profile.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -196,10 +197,10 @@ public class ProfileInfoFragment extends Fragment {
         }
 
         if (textViewFirstName.getText().toString().isEmpty()) {
-            textViewFirstName.setText(userProfileParcel.getFirstname());// + ", " + Integer.toString(23));
+            textViewFirstName.setText(userProfileParcel.getFirstname());
         }
         if (userProfileParcel.getProfileUsername() == null) {
-            parent_container.removeView(textViewUsername);
+            textViewUsername.setVisibility(View.GONE);
         }
         else {
             String usernameText = "@" + userProfileParcel.getProfileUsername();
@@ -207,7 +208,8 @@ public class ProfileInfoFragment extends Fragment {
         }
 
         if (userProfileParcel.getFavoriteTeam() == null) {
-            parent_container.removeView(view.findViewById(R.id.profile_layout_fav_team));
+            final LinearLayout favTeamLayout = (LinearLayout) view.findViewById(R.id.id_profile_layout_fav_team);
+            favTeamLayout.setVisibility(View.GONE);
         } else {
             textViewFavTeam.setText(userProfileParcel.getFavoriteTeam());
             textViewFavTeam.setOnClickListener(new View.OnClickListener() {
@@ -218,7 +220,8 @@ public class ProfileInfoFragment extends Fragment {
             });
         }
         if (userProfileParcel.getFavoritePlayer() == null) {
-            parent_container.removeView(view.findViewById(R.id.profile_layout_fav_player));
+            final LinearLayout favTeamLayout = (LinearLayout) view.findViewById(R.id.id_profile_layout_fav_player);
+            favTeamLayout.setVisibility(View.GONE);
         } else {
             textViewFavPlayer.setText(userProfileParcel.getFavoritePlayer());
             textViewFavPlayer.setOnClickListener(new View.OnClickListener() {
@@ -230,12 +233,14 @@ public class ProfileInfoFragment extends Fragment {
             });
         }
         if (userProfileParcel.getPepTalk() == null) {
-            parent_container.removeView(view.findViewById(R.id.profile_layout_pep_talk));
+            final LinearLayout favTeamLayout = (LinearLayout) view.findViewById(R.id.id_profile_layout_pep_talk);
+            favTeamLayout.setVisibility(View.GONE);
         } else {
             textViewPepTalk.setText(userProfileParcel.getPepTalk());
         }
         if (userProfileParcel.getTrashTalk() == null) {
-            parent_container.removeView(view.findViewById(R.id.profile_layout_trash_talk));
+            final LinearLayout favTeamLayout = (LinearLayout) view.findViewById(R.id.id_profile_layout_trash_talk);
+            favTeamLayout.setVisibility(View.GONE);
         } else {
             textViewTrashTalk.setText(userProfileParcel.getTrashTalk());
         }
@@ -246,9 +251,8 @@ public class ProfileInfoFragment extends Fragment {
      **************************************** GENERAL_METHODS **************************************
      **********************************************************************************************/
     private void launchFavoritePlayerActivity() {
-        Intent intent = new Intent(getContext(), FavoritePlayerActivity.class);
+        Intent intent = new Intent(getContext(), BrowsePlayersActivity.class);
         intent.putExtra("CALLING_ACTIVITY", "PROFILE_FRAGMENT");
-        intent.putExtra("CURRENT_USERNAME", userProfileParcel.getCurrentUsername());
         intent.putExtra("TEAM", userProfileParcel.getFavoriteTeam());
         startActivityForResult(intent, IntentRequestEnum.FAV_PLAYER_REQUEST.toInt());
         getActivity().overridePendingTransition(R.anim.right_in, R.anim.left_out);
