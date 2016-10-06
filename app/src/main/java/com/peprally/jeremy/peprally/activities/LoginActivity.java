@@ -5,15 +5,16 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.Spanned;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
@@ -32,6 +33,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
 import com.amazonaws.services.dynamodbv2.model.Condition;
+import com.facebook.AccessToken;
 import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
@@ -43,19 +45,18 @@ import com.facebook.Profile;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
-import com.facebook.AccessToken;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.custom.SpinnerArrayAdapter;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 import com.peprally.jeremy.peprally.custom.preferences.NotificationsPref;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
-import com.peprally.jeremy.peprally.db_models.DBUsername;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
+import com.peprally.jeremy.peprally.db_models.DBUsername;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.enums.SchoolsSupportedEnum;
 import com.peprally.jeremy.peprally.network.AWSCredentialProvider;
-import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -144,6 +145,7 @@ public class LoginActivity extends AppCompatActivity {
                 dynamoDBHelper = new DynamoDBHelper(this);
                 fbDataBundle = new Bundle();
                 FCMInstanceId = Helpers.getFCMInstanceId(this);
+                Log.d(TAG, "fcm id = " + FCMInstanceId);
                 accessTokenTracker = new AccessTokenTracker() {
                     @Override
                     protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken newAccessToken) {
@@ -561,6 +563,7 @@ public class LoginActivity extends AppCompatActivity {
                 userProfile.setHasNewMessage(false);
                 userProfile.setHasNewNotification(false);
                 userProfile.setDateJoined(Helpers.getTimestampString());
+                userProfile.setDateLastLoggedIn(Helpers.getTimestampString());
                 userProfile.setTimestampLastLoggedIn(Helpers.getTimestampSeconds());
                 dynamoDBHelper.saveDBObject(userProfile);
                 return userProfile;

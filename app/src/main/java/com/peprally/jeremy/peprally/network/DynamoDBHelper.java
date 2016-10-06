@@ -770,7 +770,6 @@ public class DynamoDBHelper {
                     || notificationType == NotificationEnum.POST_FISTBUMP
                     || notificationType == NotificationEnum.COMMENT_FISTBUMP) {
 
-                Log.d("DH: ", "sanity check");
                 // check if post exists
                 DBUserPost userPost = loadDBUserPost(bundle.getString("POST_ID"));
                 if (userPost == null) {

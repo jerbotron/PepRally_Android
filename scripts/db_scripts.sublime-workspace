@@ -383,7 +383,7 @@
 			"file": "autoMakeTables.py",
 			"settings":
 			{
-				"buffer_size": 2146,
+				"buffer_size": 2348,
 				"line_ending": "Unix"
 			}
 		},
@@ -391,7 +391,7 @@
 			"file": "teamParsers.py",
 			"settings":
 			{
-				"buffer_size": 32364,
+				"buffer_size": 31795,
 				"line_ending": "Unix"
 			}
 		},
@@ -804,15 +804,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2146,
+						"buffer_size": 2348,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								791,
-								791
+								2052,
+								2052
 							]
 						],
 						"settings":
@@ -823,10 +823,10 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 288.0,
+						"translation.y": 738.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
@@ -835,15 +835,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 32364,
+						"buffer_size": 31795,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								4005,
-								4005
+								31795,
+								31795
 							]
 						],
 						"settings":
@@ -854,7 +854,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 1776.0,
+						"translation.y": 864.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -887,14 +887,14 @@
 						{
 							"side_bar_folders_auto_load_folder": 1,
 							"syntax": "Packages/Python/Python.sublime-syntax",
-							"tab_size": 4,
+							"tab_size": 2,
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
 						"translation.y": 48.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 2,
 					"type": "text"
 				}
 			]
