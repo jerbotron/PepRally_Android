@@ -387,10 +387,12 @@ public class DynamoDBHelper {
                         .withConsistentRead(false);
 
                 // Delete all user conversations:
-                for (String convoId : userProfile.getConversationIds()) {
-                    DBUserConversation userConversation = loadDBUserConversation(convoId);
-                    if (userConversation != null) {
-                        mapper.delete(userConversation);
+                if (userProfile.getConversationIds() != null) {
+                    for (String convoId : userProfile.getConversationIds()) {
+                        DBUserConversation userConversation = loadDBUserConversation(convoId);
+                        if (userConversation != null) {
+                            mapper.delete(userConversation);
+                        }
                     }
                 }
 

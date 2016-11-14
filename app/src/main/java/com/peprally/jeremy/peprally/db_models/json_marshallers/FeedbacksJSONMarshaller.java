@@ -25,8 +25,8 @@ public class FeedbacksJSONMarshaller extends JsonMarshaller<FeedbackContainer> i
                     jsonFeedback.put("username", feedback.getUsername());
                     jsonFeedback.put("feedback", feedback.getFeedback());
                     jsonFeedback.put("timestamp", feedback.getTimestamp());
-                    jsonFeedback.put("platform", feedback.getPlatform());
-                    jsonFeedback.put("feedback_type", feedback.getFeedbackType());
+                    jsonFeedback.put("platform", feedback.getPlatform().toInt());
+                    jsonFeedback.put("feedback_type", feedback.getFeedbackType().toInt());
                     jsonFeedbacksArray.put(jsonFeedback);
                 }
                 jsonFeedbacks.put("feedbacks", jsonFeedbacksArray);
