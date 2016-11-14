@@ -353,7 +353,7 @@ public class MessagingActivity extends AppCompatActivity {
         @Nullable
         @Override
         public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-            View view = inflater.inflate(R.layout.fragment_messaging_no_message, container, false);
+            final View view = inflater.inflate(R.layout.fragment_messaging_no_message, container, false);
             final TextView titleText = (TextView) view.findViewById(R.id.id_messaging_default_title);
             final TextView messageText = (TextView) view.findViewById(R.id.id_messaging_default_message);
             final ImageView profileImage = (ImageView) view.findViewById(R.id.id_messaging_default_image);

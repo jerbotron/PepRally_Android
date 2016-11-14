@@ -35,7 +35,6 @@ public class HTTPRequestsHelper {
      ************************************** HTTP REQUEST METHODS ***********************************
      **********************************************************************************************/
     public void makePushNotificationRequest(Bundle bundle) {
-        Log.d("HRH: ", "making push notification");
         new MakePushNotificationHTTPPostRequestAsyncTask().execute(bundle);
     }
 

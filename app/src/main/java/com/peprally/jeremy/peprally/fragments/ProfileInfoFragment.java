@@ -32,7 +32,6 @@ public class ProfileInfoFragment extends Fragment implements ProfileFragmentInte
      **********************************************************************************************/
     // General Variables
     private UserProfileParcel userProfileParcel;
-    private View fragmentView;
 
     private Map<String, String> baseballPositions = new HashMap<>();
     private Map<String, String> basketballPositions = new HashMap<>();
@@ -49,8 +48,7 @@ public class ProfileInfoFragment extends Fragment implements ProfileFragmentInte
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        fragmentView = inflater.inflate(R.layout.fragment_profile_info, container, false);
-        return fragmentView;
+        return inflater.inflate(R.layout.fragment_profile_info, container, false);
     }
 
     @Override

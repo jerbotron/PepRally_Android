@@ -39,7 +39,7 @@
         <Preference
             android:key="pref_key_support_privacy_policy"
             android:title="@string/pref_support_privacy_policy" />
-        <com.peprally.jeremy.peprally.custom.preferences.DeleteAccountPreference
+        <com.peprally.jeremy.peprally.custom.preferences.DeleteAccountDialogPreference
             android:key="pref_key_support_delete_account"
             android:title="@string/pref_support_delete_account"
             android:positiveButtonText="DELETE"
@@ -49,7 +49,7 @@
     <PreferenceCategory
         android:title="@string/pref_group_show_us_love"
         android:key="pref_key_show_us_love_settings">
-        <com.peprally.jeremy.peprally.custom.preferences.FeedbackPreference
+        <com.peprally.jeremy.peprally.custom.preferences.FeedbackDialogPreference
             android:key="pref_key_show_us_love_feedback"
             android:title="@string/pref_show_love_feedback" />
         <Preference

@@ -23,8 +23,8 @@ var transport = nodemailer.createTransport(smtpTransport({
   secureConnection: false, // use SSL
   port: 587, // port for secure SMTP
   auth: {
-      user: '***',
-      pass: '***'
+      user: 'jer.wang25@gmail.com',
+      pass: 'peprallytestuser'
   } 
 }));
 
@@ -55,7 +55,7 @@ app.get('/send',function(req,res){
 
 // Constants
 // Firebase Keys
-var API_ACCESS_KEY = "***";
+var API_ACCESS_KEY = "key=AIzaSyDH7MFAWAq9tFKTaGQYjVp5trBD2ZEORT8";
 var FCM_URL = 'https://gcm-http.googleapis.com/gcm/send';
 
 // Set the request headers

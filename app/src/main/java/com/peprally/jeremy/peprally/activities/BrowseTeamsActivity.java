@@ -2,7 +2,6 @@ package com.peprally.jeremy.peprally.activities;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,31 +9,15 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.MenuItem;
 
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.TeamsCardAdapter;
-import com.peprally.jeremy.peprally.db_models.DBSport;
 import com.peprally.jeremy.peprally.custom.Team;
-import com.peprally.jeremy.peprally.network.DynamoDBHelper;
+import com.peprally.jeremy.peprally.enums.TeamsEnum;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 public class BrowseTeamsActivity extends AppCompatActivity {
-
-    /***********************************************************************************************
-     *************************************** CLASS VARIABLES ***************************************
-     **********************************************************************************************/
-    // UI Variables
-    private RecyclerView recyclerView;
-
-    // General Variables
-    private List<Team> teams;
-    private boolean dataFetched = false;
-
     /***********************************************************************************************
      *************************************** ACTIVITY METHODS **************************************
      **********************************************************************************************/
@@ -42,30 +25,26 @@ public class BrowseTeamsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_browse_team);
+        final ArrayList<Team> teams = new ArrayList<>();
 
-        ActionBar supportActionBar = getSupportActionBar();
+        final ActionBar supportActionBar = getSupportActionBar();
         if (supportActionBar != null) {
             supportActionBar.setDisplayHomeAsUpEnabled(true);
         }
 
-        recyclerView = (RecyclerView) findViewById(R.id.rv_browse_teams);
+        final RecyclerView recyclerView = (RecyclerView) findViewById(R.id.rv_browse_teams);
         if (recyclerView != null) {
             recyclerView.setHasFixedSize(true);
-            // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
-            recyclerView.setAdapter(new EmptyAdapter());
             recyclerView.setLayoutManager(new LinearLayoutManager(BrowseTeamsActivity.this));
         }
 
-        new FetchSportsTableTask().execute();
+        initializeTeamsData(teams);
+        initializeAdapter(teams, recyclerView);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (dataFetched) {
-            recyclerView.setLayoutManager(new LinearLayoutManager(BrowseTeamsActivity.this));
-            initializeAdapter();
-        }
     }
 
     @Override
@@ -88,52 +67,33 @@ public class BrowseTeamsActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
-    /***********************************************************************************************
-     *********************************** GENERAL_METHODS ********************************
+    /**********************************************************************************************
+     *************************************** GENERAL_METHODS **************************************
      **********************************************************************************************/
-    private void initializeData(PaginatedScanList<DBSport> result){
-        teams = new ArrayList<>();
-        for (DBSport DBSport : result) {
-            final int drawableId = getResources().getIdentifier(DBSport.getIcon(), "drawable", getPackageName());
-            teams.add(new Team(DBSport.getName(), drawableId));
+    public void initializeTeamsData(final ArrayList<Team> teams) {
+        for (TeamsEnum team : TeamsEnum.values()) {
+            final int drawableId = getResources().getIdentifier(team.getIconURI(), "drawable", getPackageName());
+            teams.add(new Team(team.getName(), drawableId));
         }
         // Sort teams
         Collections.sort(teams);
     }
 
-    private void initializeAdapter() {
-        TeamsCardAdapter teamsCardAdapter = new TeamsCardAdapter(teams, new TeamsCardAdapter.AdapterOnClickCallback() {
+    private void initializeAdapter(final ArrayList<Team> teams, final RecyclerView recyclerView) {
+        final TeamsCardAdapter teamsCardAdapter = new TeamsCardAdapter(teams, new TeamsCardAdapter.AdapterOnClickCallback() {
             @Override
             public void onClick(int position) {
-                teamCardOnClickHandler(position);
+                teamCardOnClickHandler(teams, position);
             }
         });
         recyclerView.setAdapter(teamsCardAdapter);
     }
 
-    public void teamCardOnClickHandler(int position) {
+    public void teamCardOnClickHandler(final ArrayList<Team> teams, int position) {
         Intent intent = new Intent();
         intent.putExtra("FAVORITE_TEAM", teams.get(position).name);
         setResult(Activity.RESULT_OK, intent);
         finish();
         overridePendingTransition(R.anim.left_in, R.anim.right_out);
-    }
-
-    /***********************************************************************************************
-     ****************************************** UI METHODS *****************************************
-     **********************************************************************************************/
-    private class FetchSportsTableTask extends AsyncTask<Void, Void, PaginatedScanList<DBSport>> {
-        @Override
-        protected PaginatedScanList<DBSport> doInBackground(Void... params) {
-            DynamoDBHelper dynamoDBHelper = new DynamoDBHelper(getApplicationContext());
-            return dynamoDBHelper.getMapper().scan(DBSport.class, new DynamoDBScanExpression());
-        }
-
-        @Override
-        protected void onPostExecute(PaginatedScanList<DBSport> result) {
-            initializeData(result);
-            dataFetched = true;
-            initializeAdapter();
-        }
     }
 }

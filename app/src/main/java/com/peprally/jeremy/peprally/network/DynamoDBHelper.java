@@ -15,8 +15,8 @@ import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
 import com.amazonaws.services.dynamodbv2.model.Condition;
 import com.peprally.jeremy.peprally.custom.Comment;
+import com.peprally.jeremy.peprally.custom.Feedback;
 import com.peprally.jeremy.peprally.custom.preferences.NotificationsPref;
-import com.peprally.jeremy.peprally.db_models.DBUserFeedback;
 import com.peprally.jeremy.peprally.custom.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.custom.messaging.Conversation;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
@@ -25,15 +25,14 @@ import com.peprally.jeremy.peprally.db_models.DBUsername;
 import com.peprally.jeremy.peprally.db_models.DBUserNotification;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
+import com.peprally.jeremy.peprally.enums.FeedbackEnum;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -182,8 +181,8 @@ public class DynamoDBHelper {
         new CreateNewDBUserConversationAsyncTask(callbackWithReturnObject).execute(userProfileParcel.getCurrentUsername(), userProfileParcel.getProfileUsername());
     }
 
-    public void createNewFeedback(Bundle bundle) {
-        new CreateNewDBUserFeedbackAsyncTask().execute(bundle);
+    public void createNewFeedback(Feedback feedback) {
+        new CreateNewDBUserFeedbackAsyncTask(feedback).execute();
     }
 
 
@@ -998,15 +997,25 @@ public class DynamoDBHelper {
     /**
      * Other misc dynamodb async tasks
      */
-    private class CreateNewDBUserFeedbackAsyncTask extends AsyncTask<Bundle, Void, Void> {
+    private class CreateNewDBUserFeedbackAsyncTask extends AsyncTask<Void, Void, Void> {
+        private Feedback feedback;
+        private CreateNewDBUserFeedbackAsyncTask(Feedback feedback) {
+            this.feedback = feedback;
+        }
         @Override
-        protected Void doInBackground(Bundle... bundles) {
-            Bundle bundle = bundles[0];
-            DBUserFeedback userFeedback = new DBUserFeedback(bundle.getString("USERNAME"), bundle.getLong("TIMESTAMP"));
-            userFeedback.setFeedbackType(bundle.getInt("FEEDBACK_TYPE"));
-            userFeedback.setFeedback(bundle.getString("FEEDBACK"));
-            userFeedback.setPlatform("Android");
-            mapper.save(userFeedback);
+        protected Void doInBackground(Void... v) {
+            if (feedback != null) {
+                DBUserProfile userProfile = null;
+                if (feedback.getFeedbackType() == FeedbackEnum.GENERAL) {
+                    userProfile = loadDBUserProfile(feedback.getUsername());
+                } else if (feedback.getFeedbackType() == FeedbackEnum.ACCOUNT_DELETION){
+                    userProfile = loadDBUserProfile("deleted_profiles_feedback");
+                }
+                if (userProfile != null) {
+                    userProfile.addFeedback(feedback);
+                    mapper.save(userProfile);
+                }
+            }
             return null;
         }
     }

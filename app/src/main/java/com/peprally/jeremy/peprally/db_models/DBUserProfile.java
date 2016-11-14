@@ -1,9 +1,13 @@
 package com.peprally.jeremy.peprally.db_models;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
+import com.peprally.jeremy.peprally.custom.Feedback;
+import com.peprally.jeremy.peprally.custom.FeedbackContainer;
 import com.peprally.jeremy.peprally.custom.preferences.NotificationsPref;
+import com.peprally.jeremy.peprally.db_models.json_marshallers.FeedbacksJSONMarshaller;
 import com.peprally.jeremy.peprally.db_models.json_marshallers.NotificationsPrefJSONMarshaller;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -44,6 +48,7 @@ public class DBUserProfile {
     private boolean isNewUser;
     private boolean isVarsityPlayer;
     private NotificationsPref notificationsPref;
+    private FeedbackContainer feedbackContainer;
 
     // Helpers
     public void addConversationId(String id) {
@@ -89,6 +94,13 @@ public class DBUserProfile {
             if (usersDirectFistbumpReceived.isEmpty())
                 usersDirectFistbumpReceived = null;
         }
+    }
+
+    public void addFeedback(Feedback feedback) {
+        if (feedbackContainer == null) {
+            feedbackContainer = new FeedbackContainer(new ArrayList<Feedback>());
+        }
+        feedbackContainer.addFeedback(feedback);
     }
 
     // Setters/Getters
@@ -230,7 +242,7 @@ public class DBUserProfile {
         this.schoolName = schoolName;
     }
 
-    @DynamoDBIndexHashKey(globalSecondaryIndexName = "Team-index", attributeName = "PlayerTeam")
+    @DynamoDBAttribute(attributeName = "PlayerTeam")
     public String getTeam() {
         return team;
     }
@@ -371,4 +383,9 @@ public class DBUserProfile {
     @DynamoDBMarshalling(marshallerClass = NotificationsPrefJSONMarshaller.class)
     public NotificationsPref getNotificationsPref() { return notificationsPref; }
     public void setNotificationsPref(NotificationsPref notificationsPref) { this.notificationsPref = notificationsPref; }
+
+    @DynamoDBAttribute(attributeName = "Feedbacks")
+    @DynamoDBMarshalling(marshallerClass = FeedbacksJSONMarshaller.class)
+    public FeedbackContainer getFeedbacks() { return feedbackContainer; }
+    public void setFeedbacks(FeedbackContainer feedbackContainer) { this.feedbackContainer = feedbackContainer; }
 }
