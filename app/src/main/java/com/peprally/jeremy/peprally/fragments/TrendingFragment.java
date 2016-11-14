@@ -5,17 +5,13 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.RelativeLayout;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBScanExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedScanList;
@@ -23,16 +19,18 @@ import com.peprally.jeremy.peprally.activities.HomeActivity;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.PostCardAdapter;
+import com.peprally.jeremy.peprally.custom.ui.EmptyViewSwipeRefreshLayout;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.custom.UserPostComparator;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
+import com.peprally.jeremy.peprally.utils.Helpers;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class TrendingFragment extends Fragment {
+public class TrendingFragment extends Fragment{
 
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
@@ -41,7 +39,7 @@ public class TrendingFragment extends Fragment {
     private PostCardAdapter postCardAdapter;
     private ImageButton imageButtonHottest, imageButtonLatest;
     private RecyclerView recyclerView;
-    private SwipeRefreshLayout trendingSwipeRefreshContainer;
+    private EmptyViewSwipeRefreshLayout trendingSwipeRefreshContainer;
 
     // General Variables
     private ArrayList<DBUserPost> posts;
@@ -61,7 +59,7 @@ public class TrendingFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         userProfileParcel = ((HomeActivity) getActivity()).getUserProfileParcel();
-        trendingMode = TrendingModeEnum.HOTTEST;
+        trendingMode = TrendingModeEnum.LATEST; // set default mode
     }
 
     @Override
@@ -76,10 +74,11 @@ public class TrendingFragment extends Fragment {
         recyclerView.setLayoutManager(rvLayoutManager);
 
         // setup swipe refresh container
-        trendingSwipeRefreshContainer = (SwipeRefreshLayout) view.findViewById(R.id.container_swipe_refresh_trending_posts);
+        trendingSwipeRefreshContainer = (EmptyViewSwipeRefreshLayout) view.findViewById(R.id.container_swipe_refresh_trending_posts);
         trendingSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
+                ((HomeActivity) getActivity()).updateMenuItemsNotificationAlerts();
                 refreshAdapter();
             }
         });
@@ -96,18 +95,20 @@ public class TrendingFragment extends Fragment {
         imageButtonHottest = (ImageButton) view.findViewById(R.id.id_image_button_trending_hottest);
         imageButtonLatest = (ImageButton) view.findViewById(R.id.id_image_button_trending_latest);
 
+        updateTrendingMode(false);  // initially set trendingMode to latest
+
         if (imageButtonHottest != null && imageButtonLatest != null) {
             imageButtonHottest.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    toggleTrendingModeIsHottestView(true);
+                    updateTrendingMode(true);
                 }
             });
 
             imageButtonLatest.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    toggleTrendingModeIsHottestView(false);
+                    updateTrendingMode(false);
                 }
             });
         }
@@ -170,7 +171,7 @@ public class TrendingFragment extends Fragment {
         postCardAdapter.addPost(newPostText, bundle);
     }
 
-    private void refreshAdapter() {
+    public void refreshAdapter() {
         // start on load progress circle animation and get latest posts
         trendingSwipeRefreshContainer.post(new Runnable() {
             @Override
@@ -181,20 +182,20 @@ public class TrendingFragment extends Fragment {
         new FetchUserPostsTask().execute();
     }
 
-    public void toggleTrendingModeIsHottestView(boolean isTrendingModeHottest) {
+    public void updateTrendingMode(boolean isTrendingModeHottest) {
         if (imageButtonHottest != null && imageButtonLatest != null) {
             trendingMode = (isTrendingModeHottest) ? TrendingModeEnum.HOTTEST : TrendingModeEnum.LATEST;
             refreshAdapter();
 
             // update UI buttons
             if (isTrendingModeHottest) {
-                imageButtonHottest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_trending_on));
-                imageButtonLatest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_clock));
+                imageButtonHottest.setImageDrawable(Helpers.getAPICompatVectorDrawable(getContext().getApplicationContext(), R.drawable.ic_trending_on));
+                imageButtonLatest.setImageDrawable(Helpers.getAPICompatVectorDrawable(getContext().getApplicationContext(), R.drawable.ic_clock));
                 imageButtonHottest.setClickable(false);
                 imageButtonLatest.setClickable(true);
             } else {
-                imageButtonHottest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_trending));
-                imageButtonLatest.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_clock_on));
+                imageButtonHottest.setImageDrawable(Helpers.getAPICompatVectorDrawable(getContext().getApplicationContext(), R.drawable.ic_trending));
+                imageButtonLatest.setImageDrawable(Helpers.getAPICompatVectorDrawable(getContext().getApplicationContext(), R.drawable.ic_clock_on));
                 imageButtonHottest.setClickable(true);
                 imageButtonLatest.setClickable(false);
             }

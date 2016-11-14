@@ -21,7 +21,7 @@ public class DBUserConversation implements Comparable<DBUserConversation> {
 
     @Override
     public int compareTo(@NonNull DBUserConversation another) {
-        return this.timeStampLatest.compareTo(another.timeStampLatest);
+        return this.timeStampLatest.compareTo(another.timeStampLatest) * (-1);
     }
 
     // Helpers
@@ -38,11 +38,11 @@ public class DBUserConversation implements Comparable<DBUserConversation> {
     public String getConversationID() { return conversationID; }
     public void setConversationID(String conversationID) { this.conversationID = conversationID; }
 
-    @DynamoDBAttribute(attributeName = "ReceiverUsername")
+    @DynamoDBAttribute(attributeName = "SenderUsername")
     public String getSenderUsername() { return senderUsername; }
     public void setSenderUsername(String senderUsername) { this.senderUsername = senderUsername; }
 
-    @DynamoDBAttribute(attributeName = "SenderUsername")
+    @DynamoDBAttribute(attributeName = "ReceiverUsername")
     public String getReceiverUsername() { return receiverUsername; }
     public void setReceiverUsername(String receiverUsername) { this.receiverUsername = receiverUsername; }
 

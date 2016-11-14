@@ -27,8 +27,9 @@ public class AsyncHelpers {
      **********************************************************************************************/
     public static void launchExistingUserProfileActivity(Context callingContext,
                                                          String profileUsername,
-                                                         String currentUsername) {
-        new LaunchUserProfileActivityAsyncTask(callingContext).execute(profileUsername, currentUsername);
+                                                         String currentUsername,
+                                                         DynamoDBHelper.AsyncTaskCallback taskCallback) {
+        new LaunchUserProfileActivityAsyncTask(callingContext, taskCallback).execute(profileUsername, currentUsername);
     }
 
     public static void launchVarsityPlayerProfileActivity(Context callingContext,
@@ -85,37 +86,46 @@ public class AsyncHelpers {
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
-    private static class LaunchUserProfileActivityAsyncTask extends AsyncTask<String, Void, DBPlayerProfile> {
+    private static class LaunchUserProfileActivityAsyncTask extends AsyncTask<String, Void, Boolean> {
 
         private Context callingContext;
         private DBUserProfile userProfile;
+        private DBPlayerProfile playerProfile;
         private String currentUsername;
+        private DynamoDBHelper.AsyncTaskCallback taskCallback;
 
-        private LaunchUserProfileActivityAsyncTask(Context callingContext) {
+        private LaunchUserProfileActivityAsyncTask(Context callingContext,
+                                                   DynamoDBHelper.AsyncTaskCallback taskCallback) {
             this.callingContext = callingContext;
+            this.taskCallback =  taskCallback;
         }
 
         @Override
-        protected DBPlayerProfile doInBackground(String... strings) {
+        protected Boolean doInBackground(String... strings) {
             String profileUsername = strings[0];
             currentUsername = strings[1];
             DynamoDBHelper dynamoDBHelper = new DynamoDBHelper(callingContext);
 
             userProfile = dynamoDBHelper.loadDBUserProfile(profileUsername);
 
-            if (userProfile != null && userProfile.getIsVarsityPlayer()) {
-                DBPlayerProfile playerProfile = dynamoDBHelper.loadDBPlayerProfile(userProfile.getTeam(), userProfile.getPlayerIndex());
-                if (playerProfile != null) {
-                    return playerProfile;
+            if (userProfile == null) {
+                return false;
+            } else {
+                if (userProfile.getIsVarsityPlayer()) {
+                    playerProfile = dynamoDBHelper.loadDBPlayerProfile(userProfile.getTeam(), userProfile.getPlayerIndex());
                 }
+                return true;
             }
-
-            return null;
         }
 
         @Override
-        protected void onPostExecute(DBPlayerProfile playerProfile) {
-            launchProfileActivityWithUserPlayerProfile(callingContext, currentUsername, userProfile, playerProfile);
+        protected void onPostExecute(Boolean isUserFound) {
+            if (isUserFound) {
+                launchProfileActivityWithUserPlayerProfile(callingContext, currentUsername, userProfile, playerProfile);
+            } else {
+                if (taskCallback != null)
+                    taskCallback.onTaskDone();
+            }
         }
     }
 

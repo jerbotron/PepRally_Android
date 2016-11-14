@@ -3,13 +3,13 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
-    <LinearLayout android:id="@+id/profile_view_container"
+    <LinearLayout android:id="@+id/id_profile_view_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/profile_view_name_age"
+            android:id="@+id/id_profile_view_name_age"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/default_firstname"
@@ -19,7 +19,7 @@
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"/>
         <TextView
-            android:id="@+id/profile_view_username"
+            android:id="@+id/id_profile_view_username"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/placeholder_username"
@@ -29,7 +29,7 @@
             android:layout_marginBottom="@dimen/activity_vertical_margin" />
 
         <LinearLayout
-            android:id="@+id/profile_container_varsity_profile"
+            android:id="@+id/id_profile_container_varsity_profile"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
@@ -37,7 +37,7 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/profile_layout_fav_team"
+            android:id="@+id/id_profile_layout_fav_team"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -51,7 +51,7 @@
                 android:paddingLeft="@dimen/activity_horizontal_margin"
                 android:paddingRight="@dimen/activity_horizontal_margin"/>
             <TextView
-                android:id="@+id/profile_view_fav_team"
+                android:id="@+id/id_profile_view_fav_team"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/placeholder_content"
@@ -60,7 +60,7 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/profile_layout_fav_player"
+            android:id="@+id/id_profile_layout_fav_player"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -74,7 +74,7 @@
                 android:paddingLeft="@dimen/activity_horizontal_margin"
                 android:paddingRight="@dimen/activity_horizontal_margin"/>
             <TextView
-                android:id="@+id/profile_view_fav_player"
+                android:id="@+id/id_profile_view_fav_player"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/placeholder_content"
@@ -83,14 +83,14 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/profile_layout_pep_talk"
+            android:id="@+id/id_profile_layout_pep_talk"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:divider="@drawable/default_divider"
             android:showDividers="end">
             <TextView
-                android:id="@+id/profile_view_pep_talk_title"
+                android:id="@+id/id_profile_view_pep_talk_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/placeholder_pep_talk"
@@ -98,7 +98,7 @@
                 android:paddingLeft="@dimen/activity_horizontal_margin"
                 android:paddingRight="@dimen/activity_horizontal_margin"/>
             <TextView
-                android:id="@+id/profile_view_pep_talk"
+                android:id="@+id/id_profile_view_pep_talk"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/placeholder_content"
@@ -107,7 +107,7 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/profile_layout_trash_talk"
+            android:id="@+id/id_profile_layout_trash_talk"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
@@ -121,7 +121,7 @@
                 android:paddingLeft="@dimen/activity_horizontal_margin"
                 android:paddingRight="@dimen/activity_horizontal_margin"/>
             <TextView
-                android:id="@+id/profile_view_trash_talk"
+                android:id="@+id/id_profile_view_trash_talk"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/placeholder_content"

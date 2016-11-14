@@ -149,11 +149,12 @@ public class MessagingActivity extends AppCompatActivity {
                 View dialogViewConfirmDelete = View.inflate(this, R.layout.dialog_confirm_delete_conversation, null);
                 TextView confirmDeleteMessage = (TextView) dialogViewConfirmDelete.findViewById(R.id.id_dialog_confirm_delete_conversation);
                 ImageView confirmDeleteImage = (ImageView) dialogViewConfirmDelete.findViewById(R.id.id_dialog_confirm_delete_conversation_image);
-                confirmDeleteMessage.setText("Are you sure you want to delete this conversation with " + receiverUsername + "?");
+                String deleteText = "Are you sure you want to delete this conversation with " + receiverUsername + "?";
+                confirmDeleteMessage.setText(deleteText);
                 Helpers.setFacebookProfileImage(MessagingActivity.this,
                         confirmDeleteImage,
                         conversation.getUsernameFacebookIdMap().get(receiverUsername),
-                        3,
+                        Helpers.FacebookProfilePictureEnum.LARGE,
                         true);
                 dialogBuilderConfirmDelete.setView(dialogViewConfirmDelete);
                 dialogBuilderConfirmDelete.setTitle("Confirm Delete");
@@ -352,7 +353,7 @@ public class MessagingActivity extends AppCompatActivity {
         @Nullable
         @Override
         public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-            View view = inflater.inflate(R.layout.fragment_messaging_no_message, container, false);
+            final View view = inflater.inflate(R.layout.fragment_messaging_no_message, container, false);
             final TextView titleText = (TextView) view.findViewById(R.id.id_messaging_default_title);
             final TextView messageText = (TextView) view.findViewById(R.id.id_messaging_default_message);
             final ImageView profileImage = (ImageView) view.findViewById(R.id.id_messaging_default_image);
@@ -365,14 +366,13 @@ public class MessagingActivity extends AppCompatActivity {
             Helpers.setFacebookProfileImage(getContext(),
                     profileImage,
                     facebookId,
-                    3,
+                    Helpers.FacebookProfilePictureEnum.LARGE,
                     true);
 
             profileImage.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-//                    getActivity().finish();
-                    AsyncHelpers.launchExistingUserProfileActivity(getContext(), receiverUsername, currentUsername);
+                    AsyncHelpers.launchExistingUserProfileActivity(getContext(), receiverUsername, currentUsername, null);
                 }
             });
 

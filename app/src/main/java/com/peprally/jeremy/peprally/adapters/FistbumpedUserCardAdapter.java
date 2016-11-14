@@ -10,6 +10,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.peprally.jeremy.peprally.R;
+import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.AsyncHelpers;
@@ -61,7 +62,7 @@ public class FistbumpedUserCardAdapter extends RecyclerView.Adapter<FistbumpedUs
         Helpers.setFacebookProfileImage(callingContext,
                 fistbumpedUserCardHolder.userImage,
                 userProfile.getFacebookId(),
-                3,
+                Helpers.FacebookProfilePictureEnum.LARGE,
                 true);
 
         fistbumpedUserCardHolder.username.setText(userProfile.getUsername());
@@ -70,8 +71,15 @@ public class FistbumpedUserCardAdapter extends RecyclerView.Adapter<FistbumpedUs
         fistbumpedUserCardHolder.clickableContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                ((Activity) callingContext).finish();
-                AsyncHelpers.launchExistingUserProfileActivity(callingContext, userProfile.getUsername(), userProfileParcel.getCurrentUsername());
+                AsyncHelpers.launchExistingUserProfileActivity(callingContext,
+                        userProfile.getUsername(),
+                        userProfileParcel.getCurrentUsername(),
+                        new DynamoDBHelper.AsyncTaskCallback(){
+                            @Override
+                            public void onTaskDone() {
+                                ((ViewFistbumpsActivity) callingContext).launchUserIsDeletedDialog(userProfile.getUsername());
+                            }
+                        });
             }
         });
     }

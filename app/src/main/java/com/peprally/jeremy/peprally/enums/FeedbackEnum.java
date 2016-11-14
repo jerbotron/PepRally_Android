@@ -6,7 +6,7 @@ public enum  FeedbackEnum {
 
     private int value;
 
-    private FeedbackEnum(int value) {
+    FeedbackEnum(int value) {
         this.value = value;
     }
 

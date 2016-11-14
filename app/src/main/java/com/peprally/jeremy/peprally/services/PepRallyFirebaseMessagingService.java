@@ -21,6 +21,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.RingtoneManager;
@@ -31,13 +32,13 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
 import android.util.Log;
+import android.widget.RemoteViews;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.LoginActivity;
 import com.peprally.jeremy.peprally.custom.ui.CircleImageTransformation;
-import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.squareup.picasso.Picasso;
@@ -63,8 +64,8 @@ public class PepRallyFirebaseMessagingService extends FirebaseMessagingService {
         // If the application is in the foreground handle both data and notification messages here.
         // Also if you intend on generating your own notifications as a result of a received FCM
         // message, here is where that should be initiated. See sendNotification method below.
-//        Log.d(TAG, "From: " + remoteMessage.getFrom());
-//        Log.d(TAG, "Notification Message Body: " + remoteMessage.getData());
+        Log.d(TAG, "From: " + remoteMessage.getFrom());
+        Log.d(TAG, "Notification Message Body: " + remoteMessage.getData());
         sendNotification(remoteMessage.getData());
     }
 
@@ -79,7 +80,6 @@ public class PepRallyFirebaseMessagingService extends FirebaseMessagingService {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
                 PendingIntent.FLAG_ONE_SHOT);
 
-        Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         String contentText = jsonData.get("sender_username") + " ";
         NotificationEnum notificationType = NotificationEnum.fromInt(Integer.parseInt(jsonData.get("notification_type")));
         int notificationColor = ContextCompat.getColor(getApplicationContext(), R.color.colorAccent);
@@ -116,36 +116,52 @@ public class PepRallyFirebaseMessagingService extends FirebaseMessagingService {
                 break;
         }
 
-        Drawable notificationDrawable = ResourcesCompat.getDrawable(getResources(), R.drawable.logo_push_ut, null);
-        if (notificationDrawable != null) {
-            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(getApplicationContext())
-                    .setLargeIcon(((BitmapDrawable) notificationDrawable).getBitmap())
-                    .setSmallIcon(R.drawable.logo_push)
-                    .setColor(notificationColor)
-                    .setContentTitle("PepRally")
-                    .setContentText(contentText)
-                    .setAutoCancel(true)
-                    .setSound(defaultSoundUri)
-                    .setContentIntent(pendingIntent);
+        sendNotificationBasedOnAPIVersion(jsonData.get("sender_facebook_id"),
+                                          contentText,
+                                          notificationColor,
+                                          pendingIntent);
+    }
 
-            final int notifyId = Helpers.generateRandomInteger();
-            final NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+    private void sendNotificationBasedOnAPIVersion(final String senderFacebookId,
+                                                   String contentText,
+                                                   int notificationColor,
+                                                   PendingIntent pendingIntent) {
+        // initialize some common components
+        Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        final NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        final NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(getApplicationContext())
+                .setSmallIcon(R.drawable.logo_push)
+                .setContentTitle("PepRally")
+                .setContentText(contentText)
+                .setColor(notificationColor)
+                .setAutoCancel(true)
+                .setSound(defaultSoundUri)
+                .setContentIntent(pendingIntent);
+        final int notifyId = Helpers.generateRandomInteger();
+
+        // check sdk version
+        if (android.os.Build.VERSION.SDK_INT >= 24) {
+            notificationBuilder.setLargeIcon(Helpers.getFacebookProfilePictureBitmap(senderFacebookId, getApplicationContext()));
             final Notification notification = notificationBuilder.build();
             notificationManager.notify(notifyId, notification);
-
-            final String senderFacebookId = jsonData.get("sender_facebook_id");
+        } else {
+            notificationBuilder.setLargeIcon(BitmapFactory.decodeResource(getApplicationContext().getResources(), R.drawable.logo_push_ut));
+            final Notification notification = notificationBuilder.build();
             if (senderFacebookId != null && !senderFacebookId.isEmpty()) {
                 Handler uiHandler = new Handler(Looper.getMainLooper());
                 uiHandler.post(new Runnable(){
                     @Override
                     public void run() {
                         Picasso.with(getApplicationContext())
-                                .load(Helpers.getFacebookProfileImageURL(senderFacebookId, 3))
+                                .load(Helpers.getFacebookProfilePictureURL(
+                                        senderFacebookId,
+                                        Helpers.FacebookProfilePictureEnum.LARGE))
                                 .transform(new CircleImageTransformation())
                                 .into(notification.contentView, android.R.id.icon, notifyId, notification);
                     }
                 });
             }
+            notificationManager.notify(notifyId, notification);
         }
     }
 }

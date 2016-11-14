@@ -1,13 +1,12 @@
 package com.peprally.jeremy.peprally.network;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -78,11 +77,11 @@ public class HTTPRequestsHelper {
 
                     if (pushNotify) {
                         // Instantiate the RequestQueue.
-                        RequestQueue queue = Volley.newRequestQueue(callingContext);
+                        final RequestQueue queue = Volley.newRequestQueue(callingContext);
 
-                        String receiverFMSID = dynamoDBHelper.loadDBUserProfile(bundle.getString("RECEIVER_USERNAME")).getFCMInstanceId();
+                        final String receiverFMSID = dynamoDBHelper.loadDBUserProfile(bundle.getString("RECEIVER_USERNAME")).getFCMInstanceId();
 
-                        HashMap<String, String> jsonData = new HashMap<>();
+                        final HashMap<String, String> jsonData = new HashMap<>();
                         jsonData.put("receiver_id", receiverFMSID);
                         jsonData.put("receiver_username", bundle.getString("RECEIVER_USERNAME"));
                         jsonData.put("sender_username", bundle.getString("SENDER_USERNAME"));
@@ -90,17 +89,18 @@ public class HTTPRequestsHelper {
                         jsonData.put("notification_type", String.valueOf(bundle.getInt("NOTIFICATION_TYPE")));
                         jsonData.put("comment_text", bundle.getString("COMMENT"));
 
-                        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST,
+                        final JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                                Request.Method.POST,
                                 Constants.PUSH_SERVER_URL,
                                 new JSONObject(jsonData),
                                 new Response.Listener<JSONObject>() {
                                     @Override
                                     public void onResponse(JSONObject response) {
-//                                        try {
-//                                            Log.d("HTTPRequestHelper: ", response.toString(4));
-//                                        } catch (JSONException e) {
-//                                            e.printStackTrace();
-//                                        }
+                                        try {
+                                            Log.d("HTTPRequestHelper: ", response.toString(4));
+                                        } catch (JSONException e) {
+                                            e.printStackTrace();
+                                        }
                                     }
                                 },
                                 new Response.ErrorListener() {
@@ -117,6 +117,13 @@ public class HTTPRequestsHelper {
                                 return headers;
                             }
                         };
+
+                        // https://groups.google.com/forum/#!topic/volley-users/8PE9dBbD6iA
+                        // Avoid volley sending data twice bug
+                        jsonObjectRequest.setRetryPolicy(new DefaultRetryPolicy(
+                                0,
+                                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
 
                         // Add the request to the RequestQueue.
                         queue.add(jsonObjectRequest);

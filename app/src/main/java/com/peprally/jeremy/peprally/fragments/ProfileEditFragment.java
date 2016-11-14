@@ -24,6 +24,7 @@ public class ProfileEditFragment extends Fragment {
 
     // General Variables
     private static final String TAG = ProfileEditFragment.class.getSimpleName();
+    private boolean isFragmentReady;
     private UserProfileParcel userProfileParcel;
 
     /***********************************************************************************************
@@ -32,8 +33,6 @@ public class ProfileEditFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Get copy of userProfileParcel from ProfileActivity
-        userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
     }
 
     @Override
@@ -72,6 +71,8 @@ public class ProfileEditFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        // Get latest copy of userProfileParcel from ProfileActivity
+        userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
         setupUserProfile();
     }
 

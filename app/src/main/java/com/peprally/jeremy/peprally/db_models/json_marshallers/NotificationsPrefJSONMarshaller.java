@@ -11,15 +11,15 @@ public class NotificationsPrefJSONMarshaller extends JsonMarshaller<Notification
 
     @Override
     public String marshall(NotificationsPref notificationsPref) {
-        JSONObject jsonoNotificationPref = new JSONObject();
+        JSONObject jsonNotificationPref = new JSONObject();
         try {
-            jsonoNotificationPref.put("notify_direct_fistbump", notificationsPref.isNotifyDirectFistbump());
-            jsonoNotificationPref.put("notify_post_fistbump", notificationsPref.isNotifyPostFistbump());
-            jsonoNotificationPref.put("notify_comment_fistbump", notificationsPref.isNotifyCommentFistbump());
-            jsonoNotificationPref.put("notify_post_comment", notificationsPref.isNotifyNewComment());
-            jsonoNotificationPref.put("notify_direct_message", notificationsPref.isNotifyDirectMessage());
+            jsonNotificationPref.put("notify_direct_fistbump", notificationsPref.isNotifyDirectFistbump());
+            jsonNotificationPref.put("notify_post_fistbump", notificationsPref.isNotifyPostFistbump());
+            jsonNotificationPref.put("notify_comment_fistbump", notificationsPref.isNotifyCommentFistbump());
+            jsonNotificationPref.put("notify_post_comment", notificationsPref.isNotifyNewComment());
+            jsonNotificationPref.put("notify_direct_message", notificationsPref.isNotifyDirectMessage());
         } catch (JSONException e) { e.printStackTrace(); }
-        return jsonoNotificationPref.toString();
+        return jsonNotificationPref.toString();
     }
 
     @Override

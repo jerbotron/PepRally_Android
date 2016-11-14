@@ -15,6 +15,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExp
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.ConversationCardAdapter;
+import com.peprally.jeremy.peprally.custom.ui.EmptyViewSwipeRefreshLayout;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
@@ -24,6 +25,7 @@ import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class ConversationsActivity extends AppCompatActivity {
 
@@ -32,7 +34,7 @@ public class ConversationsActivity extends AppCompatActivity {
      **********************************************************************************************/
     // UI Variables
     private RecyclerView recyclerView;
-    private SwipeRefreshLayout conversationSwipeRefreshContainer;
+    private EmptyViewSwipeRefreshLayout conversationSwipeRefreshContainer;
 
     // AWS Variables
     private DynamoDBHelper dynamoDBHelper;
@@ -64,7 +66,7 @@ public class ConversationsActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(rvLayoutManager);
 
         // setup swipe refresh container
-        conversationSwipeRefreshContainer = (SwipeRefreshLayout) findViewById(R.id.id_container_swipe_refresh_conversation);
+        conversationSwipeRefreshContainer = (EmptyViewSwipeRefreshLayout) findViewById(R.id.id_container_swipe_refresh_conversation);
         conversationSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -133,22 +135,20 @@ public class ConversationsActivity extends AppCompatActivity {
     private class FetchUserConversationsAsyncTask extends AsyncTask<String, Void, List<DBUserConversation>> {
         @Override
         protected List<DBUserConversation> doInBackground(String... usernames) {
-            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(usernames[0]);
-            List<DBUserConversation> userConversations = new ArrayList<>();
-            if (userProfile != null && userProfile.getConversationIds().size() > 1) {   // set has a default value of "_"
+            final DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(usernames[0]);
+            final List<DBUserConversation> userConversations = new ArrayList<>();
+            if (userProfile != null && userProfile.getConversationIds() != null && userProfile.getConversationIds().size() > 0) {
                 for (String conversationID : userProfile.getConversationIds()) {
-                    if (!conversationID.equals("_")) {  // special case inside conversationID Set
-                        DBUserConversation userConversation = new DBUserConversation();
-                        userConversation.setConversationID(conversationID);
-                        DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
-                                .withHashKeyValues(userConversation)
-                                .withConsistentRead(true);
+                    DBUserConversation userConversation = new DBUserConversation();
+                    userConversation.setConversationID(conversationID);
+                    DynamoDBQueryExpression queryExpression = new DynamoDBQueryExpression()
+                            .withHashKeyValues(userConversation)
+                            .withConsistentRead(true);
 
-                        // query should just return a single conversation
-                        List<DBUserConversation> convo = dynamoDBHelper.getMapper().query(DBUserConversation.class, queryExpression);
-                        if (convo.size() == 1)
-                            userConversations.add(convo.get(0));
-                    }
+                    // query should just return a single conversation
+                    List<DBUserConversation> convo = dynamoDBHelper.getMapper().query(DBUserConversation.class, queryExpression);
+                    if (convo.size() == 1)
+                        userConversations.add(convo.get(0));
                 }
             }
             return userConversations;

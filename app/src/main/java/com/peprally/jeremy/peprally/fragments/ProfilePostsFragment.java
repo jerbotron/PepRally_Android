@@ -17,14 +17,16 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.PostCardAdapter;
+import com.peprally.jeremy.peprally.custom.ui.EmptyViewSwipeRefreshLayout;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
+import com.peprally.jeremy.peprally.interfaces.ProfileFragmentInterface;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProfilePostsFragment extends Fragment {
+public class ProfilePostsFragment extends Fragment implements ProfileFragmentInterface {
 
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
@@ -33,7 +35,7 @@ public class ProfilePostsFragment extends Fragment {
     private PostCardAdapter postCardAdapter;
     private RecyclerView recyclerView;
     private TextView noPostsText;
-    private SwipeRefreshLayout profilePostsSwipeRefreshContainer;
+    private EmptyViewSwipeRefreshLayout profilePostsSwipeRefreshContainer;
 
     // General Variables
 //    private static final String TAG = ProfilePostsFragment.class.getSimpleName();
@@ -47,8 +49,6 @@ public class ProfilePostsFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile_posts, container, false);
 
-        userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
-
         // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
         recyclerView = (RecyclerView) view.findViewById(R.id.recycler_view_profile_posts);
         LinearLayoutManager rvLayoutManager = new LinearLayoutManager(getActivity());
@@ -57,7 +57,7 @@ public class ProfilePostsFragment extends Fragment {
         recyclerView.setLayoutManager(rvLayoutManager);
 
         // setup swipe refresh container
-        profilePostsSwipeRefreshContainer = (SwipeRefreshLayout) view.findViewById(R.id.container_swipe_refresh_profile_posts);
+        profilePostsSwipeRefreshContainer = (EmptyViewSwipeRefreshLayout) view.findViewById(R.id.container_swipe_refresh_profile_posts);
         profilePostsSwipeRefreshContainer.setRefreshing(true);
         profilePostsSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -66,14 +66,20 @@ public class ProfilePostsFragment extends Fragment {
             }
         });
 
-        noPostsText = (TextView) view.findViewById(R.id.profile_posts_empty_text);
+        noPostsText = (TextView) view.findViewById(R.id.id_profile_posts_empty_text);
         return view;
     }
 
     @Override
     public void onResume() {
-        refreshAdapter();
+        refreshFragment();
         super.onResume();
+    }
+
+    public void refreshFragment() {
+        // get latest copy of userProfileParcel from ProfileActivity
+        userProfileParcel = ((ProfileActivity) getActivity()).getUserProfileParcel();
+        refreshAdapter();
     }
 
     /***********************************************************************************************
@@ -101,7 +107,7 @@ public class ProfilePostsFragment extends Fragment {
         postCardAdapter.addPost(newPostText, bundle);
     }
 
-    private void refreshAdapter() {
+    public void refreshAdapter() {
         new FetchUserPostsTask().execute(userProfileParcel.getProfileUsername());
     }
 

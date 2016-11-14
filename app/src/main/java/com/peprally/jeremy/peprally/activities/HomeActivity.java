@@ -24,8 +24,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
-import com.facebook.FacebookSdk;
-import com.facebook.Profile;
 import com.facebook.login.LoginManager;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
@@ -35,6 +33,7 @@ import com.peprally.jeremy.peprally.enums.IntentRequestEnum;
 import com.peprally.jeremy.peprally.fragments.BrowseTeamsFragment;
 import com.peprally.jeremy.peprally.fragments.TrendingFragment;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
+import com.peprally.jeremy.peprally.interfaces.PostContainerInterface;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
@@ -43,11 +42,11 @@ import java.util.List;
 
 import static com.peprally.jeremy.peprally.utils.Helpers.getAPICompatVectorDrawable;
 
-public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class HomeActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, PostContainerInterface{
     /***********************************************************************************************
      *************************************** CLASS VARIABLES ***************************************
      **********************************************************************************************/
-    // AWS Variables
+    // Network Variables
     private DynamoDBHelper dynamoDBHelper;
 
     // UI Variables
@@ -91,33 +90,33 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         }
 
         // Setup UI components
-        Toolbar toolbar = (Toolbar) findViewById(R.id.id_toolbar_home);
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.id_toolbar_home);
         toolbar.setTitle("");
-        TextView toolbarTitle = (TextView) toolbar.findViewById(R.id.id_text_view_toolbar_title);
-        Typeface customTf = Typeface.createFromAsset(getAssets(), "fonts/Sketch 3D.otf");
+        final TextView toolbarTitle = (TextView) toolbar.findViewById(R.id.id_text_view_toolbar_title);
+        final Typeface customTf = Typeface.createFromAsset(getAssets(), "fonts/Sketch 3D.otf");
         toolbarTitle.setTypeface(customTf);
         setSupportActionBar(toolbar);
 
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout_home);
-        ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(
+        final ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(drawerToggle);
         drawerToggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.id_nav_view_home);
+        final NavigationView navigationView = (NavigationView) findViewById(R.id.id_nav_view_home);
         navigationView.setNavigationItemSelectedListener(this);
 
-        // Fetch FB img_default_profile photo and first name and display them in sidebar header
-        View headerView = navigationView.getHeaderView(0);
-        LinearLayout header = (LinearLayout) headerView.findViewById(R.id.id_sidebar_header);
-        ImageView profilePicture = (ImageView) headerView.findViewById(R.id.profile_image_header);
+        // Fetch FB profile photo and first name and display them in sidebar header
+        final View headerView = navigationView.getHeaderView(0);
+        final LinearLayout header = (LinearLayout) headerView.findViewById(R.id.id_sidebar_header);
+        final ImageView profilePicture = (ImageView) headerView.findViewById(R.id.profile_image_header);
         Helpers.setFacebookProfileImage(HomeActivity.this,
                 profilePicture,
                 sharedPreferences.getString("CURRENT_FACEBOOK_ID", ""),
-                3,
+                Helpers.FacebookProfilePictureEnum.LARGE,
                 true);
-        TextView sidebar_name = (TextView) headerView.findViewById(R.id.sidebar_header_name);
-        sidebar_name.setText(sharedPreferences.getString("CURRENT_FIRSTNAME", ""));
+        final TextView sidebarNameText = (TextView) headerView.findViewById(R.id.sidebar_header_name);
+        sidebarNameText.setText(sharedPreferences.getString("CURRENT_FIRSTNAME", ""));
         header.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -196,7 +195,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             switch (IntentRequestEnum.fromInt(requestCode)) {
                 case NEW_POST_REQUEST:
                     trendingFragment.addPostToAdapter(data.getStringExtra("NEW_POST_TEXT"));
-                    trendingFragment.toggleTrendingModeIsHottestView(false);
+                    trendingFragment.updateTrendingMode(false);
                     break;
                 case SETTINGS_REQUEST:
                     if (data.getBooleanExtra("DELETE_PROFILE", false)) {
@@ -219,7 +218,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     protected void onResume() {
         super.onResume();
         Helpers.checkGooglePlayServicesAvailable(this);
-        new UpdateUserNotificationAlertsAsyncTask().execute();
+        updateMenuItemsNotificationAlerts();
     }
 
     @Override
@@ -255,9 +254,8 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public void launchBrowsePlayerActivity(String team) {
-        Intent intent = new Intent(HomeActivity.this, FavoritePlayerActivity.class);
+        Intent intent = new Intent(HomeActivity.this, BrowsePlayersActivity.class);
         intent.putExtra("CALLING_ACTIVITY", "HOME_ACTIVITY");
-        intent.putExtra("CURRENT_USERNAME", userProfileParcel.getCurrentUsername());
         intent.putExtra("TEAM", team);
         startActivity(intent);
         overridePendingTransition(R.anim.right_in, R.anim.left_out);
@@ -273,26 +271,31 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         return userProfileParcel;
     }
 
+    public void refreshPosts() {
+        viewPagerHome.setCurrentItem(0);
+        trendingFragment.refreshAdapter();
+    }
+
     /***********************************************************************************************
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
 
-    private void setupViewPager(ViewPager viewPager) {
+    private void setupViewPager(final ViewPager viewPager) {
         trendingFragment = new TrendingFragment();
-        BrowseTeamsFragment browseTeamsFragment = new BrowseTeamsFragment();
-        ProfileViewPagerAdapter adapter = new ProfileViewPagerAdapter(getSupportFragmentManager());
-        adapter.addFrag(trendingFragment, "Trending");
-        adapter.addFrag(browseTeamsFragment, "Teams");
-        viewPager.setAdapter(adapter);
+        final BrowseTeamsFragment browseTeamsFragment = new BrowseTeamsFragment();
+        ProfileViewPagerAdapter profileViewPagerAdapter = new ProfileViewPagerAdapter(getSupportFragmentManager());
+        profileViewPagerAdapter.addFrag(trendingFragment, "Trending");
+        profileViewPagerAdapter.addFrag(browseTeamsFragment, "Teams");
+        viewPager.setAdapter(profileViewPagerAdapter);
         viewPager.setCurrentItem(0);
 
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.id_tablayout_home);
+        final TabLayout tabLayout = (TabLayout) findViewById(R.id.id_tablayout_home);
         if (tabLayout != null) {
-            tabLayout.setupWithViewPager(viewPagerHome);
+            tabLayout.setupWithViewPager(viewPager);
             tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
                 @Override
                 public void onTabSelected(TabLayout.Tab tab) {
-                    viewPagerHome.setCurrentItem(tab.getPosition());
+                    viewPager.setCurrentItem(tab.getPosition());
                 }
 
                 @Override
@@ -318,6 +321,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
             else
                 menuNotificationItem.setIcon(getAPICompatVectorDrawable(HomeActivity.this, R.drawable.ic_notifications));
         }
+    }
+
+    public void updateMenuItemsNotificationAlerts() {
+        new UpdateUserNotificationAlertsAsyncTask().execute();
     }
 
     /***********************************************************************************************
@@ -355,7 +362,7 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
-    private class UpdateUserNotificationAlertsAsyncTask extends AsyncTask<Void, Void, Void> {
+    public class UpdateUserNotificationAlertsAsyncTask extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... voids) {
             DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurrentUsername());

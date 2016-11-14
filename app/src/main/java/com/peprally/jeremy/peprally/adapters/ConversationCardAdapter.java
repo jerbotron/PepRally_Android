@@ -74,14 +74,14 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
         Helpers.setFacebookProfileImage(callingContext,
                 MessageCardHolder.profileImage,
                 usernameFacebookIDMap.get(receiverUsername),
-                3,
+                Helpers.FacebookProfilePictureEnum.LARGE,
                 true);
         MessageCardHolder.username.setText(receiverUsername);
 
         ArrayList<ChatMessage> messages = conversation.getChatMessages();
         if (messages != null && messages.size() > 0) {
             String preview = messages.get(messages.size() - 1).getMessageContent();
-            if (preview.length() > 40) {
+            if (preview.length() > 50) {
                 preview = preview.substring(0, 50) + "...";
             }
             MessageCardHolder.lastMessageContent.setText(preview);
@@ -97,7 +97,7 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
         MessageCardHolder.profileImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                AsyncHelpers.launchExistingUserProfileActivity(callingContext, receiverUsername, userProfileParcel.getCurrentUsername());
+                AsyncHelpers.launchExistingUserProfileActivity(callingContext, receiverUsername, userProfileParcel.getCurrentUsername(), null);
             }
         });
 

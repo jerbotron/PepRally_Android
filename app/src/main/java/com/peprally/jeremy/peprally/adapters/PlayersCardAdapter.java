@@ -11,7 +11,7 @@ import android.widget.TextView;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.peprally.jeremy.peprally.R;
-import com.peprally.jeremy.peprally.activities.FavoritePlayerActivity;
+import com.peprally.jeremy.peprally.activities.BrowsePlayersActivity;
 import com.peprally.jeremy.peprally.custom.ui.CircleImageTransformation;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.utils.Constants;
@@ -107,7 +107,7 @@ public class PlayersCardAdapter extends RecyclerView.Adapter<PlayersCardAdapter.
         playerCardHolder.cardContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ((FavoritePlayerActivity) callingContext).playerCardOnClickHandler(playerCardHolder.getAdapterPosition());
+                ((BrowsePlayersActivity) callingContext).playerCardOnClickHandler(playerCardHolder.getAdapterPosition());
             }
         });
     }

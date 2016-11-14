@@ -79,11 +79,11 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
                 messageView = inflater.inflate(R.layout.message_left, parent, false);
                 ImageView leftImageView = (ImageView) messageView.findViewById(R.id.id_image_view_message_left);
                 if (leftImageView != null) {
-                    Helpers.setFacebookProfileImage(callingContext, leftImageView, chatMessage.getFacebookID(), 3, true);
+                    Helpers.setFacebookProfileImage(callingContext, leftImageView, chatMessage.getFacebookID(), Helpers.FacebookProfilePictureEnum.LARGE, true);
                     leftImageView.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            AsyncHelpers.launchExistingUserProfileActivity(callingContext, chatMessage.getUsername(), currentUsername);
+                            AsyncHelpers.launchExistingUserProfileActivity(callingContext, chatMessage.getUsername(), currentUsername, null);
                         }
                     });
                 }

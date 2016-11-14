@@ -5,15 +5,16 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.Spanned;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AdapterView;
@@ -32,6 +33,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClient;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ComparisonOperator;
 import com.amazonaws.services.dynamodbv2.model.Condition;
+import com.facebook.AccessToken;
 import com.facebook.AccessTokenTracker;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
@@ -40,30 +42,26 @@ import com.facebook.FacebookSdk;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.Profile;
-import com.facebook.ProfileTracker;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
-import com.facebook.AccessToken;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.custom.SpinnerArrayAdapter;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 import com.peprally.jeremy.peprally.custom.preferences.NotificationsPref;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
-import com.peprally.jeremy.peprally.db_models.DBUsername;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
+import com.peprally.jeremy.peprally.db_models.DBUsername;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.enums.SchoolsSupportedEnum;
 import com.peprally.jeremy.peprally.network.AWSCredentialProvider;
-import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
-import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
 public class LoginActivity extends AppCompatActivity {
@@ -147,6 +145,7 @@ public class LoginActivity extends AppCompatActivity {
                 dynamoDBHelper = new DynamoDBHelper(this);
                 fbDataBundle = new Bundle();
                 FCMInstanceId = Helpers.getFCMInstanceId(this);
+                Log.d(TAG, "fcm id = " + FCMInstanceId);
                 accessTokenTracker = new AccessTokenTracker() {
                     @Override
                     protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken newAccessToken) {
@@ -351,7 +350,8 @@ public class LoginActivity extends AppCompatActivity {
         editTextUsername.addTextChangedListener(new TextWatcher() {
             public void afterTextChanged(Editable s) {
                 if (s.toString().trim().isEmpty() || s.length() < 2) {
-                    editTextUsername.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_error, 0);
+                    editTextUsername.setCompoundDrawablesWithIntrinsicBounds(null, null,
+                            Helpers.getAPICompatVectorDrawable(getApplicationContext(), R.drawable.ic_error), null);
                 }
                 else {
                     new CheckUniqueUsernameDBTask().execute(s.toString().trim().replace(" ", "_"));
@@ -437,13 +437,15 @@ public class LoginActivity extends AppCompatActivity {
 
     private void showUsernameTaken() {
         if (!editTextUsername.getText().toString().trim().isEmpty()) {
-            editTextUsername.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_error,0);
+            editTextUsername.setCompoundDrawablesWithIntrinsicBounds(null, null,
+                    Helpers.getAPICompatVectorDrawable(getApplicationContext(), R.drawable.ic_error), null);
         }
     }
 
     private void showUsernameAvailable() {
         if (!editTextUsername.getText().toString().trim().isEmpty()) {
-            editTextUsername.setCompoundDrawablesWithIntrinsicBounds(0,0,R.drawable.ic_check,0);
+            editTextUsername.setCompoundDrawablesWithIntrinsicBounds(null, null,
+                    Helpers.getAPICompatVectorDrawable(getApplicationContext(), R.drawable.ic_check), null);
         }
     }
 
@@ -491,7 +493,8 @@ public class LoginActivity extends AppCompatActivity {
                 if (userProfile.getIsVarsityPlayer()) {
                     playerProfile = mapper.load(DBPlayerProfile.class, userProfile.getTeam(), userProfile.getPlayerIndex());
                 }
-                userProfile.setLastLoggedInTimestamp(Helpers.getTimestampSeconds());
+                userProfile.setTimestampLastLoggedIn(Helpers.getTimestampSeconds());
+                userProfile.setDateLastLoggedIn(Helpers.getTimestampString());
                 dynamoDBHelper.saveDBObject(userProfile);
                 return false;
             }
@@ -559,11 +562,9 @@ public class LoginActivity extends AppCompatActivity {
                 userProfile.setNewUser(true);
                 userProfile.setHasNewMessage(false);
                 userProfile.setHasNewNotification(false);
-                userProfile.setConversationIds(new HashSet<>(Collections.singletonList("_")));
-                userProfile.setUsersDirectFistbumpSent(new HashSet<>(Collections.singletonList("_")));
-                userProfile.setUsersDirectFistbumpReceived(new HashSet<>(Collections.singletonList("_")));
                 userProfile.setDateJoined(Helpers.getTimestampString());
-                userProfile.setLastLoggedInTimestamp(Helpers.getTimestampSeconds());
+                userProfile.setDateLastLoggedIn(Helpers.getTimestampString());
+                userProfile.setTimestampLastLoggedIn(Helpers.getTimestampSeconds());
                 dynamoDBHelper.saveDBObject(userProfile);
                 return userProfile;
             }

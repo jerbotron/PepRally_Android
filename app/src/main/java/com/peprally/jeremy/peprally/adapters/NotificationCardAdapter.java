@@ -73,7 +73,7 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
         Helpers.setFacebookProfileImage(callingContext,
                                         notificationCardHolder.profileImage,
                                         userNotification.getFacebookIdSender(),
-                                        3,
+                                        Helpers.FacebookProfilePictureEnum.LARGE,
                                         true);
 
         notificationCardHolder.timeStamp.setText(Helpers.getTimetampString(userNotification.getTimestampSeconds(), true));
@@ -83,6 +83,9 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
         switch (notificationType) {
             case DIRECT_FISTBUMP:
                 content = callingContext.getResources().getString(R.string.notification_0_placeholder);
+                break;
+            case DIRECT_FISTBUMP_MATCH:
+                content = callingContext.getResources().getString(R.string.notification_5_placeholder);
                 break;
             case POST_COMMENT:
                 content = callingContext.getResources().getString(R.string.notification_2_placeholder);
@@ -104,12 +107,10 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
         notificationCardHolder.content.setText(Helpers.getAPICompatHtml("<b>"+userNotification.getSenderUsername()+"</b> " + content));
 
         // clickable handlers
-
         notificationCardHolder.profileImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-//                ((Activity) callingContext).finish();
-                AsyncHelpers.launchExistingUserProfileActivity(callingContext, userNotification.getSenderUsername(), userNotification.getUsername());
+                AsyncHelpers.launchExistingUserProfileActivity(callingContext, userNotification.getSenderUsername(), userNotification.getUsername(), null);
             }
         });
 
@@ -118,8 +119,7 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
             public void onClick(View view) {
                 switch (NotificationEnum.fromInt(userNotification.getNotificationType())) {
                     case DIRECT_FISTBUMP:
-//                        ((Activity) callingContext).finish();
-                        AsyncHelpers.launchExistingUserProfileActivity(callingContext, userNotification.getSenderUsername(), userNotification.getUsername());
+                        AsyncHelpers.launchExistingUserProfileActivity(callingContext, userNotification.getSenderUsername(), userNotification.getUsername(), null);
                         break;
                     case POST_COMMENT:
                     case POST_FISTBUMP:

@@ -40,11 +40,11 @@
             android:label="@string/label_app_name"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <activity
-            android:name=".activities.FavoriteTeamActivity"
+            android:name=".activities.BrowseTeamsActivity"
             android:label="@string/activity_label_fav_team"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".activities.FavoritePlayerActivity"
+            android:name=".activities.BrowsePlayersActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".activities.NewPostActivity"

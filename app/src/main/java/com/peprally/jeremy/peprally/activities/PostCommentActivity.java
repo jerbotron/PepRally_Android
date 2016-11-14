@@ -26,6 +26,7 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.CommentCardAdapter;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.custom.Comment;
+import com.peprally.jeremy.peprally.custom.ui.EmptyViewSwipeRefreshLayout;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
@@ -47,7 +48,7 @@ public class PostCommentActivity extends AppCompatActivity{
     // UI Variables
     private RecyclerView recyclerView;
     private ProgressDialog progressDialogDeletePost;
-    private SwipeRefreshLayout postCommentsSwipeRefreshContainer;
+    private EmptyViewSwipeRefreshLayout postCommentsSwipeRefreshContainer;
 
     // AWS/HTTP Variables
     private DynamoDBHelper dynamoDBHelper;
@@ -85,19 +86,18 @@ public class PostCommentActivity extends AppCompatActivity{
         }
 
         recyclerView = (RecyclerView) findViewById(R.id.id_recycler_view_post_comments);
-        LinearLayoutManager rvLayoutManager = new LinearLayoutManager(this);
+        final LinearLayoutManager rvLayoutManager = new LinearLayoutManager(this);
         recyclerView.setHasFixedSize(true);
         // Temporarily set recyclerView to an EmptyAdapter until we fetch real data
         recyclerView.setAdapter(new EmptyAdapter());
         recyclerView.setLayoutManager(rvLayoutManager);
 
         // setup swipe refresh container
-        postCommentsSwipeRefreshContainer = (SwipeRefreshLayout) findViewById(R.id.container_swipe_refresh_post_comments);
-        postCommentsSwipeRefreshContainer.setRefreshing(true);
+        postCommentsSwipeRefreshContainer = (EmptyViewSwipeRefreshLayout) findViewById(R.id.container_swipe_refresh_post_comments);
         postCommentsSwipeRefreshContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                refreshAdapter();
+                refreshAdapter(false);
             }
         });
 
@@ -116,16 +116,14 @@ public class PostCommentActivity extends AppCompatActivity{
             // determine if isUserViewingOwnPost
             isUserViewingOwnPost = userProfileParcel.getCurrentUsername().equals(mainPost.getUsername());
 
-            // load comments if applicable
-            if (mainPost.getCommentsCount() > 0) {
-                initializeAdapter(mainPost.getComments(), false);
-            }
+            // always try loading comments to ensure post has not been deleted yet
+            refreshAdapter(false);
 
             // display main post info correctly
             Helpers.setFacebookProfileImage(this,
                     mainPostProfileImage,
                     mainPost.getFacebookId(),
-                    3,
+                    Helpers.FacebookProfilePictureEnum.LARGE,
                     true);
 
             mainPostTimeStamp.setText(Helpers.getTimetampString(mainPost.getTimestampSeconds(), true));
@@ -138,7 +136,10 @@ public class PostCommentActivity extends AppCompatActivity{
             mainPostProfileImage.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    AsyncHelpers.launchExistingUserProfileActivity(PostCommentActivity.this, mainPost.getUsername(), userProfileParcel.getCurrentUsername());
+                    AsyncHelpers.launchExistingUserProfileActivity(PostCommentActivity.this,
+                            mainPost.getUsername(),
+                            userProfileParcel.getCurrentUsername(),
+                            null);
                 }
             });
 
@@ -171,14 +172,11 @@ public class PostCommentActivity extends AppCompatActivity{
             editTextNewComment.addTextChangedListener(new TextWatcher() {
                 int prev_length = 0;
                 public void afterTextChanged(Editable s) {
-                    if (prev_length >= 200) {
+                    if (prev_length >= 200)
                         textViewCharCount.setTextColor(Color.RED);
-                    }
                 }
 
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-                }
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
                     newCommentCharCount -= (s.length() - prev_length);
@@ -249,6 +247,9 @@ public class PostCommentActivity extends AppCompatActivity{
     private void addCommentToAdapter(String newCommentText) {
         if (newCommentText == null || newCommentText.isEmpty()) {
             Toast.makeText(this, "Comment can't be empty!", Toast.LENGTH_SHORT).show();
+            // re-enable post button
+            final TextView postCommentButton = (TextView) findViewById(R.id.id_text_view_button_new_comment_post);
+            postCommentButton.setClickable(true);
         }
         else {
             // when adding the first comment, initialize commentCardAdapter with null list
@@ -270,8 +271,8 @@ public class PostCommentActivity extends AppCompatActivity{
     private Bundle makePushNotificationBundlePostFistbump(DBUserPost curPost) {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
-        bundle.putString("RECEIVER_USERNAME", curPost.getUsername());
         bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());
+        bundle.putString("RECEIVER_USERNAME", curPost.getUsername());
         return bundle;
     }
 
@@ -324,8 +325,15 @@ public class PostCommentActivity extends AppCompatActivity{
         new FetchUserPostDBTask(false).execute();
     }
 
-    private void refreshAdapter() {
-        new FetchUserPostDBTask(false).execute();
+    private void refreshAdapter(boolean scrollToBottom) {
+        // start refresh animation
+        postCommentsSwipeRefreshContainer.post(new Runnable() {
+            @Override
+            public void run() {
+                postCommentsSwipeRefreshContainer.setRefreshing(true);
+            }
+        });
+        new FetchUserPostDBTask(scrollToBottom).execute();
     }
 
     private void toggleDeletingPostLoadingDialog(boolean show) {
@@ -352,7 +360,7 @@ public class PostCommentActivity extends AppCompatActivity{
                     Helpers.getAPICompatVectorDrawable(getApplicationContext(), R.drawable.ic_replies), null, null, null);
 
             // if user already liked the post
-            if (userPost.getFistbumpedUsers().contains(username)) {
+            if (userPost.getFistbumpedUsers() != null && userPost.getFistbumpedUsers().contains(username)) {
                 mainPostFistbump.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
                 mainPostFistbumpsCount.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_fistbump_filled_20, 0, 0, 0);
             }
@@ -361,10 +369,23 @@ public class PostCommentActivity extends AppCompatActivity{
                 @Override
                 public void onClick(View view) {
                     if (mainPost.getFistbumpsCount() > 0) {
-                        Intent intent = new Intent(PostCommentActivity.this, ViewFistbumpsActivity.class);
-                        intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
-                        intent.putStringArrayListExtra("FISTBUMPED_USERS", new ArrayList<>(mainPost.getFistbumpedUsers()));
-                        startActivity(intent);
+                        dynamoDBHelper.doActionIfDBUserPostAndCommentExists(
+                                mainPost,
+                                null,       // don't need to check comment
+                                new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
+                                    @Override
+                                    public void onTaskDone(Object bundle) {
+                                        if (((Bundle) bundle).getBoolean("POST_AND_COMMENT_EXISTS", false)) {   // assume worst case, that post/comment was deleted
+                                            Intent intent = new Intent(PostCommentActivity.this, ViewFistbumpsActivity.class);
+                                            intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
+                                            intent.putExtra("USER_POST", mainPost);
+                                            startActivity(intent);
+                                        } else {
+                                            launchPostOrCommentIsDeletedDialog(((Bundle) bundle).getBoolean("IS_POST_DELETED", true)); // assume post was deleted
+                                        }
+
+                                    }
+                                });
                     }
                 }
             });
@@ -373,61 +394,128 @@ public class PostCommentActivity extends AppCompatActivity{
             mainPostFistbump.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    int fistbumpsCount = Integer.parseInt(mainPostFistbumpsCount.getText().toString());
-                    Set<String> fistbumpedUsers = userPost.getFistbumpedUsers();
+                    final Set<String> fistbumpedUsers = userPost.getFistbumpedUsers();
                     // if user already liked the post
-                    if (fistbumpedUsers.contains(username)) {
-                        fistbumpsCount -= 1;
+                    if (fistbumpedUsers != null && fistbumpedUsers.contains(username)) {
+                        int fistbumpsCount = Integer.parseInt(mainPostFistbumpsCount.getText().toString()) - 1;
+                        // remove user from fistbumpedUsers set and update post fistbumps count
+                        userPost.removeFistbumpedUser(username);
+                        userPost.setFistbumpsCount(fistbumpsCount);
+                        // update UI
                         mainPostFistbumpsCount.setText(String.valueOf(fistbumpsCount));
                         mainPostFistbump.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_50, 0);
                         mainPostFistbumpsCount.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_fistbump_20, 0, 0, 0);
-
-                        // remove user from fistbumpedUsers set
-                        userPost.removeFistbumpedUser(username);
-
-                        // update user fistbumps counts:
                         // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
                         if (!userPost.getUsername().equals(userProfileParcel.getCurrentUsername())) {
-                            // update the received fistbumps count of the main post user
-                            dynamoDBHelper.decrementUserReceivedFistbumpsCount(userPost.getUsername());
-                            // update the sent fistbumps count of the current user
-                            dynamoDBHelper.decrementUserSentFistbumpsCount(userProfileParcel.getCurrentUsername());
-                            // remove notification
-                            dynamoDBHelper.deletePostFistbumpNotification(NotificationEnum.POST_FISTBUMP, userPost.getPostId(), userProfileParcel.getCurrentUsername());
+                            // remove notification and also update fistbump counts respectively
+                            dynamoDBHelper.deletePostFistbumpNotification(
+                                    userPost.getPostId(),
+                                    userProfileParcel.getCurrentUsername(),
+                                    userPost.getUsername(),
+                                    new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
+                                        @Override
+                                        public void onTaskDone(Object bundle) {
+                                            if (((Bundle) bundle).getBoolean("TASK_SUCCESS", false)) {  // assume notification wasn't created
+                                                dynamoDBHelper.saveDBObjectAsync(userPost);
+                                            } else {
+                                                launchPostOrCommentIsDeletedDialog(((Bundle) bundle).getBoolean("IS_POST_DELETED", true));   // assume post is deleted
+                                            }
+                                        }
+                                    });
+                        } else {
+                            // if I made changes to my own post, just save the post right away, I don't
+                            // need to check if the post has been deleted
+                            dynamoDBHelper.saveDBObjectAsync(userPost);
                         }
-                        // remove current user from fistbumped users
-                        userPost.removeFistbumpedUser(userProfileParcel.getCurrentUsername());
                     }
                     // If user has not liked the post yet
                     else {
-                        fistbumpsCount += 1;
+                        int fistbumpsCount = Integer.parseInt(mainPostFistbumpsCount.getText().toString()) + 1;
+                        // add user to fistbumpedUsers set and update post fistbumps count
+                        userPost.addFistbumpedUser(username);
+                        userPost.setFistbumpsCount(fistbumpsCount);
+                        // update UI
                         mainPostFistbumpsCount.setText(String.valueOf(fistbumpsCount));
                         mainPostFistbump.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
                         mainPostFistbumpsCount.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_fistbump_filled_20, 0, 0, 0);
-
-                        // add user to fistbumpedUsers set
-                        userPost.addFistbumpedUser(username);
-
-                        // update user fistbumps counts:
                         // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
                         if (!userPost.getUsername().equals(userProfileParcel.getCurrentUsername())) {
-                            // update the received fistbumps count of the main post user
-                            dynamoDBHelper.incrementUserReceivedFistbumpsCount(userPost.getUsername());
-                            // update the sent fistbumps count of the current user
-                            dynamoDBHelper.incrementUserSentFistbumpsCount(userProfileParcel.getCurrentUsername());
-                            // send push notification
-                            dynamoDBHelper.createNewNotification(makeDBNotificationBundlePostFistbump(userPost));
-                            httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostFistbump(userPost));
+                            dynamoDBHelper.createNewNotification(makeDBNotificationBundlePostFistbump(userPost),
+                                    new DynamoDBHelper.AsyncTaskCallbackWithReturnObject(){
+                                        @Override
+                                        public void onTaskDone(Object bundle) {
+                                            if (((Bundle) bundle).getBoolean("TASK_SUCCESS", false)) {  // assume notification wasn't created
+                                                // send push notification
+                                                httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostFistbump(userPost));
+                                                dynamoDBHelper.saveDBObjectAsync(userPost);
+                                            } else {
+                                                launchPostOrCommentIsDeletedDialog(((Bundle) bundle).getBoolean("IS_POST_DELETED", true));   // assume post is deleted
+                                            }
+                                        }
+                                    });
+                        } else {
+                            // if I made changes to my own post, just save the post right away, I don't
+                            // need to check if the post has been deleted
+                            dynamoDBHelper.saveDBObjectAsync(userPost);
                         }
-                        // add current user to fistbumped users
-                        userPost.addFistbumpedUser(userProfileParcel.getCurrentUsername());
                     }
-                    // update post fistbumps count
-                    userPost.setFistbumpsCount(fistbumpsCount);
-                    dynamoDBHelper.saveDBObjectAsync(userPost);
                 }
             });
         }
+    }
+
+    /***********************************************************************************************
+     **************************************** GENERAL_METHODS **************************************
+     **********************************************************************************************/
+    public void launchUserAccountIsDeletedDialog(final String deletedCommentId) {
+        final AlertDialog.Builder dialogBuilderCommentDeleted = new AlertDialog.Builder(PostCommentActivity.this);
+        final View dialogViewConfirmDelete = View.inflate(PostCommentActivity.this, R.layout.dialog_confirm_delete, null);
+        dialogBuilderCommentDeleted.setView(dialogViewConfirmDelete);
+        dialogBuilderCommentDeleted.setTitle("Oops!");
+        dialogBuilderCommentDeleted.setMessage("Looks like this user has deleted his/her account!");
+        dialogBuilderCommentDeleted.setPositiveButton("Go back", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                new RemovePostCommentAsyncTask().execute(deletedCommentId);
+            }
+        });
+
+        AlertDialog b = dialogBuilderCommentDeleted.create();
+        b.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                new RemovePostCommentAsyncTask().execute(deletedCommentId);
+            }
+        });
+
+        b.show();
+    }
+
+    public void launchPostOrCommentIsDeletedDialog(final boolean isPostDeleted) {
+        final AlertDialog.Builder dialogBuilderPostDeleted = new AlertDialog.Builder(PostCommentActivity.this);
+        final View dialogViewConfirmDelete = View.inflate(PostCommentActivity.this, R.layout.dialog_confirm_delete, null);
+        dialogBuilderPostDeleted.setView(dialogViewConfirmDelete);
+        dialogBuilderPostDeleted.setTitle("Oops!");
+        if (isPostDeleted)
+            dialogBuilderPostDeleted.setMessage("Looks like this post has been deleted!");
+        else
+            dialogBuilderPostDeleted.setMessage("Looks like this comment has been deleted!");
+        dialogBuilderPostDeleted.setPositiveButton("Go back", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                if (isPostDeleted) onBackPressed();
+                else refreshAdapter(false);
+            }
+        });
+
+        AlertDialog b = dialogBuilderPostDeleted.create();
+        b.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override
+            public void onDismiss(DialogInterface dialogInterface) {
+                if (isPostDeleted) onBackPressed();
+                else refreshAdapter(false);
+            }
+        });
+
+        b.show();
     }
 
     /***********************************************************************************************
@@ -443,16 +531,64 @@ public class PostCommentActivity extends AppCompatActivity{
 
         @Override
         protected DBUserPost doInBackground(Void... params) {
-            return dynamoDBHelper.loadDBUserPost(mainPost.getUsername(), mainPost.getTimestampSeconds());
+            DBUserPost userPost = dynamoDBHelper.loadDBUserPost(mainPost.getUsername(), mainPost.getTimestampSeconds());
+            if (userPost != null) {
+                ArrayList<Comment> postComments = userPost.getComments();
+                for (int i = 0; i < postComments.size(); ++i) {
+                    if (dynamoDBHelper.loadDBUserProfile(postComments.get(i).getCommentUsername()) == null) {
+                        postComments.remove(i);
+                    }
+                }
+
+                userPost.setComments(postComments);
+                userPost.setCommentsCount(postComments.size());
+                dynamoDBHelper.saveDBObject(userPost);
+            }
+            return userPost;
         }
 
         @Override
         protected void onPostExecute(DBUserPost userPost) {
-            refreshMainPostData(userPost);
-            // update cached copy of mainPost
-            mainPost = userPost;
+            if (userPost == null) {
+                launchPostOrCommentIsDeletedDialog(true);   // post is deleted
+            } else {
+                refreshMainPostData(userPost);
+                // update cached copy of mainPost
+                mainPost = userPost;
 
-            initializeAdapter(userPost.getComments(), scrollToBottom);
+                initializeAdapter(userPost.getComments(), scrollToBottom);
+
+                // stop refresh animation
+                postCommentsSwipeRefreshContainer.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        postCommentsSwipeRefreshContainer.setRefreshing(false);
+                    }
+                });
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private class RemovePostCommentAsyncTask extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... strings) {
+            String commentId = strings[0];
+            ArrayList<Comment> postComments = mainPost.getComments();
+            for (int i = 0; i < postComments.size(); ++i) {
+                if (postComments.get(i).getCommentId().equals(commentId)) {
+                    postComments.remove(i);
+                    break;
+                }
+            }
+            mainPost.setComments(postComments);
+            dynamoDBHelper.saveDBObject(mainPost);
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            refreshAdapter(false);
         }
     }
 }

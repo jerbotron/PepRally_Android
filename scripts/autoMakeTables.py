@@ -56,6 +56,13 @@ rosters_urls = {
 
 for team, url in rosters_urls.iteritems():
     print "Team = " + team
-    parseTeamData(table, team, urllib2.urlopen(url), True)
+    try:
+        parseTeamData(table, team, urllib2.urlopen(url).read(), False)
+    except urllib2.HTTPError, e:
+        print e.code
+        print e.msg
+        break
+
+# parseTeamData(table, "football", urllib2.urlopen(rosters_urls["football"]).read(), False)
 
 print("Table status:", table.table_status)

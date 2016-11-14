@@ -129,7 +129,7 @@ public class UserProfileParcel implements Parcelable {
         this.hasUserProfile = false;
     }
 
-    // FavoritePlayerActivity Constructor, only used to initialize a few required members
+    // BrowsePlayersActivity Constructor, only used to initialize a few required members
     public UserProfileParcel(ActivityEnum currentActivity,
                              String currentUsername,
                              String firstname,

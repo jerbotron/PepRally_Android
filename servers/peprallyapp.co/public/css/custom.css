@@ -1,0 +1,148 @@
+/*Custom Fonts*/
+@font-face {
+    font-family: 'Arvo';
+    src: url('fonts/Arvo-Regular.ttf');
+}
+@font-face {
+    font-family: 'Arvo-Bold';
+    src: url('fonts/Arvo-Bold.ttf');
+    font-weight: bold;
+}
+@font-face {
+    font-family: 'GothamRounded';
+    src: url('fonts/GothamRounded-Light.ttf');
+}
+@font-face {
+    font-family: 'GothamRounded-Medium';
+    src: url('fonts/GothamRounded-Medium.ttf');
+}
+.bg-primary-ut {
+  background-color: #d26b20;
+}
+
+.bg-primary-light-ut {
+  background-color: #d77d3c;
+}
+
+.bg-primary-accent {
+  background-color: #343434;
+}
+
+.app-store-btn {
+    border: 2px solid #fff;
+    color: #fff;
+    padding: 10px 20px;
+    margin: 25px 25px;
+    border-radius: 4px
+}
+
+.app-store-btn img {
+    height: 24px;
+    float: left;
+    margin-right: 12px;
+    margin-top: 5px
+}
+
+.app-store-btn .label {
+    float: right
+}
+
+.app-store-btn .label * {
+    text-transform: uppercase;
+    display: block;
+    text-align: left
+}
+
+.white {
+    color: #FFF
+}
+
+.dark {
+    color: #000
+}
+
+.app-store-btn .label .label-availability {
+    color: hsla(0, 0%, 100%, .87);
+    font-weight: 400
+}
+
+.app-store-btn .label .label-store {
+    font-size: 16px;
+    margin-top: 5px
+}
+
+.app-store-btn:active,
+.app-store-btn:hover {    
+    background-color: rgba(210, 107, 32, .8)
+}
+
+.form-control {
+    background-color: #eeeeee
+}
+
+.navbar-custom .navbar-brand {
+    font-family: "Arvo", "Helvetica Neue", Helvetica, Arial, cursive;
+}
+
+.navbar-logo {
+    height: 20%;
+    width: 20%;
+}
+
+header .intro-heading .intro-logo {
+    height: 75%;
+    width: 75%;
+}
+
+@media (min-width: 768px) {
+  header .intro-heading .intro-logo {
+  }
+}
+
+#survey {
+    background-color: #d77d3c;
+}
+
+.details-caption {
+    margin-top: 25px;
+    margin-bottom: 50px;
+    text-align: center;
+    font-family: "GothamRounded-Medium", "Helvetica Neue", Helvetica, Arial, cursive;
+    font-size: 16px;
+}
+
+.timeline-body {
+    margin-top: 70px;
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.divider {
+    padding-top: 100px;
+}
+
+.img-details {
+    padding-bottom: 40px;
+}
+
+@media (min-width: 992px) {
+    .details-item {
+        padding-right: 80px;
+    }
+
+    .img-details {
+        padding-bottom: 0px;
+    }
+
+    .timeline-body {
+        margin-top: 70px;
+        text-align: center;
+    }
+
+    .details-caption {
+        margin-top: 25px;
+        text-align: center;
+        font-family: "GothamRounded-Medium", "Helvetica Neue", Helvetica, Arial, cursive;
+        font-size: 16px;
+    }
+}
