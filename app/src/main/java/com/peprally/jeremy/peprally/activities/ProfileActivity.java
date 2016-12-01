@@ -88,7 +88,7 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
 
         private int value;
 
-        private ProfileViewPagerEnum(int  value) { this.value = value; }
+        ProfileViewPagerEnum(int  value) { this.value = value; }
 
         public int toInt() { return value; }
 
