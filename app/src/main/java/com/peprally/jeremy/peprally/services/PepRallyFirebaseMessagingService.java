@@ -22,17 +22,13 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.content.res.ResourcesCompat;
 import android.util.Log;
-import android.widget.RemoteViews;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
@@ -64,8 +60,8 @@ public class PepRallyFirebaseMessagingService extends FirebaseMessagingService {
         // If the application is in the foreground handle both data and notification messages here.
         // Also if you intend on generating your own notifications as a result of a received FCM
         // message, here is where that should be initiated. See sendNotification method below.
-        Log.d(TAG, "From: " + remoteMessage.getFrom());
-        Log.d(TAG, "Notification Message Body: " + remoteMessage.getData());
+//        Log.d(TAG, "From: " + remoteMessage.getFrom());
+//        Log.d(TAG, "Notification Message Body: " + remoteMessage.getData());
         sendNotification(remoteMessage.getData());
     }
 
@@ -80,44 +76,43 @@ public class PepRallyFirebaseMessagingService extends FirebaseMessagingService {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 /* Request code */, intent,
                 PendingIntent.FLAG_ONE_SHOT);
 
-        String contentText = jsonData.get("sender_username") + " ";
-        NotificationEnum notificationType = NotificationEnum.fromInt(Integer.parseInt(jsonData.get("notification_type")));
+        StringBuilder contentText = new StringBuilder(jsonData.get("sender_username") + " ");
         int notificationColor = ContextCompat.getColor(getApplicationContext(), R.color.colorAccent);
-        switch (notificationType) {
+        switch (NotificationEnum.fromInt(Integer.parseInt(jsonData.get("notification_type")))) {
             case DIRECT_FISTBUMP:
-                contentText += getResources().getString(R.string.notification_0_placeholder);
+                contentText.append(getResources().getString(R.string.notification_0_placeholder));
                 notificationColor = ContextCompat.getColor(getApplicationContext(), R.color.colorNotificationFistbump);
                 break;
             case DIRECT_MESSAGE:
-                contentText += getResources().getString(R.string.notification_1_placeholder);
+                contentText.append(getResources().getString(R.string.notification_1_placeholder));
                 notificationColor = ContextCompat.getColor(getApplicationContext(), R.color.colorNotificationMessage);
                 break;
             case POST_COMMENT:
-                contentText += getResources().getString(R.string.notification_2_placeholder);
+                contentText.append(getResources().getString(R.string.notification_2_placeholder));
                 String comment = jsonData.get("comment_text");
                 if (comment.length() > 50)
                     comment = comment.substring(0, 50) + "...\"";
                 else
                     comment = comment + "\"";
-                contentText += comment;
+                contentText.append(comment);
                 notificationColor = ContextCompat.getColor(getApplicationContext(), R.color.colorNotificationComment);
                 break;
             case POST_FISTBUMP:
-                contentText += getResources().getString(R.string.notification_3_placeholder);
+                contentText.append(getResources().getString(R.string.notification_3_placeholder));
                 notificationColor = ContextCompat.getColor(getApplicationContext(), R.color.colorNotificationFistbump);
                 break;
             case COMMENT_FISTBUMP:
-                contentText += getResources().getString(R.string.notification_4_placeholder);
+                contentText.append(getResources().getString(R.string.notification_4_placeholder));
                 notificationColor = ContextCompat.getColor(getApplicationContext(), R.color.colorNotificationFistbump);
                 break;
             case DIRECT_FISTBUMP_MATCH:
-                contentText += getResources().getString(R.string.notification_5_placeholder);
+                contentText.append(getResources().getString(R.string.notification_5_placeholder));
                 notificationColor = ContextCompat.getColor(getApplicationContext(), R.color.colorNotificationFistbump);
                 break;
         }
 
         sendNotificationBasedOnAPIVersion(jsonData.get("sender_facebook_id"),
-                                          contentText,
+                                          contentText.toString(),
                                           notificationColor,
                                           pendingIntent);
     }

@@ -7,6 +7,7 @@ import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -145,7 +146,7 @@ public class LoginActivity extends AppCompatActivity {
                 dynamoDBHelper = new DynamoDBHelper(this);
                 fbDataBundle = new Bundle();
                 FCMInstanceId = Helpers.getFCMInstanceId(this);
-                Log.d(TAG, "fcm id = " + FCMInstanceId);
+//                Log.d(TAG, "fcm id = " + FCMInstanceId);
                 accessTokenTracker = new AccessTokenTracker() {
                     @Override
                     protected void onCurrentAccessTokenChanged(AccessToken oldAccessToken, AccessToken newAccessToken) {
