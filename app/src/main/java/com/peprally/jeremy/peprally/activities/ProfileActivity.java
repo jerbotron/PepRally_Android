@@ -1,11 +1,9 @@
 package com.peprally.jeremy.peprally.activities;
 
 import android.content.Intent;
-import android.content.res.TypedArray;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
@@ -17,7 +15,6 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageButton;
@@ -697,7 +694,8 @@ public class ProfileActivity extends AppCompatActivity implements PostContainerI
                 if (!userProfileParcel.isSelfProfile()) {
                     // check if current user has fistbumped profile user to correctly set UI components
                     DBUserProfile curUser = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurrentUsername());
-                    if (curUser.getUsersDirectFistbumpSent().contains(userProfileParcel.getProfileUsername())) {
+                    if (curUser.getUsersDirectFistbumpSent() != null &&
+                        curUser.getUsersDirectFistbumpSent().contains(userProfileParcel.getProfileUsername())) {
                         setDidCurrentUserFistbumpProfileUserAlready(true);
                     }
                 }
