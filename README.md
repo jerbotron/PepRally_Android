@@ -1,23 +1,9 @@
 # PepRally Android App
 
-PepRally is a social app whose content is catered for college sports fans and college communities in general. In our media crazed society today, all types of media is thrown at us through numerous apps all day, every day. We often spend many minutes (if not hours) scrolling past irrelevant content to the ones that actually matter to us. Thus a niche social media platform is very much desired, especially for young, creative individuals craving to express themselves in unique ways (aka. college students) and trying to identify themselves in the biggest social group of all (aka. colleges).
+PepRally is a fun social media network dedicated to college students that aims to improve the student-life experience. By creating a niche environment unique to your campus, we help you interact directly with other students and student athletes around you. You can share news about campus events, seek advice on how to pass your finals, get hyped for the big game and most importantly - stay in the know with filtered social media content that actually matters to you!
 
-PepRally will be centered around sports primarily where users can browse teams, rosters and have the ability to send virtual "fistbumps" to players and other users to raise school spirit and to create an environment where fans come together and cheer for their team. PepRally will also give users the ability to share media posts (text/image/video) to the community and can be fistbumped (upvoted) by others. Moreover, users can send direct fistbumps to each other if they fancy each other's content and if a mutual exchange of fistbumps occur, a chat window is created and new friendships can be found through PepRally.
+Have something to share? Make a post!
+See a post that you like? Fistbump it!
+Meet someone cool or see your crush from the football team? Fistbump them! If they fistbump you back, then it's a match and you can start chatting!
 
-Want to know more about PepRally? Mark the date August 25th in your calendar and download the app from the Google Play Store to find out! 
-
-Technologies used:
-
-UI Design:
-- viewpagers, recyclerViews, custom scrolling toolbar layouts, fragments, navigation toolbars, custom menu toolbars
-
-App Design:
-- asynctasks, custom parcelables
-- Picasso image download/caching library
-- Volley HTTP library
-- Amazon Web Services: Cognito/IAM identification services
-- Facebook API: Facebook Login 
-
-Backend Design: 
-- Amazon Web Services: DyanmoDB, EC2, Elastic Beanstalk
-- Google Firebase push notification service
+Want to know more about PepRally? Download the app from the Google Play Store to find out! 
