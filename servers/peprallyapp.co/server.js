@@ -95,6 +95,55 @@ app.post('/push', function(req, res) {
   });
 });
 
+/////////////////////////////
+// DynamoDB Service Routes //
+/////////////////////////////
+// Load the AWS SDK for Node.js
+var AWS = require('aws-sdk');
+// Load credentials and set region from JSON file
+AWS.config.loadFromPath('./config/config.json');
+
+// Create DynamoDB service object
+var ddb = new AWS.DynamoDB({apiVersion: '2012-08-10'});
+var docClient = new AWS.DynamoDB.DocumentClient();
+
+app.get('/test', function(req, res) {
+  var params = {
+    TableName: 'UserNotifications',
+    KeyConditionExpression: 'Username = :n',
+    ExpressionAttributeValues: {
+      ':n' : {S: 'kev'}
+    }
+  };
+
+  ddb.query(params, function(err, data) {
+    if (err) {
+      console.log("Error querying DDB: ", err);
+    } else {
+      data.Items.forEach(function(item) {
+        console.log("time stamp: " + item.TimestampSeconds.N);
+      });
+    }
+  });
+});
+
+app.get('/scan', function(req, res) {
+  var params = {
+    TableName: 'Usernames'
+  };
+
+  ddb.scan(params, function(err, data) {
+    if (err) {
+      console.log("Error scanning DDB: ", err);
+    } else {
+      data.Items.forEach(function(item) {
+        console.log("Username: " + item.Username.S);
+      });
+    }
+  });
+  res.end('scanning db');
+});
+
 ////////////////////////////////
 // Socket.IO Messaging Routes //
 ////////////////////////////////

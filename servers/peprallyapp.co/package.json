@@ -10,13 +10,14 @@
   "author": "Jeremy Wang",
   "license": "BSD-2-Clause",
   "dependencies": {
-    "express": "~4.14.0",
-    "socket.io": "~1.4.8",
-    "forever": "~0.15.2",
+    "aws-sdk": "^2.82.0",
     "body-parser": "~1.15.2",
-    "request": "~2.75.0",
+    "express": "~4.14.0",
+    "forever": "~0.15.2",
     "nodemailer": "^2.6.4",
-    "nodemailer-smtp-transport": "^2.7.2"
+    "nodemailer-smtp-transport": "^2.7.2",
+    "request": "~2.75.0",
+    "socket.io": "~1.4.8"
   },
   "devDependencies": {
     "bootstrap": "^3.3.7",
