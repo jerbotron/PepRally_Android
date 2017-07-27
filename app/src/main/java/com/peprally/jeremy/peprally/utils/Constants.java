@@ -10,8 +10,9 @@ public class Constants {
 
     // Note: for local testing, change the server URLs to your dev machine's static IP, NOT localhost
     // Device is running on virtual machine so it doesn't listen to localhost of your dev machine
-    public static final String PUSH_SERVER_URL = "http://192.168.0.16:8080/push";
-    public static final String SOCKETIO_SERVER_URL = "http://192.168.0.16:8080/";
+    public static final String BASE_URL = "http://192.168.0.15:8080";
+    public static final String PUSH_SERVER_URL = "http://192.168.0.15:8080/push";
+    public static final String SOCKETIO_SERVER_URL = "http://192.168.0.15:8080/";
 
     public final static String IDENTITY_POOL_ID = "us-east-1:62a77974-d33d-4131-8a1d-122db8e07dfa";
     public final static Regions COGNITO_REGION = Regions.US_EAST_1;

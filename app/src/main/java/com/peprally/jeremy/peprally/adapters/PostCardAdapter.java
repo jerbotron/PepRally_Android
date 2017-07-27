@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +24,8 @@ import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.interfaces.PostContainerInterface;
+import com.peprally.jeremy.peprally.model.PostLike;
+import com.peprally.jeremy.peprally.network.ApiManager;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
@@ -31,6 +34,10 @@ import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.List;
 import java.util.Set;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHolder> {
     /***********************************************************************************************
@@ -224,7 +231,26 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                                     public void onTaskDone(Object bundle) {
                                         if (((Bundle) bundle).getBoolean("TASK_SUCCESS", false)) { // assume that notification was not created
                                             // send push notification
-                                            httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostFistbump(curPost));
+                                            ApiManager.getInstance()
+                                                    .getPushNotificationService()
+                                                    .likePost(userProfileParcel.getCurrentUsername(),
+                                                              curPost.getUsername())
+                                                    .enqueue(new Callback<PostLike>() {
+                                                        @Override
+                                                        public void onResponse(Call<PostLike> call, Response<PostLike> response) {
+                                                            Log.d(getClass().getName(), response.message());
+                                                        }
+
+                                                        @Override
+                                                        public void onFailure(Call<PostLike> call, Throwable throwable) {
+                                                            StackTraceElement[] arr = throwable.getStackTrace();
+                                                            for (int i = 0; i < arr.length; i++) {
+                                                                Log.d(getClass().getName(), arr[i].toString());
+                                                            }
+                                                            Log.d(getClass().getName(), "error msg = " + throwable.getMessage());
+                                                        }
+                                                    });
+//                                            httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostFistbump(curPost));
                                             dynamoDBHelper.saveDBObjectAsync(curPost);
                                         } else {
                                             launchPostOrCommentIsDeletedDialog(true);   // post was deleted

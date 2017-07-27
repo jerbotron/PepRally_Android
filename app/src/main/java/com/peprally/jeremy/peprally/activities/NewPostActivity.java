@@ -71,7 +71,7 @@ public class NewPostActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (editTextNewPost.getText().toString().isEmpty())
-                    Toast.makeText(getApplicationContext(), "Post can't be empty!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "PostLike can't be empty!", Toast.LENGTH_SHORT).show();
                 else {
                     newPostButton.setClickable(false);
                     Intent intent = new Intent();
