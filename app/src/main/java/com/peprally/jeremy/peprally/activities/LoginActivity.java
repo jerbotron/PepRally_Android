@@ -7,7 +7,6 @@ import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -50,12 +49,17 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.custom.SpinnerArrayAdapter;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 import com.peprally.jeremy.peprally.custom.preferences.NotificationsPref;
+import com.peprally.jeremy.peprally.data.PlayerProfile;
+import com.peprally.jeremy.peprally.data.UserProfile;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.db_models.DBUsername;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.enums.SchoolsSupportedEnum;
+import com.peprally.jeremy.peprally.model.UserResponse;
+import com.peprally.jeremy.peprally.model.UsernameResponse;
 import com.peprally.jeremy.peprally.network.AWSCredentialProvider;
+import com.peprally.jeremy.peprally.network.ApiManager;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 
@@ -64,6 +68,10 @@ import org.json.JSONObject;
 
 import java.util.Arrays;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
     /***********************************************************************************************
@@ -218,7 +226,11 @@ public class LoginActivity extends AppCompatActivity {
         AWSCredentialProvider credentialProviderTask = new AWSCredentialProvider(getApplicationContext(), new AWSLoginTaskCallback() {
             @Override
             public void onTaskDone(CognitoCachingCredentialsProvider credentialsProvider) {
-                new CheckIfNewUserDBTask().execute(credentialsProvider);
+//                new CheckIfNewUserDBTask().execute(credentialsProvider);
+	            ApiManager.getInstance()
+			            .getLoginService()
+			            .tryLogin(credentialsProvider.getIdentityId())
+			            .enqueue(new UserResponseCallback());
                 dynamoDBHelper.refresh(getApplicationContext());
             }
         });
@@ -351,11 +363,13 @@ public class LoginActivity extends AppCompatActivity {
         editTextUsername.addTextChangedListener(new TextWatcher() {
             public void afterTextChanged(Editable s) {
                 if (s.toString().trim().isEmpty() || s.length() < 2) {
-                    editTextUsername.setCompoundDrawablesWithIntrinsicBounds(null, null,
-                            Helpers.getAPICompatVectorDrawable(getApplicationContext(), R.drawable.ic_error), null);
+	                showUsernameTaken();
                 }
                 else {
-                    new CheckUniqueUsernameDBTask().execute(s.toString().trim().replace(" ", "_"));
+	                ApiManager.getInstance()
+			                .getLoginService()
+			                .verifyUsername(s.toString().trim().replace(" ", "_"))
+			                .enqueue(new VerifyUsernameCallback());
                 }
             }
 
@@ -462,84 +476,68 @@ public class LoginActivity extends AppCompatActivity {
         startActivity(intent);
         overridePendingTransition(R.anim.bottom_in, R.anim.top_out);
     }
+    
+    private void handleCallbackFailure(Throwable throwable) {
+	    StackTraceElement[] arr = throwable.getStackTrace();
+	    for (StackTraceElement s : arr) {
+		    Log.d(getClass().getName(), s.toString());
+	    }
+	    Log.d(getClass().getName(), "error msg = " + throwable.getMessage());
+    }
 
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
-    private class CheckIfNewUserDBTask extends AsyncTask<CognitoCachingCredentialsProvider, Void, Boolean> {
-        DBUserProfile userProfile;
-        DBPlayerProfile playerProfile;
-        @Override
-        protected Boolean doInBackground(CognitoCachingCredentialsProvider... params) {
-            CognitoCachingCredentialsProvider credentialsProvider = params[0];
-            AmazonDynamoDBClient ddbClient = new AmazonDynamoDBClient(credentialsProvider);
-            ddbClient.setRegion(Region.getRegion(Regions.US_EAST_1));
-            DynamoDBMapper mapper = new DynamoDBMapper(ddbClient);
-
-            userProfile = new DBUserProfile();
-            userProfile.setCognitoId(credentialsProvider.getIdentityId());
-            DynamoDBQueryExpression<DBUserProfile> queryExpression = new DynamoDBQueryExpression<DBUserProfile>()
-                    .withIndexName("CognitoId-index")
-                    .withHashKeyValues(userProfile)
-                    .withConsistentRead(false);
-
-            List<DBUserProfile> results = mapper.query(DBUserProfile.class, queryExpression);
-            if (results != null && results.size() == 1) {
-                userProfile = results.get(0);
-                // update FCM instance id if it is changed
-                if (userProfile.getFCMInstanceId() == null || !userProfile.getFCMInstanceId().equals(FCMInstanceId)) {
-                    userProfile.setFCMInstanceId(FCMInstanceId);
-                }
-                // check if user is a varsity player
-                if (userProfile.getIsVarsityPlayer()) {
-                    playerProfile = mapper.load(DBPlayerProfile.class, userProfile.getTeam(), userProfile.getPlayerIndex());
-                }
-                userProfile.setTimestampLastLoggedIn(Helpers.getTimestampSeconds());
-                userProfile.setDateLastLoggedIn(Helpers.getTimestampString());
-                dynamoDBHelper.saveDBObject(userProfile);
-                return false;
-            }
-            return true;
-        }
-
-        @Override
-        protected void onPostExecute(Boolean isNewUser) {
-            if (isNewUser) {
-                bundleFacebookData(AccessToken.getCurrentAccessToken());
-                showNewUsernameDialog();
-            }
-            else {
-                String userSchoolName = userProfile.getSchoolName();
-                // make sure user is logging into their selected school network
-                if (!userSchoolName.equals(userSelectedSchool.toString()) && !userSchoolName.equals(SchoolsSupportedEnum.PROMPT_TEXT.toString())) {
-                    Toast.makeText(LoginActivity.this, "Please log into your selected school network! You may change your network in user settings after you log in.", Toast.LENGTH_LONG).show();
-                    LoginManager.getInstance().logOut();
-                    setupLoginScreen();
-                } else {
-                    loginPeprally(new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile));
-                }
-            }
-        }
-    }
-
-    private class CheckUniqueUsernameDBTask extends AsyncTask<String, Void, Boolean> {
-        @Override
-        protected Boolean doInBackground(String... params) {
-            DBUsername username = dynamoDBHelper.loadDBUsername(params[0]);
-            return username != null;
-        }
-
-        @Override
-        protected void onPostExecute(Boolean usernameTaken) {
-            isNewUsernameTaken = usernameTaken;
-            if (usernameTaken) {
-                showUsernameTaken();
-            }
-            else {
-                showUsernameAvailable();
-            }
-        }
-    }
+	private class UserResponseCallback implements Callback<UserResponse> {
+		@Override
+		public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
+			if (response != null) {
+				UserResponse userResponse = response.body();
+				if (userResponse != null && userResponse.getUserProfile() != null) {
+					UserProfile userProfile = userResponse.getUserProfile();
+					PlayerProfile playerProfile = userResponse.getPlayerProfile();
+					String userSchoolName = userProfile.getSchoolName();
+					// make sure user is logging into their selected school network
+					if (!userSchoolName.equals(userSelectedSchool.toString()) && !userSchoolName.equals(SchoolsSupportedEnum.PROMPT_TEXT.toString())) {
+						Toast.makeText(LoginActivity.this, "Please log into your selected school network! You may change your network in user settings after you log in.", Toast.LENGTH_LONG).show();
+						LoginManager.getInstance().logOut();
+						setupLoginScreen();
+					} else {
+//						loginPeprally(new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile));
+					}
+				} else {
+					bundleFacebookData(AccessToken.getCurrentAccessToken());
+					showNewUsernameDialog();
+				}
+			} else {
+				onFailure(call, new Exception("Null response"));
+			}
+		}
+		
+		@Override
+		public void onFailure(Call<UserResponse> call, Throwable throwable) {
+			handleCallbackFailure(throwable);
+		}
+	}
+	
+	private class VerifyUsernameCallback implements Callback<UsernameResponse> {
+		@Override
+		public void onResponse(Call<UsernameResponse> call, Response<UsernameResponse> response) {
+			UsernameResponse usernameResponse = response.body();
+			if (usernameResponse != null) {
+				if (usernameResponse.isUniqueUsername()) {
+					showUsernameAvailable();
+				} else {
+					showUsernameTaken();
+				}
+			}
+		}
+		
+		@Override
+		public void onFailure(Call<UsernameResponse> call, Throwable throwable) {
+			handleCallbackFailure(throwable);
+		}
+	}
 
     private class CreateNewUserProfileDBEntryTask extends AsyncTask<String, Void, DBUserProfile> {
         @Override

@@ -12,6 +12,7 @@ public class PepRallyApplication extends Application {
     public void onCreate() {
         super.onCreate();
         pepRallyApp = this;
+        
     }
 
     public static synchronized PepRallyApplication getInstance() {

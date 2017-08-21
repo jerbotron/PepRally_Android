@@ -158,7 +158,7 @@ public class UserProfileParcel implements Parcelable {
         this.hasUserProfile = false;
     }
 
-    // PostLike Adapter Constructor, only used to initialize a few required members
+    // PostLikeResponse Adapter Constructor, only used to initialize a few required members
     public UserProfileParcel(ActivityEnum currentActivity,
                              String currentUsername,
                              DBUserPost userPost)

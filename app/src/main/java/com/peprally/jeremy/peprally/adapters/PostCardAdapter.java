@@ -24,7 +24,7 @@ import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.interfaces.PostContainerInterface;
-import com.peprally.jeremy.peprally.model.PostLike;
+import com.peprally.jeremy.peprally.model.BaseResponse;
 import com.peprally.jeremy.peprally.network.ApiManager;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
@@ -223,40 +223,44 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                     postHolder.postFistbumpsCount.setText(String.valueOf(fistbumpsCount));
                     // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
                     if (!curPost.getUsername().equals(userProfileParcel.getCurrentUsername())) {
-                        // make new notification
-                        dynamoDBHelper.createNewNotification(
-                                makeDBNotificationBundlePostFistbump(curPost),
-                                new DynamoDBHelper.AsyncTaskCallbackWithReturnObject(){
+                        // save like Post to database and send push notification
+                        ApiManager.getInstance()
+                                .getPostService()
+                                .likePost(NotificationEnum.POST_FISTBUMP.toInt(),
+                                        userProfileParcel.getCurrentUsername(),
+                                        curPost.getUsername(),
+                                        userProfileParcel.getFacebookID(),
+                                        curPost.getPostId())
+                                .enqueue(new Callback<BaseResponse>() {
                                     @Override
-                                    public void onTaskDone(Object bundle) {
-                                        if (((Bundle) bundle).getBoolean("TASK_SUCCESS", false)) { // assume that notification was not created
-                                            // send push notification
-                                            ApiManager.getInstance()
-                                                    .getPushNotificationService()
-                                                    .likePost(userProfileParcel.getCurrentUsername(),
-                                                              curPost.getUsername())
-                                                    .enqueue(new Callback<PostLike>() {
-                                                        @Override
-                                                        public void onResponse(Call<PostLike> call, Response<PostLike> response) {
-                                                            Log.d(getClass().getName(), response.message());
-                                                        }
+                                    public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                                        Log.d(getClass().getName(), response.message());
+                                    }
 
-                                                        @Override
-                                                        public void onFailure(Call<PostLike> call, Throwable throwable) {
-                                                            StackTraceElement[] arr = throwable.getStackTrace();
-                                                            for (int i = 0; i < arr.length; i++) {
-                                                                Log.d(getClass().getName(), arr[i].toString());
-                                                            }
-                                                            Log.d(getClass().getName(), "error msg = " + throwable.getMessage());
-                                                        }
-                                                    });
-//                                            httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostFistbump(curPost));
-                                            dynamoDBHelper.saveDBObjectAsync(curPost);
-                                        } else {
-                                            launchPostOrCommentIsDeletedDialog(true);   // post was deleted
-                                        }
+                                    @Override
+                                    public void onFailure(Call<BaseResponse> call, Throwable throwable) {
+                                        StackTraceElement[] arr = throwable.getStackTrace();
+	                                    for (StackTraceElement s : arr) {
+		                                    Log.d(getClass().getName(), s.toString());
+	                                    }
+                                        Log.d(getClass().getName(), "error msg = " + throwable.getMessage());
                                     }
                                 });
+
+//                        dynamoDBHelper.createNewNotification(
+//                                makeDBNotificationBundlePostFistbump(curPost),
+//                                new DynamoDBHelper.AsyncTaskCallbackWithReturnObject(){
+//                                    @Override
+//                                    public void onTaskDone(Object bundle) {
+//                                        if (((Bundle) bundle).getBoolean("TASK_SUCCESS", false)) { // assume that notification was not created
+//                                            // send push notification
+////                                            httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostFistbump(curPost));
+//                                            dynamoDBHelper.saveDBObjectAsync(curPost);
+//                                        } else {
+//                                            launchPostOrCommentIsDeletedDialog(true);   // post was deleted
+//                                        }
+//                                    }
+//                                });
                     } else {
                         // if I made changes to my own post, just save the post right away, I don't
                         // need to check if the post has been deleted

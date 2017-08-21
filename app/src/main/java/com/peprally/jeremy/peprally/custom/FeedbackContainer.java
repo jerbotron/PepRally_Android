@@ -1,10 +1,11 @@
 package com.peprally.jeremy.peprally.custom;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class FeedbackContainer {
 
-    private ArrayList<Feedback> feedbacks;
+    private List<Feedback> feedbacks;
 
     public FeedbackContainer(ArrayList<Feedback> feedbacks) {
         if (feedbacks == null) {
@@ -18,7 +19,7 @@ public class FeedbackContainer {
         feedbacks.add(feedback);
     }
 
-    public ArrayList<Feedback> getFeedbacks() {
+    public List<Feedback> getFeedbacks() {
         return feedbacks;
     }
 

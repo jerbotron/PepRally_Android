@@ -10,6 +10,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class FeedbacksJSONMarshaller extends JsonMarshaller<FeedbackContainer> implements DynamoDBMarshaller<FeedbackContainer> {
 
@@ -17,7 +18,7 @@ public class FeedbacksJSONMarshaller extends JsonMarshaller<FeedbackContainer> i
     public String marshall(FeedbackContainer feedbackContainer) {
         JSONObject jsonFeedbacks = new JSONObject();
         try {
-            ArrayList<Feedback> feedbacksList = feedbackContainer.getFeedbacks();
+            List<Feedback> feedbacksList = feedbackContainer.getFeedbacks();
             if (feedbacksList != null) {
                 JSONArray jsonFeedbacksArray = new JSONArray();
                 for (Feedback feedback : feedbacksList) {

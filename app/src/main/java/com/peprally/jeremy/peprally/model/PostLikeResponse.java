@@ -3,7 +3,7 @@ package com.peprally.jeremy.peprally.model;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class PostLike extends BaseResponse {
+public class PostLikeResponse extends BaseResponse {
 
     @SerializedName("title")
     @Expose

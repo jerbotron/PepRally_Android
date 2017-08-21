@@ -338,7 +338,7 @@ public class PostCommentActivity extends AppCompatActivity{
 
     private void toggleDeletingPostLoadingDialog(boolean show) {
         if (show)
-            progressDialogDeletePost = ProgressDialog.show(PostCommentActivity.this, "Delete PostLike", "Deleting ... ", true);
+            progressDialogDeletePost = ProgressDialog.show(PostCommentActivity.this, "Delete PostLikeResponse", "Deleting ... ", true);
         else
             progressDialogDeletePost.dismiss();
     }

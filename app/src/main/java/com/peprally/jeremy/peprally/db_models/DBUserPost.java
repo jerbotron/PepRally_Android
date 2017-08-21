@@ -33,7 +33,7 @@ public class DBUserPost implements Parcelable{
     // Empty Constructor for queries
     public DBUserPost() {}
 
-    // New PostLike Constructor
+    // New PostLikeResponse Constructor
     public DBUserPost(String username,
                       String postId,
                       String cognitoId,

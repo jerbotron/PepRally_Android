@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+@Deprecated
 @DynamoDBTable(tableName = "UserProfiles")
 public class DBUserProfile {
     private String username;
@@ -323,7 +324,7 @@ public class DBUserProfile {
         this.timestampLastLoggedIn = timestampLastLoggedIn;
     }
 
-    @DynamoDBAttribute(attributeName = "ConversationIds")
+    @DynamoDBAttribute(attributeName = "SetData")
     public Set<String> getConversationIds() {
         return conversationIds;
     }

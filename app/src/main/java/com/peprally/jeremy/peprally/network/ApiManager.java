@@ -1,7 +1,8 @@
 package com.peprally.jeremy.peprally.network;
 
 
-import com.peprally.jeremy.peprally.services.PushNotificationService;
+import com.peprally.jeremy.peprally.services.LoginService;
+import com.peprally.jeremy.peprally.services.PostService;
 import com.peprally.jeremy.peprally.utils.Constants;
 
 import okhttp3.OkHttpClient;
@@ -13,7 +14,8 @@ public class ApiManager {
     private static ApiManager instance = null;
     private Retrofit retrofit;
 
-    private PushNotificationService pushNotificationService;
+    private PostService postService;
+    private LoginService loginService;
 
     private ApiManager() {
         OkHttpClient client = new OkHttpClient();
@@ -24,7 +26,8 @@ public class ApiManager {
                 .client(client)
                 .build();
 
-        pushNotificationService = retrofit.create(PushNotificationService.class);
+        postService = retrofit.create(PostService.class);
+	    loginService = retrofit.create(LoginService.class);
     }
 
     public static ApiManager getInstance() {
@@ -34,7 +37,11 @@ public class ApiManager {
         return instance;
     }
 
-    public PushNotificationService getPushNotificationService() {
-        return pushNotificationService;
+    public PostService getPostService() {
+        return postService;
+    }
+    
+    public LoginService getLoginService() {
+	    return loginService;
     }
 }
