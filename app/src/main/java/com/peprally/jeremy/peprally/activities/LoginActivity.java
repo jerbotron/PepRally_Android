@@ -56,6 +56,7 @@ import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.db_models.DBUsername;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.enums.SchoolsSupportedEnum;
+import com.peprally.jeremy.peprally.model.BaseResponse;
 import com.peprally.jeremy.peprally.model.UserResponse;
 import com.peprally.jeremy.peprally.model.UsernameResponse;
 import com.peprally.jeremy.peprally.network.AWSCredentialProvider;
@@ -106,7 +107,7 @@ public class LoginActivity extends AppCompatActivity {
     // General Variables
     private static final String TAG = LoginActivity.class.getSimpleName();
     private boolean connectionSecured;
-    private boolean isNewUsernameTaken = true;
+    private volatile boolean isNewUsernameTaken = true;
     private Bundle fbDataBundle;
     private SchoolsSupportedEnum userSelectedSchool;
     private String FCMInstanceId;
@@ -226,7 +227,6 @@ public class LoginActivity extends AppCompatActivity {
         AWSCredentialProvider credentialProviderTask = new AWSCredentialProvider(getApplicationContext(), new AWSLoginTaskCallback() {
             @Override
             public void onTaskDone(CognitoCachingCredentialsProvider credentialsProvider) {
-//                new CheckIfNewUserDBTask().execute(credentialsProvider);
 	            ApiManager.getInstance()
 			            .getLoginService()
 			            .tryLogin(credentialsProvider.getIdentityId())
@@ -393,8 +393,23 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.makeText(LoginActivity.this, "Username taken.", Toast.LENGTH_SHORT).show();
                     showNewUsernameDialog();
                 } else {
-                    new CreateNewUserProfileDBEntryTask().execute(username);
-                    new PushNewUserToDBAsyncTask().execute(username);
+	                UserProfile userProfile = new UserProfile();
+	                userProfile.setUsername(username);
+	                userProfile.setCognitoId(dynamoDBHelper.getIdentityID());
+	                userProfile.setFCMInstanceId(FCMInstanceId);
+	                userProfile.setFacebookId(fbDataBundle.getString("ID"));
+	                userProfile.setFacebookLink(fbDataBundle.getString("LINK"));
+	                userProfile.setEmail(fbDataBundle.getString("EMAIL"));
+	                userProfile.setFirstname(fbDataBundle.getString("FIRSTNAME"));
+	                userProfile.setLastname(fbDataBundle.getString("LASTNAME"));
+	                userProfile.setGender(fbDataBundle.getString("GENDER"));
+	                userProfile.setBirthday(fbDataBundle.getString("BIRTHDAY"));
+	                userProfile.setSchoolName(userSelectedSchool.toString());
+	                
+	                ApiManager.getInstance()
+			                .getLoginService()
+			                .createNewUser(userProfile)
+			                .enqueue(new CreateNewUserCallback());
                 }
             }
         });
@@ -526,8 +541,10 @@ public class LoginActivity extends AppCompatActivity {
 			UsernameResponse usernameResponse = response.body();
 			if (usernameResponse != null) {
 				if (usernameResponse.isUniqueUsername()) {
+					isNewUsernameTaken = false;
 					showUsernameAvailable();
 				} else {
+					isNewUsernameTaken = true;
 					showUsernameTaken();
 				}
 			}
@@ -535,6 +552,21 @@ public class LoginActivity extends AppCompatActivity {
 		
 		@Override
 		public void onFailure(Call<UsernameResponse> call, Throwable throwable) {
+			handleCallbackFailure(throwable);
+		}
+	}
+	
+	private class CreateNewUserCallback implements Callback<BaseResponse> {
+		@Override
+		public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+			BaseResponse baseResponse = response.body();
+			if (baseResponse != null) {
+				Log.d(getClass().getName(), "status = " + baseResponse.getStatus());
+			}
+		}
+		
+		@Override
+		public void onFailure(Call<BaseResponse> call, Throwable throwable) {
 			handleCallbackFailure(throwable);
 		}
 	}
@@ -622,18 +654,6 @@ public class LoginActivity extends AppCompatActivity {
             else {
                 loginPeprally(new UserProfileParcel(ActivityEnum.HOME, userProfile, null));
             }
-        }
-    }
-
-    private class PushNewUserToDBAsyncTask extends AsyncTask<String, Void, Void> {
-        @Override
-        protected Void doInBackground(String... params) {
-            DBUsername newUsername = new DBUsername();
-            newUsername.setUsername(params[0]);
-            newUsername.setCognitoId(dynamoDBHelper.getIdentityID());
-            newUsername.setFacebookId(AccessToken.getCurrentAccessToken().getUserId());
-            dynamoDBHelper.saveDBObject(newUsername);
-            return null;
         }
     }
 
