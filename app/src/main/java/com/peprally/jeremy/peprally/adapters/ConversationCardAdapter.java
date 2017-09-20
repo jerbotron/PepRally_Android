@@ -17,7 +17,8 @@ import com.peprally.jeremy.peprally.activities.MessagingActivity;
 import com.peprally.jeremy.peprally.custom.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.custom.messaging.Conversation;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
-import com.peprally.jeremy.peprally.utils.AsyncHelpers;
+import com.peprally.jeremy.peprally.network.ApiManager;
+import com.peprally.jeremy.peprally.network.callbacks.UserResponsePostCommentCallback;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
@@ -97,7 +98,10 @@ public class ConversationCardAdapter extends RecyclerView.Adapter<ConversationCa
         MessageCardHolder.profileImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                AsyncHelpers.launchExistingUserProfileActivity(callingContext, receiverUsername, userProfileParcel.getCurrentUsername(), null);
+                ApiManager.getInstance()
+						.getLoginService()
+                        .getUserProfileWithUsername(receiverUsername)
+                        .enqueue(new UserResponsePostCommentCallback(callingContext, userProfileParcel.getCurrentUsername(), null));
             }
         });
 

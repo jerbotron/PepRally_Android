@@ -1,6 +1,8 @@
 package com.peprally.jeremy.peprally.network;
 
 
+import android.util.Log;
+
 import com.peprally.jeremy.peprally.services.LoginService;
 import com.peprally.jeremy.peprally.services.PostService;
 import com.peprally.jeremy.peprally.utils.Constants;
@@ -44,4 +46,12 @@ public class ApiManager {
     public LoginService getLoginService() {
 	    return loginService;
     }
+	
+	public static void handleCallbackFailure(Throwable throwable) {
+		StackTraceElement[] arr = throwable.getStackTrace();
+		for (StackTraceElement s : arr) {
+			Log.d("Error stack", s.toString());
+		}
+		Log.d("Network failure", "error msg = " + throwable.getMessage());
+	}
 }

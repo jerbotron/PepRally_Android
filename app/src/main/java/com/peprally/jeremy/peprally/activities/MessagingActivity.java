@@ -1,7 +1,9 @@
 package com.peprally.jeremy.peprally.activities;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.DataSetObserver;
 import android.os.AsyncTask;
 import android.support.annotation.Nullable;
@@ -26,18 +28,27 @@ import android.widget.TextView;
 import com.github.nkzawa.emitter.Emitter;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.MessageArrayAdapter;
+import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 import com.peprally.jeremy.peprally.custom.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.custom.messaging.Conversation;
+import com.peprally.jeremy.peprally.data.PlayerProfile;
+import com.peprally.jeremy.peprally.data.UserProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
+import com.peprally.jeremy.peprally.enums.ActivityEnum;
+import com.peprally.jeremy.peprally.model.UserResponse;
+import com.peprally.jeremy.peprally.network.ApiManager;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.network.SocketIO;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
-import com.peprally.jeremy.peprally.utils.AsyncHelpers;
 import com.peprally.jeremy.peprally.utils.Helpers;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MessagingActivity extends AppCompatActivity {
 
@@ -372,7 +383,10 @@ public class MessagingActivity extends AppCompatActivity {
             profileImage.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    AsyncHelpers.launchExistingUserProfileActivity(getContext(), receiverUsername, currentUsername, null);
+	                ApiManager.getInstance()
+			                .getLoginService()
+			                .getUserProfileWithUsername(receiverUsername)
+			                .enqueue(new UserResponseMessagingCallback(getActivity().getApplicationContext()));
                 }
             });
 
@@ -442,5 +456,41 @@ public class MessagingActivity extends AppCompatActivity {
         private void addMessage(ChatMessage newMessage) {
             messageArrayAdapter.add(newMessage);
         }
+    }
+    
+    private static class UserResponseMessagingCallback implements Callback<UserResponse> {
+	    
+	    private Context context;
+	    
+	    UserResponseMessagingCallback(Context callingContext) {
+		    this.context = callingContext;
+	    }
+	
+	    @Override
+	    public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
+		    UserResponse userResponse = response.body();
+		    if (userResponse != null) {
+			    UserProfile userProfile = userResponse.getUserProfile();
+			    PlayerProfile playerProfile = userResponse.getPlayerProfile();
+			
+			    Intent intent = new Intent(context, ProfileActivity.class);
+			    UserProfileParcel userProfileParcel = new UserProfileParcel(ActivityEnum.PROFILE,
+					    userProfile,
+					    playerProfile);
+			    if (currentUsername != null && !userProfile.getUsername().equals(currentUsername)) {
+				    userProfileParcel.setIsSelfProfile(false);
+				    userProfileParcel.setCurrentUsername(currentUsername);
+			    }
+			    intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
+			    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			    context.startActivity(intent);
+			    ((AppCompatActivity) context).overridePendingTransition(R.anim.right_in, R.anim.left_out);
+		    }
+	    }
+	
+	    @Override
+	    public void onFailure(Call<UserResponse> call, Throwable throwable) {
+		    ApiManager.handleCallbackFailure(throwable);
+	    }
     }
 }

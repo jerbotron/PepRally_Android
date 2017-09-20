@@ -3,6 +3,8 @@ package com.peprally.jeremy.peprally.custom;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import com.peprally.jeremy.peprally.data.PlayerProfile;
+import com.peprally.jeremy.peprally.data.UserProfile;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
@@ -53,8 +55,8 @@ public class UserProfileParcel implements Parcelable {
 
     // LoginActivity Constructor, constructs UserProfileParcel from a UserProfile DB object
     public UserProfileParcel(ActivityEnum currentActivity,
-                             DBUserProfile userProfile,
-                             DBPlayerProfile playerProfile) {
+                             UserProfile userProfile,
+                             PlayerProfile playerProfile) {
         this.currentActivity = currentActivity;
         this.currentUsername = userProfile.getUsername();
         this.firstname = userProfile.getFirstname();
@@ -62,7 +64,7 @@ public class UserProfileParcel implements Parcelable {
         this.profileUsername = userProfile.getUsername();
         this.cognitoID = userProfile.getCognitoId();
         this.facebookID = userProfile.getFacebookId();
-        this.FMSInstanceID = userProfile.getFCMInstanceId();
+        this.FMSInstanceID = userProfile.getFcmInstanceId();
         this.followersCount = userProfile.getFollowersCount();
         this.followingCount = userProfile.getFollowingCount();
         this.sentFistbumpsCount = userProfile.getSentFistbumpsCount();
@@ -72,11 +74,11 @@ public class UserProfileParcel implements Parcelable {
         this.favoritePlayer = userProfile.getFavoritePlayer();
         this.pepTalk = userProfile.getPepTalk();
         this.trashTalk = userProfile.getTrashTalk();
-        this.dateJoined = userProfile.getDateJoined();
+        this.dateJoined = userProfile.getDateJoinedUtc();
         this.email = userProfile.getEmail();
-        this.hasNewMessage = userProfile.getHasNewMessage();
-        this.hasNewNotification = userProfile.getHasNewNotification();
-        this.isVarsityPlayer = userProfile.getIsVarsityPlayer();
+        this.hasNewMessage = userProfile.isHasNewMessage();
+        this.hasNewNotification = userProfile.isHasNewNotification();
+        this.isVarsityPlayer = userProfile.isVarsityPlayer();
         this.isSelfProfile = true;
 
         if (this.isVarsityPlayer && playerProfile != null) {

@@ -17,9 +17,9 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.PostCommentActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserNotification;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
+import com.peprally.jeremy.peprally.network.ApiManager;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
-import com.peprally.jeremy.peprally.enums.ActivityEnum;
-import com.peprally.jeremy.peprally.utils.AsyncHelpers;
+import com.peprally.jeremy.peprally.network.callbacks.UserResponsePostCommentCallback;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
@@ -110,7 +110,10 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
         notificationCardHolder.profileImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                AsyncHelpers.launchExistingUserProfileActivity(callingContext, userNotification.getSenderUsername(), userNotification.getUsername(), null);
+                ApiManager.getInstance()
+						.getLoginService()
+						.getUserProfileWithUsername(userNotification.getSenderUsername())
+						.enqueue(new UserResponsePostCommentCallback(callingContext, userProfileParcel.getCurrentUsername(), null));
             }
         });
 
@@ -118,9 +121,13 @@ public class NotificationCardAdapter extends RecyclerView.Adapter<NotificationCa
             @Override
             public void onClick(View view) {
                 switch (NotificationEnum.fromInt(userNotification.getNotificationType())) {
-                    case DIRECT_FISTBUMP:
-                        AsyncHelpers.launchExistingUserProfileActivity(callingContext, userNotification.getSenderUsername(), userNotification.getUsername(), null);
+                    case DIRECT_FISTBUMP: {
+                        ApiManager.getInstance()
+								.getLoginService()
+								.getUserProfileWithUsername(userNotification.getSenderUsername())
+								.enqueue(new UserResponsePostCommentCallback(callingContext, userProfileParcel.getCurrentUsername(), null));
                         break;
+                    }
                     case POST_COMMENT:
                     case POST_FISTBUMP:
                     case COMMENT_FISTBUMP:

@@ -71,4 +71,60 @@ public class PlayerProfile {
 	public boolean isHasUserProfile() {
 		return hasUserProfile;
 	}
+	
+	public void setTeam(String team) {
+		this.team = team;
+	}
+	
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+	
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+	
+	public void setImageURL(String imageURL) {
+		this.imageURL = imageURL;
+	}
+	
+	public void setYear(String year) {
+		this.year = year;
+	}
+	
+	public void setHeight(String height) {
+		this.height = height;
+	}
+	
+	public void setWeight(String weight) {
+		this.weight = weight;
+	}
+	
+	public void setPosition(String position) {
+		this.position = position;
+	}
+	
+	public void setHometown(String hometown) {
+		this.hometown = hometown;
+	}
+	
+	public void setGender(String gender) {
+		this.gender = gender;
+	}
+	
+	public void setUsername(String username) {
+		this.username = username;
+	}
+	
+	public void setIndex(int index) {
+		this.index = index;
+	}
+	
+	public void setNumber(int number) {
+		this.number = number;
+	}
+	
+	public void setHasUserProfile(boolean hasUserProfile) {
+		this.hasUserProfile = hasUserProfile;
+	}
 }

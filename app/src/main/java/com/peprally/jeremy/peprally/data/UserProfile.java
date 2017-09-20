@@ -23,7 +23,7 @@ public class UserProfile {
 	private String trashTalk;
 	private String dateJoinedUtc;
 	private String dateLastLoggedInUtc;
-	private String schoolName;
+	private String school;
 	private String team;
 	private SetData conversationIds;
 	private SetData usersDirectFistbumpSent;
@@ -40,8 +40,8 @@ public class UserProfile {
 	private boolean hasNewNotification;
 	private boolean newUser;
 	private boolean isVarsityPlayer;
-	private String notificationsPref;
-	private String feedbacks;
+	private NotificationsPref notificationsPref;
+	private FeedbackContainer feedbacks;
 	
 	public String getUsername() {
 		return username;
@@ -171,12 +171,12 @@ public class UserProfile {
 		this.dateLastLoggedInUtc = dateLastLoggedInUtc;
 	}
 	
-	public String getSchoolName() {
-		return schoolName;
+	public String getSchool() {
+		return school;
 	}
 	
-	public void setSchoolName(String schoolName) {
-		this.schoolName = schoolName;
+	public void setSchool(String school) {
+		this.school = school;
 	}
 	
 	public String getTeam() {
@@ -308,12 +308,14 @@ public class UserProfile {
 	}
 	
 	public NotificationsPref getNotificationsPref() {
-		NotificationsPrefJSONMarshaller jsonMarshaller = new NotificationsPrefJSONMarshaller();
-		return jsonMarshaller.unmarshall(NotificationsPref.class, notificationsPref);
+//		NotificationsPrefJSONMarshaller jsonMarshaller = new NotificationsPrefJSONMarshaller();
+//		return jsonMarshaller.unmarshall(NotificationsPref.class, notificationsPref);
+		return notificationsPref;
 	}
 	
 	public FeedbackContainer getFeedbacks() {
-		FeedbacksJSONMarshaller jsonMarshaller = new FeedbacksJSONMarshaller();
-		return jsonMarshaller.unmarshall(FeedbackContainer.class, feedbacks);
-	}
+//		FeedbacksJSONMarshaller jsonMarshaller = new FeedbacksJSONMarshaller();
+//		return jsonMarshaller.unmarshall(FeedbackContainer.class, feedbacks);
+        return feedbacks;
+    }
 }

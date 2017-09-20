@@ -16,7 +16,8 @@ import com.peprally.jeremy.peprally.activities.BrowsePlayersActivity;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.enums.IntentRequestEnum;
 import com.peprally.jeremy.peprally.interfaces.ProfileFragmentInterface;
-import com.peprally.jeremy.peprally.utils.AsyncHelpers;
+import com.peprally.jeremy.peprally.network.ApiManager;
+import com.peprally.jeremy.peprally.network.callbacks.UserResponsePostCommentCallback;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
@@ -226,7 +227,11 @@ public class ProfileInfoFragment extends Fragment implements ProfileFragmentInte
                 @Override
                 public void onClick(View view) {
                     String[] nameArray = parseFavoritePlayerTextReturnFirstnameLastnameArray(userProfileParcel.getFavoritePlayer());
-                    AsyncHelpers.launchVarsityPlayerProfileActivity(getContext(), nameArray[0], nameArray[1], userProfileParcel.getCurrentUsername());
+                    ApiManager.getInstance().getLoginService()
+                            .getUserProfileWithPlayerProfile(nameArray[0], nameArray[1])
+                            .enqueue(new UserResponsePostCommentCallback(getContext(),
+                                    userProfileParcel.getCurrentUsername(),
+                                    null));
                 }
             });
         }

@@ -15,8 +15,9 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.custom.messaging.ChatMessage;
+import com.peprally.jeremy.peprally.network.ApiManager;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
-import com.peprally.jeremy.peprally.utils.AsyncHelpers;
+import com.peprally.jeremy.peprally.network.callbacks.UserResponsePostCommentCallback;
 import com.peprally.jeremy.peprally.utils.Helpers;
 
 import java.util.ArrayList;
@@ -39,7 +40,7 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
      ********************************** ADAPTER CONSTRUCTOR/METHODS ********************************
      **********************************************************************************************/
     public MessageArrayAdapter(Context callingContext,
-                               ArrayList<ChatMessage> messageHistoryList,
+                               List<ChatMessage> messageHistoryList,
                                String currentUsername) {
         super(callingContext, R.layout.message_right);  // default text view resource id
         this.callingContext = callingContext;
@@ -83,7 +84,10 @@ public class MessageArrayAdapter extends ArrayAdapter<ChatMessage> {
                     leftImageView.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
-                            AsyncHelpers.launchExistingUserProfileActivity(callingContext, chatMessage.getUsername(), currentUsername, null);
+                            ApiManager.getInstance()
+                                    .getLoginService()
+                                    .getUserProfileWithUsername(chatMessage.getUsername())
+                                    .enqueue(new UserResponsePostCommentCallback(callingContext, currentUsername, null));
                         }
                     });
                 }

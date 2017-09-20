@@ -20,9 +20,10 @@ import com.peprally.jeremy.peprally.activities.PostCommentActivity;
 import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.custom.Comment;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
+import com.peprally.jeremy.peprally.network.ApiManager;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
-import com.peprally.jeremy.peprally.utils.AsyncHelpers;
+import com.peprally.jeremy.peprally.network.callbacks.UserResponsePostCommentCallback;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
@@ -121,15 +122,17 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
         commentHolder.profileImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                AsyncHelpers.launchExistingUserProfileActivity(callingContext,
-                        commentUsername,
-                        currentUsername,
-                        new DynamoDBHelper.AsyncTaskCallback() {
-                            @Override
-                            public void onTaskDone() {
-                                ((PostCommentActivity) callingContext).launchUserAccountIsDeletedDialog(currentComment.getCommentId());
-                            }
-                        });
+                ApiManager.getInstance()
+                        .getLoginService()
+                        .getUserProfileWithUsername(mainPost.getUsername())
+                        .enqueue(new UserResponsePostCommentCallback(callingContext,
+                                                                    currentUsername,
+                                                                    new DynamoDBHelper.AsyncTaskCallback() {
+	                                                                    @Override
+	                                                                    public void onTaskDone() {
+		                                                                    ((PostCommentActivity) callingContext).launchUserAccountIsDeletedDialog(currentComment.getCommentId());
+	                                                                    }
+                                                                    }));
             }
         });
 

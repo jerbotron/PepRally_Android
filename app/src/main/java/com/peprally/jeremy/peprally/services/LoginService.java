@@ -13,8 +13,15 @@ import retrofit2.http.Query;
 
 public interface LoginService {
 	
-	@GET("/login")
-	Call<UserResponse> tryLogin(@Query("cognitoId") String cognitoId);
+	@GET("/login/cognito_id")
+	Call<UserResponse> getUserProfileWithCognitoId(@Query("cognitoId") String cognitoId);
+	
+	@GET("/login/username")
+	Call<UserResponse> getUserProfileWithUsername(@Query("username") String username);
+
+	@GET("/login/player_profile")
+	Call<UserResponse> getUserProfileWithPlayerProfile(@Query("firstname") String firstname,
+                                                       @Query("lastname") String lastname);
 	
 	@GET("/login/verify_username")
 	Call<UsernameResponse> verifyUsername(@Query("username") String username);

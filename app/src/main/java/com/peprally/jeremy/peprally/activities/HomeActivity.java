@@ -24,21 +24,31 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
+import com.facebook.AccessToken;
 import com.facebook.login.LoginManager;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
+import com.peprally.jeremy.peprally.data.PlayerProfile;
+import com.peprally.jeremy.peprally.data.UserProfile;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.enums.IntentRequestEnum;
+import com.peprally.jeremy.peprally.enums.SchoolsSupportedEnum;
 import com.peprally.jeremy.peprally.fragments.BrowseTeamsFragment;
 import com.peprally.jeremy.peprally.fragments.TrendingFragment;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.interfaces.PostContainerInterface;
+import com.peprally.jeremy.peprally.model.UserResponse;
+import com.peprally.jeremy.peprally.network.ApiManager;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 import static com.peprally.jeremy.peprally.utils.Helpers.getAPICompatVectorDrawable;
 
@@ -82,7 +92,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
         if (userProfileParcel == null) {
-            new FetchUserProfileParcelTask().execute();
+	        ApiManager.getInstance()
+			        .getLoginService()
+			        .getUserProfileWithCognitoId(dynamoDBHelper.getIdentityID())
+			        .enqueue(new UserResponseHomeCallback());
         }
         else {
             viewPagerHome = (ViewPager) findViewById(R.id.id_viewpager_home);
@@ -327,39 +340,31 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
         new UpdateUserNotificationAlertsAsyncTask().execute();
     }
 
-    /***********************************************************************************************
-     ****************************************** ASYNC TASKS ****************************************
-     **********************************************************************************************/
-    private class FetchUserProfileParcelTask extends AsyncTask<Void, Void, Boolean> {
-        @Override
-        protected Boolean doInBackground(Void... params) {
-            DBUserProfile userProfile = new DBUserProfile();
-            DBPlayerProfile playerProfile = new DBPlayerProfile();
-            userProfile.setCognitoId(dynamoDBHelper.getIdentityID());
-            DynamoDBQueryExpression<DBUserProfile> queryExpression = new DynamoDBQueryExpression<DBUserProfile>()
-                    .withIndexName("CognitoId-index")
-                    .withHashKeyValues(userProfile)
-                    .withConsistentRead(false);
-
-            List<DBUserProfile> results = dynamoDBHelper.getMapper().query(DBUserProfile.class, queryExpression);
-            if (results != null && results.size() == 1) {
-                userProfile = results.get(0);
-                if (userProfile.getIsVarsityPlayer()) {
-                    playerProfile = dynamoDBHelper.loadDBPlayerProfile(userProfile.getTeam(), userProfile.getPlayerIndex());
-                }
-                userProfileParcel = new UserProfileParcel(ActivityEnum.HOME, userProfile, playerProfile);
-                return true;
-            }
-            return false;
-        }
-
-        @Override
-        protected void onPostExecute(Boolean success) {
-            if (success) {
-                viewPagerHome = (ViewPager) findViewById(R.id.id_viewpager_home);
-                setupViewPager(viewPagerHome);
-            }
-        }
+    /*********************************************************************************************
+     ****************************************** Callbacks ****************************************
+     *********************************************************************************************/
+    private class UserResponseHomeCallback implements Callback<UserResponse> {
+	    @Override
+	    public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
+		    if (response != null) {
+			    UserResponse userResponse = response.body();
+			    if (userResponse != null) {
+				    userProfileParcel = new UserProfileParcel(
+				    		ActivityEnum.HOME,
+						    userResponse.getUserProfile(),
+						    userResponse.getPlayerProfile());
+				    viewPagerHome = (ViewPager) findViewById(R.id.id_viewpager_home);
+				    setupViewPager(viewPagerHome);
+			    }
+		    } else {
+			    onFailure(call, new Exception("Null response"));
+		    }
+	    }
+	
+	    @Override
+	    public void onFailure(Call<UserResponse> call, Throwable throwable) {
+		    ApiManager.handleCallbackFailure(throwable);
+	    }
     }
 
     public class UpdateUserNotificationAlertsAsyncTask extends AsyncTask<Void, Void, Void> {

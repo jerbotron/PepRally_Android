@@ -12,8 +12,9 @@ import android.widget.TextView;
 import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
+import com.peprally.jeremy.peprally.network.ApiManager;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
-import com.peprally.jeremy.peprally.utils.AsyncHelpers;
+import com.peprally.jeremy.peprally.network.callbacks.UserResponsePostCommentCallback;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
@@ -71,15 +72,17 @@ public class FistbumpedUserCardAdapter extends RecyclerView.Adapter<FistbumpedUs
         fistbumpedUserCardHolder.clickableContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                AsyncHelpers.launchExistingUserProfileActivity(callingContext,
-                        userProfile.getUsername(),
-                        userProfileParcel.getCurrentUsername(),
-                        new DynamoDBHelper.AsyncTaskCallback(){
-                            @Override
-                            public void onTaskDone() {
-                                ((ViewFistbumpsActivity) callingContext).launchUserIsDeletedDialog(userProfile.getUsername());
-                            }
-                        });
+	            ApiManager.getInstance()
+	                    .getLoginService()
+	                    .getUserProfileWithUsername(userProfile.getUsername())
+	                    .enqueue(new UserResponsePostCommentCallback(callingContext,
+                                                                    userProfileParcel.getCurrentUsername(),
+	                                                                new DynamoDBHelper.AsyncTaskCallback(){
+		                                                                @Override
+		                                                                public void onTaskDone() {
+			                                                                ((ViewFistbumpsActivity) callingContext).launchUserIsDeletedDialog(userProfile.getUsername());
+		                                                                }
+	                                                                }));
             }
         });
     }

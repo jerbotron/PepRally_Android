@@ -14,7 +14,8 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.ProfileViewPagerAdapter;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.fragments.BrowsePlayersFragment;
-import com.peprally.jeremy.peprally.utils.AsyncHelpers;
+import com.peprally.jeremy.peprally.network.ApiManager;
+import com.peprally.jeremy.peprally.network.callbacks.UserResponsePostCommentCallback;
 import com.peprally.jeremy.peprally.utils.Helpers;
 
 
@@ -103,13 +104,9 @@ public class BrowsePlayersActivity extends AppCompatActivity {
                 String currentUsername = getIntent().getStringExtra("CURRENT_USERNAME");
                 boolean isSelfProfile = playerProfile.getHasUserProfile() &&
                                         playerProfile.getUsername().equals(currentUsername);
-                AsyncHelpers.launchProfileActivityWithVarsityPlayerInfo(
-                        BrowsePlayersActivity.this,
-                        currentUsername,
-                        playerProfile.getFirstName(),
-                        playerProfile.getTeam(),
-                        playerProfile.getIndex(),
-                        isSelfProfile);
+                ApiManager.getInstance().getLoginService()
+                        .getUserProfileWithPlayerProfile(playerProfile.getFirstName(), playerProfile.getLastName())
+                        .enqueue(new UserResponsePostCommentCallback(this, currentUsername, null));
                 break;
             }
         }

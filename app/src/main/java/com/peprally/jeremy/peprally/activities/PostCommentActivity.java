@@ -30,9 +30,10 @@ import com.peprally.jeremy.peprally.custom.ui.EmptyViewSwipeRefreshLayout;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
+import com.peprally.jeremy.peprally.network.ApiManager;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
-import com.peprally.jeremy.peprally.utils.AsyncHelpers;
+import com.peprally.jeremy.peprally.network.callbacks.UserResponsePostCommentCallback;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
@@ -136,10 +137,10 @@ public class PostCommentActivity extends AppCompatActivity{
             mainPostProfileImage.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    AsyncHelpers.launchExistingUserProfileActivity(PostCommentActivity.this,
-                            mainPost.getUsername(),
-                            userProfileParcel.getCurrentUsername(),
-                            null);
+	                ApiManager.getInstance()
+			                .getLoginService()
+			                .getUserProfileWithUsername(mainPost.getUsername())
+			                .enqueue(new UserResponsePostCommentCallback(getApplicationContext(), userProfileParcel.getCurrentUsername(), null));
                 }
             });
 
@@ -491,8 +492,8 @@ public class PostCommentActivity extends AppCompatActivity{
     }
 
     public void launchPostOrCommentIsDeletedDialog(final boolean isPostDeleted) {
-        final AlertDialog.Builder dialogBuilderPostDeleted = new AlertDialog.Builder(PostCommentActivity.this);
-        final View dialogViewConfirmDelete = View.inflate(PostCommentActivity.this, R.layout.dialog_confirm_delete, null);
+        final AlertDialog.Builder dialogBuilderPostDeleted = new AlertDialog.Builder(this);
+        final View dialogViewConfirmDelete = View.inflate(this, R.layout.dialog_confirm_delete, null);
         dialogBuilderPostDeleted.setView(dialogViewConfirmDelete);
         dialogBuilderPostDeleted.setTitle("Oops!");
         if (isPostDeleted)
@@ -591,4 +592,5 @@ public class PostCommentActivity extends AppCompatActivity{
             refreshAdapter(false);
         }
     }
+	
 }
