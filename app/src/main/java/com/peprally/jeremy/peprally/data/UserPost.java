@@ -1,22 +1,16 @@
-package com.peprally.jeremy.peprally.db_models;
+package com.peprally.jeremy.peprally.data;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.*;
 import com.peprally.jeremy.peprally.custom.Comment;
 import com.peprally.jeremy.peprally.db_models.json_marshallers.CommentsJSONMarshaller;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
-@Deprecated
-@DynamoDBTable(tableName = "UserPosts")
-public class DBUserPost implements Parcelable{
+public class UserPost implements Parcelable {
+
     private String username;
     private String postId;
     private String cognitoId;
@@ -26,16 +20,16 @@ public class DBUserPost implements Parcelable{
     private Long timestampSeconds;
     private int fistbumpsCount;
     private int commentsCount;
-    private Set<String> fistbumpedUsers;
-    private ArrayList<Comment> comments;
+    private SetData fistbumpedUsers;
+    private List<Comment> comments;
 
     // Default Constructors
 
     // Empty Constructor for queries
-    public DBUserPost() {}
+    public UserPost() {}
 
     // New PostLikeResponse Constructor
-    public DBUserPost(String username,
+    public UserPost(String username,
                       String postId,
                       String cognitoId,
                       String facebookId,
@@ -58,15 +52,15 @@ public class DBUserPost implements Parcelable{
     // Helpers
     public void addFistbumpedUser(String user) {
         if (fistbumpedUsers == null) {
-            fistbumpedUsers = new HashSet<>(Collections.singletonList(user));
+            fistbumpedUsers = new SetData(user);
         } else {
-            fistbumpedUsers.add(user);
+            fistbumpedUsers.addItem(user);
         }
     }
 
     public void removeFistbumpedUser(String user) {
         if (fistbumpedUsers != null) {
-            fistbumpedUsers.remove(user);
+            fistbumpedUsers.removeItem(user);
             if (fistbumpedUsers.isEmpty()) {
                 fistbumpedUsers = null;
             }
@@ -86,7 +80,6 @@ public class DBUserPost implements Parcelable{
     public boolean hasComment(String commentId) {
         if (comments != null) {
             for (Comment comment : comments) {
-                Log.d("DH: ", "comment id = " + comment.getCommentId());
                 if (comment.getCommentId().equals(commentId)) return true;
             }
         }
@@ -94,7 +87,7 @@ public class DBUserPost implements Parcelable{
     }
 
     // Parcelable Methods
-    private DBUserPost(Parcel in) {
+    private UserPost(Parcel in) {
         this.username = in.readString();
         this.postId = in.readString();
         this.cognitoId = in.readString();
@@ -105,7 +98,7 @@ public class DBUserPost implements Parcelable{
         this.fistbumpsCount = in.readInt();
         this.commentsCount = in.readInt();
         if (in.readByte() == 1) {
-            this.fistbumpedUsers = new HashSet<>(Arrays.asList(in.createStringArray()));
+            this.fistbumpedUsers = new SetData(in);
         }
         this.comments = CommentsJSONMarshaller.decodeJSONComments(in.readString());
     }
@@ -123,7 +116,7 @@ public class DBUserPost implements Parcelable{
         dest.writeInt(commentsCount);
         if (fistbumpedUsers != null) {
             dest.writeByte((byte) 1);
-            dest.writeStringArray(fistbumpedUsers.toArray(new String[fistbumpedUsers.size()]));
+            dest.writeStringArray(fistbumpedUsers.toArray());
         }
         else {
             dest.writeByte((byte) 0);
@@ -136,20 +129,19 @@ public class DBUserPost implements Parcelable{
         return 0;
     }
 
-    public static final Parcelable.Creator<DBUserPost> CREATOR = new Parcelable.Creator<DBUserPost>() {
+    public static final Parcelable.Creator<UserPost> CREATOR = new Parcelable.Creator<UserPost>() {
         @Override
-        public DBUserPost createFromParcel(Parcel source) {
-            return new DBUserPost(source);
+        public UserPost createFromParcel(Parcel source) {
+            return new UserPost(source);
         }
 
         @Override
-        public DBUserPost[] newArray(int size) {
-            return new DBUserPost[size];
+        public UserPost[] newArray(int size) {
+            return new UserPost[size];
         }
     };
 
     // Getters/Setters
-    @DynamoDBHashKey(attributeName = "Username")
     public String getUsername() {
         return username;
     }
@@ -157,7 +149,6 @@ public class DBUserPost implements Parcelable{
         this.username = username;
     }
 
-    @DynamoDBAttribute(attributeName = "PostId")
     public String getPostId() {
         return postId;
     }
@@ -165,7 +156,6 @@ public class DBUserPost implements Parcelable{
         this.postId = postId;
     }
 
-    @DynamoDBAttribute(attributeName = "CognitoId")
     public String getCognitoId() {
         return cognitoId;
     }
@@ -173,7 +163,6 @@ public class DBUserPost implements Parcelable{
         this.cognitoId = cognitoId;
     }
 
-    @DynamoDBAttribute(attributeName = "FacebookId")
     public String getFacebookId() {
         return facebookId;
     }
@@ -181,7 +170,6 @@ public class DBUserPost implements Parcelable{
         this.facebookId = facebookId;
     }
 
-    @DynamoDBAttribute(attributeName = "Firstname")
     public String getFirstname() {
         return firstname;
     }
@@ -189,7 +177,6 @@ public class DBUserPost implements Parcelable{
         this.firstname = firstname;
     }
 
-    @DynamoDBAttribute(attributeName = "TextContent")
     public String getPostText() {
         return postText;
     }
@@ -197,7 +184,6 @@ public class DBUserPost implements Parcelable{
         this.postText = postText;
     }
 
-    @DynamoDBRangeKey(attributeName = "TimestampSeconds")
     public long getTimestampSeconds() {
         return timestampSeconds;
     }
@@ -205,7 +191,6 @@ public class DBUserPost implements Parcelable{
         this.timestampSeconds = timestampSeconds;
     }
 
-    @DynamoDBAttribute(attributeName = "FistbumpsCount")
     public int getFistbumpsCount() {
         return fistbumpsCount;
     }
@@ -213,7 +198,6 @@ public class DBUserPost implements Parcelable{
         this.fistbumpsCount = fistbumpsCount;
     }
 
-    @DynamoDBAttribute(attributeName = "CommentsCount")
     public int getCommentsCount() {
         return commentsCount;
     }
@@ -221,20 +205,17 @@ public class DBUserPost implements Parcelable{
         this.commentsCount = commentsCount;
     }
 
-    @DynamoDBAttribute(attributeName = "FistbumpedUsers")
-    public Set<String> getFistbumpedUsers() {
+    public SetData getFistbumpedUsers() {
         return fistbumpedUsers;
     }
-    public void setFistbumpedUsers(Set<String> fistbumpedUsers) {
+    public void setFistbumpedUsers(SetData fistbumpedUsers) {
         this.fistbumpedUsers = fistbumpedUsers;
     }
 
-    @DynamoDBAttribute(attributeName = "CommentsJson")
-    @DynamoDBMarshalling (marshallerClass = CommentsJSONMarshaller.class)
-    public ArrayList<Comment> getComments() {
+    public List<Comment> getComments() {
         return comments;
     }
-    public void setComments(ArrayList<Comment> comments) {
+    public void setComments(List<Comment> comments) {
         this.comments = comments;
     }
 }

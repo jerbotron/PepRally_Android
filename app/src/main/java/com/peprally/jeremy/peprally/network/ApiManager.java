@@ -4,6 +4,7 @@ package com.peprally.jeremy.peprally.network;
 import android.util.Log;
 
 import com.peprally.jeremy.peprally.services.LoginService;
+import com.peprally.jeremy.peprally.services.NotificationService;
 import com.peprally.jeremy.peprally.services.PostService;
 import com.peprally.jeremy.peprally.utils.Constants;
 
@@ -18,6 +19,7 @@ public class ApiManager {
 
     private PostService postService;
     private LoginService loginService;
+	private NotificationService notificationService;
 
     private ApiManager() {
         OkHttpClient client = new OkHttpClient();
@@ -30,6 +32,7 @@ public class ApiManager {
 
         postService = retrofit.create(PostService.class);
 	    loginService = retrofit.create(LoginService.class);
+	    notificationService = retrofit.create(NotificationService.class);
     }
 
     public static ApiManager getInstance() {
@@ -45,6 +48,10 @@ public class ApiManager {
     
     public LoginService getLoginService() {
 	    return loginService;
+    }
+
+    public NotificationService getNotificationService() {
+        return notificationService;
     }
 	
 	public static void handleCallbackFailure(Throwable throwable) {

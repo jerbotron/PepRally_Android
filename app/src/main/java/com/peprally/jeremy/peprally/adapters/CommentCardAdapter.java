@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.util.Pair;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
@@ -19,10 +20,15 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.PostCommentActivity;
 import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
 import com.peprally.jeremy.peprally.custom.Comment;
+import com.peprally.jeremy.peprally.data.UserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
+import com.peprally.jeremy.peprally.model.BaseResponse;
+import com.peprally.jeremy.peprally.model.PostDeletionResponse;
+import com.peprally.jeremy.peprally.model.PostResponse;
 import com.peprally.jeremy.peprally.network.ApiManager;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
+import com.peprally.jeremy.peprally.network.NetworkHelpers;
 import com.peprally.jeremy.peprally.network.callbacks.UserResponsePostCommentCallback;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
@@ -30,6 +36,10 @@ import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.ArrayList;
 import java.util.Set;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.CommentHolder> {
 
@@ -44,7 +54,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     private Context callingContext;
     private ArrayList<Comment> comments;
     private UserProfileParcel userProfileParcel;
-    private DBUserPost mainPost;
+    private UserPost mainPost;
 
     // UI Variables
     private ProgressDialog progressDialogDeleteComment;
@@ -55,7 +65,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     public CommentCardAdapter(Context callingContext,
                               ArrayList<Comment> comments,
                               UserProfileParcel userProfileParcel,
-                              DBUserPost mainPost) {
+                              UserPost mainPost) {
         this.comments = comments;
         this.callingContext = callingContext;
         this.userProfileParcel = userProfileParcel;
@@ -94,7 +104,7 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
     }
 
     @Override
-    public void onBindViewHolder(final CommentHolder commentHolder, int position) {
+    public void onBindViewHolder(final CommentHolder commentHolder, final int position) {
         final Comment currentComment = comments.get(position);
         final String currentUsername = userProfileParcel.getCurrentUsername();
         final String commentUsername = currentComment.getCommentUsername();
@@ -141,23 +151,32 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
             @Override
             public void onClick(View view) {
                 if (currentComment.getFistbumpsCount() > 0) {
-                    dynamoDBHelper.doActionIfDBUserPostAndCommentExists(
-                            mainPost,
-                            currentComment,
-                            new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
+                    Pair<String, Long> postQueryParams = NetworkHelpers.parsePostId(mainPost.getPostId());
+                    ApiManager.getInstance()
+                            .getPostService()
+                            .getPost(postQueryParams.first, postQueryParams.second)
+                            .enqueue(new Callback<PostResponse>() {
                                 @Override
-                                public void onTaskDone(Object bundle) {
-                                    if (((Bundle) bundle).getBoolean("POST_AND_COMMENT_EXISTS", false)) {   // assume worst case, that post/comment was deleted
-                                        Intent intent = new Intent(callingContext, ViewFistbumpsActivity.class);
-                                        intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
-                                        intent.putExtra("USER_POST", mainPost);
-                                        intent.putExtra("COMMENT_INDEX", commentHolder.getAdapterPosition());
-                                        callingContext.startActivity(intent);
+                                public void onResponse(Call<PostResponse> call, Response<PostResponse> response) {
+                                    PostResponse postResponse = response.body();
+                                    if (postResponse != null) {
+                                        if (postResponse.getPost().hasComment(currentComment.getCommentId())) {
+                                            Intent intent = new Intent(callingContext, ViewFistbumpsActivity.class);
+                                            intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
+                                            intent.putExtra("USER_POST", mainPost);
+                                            intent.putExtra("COMMENT_INDEX", commentHolder.getAdapterPosition());
+                                            callingContext.startActivity(intent);
+                                        } else {
+                                            ((PostCommentActivity) callingContext).launchPostOrCommentIsDeletedDialog(true);
+                                        }
                                     } else {
-                                        ((PostCommentActivity) callingContext).
-                                                launchPostOrCommentIsDeletedDialog(((Bundle) bundle).getBoolean("IS_POST_DELETED", true)); // assume post was deleted
+                                        ((PostCommentActivity) callingContext).launchPostOrCommentIsDeletedDialog(false);
                                     }
+                                }
 
+                                @Override
+                                public void onFailure(Call<PostResponse> call, Throwable throwable) {
+                                    ApiManager.handleCallbackFailure(throwable);
                                 }
                             });
                 }
@@ -169,101 +188,83 @@ public class CommentCardAdapter extends RecyclerView.Adapter<CommentCardAdapter.
             @Override
             public void onClick(View v) {
                 final Set<String> fistbumpedUsers = currentComment.getFistbumpedUsers();
+                int fistbumpsCount;
                 // If user already liked the comment
                 if (fistbumpedUsers != null && fistbumpedUsers.contains(currentUsername)) {
                     // update db items: remove current user from fistbumped users
-                    final int fistbumpsCount = currentComment.getFistbumpsCount() - 1;
+                    fistbumpsCount = currentComment.getFistbumpsCount() - 1;
                     currentComment.removeFistbumpedUser(currentUsername);
                     currentComment.setFistbumpsCount(fistbumpsCount);
-                    // update UI
-                    commentHolder.fistbumpsCount.setText(String.valueOf(fistbumpsCount));
                     commentHolder.fistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_50, 0);
+
                     // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
                     if (!commentUsername.equals(currentUsername)) {
-                        // remove notification
-                        dynamoDBHelper.deleteCommentFistbumpNotification(
-                                currentComment.getPostId(),
-                                currentComment.getCommentId(),
-                                currentUsername,
-                                commentUsername,
-                                new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
+                        ApiManager.getInstance()
+                                .getNotificationService()
+                                .deleteNotification(currentComment.getPostId(), currentComment.getCommentId())
+                                .enqueue(new Callback<PostDeletionResponse>() {
                                     @Override
-                                    public void onTaskDone(Object bundle) {
-                                        Bundle taskCallbackBundle = (Bundle) bundle;
-                                        // if we couldn't complete the task because comment was deleted
-                                        if (taskCallbackBundle.getBoolean("TASK_SUCCESS", false)) {
-                                            mainPost.setComments(comments);
-                                            dynamoDBHelper.saveDBObjectAsync(mainPost);
-                                        } else {
-                                            ((PostCommentActivity) callingContext).
-                                                    launchPostOrCommentIsDeletedDialog(taskCallbackBundle.getBoolean("IS_POST_DELETED", true)); // assume post was deleted
-                                        }
-                                    }
-                                });
-                    } else {
-                        // if I made changes to my own comment, just save the post right away, I don't
-                        // need to check if the post has been deleted
-                        mainPost.setComments(comments);
-                        dynamoDBHelper.saveIfDBUserPostAndCommentExists(
-                                mainPost,
-                                currentComment,
-                                new DynamoDBHelper.AsyncTaskCallback() {
+                                    public void onResponse(Call<PostDeletionResponse> call, Response<PostDeletionResponse> response) {}
+
                                     @Override
-                                    public void onTaskDone() {
-                                        // this is called if either post has been deleted
-                                        ((PostCommentActivity) callingContext).
-                                                launchPostOrCommentIsDeletedDialog(true);
+                                    public void onFailure(Call<PostDeletionResponse> call, Throwable throwable) {
+                                        ApiManager.handleCallbackFailure(throwable);
                                     }
                                 });
                     }
-
                 }
                 // If user has not liked the comment yet
                 else {
                     // update db items: add current user from fistbumped users
-                    final int fistbumpsCount = currentComment.getFistbumpsCount() + 1;
+                    fistbumpsCount = currentComment.getFistbumpsCount() + 1;
                     currentComment.addFistbumpedUser(currentUsername);
                     currentComment.setFistbumpsCount(fistbumpsCount);
-                    // update UI
-                    commentHolder.fistbumpsCount.setText(String.valueOf(fistbumpsCount));
                     commentHolder.fistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
-                    // update fistbumps counts:
+
                     // if current user did not fistbump his/her OWN post (fistbumping your own post does not change user's own fistbumps count)
                     if (!commentUsername.equals(currentUsername)) {
-                        dynamoDBHelper.createNewNotification(
-                                makeDBNotificationBundleCommentFistbump(currentComment),
-                                new DynamoDBHelper.AsyncTaskCallbackWithReturnObject() {
+                        ApiManager.getInstance()
+                                .getNotificationService()
+                                .createNewNotification(currentComment)
+                                .enqueue(new Callback<BaseResponse>() {
                                     @Override
-                                    public void onTaskDone(Object bundle) {
-                                        Bundle taskCallbackBundle = (Bundle) bundle;
-                                        if (taskCallbackBundle.getBoolean("TASK_SUCCESS", false)) { // default, assume the notification was not created
+                                    public void onResponse(Call<BaseResponse> call, Response<BaseResponse> response) {
+                                        if (response.body() != null) {
                                             // send push notification once db user notification is successfully created
                                             httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundleCommentFistbump(currentComment));
-                                            mainPost.setComments(comments);
-                                            dynamoDBHelper.saveDBObjectAsync(mainPost);
-                                        } else {
-                                            ((PostCommentActivity) callingContext).
-                                                    launchPostOrCommentIsDeletedDialog(taskCallbackBundle.getBoolean("IS_POST_DELETED", true)); // assume post was deleted
                                         }
                                     }
-                                });
-                    } else {
-                        // if I made changes to my own comment, just save the post right away, I don't
-                        // need to check if the post has been deleted
-                        mainPost.setComments(comments);
-                        dynamoDBHelper.saveIfDBUserPostAndCommentExists(
-                                mainPost,
-                                currentComment,
-                                new DynamoDBHelper.AsyncTaskCallback() {
+
                                     @Override
-                                    public void onTaskDone() {
-                                        // this is called if either post has been deleted
-                                        ((PostCommentActivity) callingContext).
-                                                launchPostOrCommentIsDeletedDialog(true);
+                                    public void onFailure(Call<BaseResponse> call, Throwable throwable) {
+                                        ApiManager.handleCallbackFailure(throwable);
                                     }
                                 });
                     }
                 }
+
+                commentHolder.fistbumpsCount.setText(String.valueOf(fistbumpsCount));
+                mainPost.setComments(comments);
+                ApiManager.getInstance().getPostService().updatePost(mainPost)
+                        .enqueue(new Callback<PostDeletionResponse>() {
+                            @Override
+                            public void onResponse(Call<PostDeletionResponse> call, Response<PostDeletionResponse> response) {
+                                PostDeletionResponse postDeletionResponse = response.body();
+                                if (postDeletionResponse != null) {
+                                    if (postDeletionResponse.isPostDeleted()) {
+                                        ((PostCommentActivity) callingContext).launchPostOrCommentIsDeletedDialog(true);
+                                    } else if (postDeletionResponse.isCommentDeleted()){
+                                        ((PostCommentActivity) callingContext).launchPostOrCommentIsDeletedDialog(false);
+                                    }
+                                }
+
+                            }
+
+                            @Override
+                            public void onFailure(Call<PostDeletionResponse> call, Throwable throwable) {
+                                ApiManager.handleCallbackFailure(throwable);
+                            }
+                        });
             }
         });
 

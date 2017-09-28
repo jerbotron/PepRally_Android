@@ -20,20 +20,21 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.activities.PostCommentActivity;
 import com.peprally.jeremy.peprally.activities.ProfileActivity;
 import com.peprally.jeremy.peprally.activities.ViewFistbumpsActivity;
+import com.peprally.jeremy.peprally.data.SetData;
+import com.peprally.jeremy.peprally.data.UserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserProfile;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.interfaces.PostContainerInterface;
 import com.peprally.jeremy.peprally.model.BaseResponse;
+import com.peprally.jeremy.peprally.model.PostResponse;
 import com.peprally.jeremy.peprally.network.ApiManager;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
-import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
 import com.peprally.jeremy.peprally.utils.Helpers;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 
 import java.util.List;
-import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -45,22 +46,20 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
      **********************************************************************************************/
     // AWS/HTTP Variables
     private DynamoDBHelper dynamoDBHelper;
-    private HTTPRequestsHelper httpRequestsHelper;
 
     // General Variables
     private Context callingContext;
-    private List<DBUserPost> posts;
+    private List<UserPost> posts;
     private UserProfileParcel userProfileParcel;
 
     /***********************************************************************************************
      ********************************** ADAPTER CONSTRUCTOR/METHODS ********************************
      **********************************************************************************************/
-    public PostCardAdapter(Context callingContext, List<DBUserPost> posts, UserProfileParcel userProfileParcel) {
+    public PostCardAdapter(Context callingContext, List<UserPost> posts, UserProfileParcel userProfileParcel) {
         this.callingContext = callingContext;
         this.posts = posts;
         this.userProfileParcel = userProfileParcel;
         dynamoDBHelper = new DynamoDBHelper(callingContext);
-        httpRequestsHelper = new HTTPRequestsHelper(callingContext);
     }
 
     static class PostHolder extends RecyclerView.ViewHolder {
@@ -94,7 +93,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
 
     @Override
     public void onBindViewHolder(final PostHolder postHolder, int position) {
-        final DBUserPost curPost = posts.get(position);
+        final UserPost curPost = posts.get(position);
         Helpers.setFacebookProfileImage(callingContext,
                                         postHolder.profileImage,
                                         curPost.getFacebookId(),
@@ -103,7 +102,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
 
         final String curUsername = userProfileParcel.getCurrentUsername();
 
-        final Set<String> fistbumpedUsers = curPost.getFistbumpedUsers();
+        final SetData fistbumpedUsers = curPost.getFistbumpedUsers();
 
         if (fistbumpedUsers != null && fistbumpedUsers.contains(curUsername)) {
             postHolder.postFistbumpButton.setCompoundDrawablesWithIntrinsicBounds(0, 0, R.drawable.ic_fistbump_filled_50, 0);
@@ -177,7 +176,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         postHolder.postFistbumpButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final Set<String> fistbumpedUsers = curPost.getFistbumpedUsers();
+                final SetData fistbumpedUsers = curPost.getFistbumpedUsers();
                 // If user already liked the post
                 if (fistbumpedUsers != null && fistbumpedUsers.contains(curUsername)) {
                     final int fistbumpsCount = Integer.parseInt(postHolder.postFistbumpsCount.getText().toString()) - 1;
@@ -246,21 +245,6 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
                                         Log.d(getClass().getName(), "error msg = " + throwable.getMessage());
                                     }
                                 });
-
-//                        dynamoDBHelper.createNewNotification(
-//                                makeDBNotificationBundlePostFistbump(curPost),
-//                                new DynamoDBHelper.AsyncTaskCallbackWithReturnObject(){
-//                                    @Override
-//                                    public void onTaskDone(Object bundle) {
-//                                        if (((Bundle) bundle).getBoolean("TASK_SUCCESS", false)) { // assume that notification was not created
-//                                            // send push notification
-////                                            httpRequestsHelper.makePushNotificationRequest(makePushNotificationBundlePostFistbump(curPost));
-//                                            dynamoDBHelper.saveDBObjectAsync(curPost);
-//                                        } else {
-//                                            launchPostOrCommentIsDeletedDialog(true);   // post was deleted
-//                                        }
-//                                    }
-//                                });
                     } else {
                         // if I made changes to my own post, just save the post right away, I don't
                         // need to check if the post has been deleted
@@ -295,12 +279,12 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
     /***********************************************************************************************
      **************************************** GENERAL_METHODS **************************************
      **********************************************************************************************/
-    private void adapterAddItemTop(DBUserPost newPost) {
+    private void adapterAddItemTop(UserPost newPost) {
         posts.add(0, newPost);
         notifyItemInserted(0);
     }
 
-    private void launchNewCommentActivity(DBUserPost curPost) {
+    private void launchNewCommentActivity(UserPost curPost) {
         Intent intent = new Intent(callingContext, PostCommentActivity.class);
         intent.putExtra("USER_PROFILE_PARCEL", userProfileParcel);
         intent.putExtra("MAIN_POST", curPost);
@@ -308,7 +292,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         ((AppCompatActivity) callingContext).overridePendingTransition(R.anim.right_in, R.anim.left_out);
     }
 
-    private Bundle makeDBNotificationBundlePostFistbump(DBUserPost curPost) {
+    private Bundle makeDBNotificationBundlePostFistbump(UserPost curPost) {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
@@ -317,7 +301,7 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
         return bundle;
     }
 
-    private Bundle makePushNotificationBundlePostFistbump(DBUserPost curPost) {
+    private Bundle makePushNotificationBundlePostFistbump(UserPost curPost) {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
         bundle.putString("RECEIVER_USERNAME", curPost.getUsername());
@@ -330,16 +314,13 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
      **********************************************************************************************/
     public void addPost(String newPostText, Bundle bundle) {
         Long timestampSeconds = Helpers.getTimestampSeconds();
-        DBUserPost newPost = new DBUserPost(
-                bundle.getString("USERNAME"),
+        ApiManager.getInstance().getPostService().makeNewPost(bundle.getString("USERNAME"),
                 bundle.getString("USERNAME") + "_" + timestampSeconds.toString(),
                 dynamoDBHelper.getIdentityID(),
                 bundle.getString("FACEBOOK_ID"),
                 bundle.getString("FIRST_NAME"),
                 newPostText,
-                timestampSeconds
-        );
-        new PushNewUserPostToDBTask().execute(newPost);
+                timestampSeconds).enqueue(new NewPostCallback());
     }
 
     private void launchPostOrCommentIsDeletedDialog(boolean isPost) {
@@ -369,27 +350,22 @@ public class PostCardAdapter extends RecyclerView.Adapter<PostCardAdapter.PostHo
     }
 
     /***********************************************************************************************
-     ****************************************** ASYNC TASKS ****************************************
+     ****************************************** CALL BACKS *****************************************
      **********************************************************************************************/
-    private class PushNewUserPostToDBTask extends AsyncTask<DBUserPost, Void, DBUserPost> {
+
+    private class NewPostCallback implements Callback<PostResponse> {
+
         @Override
-        protected DBUserPost doInBackground(DBUserPost... params) {
-            // Save new post to DBUserPosts
-            DBUserPost newPost= params[0];
-            dynamoDBHelper.saveDBObject(newPost);
-
-            // Update UserProfile post count
-            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(newPost.getUsername());
-            int curPostCount = userProfile.getPostsCount();
-            userProfile.setPostsCount(curPostCount + 1);
-            dynamoDBHelper.saveDBObject(userProfile);
-
-            return newPost;
+        public void onResponse(Call<PostResponse> call, Response<PostResponse> response) {
+            PostResponse postResponse = response.body();
+            if (postResponse != null) {
+                adapterAddItemTop(postResponse.getPost());
+            }
         }
 
         @Override
-        protected void onPostExecute(DBUserPost newPost) {
-            adapterAddItemTop(newPost);
+        public void onFailure(Call<PostResponse> call, Throwable throwable) {
+
         }
     }
 }

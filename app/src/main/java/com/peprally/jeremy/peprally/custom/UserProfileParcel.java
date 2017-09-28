@@ -4,6 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import com.peprally.jeremy.peprally.data.PlayerProfile;
+import com.peprally.jeremy.peprally.data.UserPost;
 import com.peprally.jeremy.peprally.data.UserProfile;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
@@ -163,7 +164,7 @@ public class UserProfileParcel implements Parcelable {
     // PostLikeResponse Adapter Constructor, only used to initialize a few required members
     public UserProfileParcel(ActivityEnum currentActivity,
                              String currentUsername,
-                             DBUserPost userPost)
+                             UserPost userPost)
     {
         this.currentActivity = currentActivity;
         this.currentUsername = currentUsername;

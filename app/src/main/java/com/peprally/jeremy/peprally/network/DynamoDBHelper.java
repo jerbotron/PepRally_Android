@@ -19,6 +19,7 @@ import com.peprally.jeremy.peprally.custom.Feedback;
 import com.peprally.jeremy.peprally.custom.preferences.NotificationsPref;
 import com.peprally.jeremy.peprally.custom.messaging.ChatMessage;
 import com.peprally.jeremy.peprally.custom.messaging.Conversation;
+import com.peprally.jeremy.peprally.data.UserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserConversation;
 import com.peprally.jeremy.peprally.db_models.DBPlayerProfile;
 import com.peprally.jeremy.peprally.db_models.DBUsername;
@@ -102,7 +103,7 @@ public class DynamoDBHelper {
         new SaveDBUserPostAndCommentIfExistsAsyncTask(userPost, comment, taskCallback).execute();
     }
 
-    public void doActionIfDBUserPostAndCommentExists(DBUserPost userPost, Comment comment, AsyncTaskCallbackWithReturnObject taskCallback) {
+    public void doActionIfDBUserPostAndCommentExists(UserPost userPost, Comment comment, AsyncTaskCallbackWithReturnObject taskCallback) {
         new DoActionIfDBUserPostAndCommentIfExistsAsyncTask(userPost, comment, taskCallback).execute();
     }
 
@@ -194,7 +195,7 @@ public class DynamoDBHelper {
         new DeletePostCommentAsyncTask(taskCallback).execute(userPost);
     }
 
-    public void deleteUserPost(DBUserPost userPost, AsyncTaskCallback taskCallback) {
+    public void deleteUserPost(UserPost userPost, AsyncTaskCallback taskCallback) {
         new DeleteDBUserPostAsyncTask(taskCallback).execute(userPost);
     }
 
@@ -252,7 +253,7 @@ public class DynamoDBHelper {
     /**
      * Database batch delete methods
      */
-    public void batchDeletePostNotifications(DBUserPost userPost) {
+    public void batchDeletePostNotifications(UserPost userPost) {
         new BatchDeletePostDBUserNotificationsAsyncTask().execute(userPost);
     }
 
@@ -489,11 +490,11 @@ public class DynamoDBHelper {
 
     private class DoActionIfDBUserPostAndCommentIfExistsAsyncTask extends AsyncTask<Void, Void, Boolean> {
         private AsyncTaskCallbackWithReturnObject taskCallback;
-        private DBUserPost userPost;
+        private UserPost userPost;
         private Comment comment;
         private boolean isPostDeleted;
 
-        private DoActionIfDBUserPostAndCommentIfExistsAsyncTask(DBUserPost userPost,
+        private DoActionIfDBUserPostAndCommentIfExistsAsyncTask(UserPost userPost,
                                                                 Comment comment,
                                                                 AsyncTaskCallbackWithReturnObject taskCallback) {
             this.userPost = userPost;
@@ -594,7 +595,7 @@ public class DynamoDBHelper {
         }
     }
 
-    private class DeleteDBUserPostAsyncTask extends AsyncTask<DBUserPost, Void, Void> {
+    private class DeleteDBUserPostAsyncTask extends AsyncTask<UserPost, Void, Void> {
 
         private AsyncTaskCallback taskCallback;
 
@@ -603,8 +604,8 @@ public class DynamoDBHelper {
         }
 
         @Override
-        protected Void doInBackground(DBUserPost... dbUserPosts) {
-            DBUserPost userPost = dbUserPosts[0];
+        protected Void doInBackground(UserPost... dbUserPosts) {
+            UserPost userPost = dbUserPosts[0];
             DBUserProfile userProfile = loadDBUserProfile(userPost.getUsername());
             if (userProfile != null) {
                 userProfile.setPostsCount(userProfile.getPostsCount() - 1);
@@ -856,10 +857,10 @@ public class DynamoDBHelper {
     }
 
     @SuppressWarnings("unchecked")
-    private class BatchDeletePostDBUserNotificationsAsyncTask extends AsyncTask<DBUserPost, Void, Void> {
+    private class BatchDeletePostDBUserNotificationsAsyncTask extends AsyncTask<UserPost, Void, Void> {
         @Override
-        protected Void doInBackground(DBUserPost... params) {
-            DBUserPost post = params[0];
+        protected Void doInBackground(UserPost... params) {
+            UserPost post = params[0];
             if (post != null) {
                 DBUserNotification userNotification = new DBUserNotification();
                 userNotification.setPostId(post.getPostId());

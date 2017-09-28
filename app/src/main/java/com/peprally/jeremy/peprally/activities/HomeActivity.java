@@ -38,6 +38,7 @@ import com.peprally.jeremy.peprally.fragments.BrowseTeamsFragment;
 import com.peprally.jeremy.peprally.fragments.TrendingFragment;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.interfaces.PostContainerInterface;
+import com.peprally.jeremy.peprally.model.NewNotificationResponse;
 import com.peprally.jeremy.peprally.model.UserResponse;
 import com.peprally.jeremy.peprally.network.ApiManager;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
@@ -337,7 +338,10 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
     }
 
     public void updateMenuItemsNotificationAlerts() {
-        new UpdateUserNotificationAlertsAsyncTask().execute();
+        ApiManager.getInstance()
+                .getNotificationService()
+                .checkNewNotifications(userProfileParcel.getCurrentUsername())
+                .enqueue(new NewNotificationCallback());
     }
 
     /*********************************************************************************************
@@ -367,21 +371,19 @@ public class HomeActivity extends AppCompatActivity implements NavigationView.On
 	    }
     }
 
-    public class UpdateUserNotificationAlertsAsyncTask extends AsyncTask<Void, Void, Void> {
+    private class NewNotificationCallback implements Callback<NewNotificationResponse> {
+
         @Override
-        protected Void doInBackground(Void... voids) {
-            DBUserProfile userProfile = dynamoDBHelper.loadDBUserProfile(userProfileParcel.getCurrentUsername());
-            if (userProfile != null) {
-                userProfileParcel.setHasNewMessage(userProfile.getHasNewMessage());
-                userProfileParcel.setHasNewNotification(userProfile.getHasNewNotification());
+        public void onResponse(Call<NewNotificationResponse> call, Response<NewNotificationResponse> response) {
+            NewNotificationResponse newNotificationResponse = response.body();
+            if (newNotificationResponse != null) {
+                updateMenuItemsNotificationAlerts(newNotificationResponse.hasNewMessage(), newNotificationResponse.hasNewNotification());
             }
-            return null;
         }
 
         @Override
-        protected void onPostExecute(Void aVoid) {
-            updateMenuItemsNotificationAlerts(userProfileParcel.hasNewMessage(),
-                                              userProfileParcel.hasNewNotification());
+        public void onFailure(Call<NewNotificationResponse> call, Throwable throwable) {
+            ApiManager.handleCallbackFailure(throwable);
         }
     }
 }

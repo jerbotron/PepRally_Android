@@ -27,9 +27,12 @@ import com.peprally.jeremy.peprally.adapters.CommentCardAdapter;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.custom.Comment;
 import com.peprally.jeremy.peprally.custom.ui.EmptyViewSwipeRefreshLayout;
+import com.peprally.jeremy.peprally.data.SetData;
+import com.peprally.jeremy.peprally.data.UserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
 import com.peprally.jeremy.peprally.enums.ActivityEnum;
 import com.peprally.jeremy.peprally.enums.NotificationEnum;
+import com.peprally.jeremy.peprally.model.PostResponse;
 import com.peprally.jeremy.peprally.network.ApiManager;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.network.HTTPRequestsHelper;
@@ -40,6 +43,10 @@ import com.peprally.jeremy.peprally.custom.UserProfileParcel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class PostCommentActivity extends AppCompatActivity{
 
@@ -58,7 +65,7 @@ public class PostCommentActivity extends AppCompatActivity{
     // General Variables
     private static final String TAG = PostCommentActivity.class.getSimpleName();
     private CommentCardAdapter commentCardAdapter;
-    private DBUserPost mainPost;
+    private UserPost mainPost;
     private UserProfileParcel userProfileParcel;
     private boolean isUserViewingOwnPost;       // if current post is user's own post
     private int newCommentCharCount = 200;
@@ -260,7 +267,7 @@ public class PostCommentActivity extends AppCompatActivity{
         }
     }
 
-    private Bundle makeDBNotificationBundlePostFistbump(DBUserPost curPost) {
+    private Bundle makeDBNotificationBundlePostFistbump(UserPost curPost) {
         Bundle bundle = new Bundle();
         bundle.putParcelable("USER_PROFILE_PARCEL", userProfileParcel);
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
@@ -269,7 +276,7 @@ public class PostCommentActivity extends AppCompatActivity{
         return bundle;
     }
 
-    private Bundle makePushNotificationBundlePostFistbump(DBUserPost curPost) {
+    private Bundle makePushNotificationBundlePostFistbump(UserPost curPost) {
         Bundle bundle = new Bundle();
         bundle.putInt("NOTIFICATION_TYPE", NotificationEnum.POST_FISTBUMP.toInt());
         bundle.putString("SENDER_USERNAME", userProfileParcel.getCurrentUsername());
@@ -310,7 +317,12 @@ public class PostCommentActivity extends AppCompatActivity{
      **********************************************************************************************/
     public void postAddCommentCleanup() {
         postCommentsSwipeRefreshContainer.setRefreshing(true);
-        new FetchUserPostDBTask(true).execute();
+
+        ApiManager.getInstance()
+                .getPostService()
+                .getPost(mainPost.getUsername(), mainPost.getTimestampSeconds())
+                .enqueue(new UserPostCallback(true));
+
         // reset new comment edit text
         final EditText newCommentText = (EditText) findViewById(R.id.id_edit_text_new_comment);
         newCommentText.setText("");
@@ -323,7 +335,10 @@ public class PostCommentActivity extends AppCompatActivity{
     }
 
     public void postDeleteCommentCleanup() {
-        new FetchUserPostDBTask(false).execute();
+        ApiManager.getInstance()
+                .getPostService()
+                .getPost(mainPost.getUsername(), mainPost.getTimestampSeconds())
+                .enqueue(new UserPostCallback(false));
     }
 
     private void refreshAdapter(boolean scrollToBottom) {
@@ -334,7 +349,10 @@ public class PostCommentActivity extends AppCompatActivity{
                 postCommentsSwipeRefreshContainer.setRefreshing(true);
             }
         });
-        new FetchUserPostDBTask(scrollToBottom).execute();
+        ApiManager.getInstance()
+                .getPostService()
+                .getPost(mainPost.getUsername(), mainPost.getTimestampSeconds())
+                .enqueue(new UserPostCallback(scrollToBottom));
     }
 
     private void toggleDeletingPostLoadingDialog(boolean show) {
@@ -344,7 +362,7 @@ public class PostCommentActivity extends AppCompatActivity{
             progressDialogDeletePost.dismiss();
     }
 
-    private void refreshMainPostData(final DBUserPost userPost) {
+    private void refreshMainPostData(final UserPost userPost) {
         final TextView mainPostFistbump = (TextView) findViewById(R.id.id_button_comment_main_post_fistbump);
         final TextView mainPostFistbumpsCount = (TextView) findViewById(R.id.id_text_view_post_card_fistbumps_count);
         final TextView mainPostCommentsCount = (TextView) findViewById(R.id.id_text_view_post_card_comments_count);
@@ -395,7 +413,7 @@ public class PostCommentActivity extends AppCompatActivity{
             mainPostFistbump.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    final Set<String> fistbumpedUsers = userPost.getFistbumpedUsers();
+                    final SetData fistbumpedUsers = userPost.getFistbumpedUsers();
                     // if user already liked the post
                     if (fistbumpedUsers != null && fistbumpedUsers.contains(username)) {
                         int fistbumpsCount = Integer.parseInt(mainPostFistbumpsCount.getText().toString()) - 1;
@@ -522,6 +540,45 @@ public class PostCommentActivity extends AppCompatActivity{
     /***********************************************************************************************
      ****************************************** ASYNC TASKS ****************************************
      **********************************************************************************************/
+    private class UserPostCallback implements Callback<PostResponse> {
+
+        private boolean scrollToBottom;
+
+        UserPostCallback(boolean scrollToBottom) {
+            this.scrollToBottom = scrollToBottom;
+        }
+
+        @Override
+        public void onResponse(Call<PostResponse> call, Response<PostResponse> response) {
+            PostResponse postResponse = response.body();
+            if (postResponse != null) {
+                UserPost userPost = postResponse.getPost();
+                if (userPost == null) {
+                    launchPostOrCommentIsDeletedDialog(true);   // post is deleted
+                } else {
+                    refreshMainPostData(userPost);
+                    // update cached copy of mainPost
+                    mainPost = userPost;
+
+                    initializeAdapter(userPost.getComments(), scrollToBottom);
+
+                    // stop refresh animation
+                    postCommentsSwipeRefreshContainer.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            postCommentsSwipeRefreshContainer.setRefreshing(false);
+                        }
+                    });
+                }
+            }
+        }
+
+        @Override
+        public void onFailure(Call<PostResponse> call, Throwable throwable) {
+            ApiManager.handleCallbackFailure(throwable);
+        }
+    }
+
     private class FetchUserPostDBTask extends AsyncTask<Void, Void, DBUserPost> {
 
         private boolean scrollToBottom;
@@ -575,7 +632,7 @@ public class PostCommentActivity extends AppCompatActivity{
         @Override
         protected Void doInBackground(String... strings) {
             String commentId = strings[0];
-            ArrayList<Comment> postComments = mainPost.getComments();
+            List<Comment> postComments = mainPost.getComments();
             for (int i = 0; i < postComments.size(); ++i) {
                 if (postComments.get(i).getCommentId().equals(commentId)) {
                     postComments.remove(i);

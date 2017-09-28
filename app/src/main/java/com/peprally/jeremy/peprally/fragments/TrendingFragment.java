@@ -20,7 +20,10 @@ import com.peprally.jeremy.peprally.R;
 import com.peprally.jeremy.peprally.adapters.EmptyAdapter;
 import com.peprally.jeremy.peprally.adapters.PostCardAdapter;
 import com.peprally.jeremy.peprally.custom.ui.EmptyViewSwipeRefreshLayout;
+import com.peprally.jeremy.peprally.data.UserPost;
 import com.peprally.jeremy.peprally.db_models.DBUserPost;
+import com.peprally.jeremy.peprally.model.PostFeedResponse;
+import com.peprally.jeremy.peprally.network.ApiManager;
 import com.peprally.jeremy.peprally.network.DynamoDBHelper;
 import com.peprally.jeremy.peprally.custom.UserPostComparator;
 import com.peprally.jeremy.peprally.custom.UserProfileParcel;
@@ -29,6 +32,10 @@ import com.peprally.jeremy.peprally.utils.Helpers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class TrendingFragment extends Fragment{
 
@@ -42,7 +49,7 @@ public class TrendingFragment extends Fragment{
     private EmptyViewSwipeRefreshLayout trendingSwipeRefreshContainer;
 
     // General Variables
-    private ArrayList<DBUserPost> posts;
+    private List<UserPost> posts;
     private UserProfileParcel userProfileParcel;
     private TrendingModeEnum trendingMode;
 
@@ -125,11 +132,7 @@ public class TrendingFragment extends Fragment{
     /***********************************************************************************************
      *********************************** GENERAL_METHODS ********************************
      **********************************************************************************************/
-    private void updateCachedPosts(List<DBUserPost> results) {
-        posts = new ArrayList<>(results);
-    }
-
-    private ArrayList<DBUserPost> sortPosts(TrendingModeEnum trendingMode, ArrayList<DBUserPost> posts) {
+    private List<UserPost> sortPosts(TrendingModeEnum trendingMode, List<UserPost> posts) {
         switch (trendingMode) {
             case HOTTEST:
                 Collections.sort(posts, UserPostComparator.decending(UserPostComparator.getComparator(UserPostComparator.HOTTEST_SORT, UserPostComparator.LATEST_SORT)));
@@ -145,7 +148,7 @@ public class TrendingFragment extends Fragment{
     /***********************************************************************************************
      ****************************************** UI METHODS *****************************************
      **********************************************************************************************/
-    private void initializeAdapter(ArrayList<DBUserPost> userPosts) {
+    private void initializeAdapter(List<UserPost> userPosts) {
         if (userPosts != null && userPosts.size() > 0) {
 
             userPosts = sortPosts(trendingMode, userPosts);
@@ -179,7 +182,7 @@ public class TrendingFragment extends Fragment{
                 trendingSwipeRefreshContainer.setRefreshing(true);
             }
         });
-        new FetchUserPostsTask().execute();
+        ApiManager.getInstance().getPostService().getPostFeed().enqueue(new PostFeedCallback());
     }
 
     public void updateTrendingMode(boolean isTrendingModeHottest) {
@@ -203,30 +206,33 @@ public class TrendingFragment extends Fragment{
     }
 
     /***********************************************************************************************
-     ****************************************** ASYNC TASKS ****************************************
+     ****************************************** CALL BACKS *****************************************
      **********************************************************************************************/
-    private class FetchUserPostsTask extends AsyncTask<Void, Void, PaginatedScanList<DBUserPost>> {
+
+    private class PostFeedCallback implements Callback<PostFeedResponse> {
+
         @Override
-        protected PaginatedScanList<DBUserPost> doInBackground(Void... params) {
-            DynamoDBHelper dynamoDBHelper = new DynamoDBHelper(getActivity().getApplicationContext());
-            DynamoDBScanExpression scanExpression = new DynamoDBScanExpression();
-            return dynamoDBHelper.getMapper().scan(DBUserPost.class, scanExpression);
+        public void onResponse(Call<PostFeedResponse> call, Response<PostFeedResponse> response) {
+            PostFeedResponse postFeedResponse = response.body();
+            if (postFeedResponse != null) {
+                posts = postFeedResponse.getPosts();
+                initializeAdapter(posts);
+
+                // stop refresh loading animation
+                if (trendingSwipeRefreshContainer.isRefreshing()) {
+                    trendingSwipeRefreshContainer.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            trendingSwipeRefreshContainer.setRefreshing(false);
+                        }
+                    });
+                }
+            }
         }
 
         @Override
-        protected void onPostExecute(PaginatedScanList<DBUserPost> results) {
-            updateCachedPosts(results);
-            initializeAdapter(posts);
-
-            // stop refresh loading animation
-            if (trendingSwipeRefreshContainer.isRefreshing()) {
-                trendingSwipeRefreshContainer.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        trendingSwipeRefreshContainer.setRefreshing(false);
-                    }
-                });
-            }
+        public void onFailure(Call<PostFeedResponse> call, Throwable throwable) {
+            ApiManager.handleCallbackFailure(throwable);
         }
     }
 }

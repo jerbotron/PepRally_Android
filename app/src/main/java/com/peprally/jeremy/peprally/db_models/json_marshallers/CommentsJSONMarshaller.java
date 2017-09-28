@@ -9,6 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class CommentsJSONMarshaller extends JsonMarshaller<ArrayList<Comment>> implements DynamoDBMarshaller<ArrayList<Comment>> {
     @Override
@@ -33,7 +34,7 @@ public class CommentsJSONMarshaller extends JsonMarshaller<ArrayList<Comment>> i
         return comments;
     }
 
-    public static String convertCommentsToJSON(ArrayList<Comment> comments) {
+    public static String convertCommentsToJSON(List<Comment> comments) {
         JSONArray jsonCommentsArray = new JSONArray();
         for (Comment comment : comments) {
             JSONObject jsonComment = comment.toJSONObject();
